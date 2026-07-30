@@ -116,6 +116,31 @@
   `security_invoker = on` ayarı verildi, RLS artık sorguyu yapan kullanıcının
   rolü üzerinden doğru şekilde uygulanıyor. Bu dosya da SQL Editor'de
   çalıştırılmalı (01/02'den sonra, tek seferlik).
+- **KRİTİK BUG:** İlk giriş denemesinde `postgrest.exceptions.APIError: stack
+  depth limit exceeded` hatası alındı. Sebep: `auth_isletme_id()` fonksiyonu
+  `kullanicilar` tablosunu sorguluyor, ama `kullanicilar`'ın RLS politikası da
+  bu fonksiyonu çağırıyor — SECURITY INVOKER (varsayılan) olduğu için iç
+  sorgu da RLS'e tabi oluyor ve sonsuz döngüye giriyordu.
+  **`sql/04_auth_isletme_id_duzeltmesi.sql`** eklendi: fonksiyon `SECURITY
+  DEFINER` + sabit `search_path` ile yeniden tanımlandı, böylece iç sorgu
+  RLS'i atlıyor ve döngü kırılıyor. Bu dosya da SQL Editor'de çalıştırılmalı.
+- **KRİTİK BUG:** Döngü düzeltildikten sonra girişte `PGRST116: Cannot
+  coerce... The result contains 0 rows` hatası alındı. Sebep: `app.py`'deki
+  kayıt mantığı, `isletmeler`/`kullanicilar`/`abonelikler` satırlarını
+  oluşturmak için `sign_up()` sonrası bir oturum (session) varlığına
+  güveniyordu — e-posta doğrulaması zorunlu olduğunda Supabase doğrulama
+  tamamlanana kadar oturum döndürmüyor, bu yüzden kayıt satırları hiç
+  oluşmuyordu.
+  **Mimari düzeltme (daha sağlam):** İş, client'tan veritabanı
+  tetikleyicisine taşındı. **`sql/05_kullanici_kayit_tetikleyicisi.sql`**
+  eklendi: `auth.users` tablosuna her yeni kayıt girdiğinde (oturum olsun
+  olmasın) `isletmeler`+`kullanicilar`+`abonelikler` (deneme) satırları
+  otomatik oluşuyor. `app.py`'deki `hesap_olustur()` sadeleşti — artık
+  sadece işletme adını kullanıcı metadata'sı olarak gönderiyor, tetikleyici
+  gerisini hallediyor.
+  **Not:** Bu düzeltmeden önce oluşturulan test hesabı (`bahriguler@gmail.com`,
+  "ev" işletmesi) yarım kalmış durumda — Authentication → Users'tan silinip
+  yeniden kayıt olunmalı.
 
 ### 30 Temmuz 2026 — I. Oturum (devam): Reçete/Menü CRUD Ekranları
 - **db.py** (yeni, ortak modül): `get_supabase()` ve `oturumu_uygula()` buraya
