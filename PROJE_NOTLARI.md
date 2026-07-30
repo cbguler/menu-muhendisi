@@ -88,11 +88,34 @@
 | `pages/3_Boston_Matrisi.py` | Özellik kilitleme örneği |
 
 ## Sıradaki Adımlar (Kuyruk)
-1. Streamlit uygulamasını Community Cloud'a deploy et, gerçek URL al (kod hazır, deploy birlikte yapılacak).
+1. Streamlit uygulamasını Community Cloud'a deploy et, gerçek URL al (kod hazır, deploy birlikte yapılıyor).
 2. WordPress landing page içeriği (menumuhendisi.com).
 3. Domain'i WP Small hosting'e bağlama (musenstyle.com'dan ayırma).
 4. **[ERTELENDİ]** Mustafa ile Odora Kozmetik görüşmesi, PayTR üye işyeri
    hesabı, vergi dairesi kaydı.
+
+### 30 Temmuz 2026 — II. Oturum: Canlı Kurulum (GitHub + Supabase)
+- GitHub deposu oluşturuldu: `cbguler/menu-muhendisi` (**private** — TrendSurf'ten
+  farklı olarak, orada public seçimi ücretsiz sınırsız Actions içindi, burada
+  henüz Actions kullanılmıyor ve ticari ürün olacağı için kod gizli tutuldu).
+  İlk push'ta remote URL placeholder ("KULLANICI_ADIN") olarak kalmıştı,
+  `git remote set-url` ile düzeltildi.
+- Supabase projesi oluşturuldu: `menu-muhendisi`, Personal org, Free plan,
+  Frankfurt (eu-central-1) bölgesi, "Enable automatic RLS" işaretlendi.
+- `01_menu_muhendisligi_schema.sql` ve `02_abonelik_ve_odeme_altyapisi.sql`
+  SQL Editor'de başarıyla çalıştırıldı. Table Editor'de 17 tablo + 4 view
+  doğrulandı.
+- **KRİTİK GÜVENLİK BULGUSU:** Table Editor'de 4 view (`malzeme_guncel_fiyat`,
+  `recete_guncel_maliyet`, `menu_ogesi_karlilik`, `isletme_aktif_abonelik`)
+  "UNRESTRICTED" etiketiyle işaretliydi. Sebep: Postgres'te view'ler
+  varsayılan olarak OLUŞTURAN rolün (Supabase'de `postgres` superuser)
+  yetkileriyle çalışır, sorguyu yapanın değil — superuser RLS'yi atladığı
+  için bu 4 view düzeltilmeden herhangi bir işletmenin maliyet/kâr
+  marjı/abonelik verisini TÜM işletmeler için ifşa edebilirdi.
+  **`sql/03_view_guvenlik_duzeltmesi.sql`** eklendi: her 4 view'e
+  `security_invoker = on` ayarı verildi, RLS artık sorguyu yapan kullanıcının
+  rolü üzerinden doğru şekilde uygulanıyor. Bu dosya da SQL Editor'de
+  çalıştırılmalı (01/02'den sonra, tek seferlik).
 
 ### 30 Temmuz 2026 — I. Oturum (devam): Reçete/Menü CRUD Ekranları
 - **db.py** (yeni, ortak modül): `get_supabase()` ve `oturumu_uygula()` buraya
