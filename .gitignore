@@ -1,0 +1,16 @@
+# Streamlit secrets -- ASLA commitleme! Gercek degerler sadece burada,
+# yerel makinede ve Streamlit Cloud'un kendi "Secrets" ekraninda durur.
+.streamlit/secrets.toml
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Supabase CLI yerel durum
+.supabase/
+
+# OS
+.DS_Store
+Thumbs.db
