@@ -155,13 +155,13 @@ for recete in receteler:
                 ).execute()
                 st.rerun()
 
-        maliyet = (
+        maliyet_sonuc = (
             supabase.table("recete_guncel_maliyet")
             .select("*")
             .eq("recete_id", recete["id"])
-            .maybe_single()
             .execute()
-        ).data
+        )
+        maliyet = maliyet_sonuc.data[0] if maliyet_sonuc.data else None
 
         if maliyet:
             st.write("**Canlı maliyet**")
