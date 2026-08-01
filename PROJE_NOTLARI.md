@@ -101,6 +101,9 @@ olarak diğer mutfaklara uygulanmaz.
 | `pages/3_Boston_Matrisi.py` | Özellik kilitleme örneği |
 | `yukle_malzemeler.py` | Malzeme kataloğu ETL scripti |
 | `requirements.txt` | `streamlit`, `supabase`, `streamlit-cookies-manager` |
+| `sql/12_tarif_kutuphanesi_global_receteler.sql` | `receteler` global tarif desteği + eksik SALATALIK kalemi |
+| `tarif_verisi.py` | 74 tariflik Türk mutfağı başlangıç kütüphanesi (veri) |
+| `yukle_tarifler.py` | Tarif kütüphanesi ETL scripti (global `receteler` + `recete_malzemeleri`) |
 
 ## Oturum Geçmişi
 
@@ -183,11 +186,18 @@ modeli genişlemesi gerektiriyor (yemek grubu I/II/III, uyumsuzluk/
 tamamlayıcı etiketleri, kişisel beslenme profili, menü takvimi tablosu).
 
 ## Sıradaki Adımlar (Kuyruk)
-1. **[YENİ ÖNCELİK]** Yıllık menü üretim motoru: şema genişletmesi
-   (`yemek_grubu`, özel etiketler, `tamamlayici_eslestirme`,
-   `kisisel_beslenme_profili`, `menu_takvimi`) + üretim algoritması tasarımı.
-2. Streamlit uygulamasını Community Cloud'a deploy et (kod hazır, yarım
-   kalmıştı — GitHub'a giriş yapıldı, "New app" adımına kadar gelindi).
+1. **[TAMAMLANDI — bkz. IV. Oturum]** ~~Yıllık menü üretim motoru: şema
+   genişletmesi + tarif kütüphanesi veri girişi~~ → 74 tariflik set
+   hazırlandı, `12_tarif_kutuphanesi_global_receteler.sql` +
+   `yukle_tarifler.py` teslim edildi. **Sıradaki alt-adım:** SQL'i
+   Supabase'de çalıştır, `yukle_tarifler.py`'yi çalıştır, sonra menü
+   **üretim algoritmasının** (haftalık/yıllık takvim doldurma mantığı)
+   tasarımına geç.
+2. Streamlit uygulamasını Community Cloud'a deploy et — deploy tamamlandı
+   (menu-muhendisi.streamlit.app canlı); **açık soru:** sol menüde
+   "Uretim Asamalari" sayfası görünüyor mu, görünmüyorsa önce
+   `10_uretim_maliyet_semasi.sql`/`4_Uretim_Asamalari.py`'nin GitHub'a
+   push edilip edilmediği kontrol edilmeli (reboot bunu çözmeyebilir).
 3. WordPress landing page içeriği (menumuhendisi.com).
 4. Domain'i WP Small hosting'e bağlama (musenstyle.com'dan ayırma).
 5. **[ERTELENDİ]** Mustafa ile Odora Kozmetik görüşmesi, PayTR üye işyeri
@@ -248,3 +258,54 @@ tamamlayıcı etiketleri, kişisel beslenme profili, menü takvimi tablosu).
     Mevcut 337 malzemenin tamamı başlangıçta Türk mutfağına bağlandı.
   - Anayasa dokümanına not eklendi: 13 madde özellikle Türk Mutfağı için
     geçerli, yeni mutfaklar kendi kural setini tanımlayacak.
+
+### 1 Ağustos 2026 — IV. Oturum: 74 Tariflik Türk Mutfağı Kütüphanesi
+- **Mimari karar:** `receteler` tablosu şimdiye kadar sadece isletme'ye
+  özel (isletme_id NOT NULL) tasarlanmıştı; yıllık menü motorunun ortak
+  tarif kütüphanesi için bu yeterli değildi. `malzemeler` tablosundaki
+  "isletme_id NULL = global katalog" deseni `receteler`'a da uygulandı
+  (`12_tarif_kutuphanesi_global_receteler.sql`): `isletme_id` nullable
+  yapıldı, global/özel için ayrı unique index'ler eklendi, RLS
+  `for all` politikası SELECT (global+kendi) / INSERT-UPDATE-DELETE
+  (sadece kendi) olarak ayrıştırıldı — aynı ayrıştırma
+  `recete_malzemeleri` için de yapıldı. **Etkisi yok:**
+  `pages/1_Receteler.py` zaten `.eq("isletme_id", isletme_id)` ile
+  sorguluyor, yani mevcut restoran maliyet ekranına global tarifler
+  karışmıyor.
+- **`receteler.mevsim_etiketi`** (yeni sütun) eklendi — gerçek
+  mevsimsellik malzeme bazında zaten var, ama yıllık menü motorunun
+  ağır join yapmadan tarif filtreleyebilmesi için kürasyonla belirlenen
+  tek bir baskın mevsim etiketi de tutuluyor.
+- **Eksik katalog kalemi bulundu:** `kaynak_duzeltilmis_v2.xlsx`'te
+  **SALATALIK** (salatalık/cacık ve salatalarda temel malzeme) hiç
+  yoktu. Standart referans besin değerleriyle `malzemeler` tablosuna
+  eklendi (aynı migration dosyasında, kategori_id=2 SEBZELER).
+- **74 tariflik başlangıç seti** tasarlandı ve doğrulandı (`tarif_verisi.py`):
+  I. Grup 30 (kırmızı et 6, tavuk 6, balık/deniz ürünü 6, etli sebze/dolma 5,
+  kuru baklagil 5, yumurta 2), II. Grup 24 (çorba 6, pilav 5, zeytinyağlı 6,
+  makarna 3, börek 4), III. Grup 20 (salata 5, cacık/yoğurt 2, turşu 2,
+  komposto 3, tatlı 8). Tüm malzeme adları `kaynak_duzeltilmis_v2.xlsx`
+  kataloğuyla programatik olarak çapraz kontrol edildi (SALATALIK hariç
+  hepsi zaten katalogda vardı). `porsiyon_sayisi` kütüphane genelinde 1
+  (kişi başı günlük plan birimi) sabitlendi.
+- **Etiket ayrımı netleştirildi:** `ozel_etiketler` içinde iki tür etiket
+  var — kural motorunun kullandığı sabit etiketler (zeytinyagli,
+  etli_sebze, etli_zeytinyagli_dolma, dolma, izgara, tursu, kuru_baklagil,
+  salata, balik, pilav_makarna_borek, tatli, sporcu_uygun) ve sadece
+  sınıflandırma/haftalık denge amaçlı serbest etiketler (kirmizi_et,
+  beyaz_et, vejetaryen, corba, pilav, borek, komposto, cacik, yumurta).
+  **Önemli detay:** `etli_zeytinyagli_dolma` etiketi hem etli hem
+  zeytinyağlı dolma/sarma çeşitlerine birlikte uygulanır (uyumsuzluk
+  kuralındaki `etiket_a` adı ikisini birden temsil eder) — sadece
+  zeytinyağlı varyanta değil.
+- **`yukle_tarifler.py`** (yeni ETL): `mutfaklar`/`mutfak_kategorileri`
+  üzerinden Türk mutfağı I/II/III grup id'lerini, `malzemeler` üzerinden
+  (isletme_id NULL) malzeme id'lerini çözüp `receteler` + 
+  `recete_malzemeleri`'ne global (isletme_id=NULL) olarak yükler. Yükleme
+  öncesi tüm malzeme adlarını doğrular, eksik varsa hiçbir satır
+  yazmadan durur.
+- **Sıradaki alt-adım:** `12_...sql` Supabase'de çalıştırılıp
+  `yukle_tarifler.py` çalıştırılınca 74 tarif veritabanında olacak;
+  bir sonraki oturumda **üretim algoritması** (haftalık/yıllık takvimi
+  anayasa kurallarına göre otomatik dolduran mantık — madde 2, 4, 8, 11,
+  13) tasarlanacak.
