@@ -79,39 +79,45 @@ if st.session_state.oturum is None:
             cookies.save()
 
 if st.session_state.oturum is None:
-    st.title("Menü Mühendisliği")
-    st.caption("Reçete maliyeti, kâr marjı ve Boston Matrisi analizini tek yerden yönet.")
+    _, giris_sutunu, _ = st.columns([1, 1.3, 1])
+    with giris_sutunu:
+        st.title("Menü Mühendisliği")
+        st.caption("Reçete maliyeti, kâr marjı ve Boston Matrisi analizini tek yerden yönet.")
 
-    sekme_giris, sekme_kayit = st.tabs(["Giriş yap", "Hesap oluştur"])
+        sekme_giris, sekme_kayit = st.tabs(["Giriş yap", "Hesap oluştur"])
 
-    with sekme_giris:
-        email = st.text_input("E-posta", key="giris_email")
-        sifre = st.text_input("Şifre", type="password", key="giris_sifre")
-        beni_hatirla = st.checkbox("Beni hatırla", value=True, key="beni_hatirla")
-        if st.button("Giriş yap", type="primary"):
-            try:
-                sonuc = giris_yap(email, sifre)
-                st.session_state.oturum = sonuc.session
-                if beni_hatirla:
-                    cookies["refresh_token"] = sonuc.session.refresh_token
-                    cookies.save()
-                st.rerun()
-            except Exception:
-                st.error("Giriş başarısız: e-posta veya şifre hatalı.")
-
-    with sekme_kayit:
-        yeni_email = st.text_input("E-posta", key="kayit_email")
-        yeni_sifre = st.text_input("Şifre (en az 8 karakter)", type="password", key="kayit_sifre")
-        isletme_adi = st.text_input("İşletme adı", key="kayit_isletme")
-        if st.button("14 günlük denemeyi başlat", type="primary"):
-            if not (yeni_email and yeni_sifre and isletme_adi):
-                st.warning("Lütfen tüm alanları doldur.")
-            else:
+        with sekme_giris:
+            email = st.text_input("E-posta", key="giris_email")
+            sifre = st.text_input("Şifre", type="password", key="giris_sifre")
+            beni_hatirla = st.checkbox("Beni hatırla", value=True, key="beni_hatirla")
+            if st.button("Giriş yap", type="primary"):
                 try:
-                    hesap_olustur(yeni_email, yeni_sifre, isletme_adi)
-                    st.success("Hesabın oluşturuldu. E-postana gelen bağlantıyla doğrulayıp giriş yap.")
-                except Exception as e:
-                    st.error(f"Kayıt başarısız: {e}")
+                    sonuc = giris_yap(email, sifre)
+                    st.session_state.oturum = sonuc.session
+                    if beni_hatirla:
+                        cookies["refresh_token"] = sonuc.session.refresh_token
+                        cookies.save()
+                    st.rerun()
+                except Exception:
+                    st.error("Giriş başarısız: e-posta veya şifre hatalı.")
+
+        with sekme_kayit:
+            yeni_email = st.text_input("E-posta", key="kayit_email")
+            yeni_sifre = st.text_input(
+                "Şifre (en az 8 karakter)", type="password", key="kayit_sifre"
+            )
+            isletme_adi = st.text_input("İşletme adı", key="kayit_isletme")
+            if st.button("14 günlük denemeyi başlat", type="primary"):
+                if not (yeni_email and yeni_sifre and isletme_adi):
+                    st.warning("Lütfen tüm alanları doldur.")
+                else:
+                    try:
+                        hesap_olustur(yeni_email, yeni_sifre, isletme_adi)
+                        st.success(
+                            "Hesabın oluşturuldu. E-postana gelen bağlantıyla doğrulayıp giriş yap."
+                        )
+                    except Exception as e:
+                        st.error(f"Kayıt başarısız: {e}")
 
     st.stop()
 
@@ -165,9 +171,10 @@ st.session_state.recete_limiti = abonelik_verisi["recete_limiti"]
 st.session_state.sube_limiti = abonelik_verisi["sube_limiti"]
 
 with st.sidebar:
-    st.success(f"Plan: {abonelik_verisi['plan_adi']}")
+    plan_metni = f"Plan: {abonelik_verisi['plan_adi']}"
     if abonelik_verisi["durum"] == "deneme":
-        st.info(f"Deneme bitiş: {abonelik_verisi['deneme_bitis_tarihi']}")
+        plan_metni += f"  ·  Deneme bitiş: {abonelik_verisi['deneme_bitis_tarihi']}"
+    st.caption(plan_metni)
     if st.button("Çıkış yap"):
         supabase.auth.sign_out()
         st.session_state.oturum = None
