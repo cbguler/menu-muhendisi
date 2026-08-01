@@ -27,6 +27,9 @@
 6. Ticari/vergi kaydı (şirket kurma, PayTR üye işyeri hesabı, vergi dairesi)
    **en sona bırakıldı** — önce ürün + deneme kullanıcılarıyla doğrulama
    yapılacak.
+7. Yeni/değişen dosya olduğunda Claude, kullanıcının çalıştırması için tam
+   `git add / commit / push` komutlarını HER ZAMAN otomatik verir —
+   kullanıcı ayrıca istemek zorunda kalmaz.
 
 ## Teknoloji Yığını
 | Katman | Seçim |
@@ -37,7 +40,12 @@
 | Landing page | WordPress — WP Small hosting (musenstyle.com'dan taşınıyor) |
 | Barındırma | hosting.com.tr paneli (mevcut hesap) |
 
-## Yıllık Menü Anayasası (v3)
+## Yıllık Menü Anayasası — Türk Mutfağı (v3)
+**Not (30 Temmuz 2026):** Bu anayasa özellikle **Türk Mutfağı** için
+geçerlidir (`mutfaklar` tablosunda `kod='turk'`). İleride eklenecek her
+mutfak (Fransız, fast-food vb.) kendi kategori şemasını ve kendi
+uyumsuzluk/tamamlayıcı kurallarını tanımlayacak — bu 13 madde otomatik
+olarak diğer mutfaklara uygulanmaz.
 1. Günde iki öğün: öğle ve akşam yemeği menüleri olmalıdır.
 2. Aynı hafta içinde bir yemek çeşidi tekrarlanmaz; ardışık günlerde aynı
    ana malzeme tekrar etmez.
@@ -217,3 +225,26 @@ tamamlayıcı etiketleri, kişisel beslenme profili, menü takvimi tablosu).
   DEĞİŞİKLİĞİ" notu. 74 tariflik başlangıç seti (I/II/III grup dengeli,
   mevsimsel dağılım) önerildi, onay bekleniyor; onaylanınca veri girişi
   + yükleme scripti hazırlanacak.
+
+### 30 Temmuz 2026 — III. Oturum (devam): Çoklu Mutfak Mimarisi
+- **İleriye dönük gereksinim:** Uygulama sadece Türk mutfağıyla kalmayacak
+  — kullanıcı ileride Fransız mutfağı, fast-food vb. seçebilmeli, menü
+  yapısı ve tüm sistem seçilen mutfağa göre yeniden şekillenmeli, malzeme
+  listeleri mutfağa göre genişleyebilmeli.
+- **`sql/11_coklu_mutfak_capraz_kesim.sql`** eklendi:
+  - `mutfaklar` (kod/ad) ve `mutfak_kategorileri` (her mutfağın kendi
+    yemek sınıflandırması — Türk için I/II/III Grup, ileride Fransız için
+    Entrée/Plat/Dessert vb.) tabloları.
+  - `receteler.yemek_grubu` (sabit 1/2/3) → `receteler.mutfak_kategori_id`
+    (esnek, mutfağa göre değişir) — 09 daha önce çalıştırılmışsa mevcut
+    veriyi Türk mutfağı varsayımıyla otomatik taşıyıp eski sütunu kaldırır.
+  - `uyumsuzluk_kurallari` ve `tamamlayici_eslestirme` artık `mutfak_id`
+    ile kapsamlandırılıyor (Türk mutfağına özel kurallar başka mutfaklara
+    sızmaz).
+  - `menu_takvimi`'ye `mutfak_id` eklendi (takvim hangi mutfak için
+    üretildi).
+  - `mutfak_malzeme`: malzeme-mutfak ilişkisi **kısıtlayıcı değil,
+    bilgilendirici** (bir malzeme birden fazla mutfakta ortak kullanılabilir).
+    Mevcut 337 malzemenin tamamı başlangıçta Türk mutfağına bağlandı.
+  - Anayasa dokümanına not eklendi: 13 madde özellikle Türk Mutfağı için
+    geçerli, yeni mutfaklar kendi kural setini tanımlayacak.
