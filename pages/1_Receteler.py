@@ -9,9 +9,13 @@ import streamlit as st
 from db import get_supabase, oturumu_uygula
 
 st.set_page_config(page_title="Reçeteler", page_icon="assets/favicon.png", layout="wide")
-st.logo("assets/logo.png", icon_image="assets/logo_icon.png")
 st.sidebar.image("assets/logo.png", width=140)
-st.sidebar.markdown("#### Menü Mühendisi")
+st.sidebar.markdown(
+    "<div style='font-weight:700; color:#2C6B3C; font-size:1.4rem; "
+    "font-family: Arial, Helvetica, sans-serif; margin-top:-6px;'>"
+    "Menü Mühendisi</div>",
+    unsafe_allow_html=True,
+)
 
 supabase = get_supabase()
 oturumu_uygula(supabase)
