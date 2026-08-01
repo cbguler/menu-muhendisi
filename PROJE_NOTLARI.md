@@ -104,6 +104,7 @@ olarak diğer mutfaklara uygulanmaz.
 | `sql/12_tarif_kutuphanesi_global_receteler.sql` | `receteler` global tarif desteği + eksik SALATALIK kalemi |
 | `tarif_verisi.py` | 74 tariflik Türk mutfağı başlangıç kütüphanesi (veri) |
 | `yukle_tarifler.py` | Tarif kütüphanesi ETL scripti (global `receteler` + `recete_malzemeleri`) |
+| `assets/favicon.png`, `logo.png`, `logo_icon.png`, `favicon.ico`, `apple-touch-icon.png` | Logo/favicon varlıkları (kaynak: kullanıcının `logo.png`'si, siyah arka plan şeffaflaştırıldı) |
 
 ## Oturum Geçmişi
 
@@ -323,3 +324,60 @@ tamamlayıcı etiketleri, kişisel beslenme profili, menü takvimi tablosu).
   adresi (`...streamlit.app`) değil, Supabase **Project URL**'i
   (`...supabase.co`) girilmeli — karışınca `.data` beklenmeyen tipte
   dönüp `TypeError` veriyor.
+
+### 1 Ağustos 2026 — V. Oturum: Favicon + Uygulama Logosu
+- Kullanıcı `logo.ai` (Illustrator/PDF, 512×512pt) ve `logo.png` (aslında
+  JPEG, 8000×7950, düz siyah arka plan) dosyalarını paylaştı.
+- **`logo.ai` render edilemedi:** Poppler/pdftocairo ile açılınca sadece
+  düz siyah bir kare geldi, asıl çizim görünmedi — muhtemelen dosya
+  "PDF uyumluluğu" (Create PDF Compatible File) işaretlenmeden
+  kaydedilmiş, yani PDF katmanında sadece bir arka plan var, gerçek
+  vektör verisi Illustrator'a özel kısımda. **Sonuç:** `logo.png`
+  (raster) kaynak olarak kullanıldı.
+- **Arka plan kaldırma:** `logo.png`'nin arka planı saf siyahtı (0,0,0),
+  çizim öğeleri (koyu yeşil çatal/bıçak dahil) belirgin şekilde daha
+  açık renkte olduğundan güvenle chroma-key yapılabildi. Parlaklık eşiğine
+  göre alfa hesaplanıp siyah arka plan üzerinden "unmultiply" ile gerçek
+  renkler geri çıkarıldı (kenarlarda siyah halo kalmadı).
+- **Üretilen dosyalar** (`assets/`): `favicon.png` (128px, Streamlit
+  `page_icon` için), `logo.png` (512px, `st.logo()` ana görsel),
+  `logo_icon.png` (96px, `st.logo()` daraltılmış sidebar ikonu),
+  `favicon.ico` (16/32/48/64/128/256 çoklu boyut, ileride WordPress
+  landing page için hazır), `apple-touch-icon.png` (180px, beyaz
+  arka planlı — iOS şeffaflığı desteklemiyor).
+- **Kod değişikliği:** `app.py` + `pages/` altındaki 4 sayfanın hepsine
+  `st.set_page_config(..., page_icon="assets/favicon.png")` ve
+  `st.logo("assets/logo.png", icon_image="assets/logo_icon.png")`
+  eklendi (her sayfa kendi `set_page_config`'ini çağırdığı için hepsine
+  ayrı ayrı eklenmesi gerekti — bkz. mimari not: çoklu-sayfa yapısı).
+
+#### V. Oturum (devam): Sidebar Logo İterasyonu
+Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
+- **`st.logo()`'nun sabit boyut kısıtı keşfedildi:** Streamlit bu alanı
+  hangi görsel verilirse verilsin sabit (küçük) yükseklikte gösteriyor —
+  kaynak dosyanın çözünürlüğü fark etmiyor. Bu yüzden gerçekten büyük bir
+  logo için `st.logo()` yerine normal bir sidebar elemanı
+  (`st.sidebar.image`) kullanılmasına karar verildi.
+- İlk denemede amblem+yazı tek bir görselde birleştirildi (yatay
+  "wordmark", sonra dikey düzen) — kullanıcı görsele gömülü metni
+  **istemedi**: metin ayrı, gerçek Streamlit metni olarak kalmalı
+  (`st.sidebar.markdown`, tema/boyut esnekliği için).
+- Yazı tipi/rengi logonun çatal-bıçağıyla eşleşen koyu yeşile
+  (`#2C6B3C`, Arial/Helvetica kalın) `unsafe_allow_html=True` ile
+  stillendirildi.
+- Küçük `st.logo()` ikonu kullanıcı isteğiyle tamamen kaldırıldı (sadece
+  favicon/`page_icon` kaldı) — sidebar'da artık tek, büyük bir logo var.
+  **Bilinen ödün:** sidebar tamamen daraltıldığında artık hiç ikon
+  görünmüyor (st.logo'nun collapsed-state faydası kayboldu).
+  Logo+yazı `st.sidebar.columns([1, 5, 1])` ile ortalandı — **ilk
+  denemede `[1, 2, 1]` kullanılmıştı, bu orta sütunu görsel genişliğinden
+  (`width=190`) daha dar bıraktığı için büyütme hiç etkili olmamıştı**;
+  oranı `[1, 5, 1]`'e çıkarıp `width=220` yapınca çözüldü. Bu, ileride
+  sidebar'da ortalanmış herhangi bir görsel eklerken akılda tutulacak bir
+  tuzak: `st.image(width=N)` istegi, içinde bulunduğu sütun/konteynerden
+  geniş olamaz.
+- Ayrıca bu oturumda: giriş/kayıt ekranı (`app.py`) `layout="wide"`
+  yüzünden tam genişlikte açılan metin kutularına sahipti —
+  `st.columns([1, 1.3, 1])` ile ortalanmış dar bir sütuna alındı. Plan/
+  deneme bitiş bilgisi iki ayrı renkli kutudan (`st.success`/`st.info`)
+  tek satırlık gri `st.caption`'a sadeleştirildi.
