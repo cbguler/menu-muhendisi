@@ -17,7 +17,10 @@ from streamlit_cookies_manager import EncryptedCookieManager
 
 from db import get_supabase
 
-st.set_page_config(page_title="Menü Mühendisliği", layout="wide")
+st.set_page_config(
+    page_title="Menü Mühendisliği", page_icon="assets/favicon.png", layout="wide"
+)
+st.logo("assets/logo.png", icon_image="assets/logo_icon.png")
 
 supabase = get_supabase()
 

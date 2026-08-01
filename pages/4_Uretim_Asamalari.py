@@ -9,7 +9,10 @@ import streamlit as st
 from db import get_supabase, oturumu_uygula
 from uretim_hesap import kritik_yolu_hesapla
 
-st.set_page_config(page_title="Üretim Aşamaları", layout="wide")
+st.set_page_config(
+    page_title="Üretim Aşamaları", page_icon="assets/favicon.png", layout="wide"
+)
+st.logo("assets/logo.png", icon_image="assets/logo_icon.png")
 
 supabase = get_supabase()
 oturumu_uygula(supabase)

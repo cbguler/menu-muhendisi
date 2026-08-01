@@ -7,7 +7,8 @@ import streamlit as st
 
 from db import get_supabase, oturumu_uygula
 
-st.set_page_config(page_title="Menü", layout="wide")
+st.set_page_config(page_title="Menü", page_icon="assets/favicon.png", layout="wide")
+st.logo("assets/logo.png", icon_image="assets/logo_icon.png")
 
 supabase = get_supabase()
 oturumu_uygula(supabase)
