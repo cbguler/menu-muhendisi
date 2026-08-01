@@ -10,6 +10,7 @@ from db import get_supabase, oturumu_uygula
 
 st.set_page_config(page_title="Boston Matrisi", page_icon="assets/favicon.png", layout="wide")
 st.logo("assets/logo.png", icon_image="assets/logo_icon.png")
+st.sidebar.markdown("### Menü Mühendisi")
 
 supabase = get_supabase()
 oturumu_uygula(supabase)

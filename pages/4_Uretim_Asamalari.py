@@ -13,6 +13,7 @@ st.set_page_config(
     page_title="Üretim Aşamaları", page_icon="assets/favicon.png", layout="wide"
 )
 st.logo("assets/logo.png", icon_image="assets/logo_icon.png")
+st.sidebar.markdown("### Menü Mühendisi")
 
 supabase = get_supabase()
 oturumu_uygula(supabase)
