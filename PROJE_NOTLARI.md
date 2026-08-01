@@ -309,3 +309,17 @@ tamamlayıcı etiketleri, kişisel beslenme profili, menü takvimi tablosu).
   bir sonraki oturumda **üretim algoritması** (haftalık/yıllık takvimi
   anayasa kurallarına göre otomatik dolduran mantık — madde 2, 4, 8, 11,
   13) tasarlanacak.
+- **DOĞRULANDI (1 Ağustos 2026):** `12_...sql` çalıştırıldı,
+  `yukle_tarifler.py` başarıyla tamamlandı ("74 tarif + malzeme
+  ilişkileri yüklendi"), Supabase Table Editor'da teyit edildi. Kod
+  GitHub'a push edildi. **Karşılaşılan ve çözülen ortam sorunları**
+  (ileride benzer ETL scriptleri için hatırlatma): (1) bu makinede
+  `python` komutu bazen gercek kurulum yerine Windows Store'un sahte
+  kısayoluna gidiyor — gerçek yol `C:\Users\bahri\AppData\Local\Programs\
+  Python\Python312\python.exe` kullanılmalı; (2) konsol varsayılan kod
+  sayfası (cp1252) Türkçe karakterleri yazdıramıyor —
+  `chcp 65001` + `PYTHONUTF8=1` + `PYTHONIOENCODING=utf-8` gerekli;
+  (3) `SUPABASE_URL` ortam değişkenine yanlışlıkla Streamlit uygulama
+  adresi (`...streamlit.app`) değil, Supabase **Project URL**'i
+  (`...supabase.co`) girilmeli — karışınca `.data` beklenmeyen tipte
+  dönüp `TypeError` veriyor.
