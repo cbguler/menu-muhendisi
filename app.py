@@ -13,6 +13,8 @@
 #     COOKIE_SIFRESI = "uzun-rastgele-bir-metin"   # "Beni hatirla" cerezini sifrelemek icin
 
 import streamlit as st
+
+from sidebar_logo import sidebar_logo_goster
 from streamlit_cookies_manager import EncryptedCookieManager
 
 from db import get_supabase
@@ -20,14 +22,7 @@ from db import get_supabase
 st.set_page_config(
     page_title="Menü Mühendisliği", page_icon="assets/favicon.png", layout="wide"
 )
-_sol, _orta, _sag = st.sidebar.columns([1, 5, 1])
-_orta.image("assets/logo.png", width=220)
-st.sidebar.markdown(
-    "<div style='text-align:center; font-weight:700; color:#2C6B3C; font-size:1.4rem; "
-    "font-family: Arial, Helvetica, sans-serif; margin-top:-6px;'>"
-    "Menü Mühendisi</div>",
-    unsafe_allow_html=True,
-)
+sidebar_logo_goster(animasyonlu=True)
 
 supabase = get_supabase()
 
