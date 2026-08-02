@@ -11,7 +11,7 @@ from sidebar_logo import sidebar_logo_goster
 from db import get_supabase, oturumu_uygula
 
 st.set_page_config(page_title="Reçeteler", page_icon="assets/favicon.png", layout="wide")
-sidebar_logo_goster(animasyonlu=True)
+sidebar_logo_goster(animasyonlu=False)
 
 supabase = get_supabase()
 oturumu_uygula(supabase)

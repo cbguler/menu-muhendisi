@@ -14,7 +14,7 @@ from uretim_hesap import kritik_yolu_hesapla
 st.set_page_config(
     page_title="Üretim Aşamaları", page_icon="assets/favicon.png", layout="wide"
 )
-sidebar_logo_goster(animasyonlu=True)
+sidebar_logo_goster(animasyonlu=False)
 
 supabase = get_supabase()
 oturumu_uygula(supabase)

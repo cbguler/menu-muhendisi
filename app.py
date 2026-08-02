@@ -22,7 +22,7 @@ from db import get_supabase
 st.set_page_config(
     page_title="Menü Mühendisliği", page_icon="assets/favicon.png", layout="wide"
 )
-sidebar_logo_goster(animasyonlu=True)
+sidebar_logo_goster(animasyonlu=False)
 
 supabase = get_supabase()
 
