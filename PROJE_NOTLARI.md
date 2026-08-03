@@ -465,3 +465,9 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   ve widget kesinlikle yasak — TrendSurf Optima'daki aynı kural buraya da
   uygulandı. Claude'un hafızasına da (memory_user_edits) aynı kural ayrı
   bir proje-özel not olarak eklendi.
+- **"Rastgelelik tohumu" kaldırıldı, mevsim→ay→4 hafta akışına geçildi:**
+  Kullanıcı manuel tohum girmenin faydasız olduğunu belirtti. Artık:
+  mevsim seçilince o mevsimin 3 ayı (`MEVSIM_AYLARI`) açılıyor, ay
+  seçilince o ayın 4 haftası art arda (deterministik tohum =
+  `ay_index*10+hafta_no`, kullanıcıya görünmüyor) üretilip alt alta
+  gösteriliyor. Kart içinde alerjen bilgisi maliyetin üstüne alındı.

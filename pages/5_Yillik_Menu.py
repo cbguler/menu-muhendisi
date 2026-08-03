@@ -14,6 +14,17 @@ from sidebar_logo import sidebar_logo_goster
 from db import get_supabase, oturumu_uygula
 from uretim_algoritmasi import MEVSIMLER, hafta_olustur
 
+MEVSIM_AYLARI = {
+    "kis": ["Aralık", "Ocak", "Şubat"],
+    "ilkbahar": ["Mart", "Nisan", "Mayıs"],
+    "yaz": ["Haziran", "Temmuz", "Ağustos"],
+    "sonbahar": ["Eylül", "Ekim", "Kasım"],
+}
+AYLAR_SIRALI = [
+    "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+    "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
+]
+
 st.set_page_config(page_title="Yıllık Menü", page_icon="assets/favicon.png", layout="wide")
 sidebar_logo_goster(animasyonlu=False)
 
@@ -186,23 +197,21 @@ sol, sag = st.columns([1, 1])
 with sol:
     mevsim_secimi = st.selectbox("Mevsim", MEVSIMLER, format_func=lambda m: m.capitalize())
 with sag:
-    tohum = st.number_input("Rastgelelik tohumu (aynı sayı = aynı sonuç)", value=42, step=1)
+    ay_secimi = st.selectbox("Ay", MEVSIM_AYLARI[mevsim_secimi])
 
-if st.button("Örnek hafta üret", type="primary"):
-    rastgele = random.Random(int(tohum))
-    st.session_state["yillik_menu_hafta"] = hafta_olustur(tarifler, mevsim_secimi, rastgele)
+if st.button("Ay için menü üret", type="primary"):
+    ay_index = AYLAR_SIRALI.index(ay_secimi)
+    haftalar = []
+    for hafta_no in range(1, 5):
+        tohum = ay_index * 10 + hafta_no  # deterministik: ayni ay+hafta = ayni sonuc
+        rastgele = random.Random(tohum)
+        haftalar.append(hafta_olustur(tarifler, mevsim_secimi, rastgele))
+    st.session_state["yillik_menu_aylik"] = {"ay": ay_secimi, "haftalar": haftalar}
 
-hafta = st.session_state.get("yillik_menu_hafta")
-if hafta:
-    detay, fiyat_verisi_var = _tarif_detaylarini_getir(st.session_state.isletme_id)
-    if not fiyat_verisi_var:
-        st.caption(
-            "Bu işletme için henüz malzeme fiyatı girilmemiş — maliyet "
-            "sütunu bu yüzden hesaplanamıyor (\"-\" gösterilecek)."
-        )
+RENKLER = {1: "#D85A30", 2: "#639922", 3: "#1D9E75"}
 
-    RENKLER = {1: "#D85A30", 2: "#639922", 3: "#1D9E75"}
 
+def _hafta_kart_izgarasi_html(hafta, detay, fiyat_verisi_var):
     kartlar = []
     for gun in hafta:
         ogun_html = ""
@@ -235,8 +244,8 @@ if hafta:
               <div style="color:#666;">{round(t['kalori'])} kcal</div>
               <div style="color:#666;">P {round(t['protein'])}g · Y {round(t['yag'])}g · K {round(t['karbonhidrat'])}g</div>
               <div style="color:#666;">Gİ {gi_metin}</div>
-              <div style="color:#666; margin-top:3px;">Maliyet: {maliyet_metin}</div>
               <div style="color:#666; margin-top:3px;">Alerjen: {alerjen_metin}</div>
+              <div style="color:#666; margin-top:3px;">Maliyet: {maliyet_metin}</div>
             </div>
             """
         # Tek satira sikistir: coklu-satirli/girintili HTML parcalari yan
@@ -245,14 +254,32 @@ if hafta:
         # kartlari duz metin olarak kacis'lamasina) yol aciyordu.
         kartlar.append(" ".join(kart_html.split()))
 
+    return (
+        f"<div style='display:grid; grid-template-columns:repeat({len(hafta)}, 1fr); "
+        "gap:8px;'>" + "".join(kartlar) + "</div>"
+    )
 
+
+aylik = st.session_state.get("yillik_menu_aylik")
+if aylik:
+    detay, fiyat_verisi_var = _tarif_detaylarini_getir(st.session_state.isletme_id)
+    if not fiyat_verisi_var:
+        st.caption(
+            "Bu işletme için henüz malzeme fiyatı girilmemiş — maliyet "
+            "sütunu bu yüzden hesaplanamıyor (\"-\" gösterilecek)."
+        )
 
     st.markdown(
         "<div style='font-size:13px; color:gray; margin:0.5rem 0 1rem;'>"
         "<span style='color:#D85A30;'>●</span> I. Grup&nbsp;&nbsp;&nbsp;"
         "<span style='color:#639922;'>●</span> II. Grup&nbsp;&nbsp;&nbsp;"
-        "<span style='color:#1D9E75;'>●</span> III. Grup</div>"
-        f"<div style='display:grid; grid-template-columns:repeat({len(hafta)}, 1fr); "
-        "gap:8px;'>" + "".join(kartlar) + "</div>",
+        "<span style='color:#1D9E75;'>●</span> III. Grup</div>",
         unsafe_allow_html=True,
     )
+
+    for i, hafta in enumerate(aylik["haftalar"], start=1):
+        st.markdown(f"**{aylik['ay']} — {i}. Hafta**")
+        st.markdown(
+            _hafta_kart_izgarasi_html(hafta, detay, fiyat_verisi_var),
+            unsafe_allow_html=True,
+        )
