@@ -484,3 +484,23 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   izin ver. UYUMSUZLUK kuralı (madde 11) hiçbir kademede gevşetilmiyor.
   16 haftalık (4 mevsim × 4 hafta) regresyon testinde doğrulandı: 0
   hafta-içi tekrar, 0 uyumsuzluk ihlali.
+- **"Eksik fiyat var" artık hangi malzeme olduğunu söylüyor:** Önceden
+  sadece genel bir uyarıydı, kullanıcı hangi malzemenin fiyatı eksik
+  bilmiyordu. `malzemeler(ad, ...)` embed'ine `ad` eklendi, fiyatı
+  olmayan her malzeme adı toplanıp maliyet metnine ekleniyor
+  (ör. "≈3.67 € (eksik fiyat: Karides, Makarna)").
+
+### 3 Ağustos 2026 — VI. Oturum (devam 2): Beni Hatırla Hatası + Sidebar Sırası
+- **"Beni hatırla" hatası bulundu ve düzeltildi (gerçek bug, TrendSurf'te
+  belgelenmemiş bir konu — oradan kopyalanmadı, doğrudan koddan
+  teşhis edildi):** Supabase refresh token'ları tek kullanımlık
+  (rotation) — her başarılı yenilemede yeni bir refresh_token dönüyor,
+  eskisi geçersiz oluyor. Kod, oturumu yenilerken çerezi
+  GÜNCELLEMİYORDU — sonuç: "beni hatırla" tam olarak bir kere işe
+  yarayıp (2. ziyarette yenileme başarılı ama çerez eski token'da
+  kalıyor), 3. ziyarette (artık geçersiz eski token'la yenileme
+  denenince) başarısız oluyordu. `app.py`'de düzeltildi: her başarılı
+  `refresh_session` sonrası çerez yeni `refresh_token` ile güncelleniyor.
+- **Sidebar sırası:** Kullanıcı "Yıllık Menü"nün en üstte olmasını istedi.
+  `pages/5_Yillik_Menu.py` → `pages/0_Yillik_Menu.py` olarak yeniden
+  adlandırıldı (Streamlit sayfa sırası dosya adı başındaki sayıya göre).

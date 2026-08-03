@@ -67,6 +67,13 @@ if st.session_state.oturum is None:
         try:
             yenilenen = supabase.auth.refresh_session(saklanan_refresh)
             st.session_state.oturum = yenilenen.session
+            # ONEMLI: Supabase refresh token'lari TEK KULLANIMLIK (rotation) --
+            # her basarili yenilemede yeni bir refresh_token doner, eskisi
+            # gecersiz olur. Cerezi burada guncellemezsek "beni hatirla"
+            # tam olarak BIR KERE calisir, bir sonraki ziyarette eski
+            # (artik gecersiz) token cerezde kalir ve yenileme basarisiz olur.
+            cookies["refresh_token"] = yenilenen.session.refresh_token
+            cookies.save()
         except Exception:
             # refresh token geçersiz/süresi dolmuş -- sessizce temizleyip
             # normal giriş ekranına düş

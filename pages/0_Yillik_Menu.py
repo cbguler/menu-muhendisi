@@ -90,7 +90,7 @@ def _tarif_detaylarini_getir(isletme_id):
         supabase.table("recete_malzemeleri")
         .select(
             "recete_id, malzeme_id, miktar_gram, "
-            "malzemeler(kalori, protein, yag, karbonhidrat, glisemik_indeks)"
+            "malzemeler(ad, kalori, protein, yag, karbonhidrat, glisemik_indeks)"
         )
         .execute()
     ).data
@@ -123,7 +123,7 @@ def _tarif_detaylarini_getir(isletme_id):
         girdi = ham.setdefault(
             ad, {"kalori": 0.0, "protein": 0.0, "yag": 0.0, "karbonhidrat": 0.0,
                  "gi_agirlikli": 0.0, "gi_karb_toplam": 0.0, "maliyet_eur": 0.0,
-                 "tam_fiyatli": True, "alerjenler": set()}
+                 "tam_fiyatli": True, "eksik_malzemeler": set(), "alerjenler": set()}
         )
         girdi["kalori"] += (m.get("kalori") or 0) * oran
         girdi["protein"] += (m.get("protein") or 0) * oran
@@ -139,6 +139,9 @@ def _tarif_detaylarini_getir(isletme_id):
         fiyat = fiyat_by_malzeme.get(malzeme_id)
         if fiyat is None:
             girdi["tam_fiyatli"] = False
+            malzeme_adi = m.get("ad")
+            if malzeme_adi:
+                girdi["eksik_malzemeler"].add(malzeme_adi)
         else:
             girdi["maliyet_eur"] += (kalem["miktar_gram"] / 1000.0) * fiyat
         girdi["alerjenler"] |= alerjen_by_malzeme.get(malzeme_id, set())
@@ -150,7 +153,7 @@ def _tarif_detaylarini_getir(isletme_id):
             "kalori": v["kalori"], "protein": v["protein"],
             "yag": v["yag"], "karbonhidrat": v["karbonhidrat"], "gi": gi,
             "maliyet_eur": v["maliyet_eur"], "tam_fiyatli": v["tam_fiyatli"],
-            "alerjenler": v["alerjenler"],
+            "eksik_malzemeler": v["eksik_malzemeler"], "alerjenler": v["alerjenler"],
         }
     return sonuc, fiyat_verisi_var
 
@@ -160,6 +163,7 @@ def _gun_toplami(gun, detay):
     gi_agirlikli = 0.0
     gi_karb_toplam = 0.0
     tam_fiyatli = True
+    eksik_malzemeler = set()
     alerjenler = set()
     for tarif_adlari in gun["ogunler"].values():
         for ad in tarif_adlari:
@@ -172,12 +176,14 @@ def _gun_toplami(gun, detay):
             toplam["karbonhidrat"] += b["karbonhidrat"]
             toplam["maliyet_eur"] += b["maliyet_eur"]
             tam_fiyatli = tam_fiyatli and b["tam_fiyatli"]
+            eksik_malzemeler |= b["eksik_malzemeler"]
             alerjenler |= b["alerjenler"]
             if b["gi"] is not None and b["karbonhidrat"] > 0:
                 gi_agirlikli += b["gi"] * b["karbonhidrat"]
                 gi_karb_toplam += b["karbonhidrat"]
     toplam["gi"] = round(gi_agirlikli / gi_karb_toplam) if gi_karb_toplam > 0 else None
     toplam["tam_fiyatli"] = tam_fiyatli
+    toplam["eksik_malzemeler"] = eksik_malzemeler
     toplam["alerjenler"] = alerjenler
     return toplam
 
@@ -231,7 +237,8 @@ def _hafta_kart_izgarasi_html(hafta, detay, fiyat_verisi_var):
         elif t["tam_fiyatli"]:
             maliyet_metin = f"{t['maliyet_eur']:.2f} €"
         else:
-            maliyet_metin = f"≈{t['maliyet_eur']:.2f} € (eksik fiyat var)"
+            eksik_liste = ", ".join(sorted(t["eksik_malzemeler"]))
+            maliyet_metin = f"≈{t['maliyet_eur']:.2f} € (eksik fiyat: {eksik_liste})"
 
         alerjen_metin = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
 
