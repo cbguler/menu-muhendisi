@@ -17,7 +17,7 @@ import streamlit as st
 from sidebar_logo import sidebar_logo_goster
 from streamlit_cookies_manager import EncryptedCookieManager
 
-from db import get_supabase
+from db import get_supabase, supabase_ile_dene
 
 st.set_page_config(
     page_title="Menü Mühendisliği", page_icon="assets/favicon.png", layout="wide"
@@ -123,22 +123,26 @@ if st.session_state.oturum is None:
 supabase.auth.set_session(
     st.session_state.oturum.access_token, st.session_state.oturum.refresh_token
 )
-kullanici = supabase.auth.get_user()
+kullanici = supabase_ile_dene(lambda: supabase.auth.get_user())
 
-kullanici_kaydi = (
-    supabase.table("kullanicilar")
-    .select("isletme_id, rol")
-    .eq("id", kullanici.user.id)
-    .single()
-    .execute()
+kullanici_kaydi = supabase_ile_dene(
+    lambda: (
+        supabase.table("kullanicilar")
+        .select("isletme_id, rol")
+        .eq("id", kullanici.user.id)
+        .single()
+        .execute()
+    )
 )
 isletme_id = kullanici_kaydi.data["isletme_id"]
 
-abonelik_sonuc = (
-    supabase.table("isletme_aktif_abonelik")
-    .select("*")
-    .eq("isletme_id", isletme_id)
-    .execute()
+abonelik_sonuc = supabase_ile_dene(
+    lambda: (
+        supabase.table("isletme_aktif_abonelik")
+        .select("*")
+        .eq("isletme_id", isletme_id)
+        .execute()
+    )
 )
 abonelik_verisi = abonelik_sonuc.data[0] if abonelik_sonuc.data else None
 

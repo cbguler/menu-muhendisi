@@ -7,6 +7,8 @@
 #   supabase = get_supabase()
 #   oturumu_uygula(supabase)
 
+import time
+
 import streamlit as st
 from supabase import create_client, Client
 
@@ -14,6 +16,23 @@ from supabase import create_client, Client
 @st.cache_resource
 def get_supabase() -> Client:
     return create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_ANON_KEY"])
+
+
+def supabase_ile_dene(fonksiyon, deneme_sayisi=3, bekleme_saniye=1.0):
+    """Gecici ag hatalarina (ozellikle uygulama uykudan yeni uyanirken
+    gorulen httpx.ReadError/ConnectError) karsi kisa bir bekleyle tekrar
+    dener. `fonksiyon` parametresiz bir lambda/callable olmali, ornek:
+        sonuc = supabase_ile_dene(lambda: supabase.table("x").select("*").execute())
+    """
+    son_hata = None
+    for deneme in range(deneme_sayisi):
+        try:
+            return fonksiyon()
+        except Exception as e:
+            son_hata = e
+            if deneme < deneme_sayisi - 1:
+                time.sleep(bekleme_saniye * (deneme + 1))
+    raise son_hata
 
 
 def oturumu_uygula(supabase: Client):
