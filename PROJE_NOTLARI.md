@@ -471,3 +471,16 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   seçilince o ayın 4 haftası art arda (deterministik tohum =
   `ay_index*10+hafta_no`, kullanıcıya görünmüyor) üretilip alt alta
   gösteriliyor. Kart içinde alerjen bilgisi maliyetin üstüne alındı.
+- **Kullanıcının bulduğu gerçek hata (madde 2 ihlali) — düzeltildi:**
+  Aynı haftada "Mercimek Çorbası" ve "Sezar Usulü Tavuklu Salata" 3 kez
+  tekrar etmiş. Kök neden: mevsime göre filtrelenmiş III. Grup havuzu
+  bazı mevsimlerde çok küçük (ör. "yaz" için sadece 12 tarif); hafta
+  ilerleyip bu küçük havuz tükenince (ya da kalanlar uyumsuzluk kuralına
+  takılınca), algoritma **mevsim kısıtını gevşetmeden doğrudan tekrara
+  izin verme**ye düşüyordu — oysa kütüphanenin geneli (mevsim dışı dahil)
+  hâlâ kullanılmamış uygun tarif içeriyordu. `ogun_olustur`'a eksik olan
+  ara kademe eklendi: (1) mevsime uygun + tekrarsız → (2) **mevsim
+  kısıtı gevşetilmiş + hâlâ tekrarsız** [YENİ] → (3) son çare tekrara
+  izin ver. UYUMSUZLUK kuralı (madde 11) hiçbir kademede gevşetilmiyor.
+  16 haftalık (4 mevsim × 4 hafta) regresyon testinde doğrulandı: 0
+  hafta-içi tekrar, 0 uyumsuzluk ihlali.
