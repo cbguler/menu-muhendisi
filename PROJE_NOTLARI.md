@@ -563,3 +563,85 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   `diger_adlar` içindeki tüm eşanlamlıları da otomatik indeksliyor —
   ileride bir tarif "HIYAR" yazsa da doğru malzemeye bağlanacak. Kanonik
   ad hâlâ `malzemeler.ad` (SALATALIK); bu sadece esneklik katmanı.
+
+### 3 Ağustos 2026 — VII. Oturum: Kütüphane 74 -> 250 Tarif
+- Kullanıcı Türk mutfağının gerçek ölçeğini (15-20 bin+ yemek, 81 il/7
+  bölge) hatırlattıktan sonra kütüphaneyi genişletme kararı alındı:
+  **250'ye çıkar, hem mevcut kategorilerin çeşidini artır hem bölgesel
+  yemek ekle (dengeli)**.
+- **`tarif_verisi_ek1.py`** (yeni dosya, 176 tarif): I. Grup +70 (30->100,
+  kırmızı et/tavuk/balık/etli sebze/kuru baklagil/yumurta çeşitlendirildi
+  + Güneydoğu kebapları, Karadeniz balık/kavurma, Doğu Anadolu, İç
+  Anadolu mantı/pastırma), II. Grup +56 (24->80, çorba/pilav/zeytinyağlı/
+  makarna/börek), III. Grup +50 (20->70, salata/meze/cacık/turşu/
+  komposto/tatlı — baklava, künefe, mantı, kısır, muhammara, çiğ köfte
+  (vejetaryen) gibi ikonik bölgesel isimler dahil).
+- **Bölgesel sınıflandırma:** `ozel_etiketler`e kural motorunu
+  ETKİLEMEYEN yeni sınıflandırma etiketleri eklendi: `ege`, `karadeniz`,
+  `guneydogu`, `akdeniz`, `ic_anadolu`, `marmara`, `dogu_anadolu` (aynı
+  `kirmizi_et`/`vejetaryen` gibi bilgi amaçlı, madde 11/13'ü etkilemiyor).
+- **Doğrulama:** 250 tarif, 0 tekrar eden isim (EK1 içinde ve orijinal
+  74 ile karşılaştırmalı), 0 katalogda bulunamayan malzeme (154 farklı
+  malzeme kullanıldı, ilk denemede 2 tanesi Türkçe İ/I yazım farkından
+  ötürü — ÇILEK REÇELİ, INSTANT MAYA — kataloğun kendi yazımına göre
+  düzeltildi).
+- **`yukle_tarifler.py` idempotent hale getirildi:** Artık `TARIFLER` +
+  `TARIFLER_EK1`'i birleştirip, Supabase'de **zaten var olan** tarif
+  adlarını atlıyor — script'i her yeni parti eklendiğinde tekrar tekrar
+  çalıştırmak güvenli (74'ü yeniden yüklemeye çalışıp unique constraint
+  hatası vermiyor).
+- **YUFKA kataloğu yok, adaptasyon notu:** Baklava/künefe gibi tarifler
+  gerçek yufka/tel kadayıf yerine mevcut `BUĞDAY UNU`/`KADAYIF` ile
+  yaklaşık olarak modellendi (aynı önceki börek tariflerindeki yaklaşım).
+  Adana/Urfa kebap gibi geleneksel kuzu kıymalı tarifler, katalogda
+  "kuzu kıyma" olmadığı için `DANA KIYMA` ile uyarlandı.
+- **Sıradaki adım:** `yukle_tarifler.py`'yi tekrar çalıştırıp 176 yeni
+  tarifi Supabase'e yüklemek (74'ü otomatik atlayacak).
+
+### 3 Ağustos 2026 — VII. Oturum: Kütüphane Genişletme Yol Haritası + I. Parti (Karadeniz)
+- **Karar (kullanıcıyla):** 74 tariflik kütüphane ~500'e çıkarılacak,
+  hem bölgesel (Türkiye'nin 7 coğrafi bölgesi) hem kategorik çeşitlilik
+  dengeli şekilde ele alınacak. Tek seferde değil, **bölge bölge partiler**
+  hâlinde ilerlenecek (~60 tarif/bölge × 7 ≈ 420 + mevcut 74 ≈ 494).
+- **I. Parti: Karadeniz Bölgesi — 20 tarif teslim edildi**
+  (`karadeniz_tarifleri.py`, `KARADENIZ_TARIFLERI` listesi — I. Grup 8,
+  II. Grup 6, III. Grup 6). Örnek tarifler: Akçaabat Köfte, Karalahana
+  Sarması, Hamsili Pilav, Kuymak, Karalahana Çorbası, Laz Böreği,
+  Fındıklı Kurabiye. Tüm malzemeler kataloğa karşı doğrulandı (0 eksik),
+  74'lük kütüphaneyle isim çakışması yok.
+- **Eksik malzemeler bulundu ve eklendi** (`17_karadeniz_malzemeleri_ekle.sql`):
+  KARALAHANE (normal lahanadan farklı, Karadeniz'e özgü) ve FINDIK
+  (Sert Kabuklu Yemiş alerjeni bağlandı). Fındık fiyatı TMO 2025-2026
+  kabuklu fındık alım fiyatı (Giresun kalite, %50 randıman, 200 TL/kg
+  kabuklu) referans alınarak iç fındık eşdeğeri ~5,56 €/kg olarak
+  hesaplandı.
+- **Yeni araç: `yukle_yeni_tarifler.py`** — `yukle_tarifler.py`'den
+  farklı olarak mevcut tarifleri isme göre ATLAR, bu yüzden güvenle
+  tekrar tekrar farklı partilerle (Ege, Güneydoğu, İç Anadolu, Akdeniz,
+  Marmara, Doğu Anadolu partileri dahil) çalıştırılabilir. Her yeni
+  parti için sadece dosyanın başındaki import satırı değiştirilecek.
+- **Sıradaki bölge partileri (öncelik sırası belirlenmedi, kullanıcı
+  yönlendirecek):** Ege, Akdeniz, Güneydoğu Anadolu, İç Anadolu,
+  Marmara, Doğu Anadolu — her biri için önce eksik malzeme taraması,
+  sonra tarif tasarımı, sonra doğrulama (isim çakışması + malzeme
+  eksikliği) aynı yöntemle tekrarlanacak.
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Besin Hedefi Kısıtları
+- **Yeni özellik: öğün bazında besin hedefi.** `uretim_algoritmasi.py`'ye
+  `hedef` parametresi eklendi (kalori/protein/yağ/karbonhidrat/glisemik
+  indeks için ayrı ayrı min-maks aralığı, Öğle ve Akşam için bağımsız).
+  Kademeli esneme sırasına yeni bir aşama eklendi (UYUMSUZLUK/madde 11
+  hâlâ hiçbir aşamada gevşetilmiyor):
+  1) mevsime uygun + tekrarsız + hedef içinde
+  2) mevsim gevşek + tekrarsız + hedef içinde
+  3) tekrar izinli + hedef içinde
+  4) son çare: hedef de gevşetilir
+  **Test sonucu** (74 tarifle, sentetik besin verisiyle): hedef
+  belirtilince 14/14 öğün hedefe uydu; 16 haftalık regresyon testinde
+  hâlâ 0 uyumsuzluk ihlali, hafta-içi tekrar 42'den 54'e çıktı (kütüphane
+  küçük + artık bir kısıt daha var — beklenen, Karadeniz partisi ve
+  sonraki partiler bunu azaltacak).
+- `pages/0_Yillik_Menu.py`: "Öğün başına besin hedefi uygula" onay kutusu
+  + Öğle/Akşam için ayrı genişletilebilir bölümler (5 besin değeri ×
+  min/maks). Kart görünümünde her öğünün altına "Hedefte" / "Hedef dışı"
+  notu ekleniyor (hedef aktifse).

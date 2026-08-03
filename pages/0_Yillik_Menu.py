@@ -198,11 +198,61 @@ if not tarifler:
 
 st.caption(f"Kütüphanede {len(tarifler)} tarif bulundu.")
 
+detay, fiyat_verisi_var = _tarif_detaylarini_getir(st.session_state.isletme_id)
+if not fiyat_verisi_var:
+    st.caption(
+        "Bu işletme için henüz malzeme fiyatı girilmemiş — maliyet "
+        "sütunu bu yüzden hesaplanamıyor (\"-\" gösterilecek)."
+    )
+
+# Uretim algoritmasi besin hedefi kontrolu icin her tarife kalori/protein/
+# yag/karbonhidrat/gi ekliyoruz (detay'dan -- zaten hesaplanmisti).
+tarifler_zengin = []
+for t in tarifler:
+    b = detay.get(t["ad"], {})
+    t2 = dict(t)
+    t2["kalori"] = b.get("kalori")
+    t2["protein"] = b.get("protein")
+    t2["yag"] = b.get("yag")
+    t2["karbonhidrat"] = b.get("karbonhidrat")
+    t2["gi"] = b.get("gi")
+    tarifler_zengin.append(t2)
+
 sol, sag = st.columns([1, 1])
 with sol:
     mevsim_secimi = st.selectbox("Mevsim", MEVSIMLER, format_func=lambda m: m.capitalize())
 with sag:
     ay_secimi = st.selectbox("Ay", MEVSIM_AYLARI[mevsim_secimi])
+
+besin_hedefi_kullan = st.checkbox("Öğün başına besin hedefi uygula (opsiyonel)")
+
+BESIN_SATIRLARI = [
+    ("kalori", "Kalori (kcal)", 0, 3000, 900, 1200),
+    ("protein", "Protein (g)", 0, 150, 20, 60),
+    ("yag", "Yağ (g)", 0, 120, 10, 40),
+    ("karbonhidrat", "Karbonhidrat (g)", 0, 300, 40, 120),
+    ("gi", "Glisemik İndeks", 0, 100, 0, 70),
+]
+
+hedefler = None
+if besin_hedefi_kullan:
+    hedefler = {}
+    for ogun_adi in ("Öğle", "Akşam"):
+        with st.expander(f"{ogun_adi} hedefleri", expanded=False):
+            hedefler[ogun_adi] = {}
+            for anahtar, etiket, minv, maxv, def_alt, def_ust in BESIN_SATIRLARI:
+                c1, c2 = st.columns(2)
+                with c1:
+                    alt = st.number_input(
+                        f"{etiket} — min", min_value=minv, max_value=maxv,
+                        value=def_alt, key=f"{ogun_adi}_{anahtar}_alt",
+                    )
+                with c2:
+                    ust = st.number_input(
+                        f"{etiket} — maks", min_value=minv, max_value=maxv,
+                        value=def_ust, key=f"{ogun_adi}_{anahtar}_ust",
+                    )
+                hedefler[ogun_adi][anahtar] = (alt, ust)
 
 if st.button("Ay için menü üret", type="primary"):
     ay_index = AYLAR_SIRALI.index(ay_secimi)
@@ -210,13 +260,28 @@ if st.button("Ay için menü üret", type="primary"):
     for hafta_no in range(1, 5):
         tohum = ay_index * 10 + hafta_no  # deterministik: ayni ay+hafta = ayni sonuc
         rastgele = random.Random(tohum)
-        haftalar.append(hafta_olustur(tarifler, mevsim_secimi, rastgele))
+        haftalar.append(
+            hafta_olustur(tarifler_zengin, mevsim_secimi, rastgele, hedefler=hedefler)
+        )
     st.session_state["yillik_menu_aylik"] = {"ay": ay_secimi, "haftalar": haftalar}
+    st.session_state["yillik_menu_hedefler"] = hedefler
 
 RENKLER = {1: "#D85A30", 2: "#639922", 3: "#1D9E75"}
 
 
-def _hafta_kart_izgarasi_html(hafta, detay, fiyat_verisi_var):
+def _hedefte_mi(ogun_adi, t, hedefler):
+    if not hedefler or ogun_adi not in hedefler:
+        return None
+    for anahtar, (alt, ust) in hedefler[ogun_adi].items():
+        deger = t.get(anahtar)
+        if deger is None:
+            continue
+        if not (alt <= deger <= ust):
+            return False
+    return True
+
+
+def _hafta_kart_izgarasi_html(hafta, detay, fiyat_verisi_var, hedefler):
     kartlar = []
     for gun in hafta:
         ogun_html = ""
@@ -240,6 +305,13 @@ def _hafta_kart_izgarasi_html(hafta, detay, fiyat_verisi_var):
 
             alerjen_metin = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
 
+            hedef_metin = ""
+            hedefte = _hedefte_mi(ogun_adi, t, hedefler)
+            if hedefte is True:
+                hedef_metin = "<div style='color:#1D9E75;'>Hedefte</div>"
+            elif hedefte is False:
+                hedef_metin = "<div style='color:#D85A30;'>Hedef dışı</div>"
+
             ogun_html += (
                 f"<div style='margin:6px 0;'><b>{ogun_adi}</b>{satirlar}"
                 f"<div style='color:#666; margin-top:3px;'>{round(t['kalori'])} kcal · "
@@ -247,6 +319,7 @@ def _hafta_kart_izgarasi_html(hafta, detay, fiyat_verisi_var):
                 f"K {round(t['karbonhidrat'])}g · Gİ {gi_metin}</div>"
                 f"<div style='color:#666;'>Alerjen: {alerjen_metin}</div>"
                 f"<div style='color:#666;'>Maliyet: {maliyet_metin}</div>"
+                f"{hedef_metin}"
                 f"</div>"
             )
 
@@ -271,12 +344,7 @@ def _hafta_kart_izgarasi_html(hafta, detay, fiyat_verisi_var):
 
 aylik = st.session_state.get("yillik_menu_aylik")
 if aylik:
-    detay, fiyat_verisi_var = _tarif_detaylarini_getir(st.session_state.isletme_id)
-    if not fiyat_verisi_var:
-        st.caption(
-            "Bu işletme için henüz malzeme fiyatı girilmemiş — maliyet "
-            "sütunu bu yüzden hesaplanamıyor (\"-\" gösterilecek)."
-        )
+    kayitli_hedefler = st.session_state.get("yillik_menu_hedefler")
 
     st.markdown(
         "<div style='font-size:13px; color:gray; margin:0.5rem 0 1rem;'>"
@@ -289,6 +357,6 @@ if aylik:
     for i, hafta in enumerate(aylik["haftalar"], start=1):
         st.markdown(f"**{aylik['ay']} — {i}. Hafta**")
         st.markdown(
-            _hafta_kart_izgarasi_html(hafta, detay, fiyat_verisi_var),
+            _hafta_kart_izgarasi_html(hafta, detay, fiyat_verisi_var, kayitli_hedefler),
             unsafe_allow_html=True,
         )
