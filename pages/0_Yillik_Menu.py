@@ -5,9 +5,13 @@
 # menu uretir. Henuz eklenmeyenler: kisisel_beslenme_profili filtrelemesi,
 # menu_takvimi/menu_takvimi_ogeleri'ne yazma (sadece ekranda gosteriyor).
 
+import io
 import random
 
 import streamlit as st
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Font, PatternFill
+from openpyxl.utils import get_column_letter
 
 from sidebar_logo import sidebar_logo_goster
 
@@ -342,9 +346,80 @@ def _hafta_kart_izgarasi_html(hafta, detay, fiyat_verisi_var, hedefler):
     )
 
 
+def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
+    """Aylık menüyü (tüm haftalar/günler/öğünler) düz bir veri tablosu
+    olarak Excel'e döker. Bir finansal model degil -- formul gerekmiyor,
+    sadece profesyonel bicimlendirilmis bir veri dokumu."""
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Yıllık Menü"
+
+    basliklar = [
+        "Hafta", "Gün", "Öğün", "Ana Yemek", "Yardımcı Yemek", "Tamamlayıcı",
+        "Kalori (kcal)", "Protein (g)", "Yağ (g)", "Karbonhidrat (g)",
+        "Glisemik İndeks", "Alerjen", "Maliyet (€)", "Hedefte mi",
+    ]
+    yazi_tipi = "Arial"
+    baslik_yazi = Font(name=yazi_tipi, bold=True, color="FFFFFF")
+    baslik_dolgu = PatternFill(start_color="2C6B3C", end_color="2C6B3C", fill_type="solid")
+    for sutun, baslik in enumerate(basliklar, start=1):
+        hucre = ws.cell(row=1, column=sutun, value=baslik)
+        hucre.font = baslik_yazi
+        hucre.fill = baslik_dolgu
+        hucre.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    ws.freeze_panes = "A2"
+
+    satir = 2
+    for hafta_no, hafta in enumerate(aylik["haftalar"], start=1):
+        for gun in hafta:
+            for ogun_adi, tarif_adlari in gun["ogunler"].items():
+                t = _ogun_toplami(tarif_adlari, detay)
+                gi_deger = round(t["gi"]) if t["gi"] is not None else None
+                alerjen_metin = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
+
+                if not fiyat_verisi_var:
+                    maliyet_deger = None
+                elif t["tam_fiyatli"]:
+                    maliyet_deger = round(t["maliyet_eur"], 2)
+                else:
+                    eksik_liste = ", ".join(sorted(t["eksik_malzemeler"]))
+                    maliyet_deger = f"≈{t['maliyet_eur']:.2f} (eksik: {eksik_liste})"
+
+                hedefte = _hedefte_mi(ogun_adi, t, hedefler)
+                hedef_metin = {True: "Evet", False: "Hayır", None: "-"}[hedefte]
+
+                degerler = [
+                    f"{hafta_no}. Hafta", gun["gun"], ogun_adi,
+                    tarif_adlari[0], tarif_adlari[1], tarif_adlari[2],
+                    round(t["kalori"]), round(t["protein"]), round(t["yag"]),
+                    round(t["karbonhidrat"]), gi_deger, alerjen_metin,
+                    maliyet_deger, hedef_metin,
+                ]
+                for sutun, deger in enumerate(degerler, start=1):
+                    hucre = ws.cell(row=satir, column=sutun, value=deger)
+                    hucre.font = Font(name=yazi_tipi)
+                satir += 1
+
+    genislikler = [10, 6, 8, 26, 26, 22, 12, 11, 9, 15, 13, 22, 24, 11]
+    for i, genislik in enumerate(genislikler, start=1):
+        ws.column_dimensions[get_column_letter(i)].width = genislik
+
+    tampon = io.BytesIO()
+    wb.save(tampon)
+    return tampon.getvalue()
+
+
 aylik = st.session_state.get("yillik_menu_aylik")
 if aylik:
     kayitli_hedefler = st.session_state.get("yillik_menu_hedefler")
+
+    excel_verisi = _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, kayitli_hedefler)
+    st.download_button(
+        "Excel'e indir",
+        data=excel_verisi,
+        file_name=f"yillik_menu_{aylik['ay']}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
 
     st.markdown(
         "<div style='font-size:13px; color:gray; margin:0.5rem 0 1rem;'>"

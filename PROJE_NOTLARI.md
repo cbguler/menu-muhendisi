@@ -656,3 +656,15 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   eksikliğindeydi. Düzeltildi (`Kodu indir` adımı eklendi, ilk sıraya
   alındı). Manuel "Run workflow" ile test edildi, başarılı: uygulama
   ziyaret edildi, log "uyku ekranı görülmedi" dedi (zaten uyanıktı).
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Excel'e İndir Butonu
+- **Yeni özellik:** Üretilen aylık menü artık "Excel'e indir" butonuyla
+  tek dosya (.xlsx) olarak indirilebiliyor — tüm haftalar/günler/öğünler
+  tek bir düz veri tablosu (Hafta, Gün, Öğün, Ana/Yardımcı/Tamamlayıcı
+  Yemek, Kalori, Protein, Yağ, Karbonhidrat, Gİ, Alerjen, Maliyet,
+  Hedefte mi). `openpyxl` ile `st.download_button` kullanılarak bellekte
+  (dosyaya yazmadan) üretiliyor. `openpyxl` `requirements.txt`'e eklendi
+  (önceden tanımlı değildi). Profesyonel biçimlendirme: Arial font, koyu
+  yeşil (#2C6B3C) marka renkli kalın başlık satırı, dondurulmuş başlık,
+  sütun genişlikleri. Yerel testte 4 hafta × 7 gün × 2 öğün = 56 satır +
+  başlık doğrulandı.
