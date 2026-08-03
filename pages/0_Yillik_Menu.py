@@ -158,29 +158,28 @@ def _tarif_detaylarini_getir(isletme_id):
     return sonuc, fiyat_verisi_var
 
 
-def _gun_toplami(gun, detay):
+def _ogun_toplami(tarif_adlari, detay):
     toplam = {"kalori": 0.0, "protein": 0.0, "yag": 0.0, "karbonhidrat": 0.0, "maliyet_eur": 0.0}
     gi_agirlikli = 0.0
     gi_karb_toplam = 0.0
     tam_fiyatli = True
     eksik_malzemeler = set()
     alerjenler = set()
-    for tarif_adlari in gun["ogunler"].values():
-        for ad in tarif_adlari:
-            b = detay.get(ad)
-            if not b:
-                continue
-            toplam["kalori"] += b["kalori"]
-            toplam["protein"] += b["protein"]
-            toplam["yag"] += b["yag"]
-            toplam["karbonhidrat"] += b["karbonhidrat"]
-            toplam["maliyet_eur"] += b["maliyet_eur"]
-            tam_fiyatli = tam_fiyatli and b["tam_fiyatli"]
-            eksik_malzemeler |= b["eksik_malzemeler"]
-            alerjenler |= b["alerjenler"]
-            if b["gi"] is not None and b["karbonhidrat"] > 0:
-                gi_agirlikli += b["gi"] * b["karbonhidrat"]
-                gi_karb_toplam += b["karbonhidrat"]
+    for ad in tarif_adlari:
+        b = detay.get(ad)
+        if not b:
+            continue
+        toplam["kalori"] += b["kalori"]
+        toplam["protein"] += b["protein"]
+        toplam["yag"] += b["yag"]
+        toplam["karbonhidrat"] += b["karbonhidrat"]
+        toplam["maliyet_eur"] += b["maliyet_eur"]
+        tam_fiyatli = tam_fiyatli and b["tam_fiyatli"]
+        eksik_malzemeler |= b["eksik_malzemeler"]
+        alerjenler |= b["alerjenler"]
+        if b["gi"] is not None and b["karbonhidrat"] > 0:
+            gi_agirlikli += b["gi"] * b["karbonhidrat"]
+            gi_karb_toplam += b["karbonhidrat"]
     toplam["gi"] = round(gi_agirlikli / gi_karb_toplam) if gi_karb_toplam > 0 else None
     toplam["tam_fiyatli"] = tam_fiyatli
     toplam["eksik_malzemeler"] = eksik_malzemeler
@@ -227,32 +226,35 @@ def _hafta_kart_izgarasi_html(hafta, detay, fiyat_verisi_var):
                 f"<span style='color:{RENKLER[i + 1]};'>●</span> {ad}</div>"
                 for i, ad in enumerate(tarif_adlari)
             )
-            ogun_html += f"<div style='margin:4px 0;'><b>{ogun_adi}</b>{satirlar}</div>"
 
-        t = _gun_toplami(gun, detay)
-        gi_metin = f"{t['gi']}" if t["gi"] is not None else "-"
+            t = _ogun_toplami(tarif_adlari, detay)
+            gi_metin = f"{t['gi']}" if t["gi"] is not None else "-"
 
-        if not fiyat_verisi_var:
-            maliyet_metin = "-"
-        elif t["tam_fiyatli"]:
-            maliyet_metin = f"{t['maliyet_eur']:.2f} €"
-        else:
-            eksik_liste = ", ".join(sorted(t["eksik_malzemeler"]))
-            maliyet_metin = f"≈{t['maliyet_eur']:.2f} € (eksik fiyat: {eksik_liste})"
+            if not fiyat_verisi_var:
+                maliyet_metin = "-"
+            elif t["tam_fiyatli"]:
+                maliyet_metin = f"{t['maliyet_eur']:.2f} €"
+            else:
+                eksik_liste = ", ".join(sorted(t["eksik_malzemeler"]))
+                maliyet_metin = f"≈{t['maliyet_eur']:.2f} € (eksik fiyat: {eksik_liste})"
 
-        alerjen_metin = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
+            alerjen_metin = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
+
+            ogun_html += (
+                f"<div style='margin:6px 0;'><b>{ogun_adi}</b>{satirlar}"
+                f"<div style='color:#666; margin-top:3px;'>{round(t['kalori'])} kcal · "
+                f"P {round(t['protein'])}g · Y {round(t['yag'])}g · "
+                f"K {round(t['karbonhidrat'])}g · Gİ {gi_metin}</div>"
+                f"<div style='color:#666;'>Alerjen: {alerjen_metin}</div>"
+                f"<div style='color:#666;'>Maliyet: {maliyet_metin}</div>"
+                f"</div>"
+            )
 
         kart_html = f"""
             <div style="border:0.5px solid var(--border, #ddd); border-radius:10px;
                         padding:10px 12px; font-size:11.5px; line-height:1.5;">
               <div style="font-weight:600; margin-bottom:4px; font-size:13px;">Gün {gun['gun']}</div>
               {ogun_html}
-              <hr style="margin:6px 0; border:none; border-top:0.5px solid #e2e2e2;">
-              <div style="color:#666;">{round(t['kalori'])} kcal</div>
-              <div style="color:#666;">P {round(t['protein'])}g · Y {round(t['yag'])}g · K {round(t['karbonhidrat'])}g</div>
-              <div style="color:#666;">Gİ {gi_metin}</div>
-              <div style="color:#666; margin-top:3px;">Alerjen: {alerjen_metin}</div>
-              <div style="color:#666; margin-top:3px;">Maliyet: {maliyet_metin}</div>
             </div>
             """
         # Tek satira sikistir: coklu-satirli/girintili HTML parcalari yan
