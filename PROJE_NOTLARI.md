@@ -668,3 +668,28 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   yeşil (#2C6B3C) marka renkli kalın başlık satırı, dondurulmuş başlık,
   sütun genişlikleri. Yerel testte 4 hafta × 7 gün × 2 öğün = 56 satır +
   başlık doğrulandı.
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Ege Bölgesi (II. Parti)
+- **74 (başlangıç) + 20 (Karadeniz) = 94 doğrulandı** — kullanıcı Yıllık
+  Menü sayfasında hâlâ "74" görüyordu, sebebi `_tarif_kutuphanesini_getir()`
+  üzerindeki `@st.cache_data(ttl=3600)` (1 saatlik önbellek) idi — reboot
+  sonrası 94 olarak doğru göründü. Bug değil, beklenen önbellek davranışı.
+- **II. Parti: Ege Bölgesi — 26 tarif teslim edildi** (`ege_tarifleri.py`,
+  `EGE_TARIFLERI` — I. Grup 10, II. Grup 8, III. Grup 8). Örnekler:
+  Zeytinyağlı Bakla, Ahtapot Izgara, İzmir Köfte, Etli Enginar Dolması,
+  Zeytinyağlı Radika, Bademli Kurabiye. Toplam kütüphane artık 94+26=120
+  hedefleniyor.
+- **Eksik malzemeler eklendi** (`18_ege_malzemeleri_ekle.sql`): BAKLA,
+  PAZI, RADİKA (yabani ot), BADEM (Sert Kabuklu Yemiş alerjeni bağlandı).
+  Badem fiyatı için perakende marka fiyatları (~600-900 TL/kg) yerine
+  toptan/işletme alımına daha yakın bir referans (~450-500 TL/kg → 9€/kg)
+  kullanıldı.
+- **`yukle_yeni_tarifler.py`'nin import satırı Ege partisine güncellendi**
+  (artık `ege_tarifleri.py`'den okuyor) — bir sonraki bölge için tekrar
+  değiştirilecek. **Kendi kontrolümde bir hata yakaladım ve düzelttim:**
+  ilk str_replace denemem import satırını yanlışlıkla bir sonraki satırla
+  birleştirip syntax hatası yaratmıştı — `py_compile` ile fark edilip
+  teslim öncesi düzeltildi.
+- **Kalan 5 bölge partisi:** Akdeniz, Güneydoğu Anadolu, İç Anadolu,
+  Marmara, Doğu Anadolu — sıradaki adım kullanıcının yönlendirmesiyle
+  belirlenecek.
