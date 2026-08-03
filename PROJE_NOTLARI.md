@@ -106,6 +106,8 @@ olarak diğer mutfaklara uygulanmaz.
 | `yukle_tarifler.py` | Tarif kütüphanesi ETL scripti (global `receteler` + `recete_malzemeleri`) |
 | `uretim_algoritmasi.py` | Yıllık menü üretim motoru — anayasa madde 8/11/13 kural motoru (veri kaynağından bağımsız) |
 | `pages/5_Yillik_Menu.py` | Yıllık menü motoru UI (ilk sürüm) — Supabase'ten global tarifleri okuyup örnek haftalık menü üretir |
+| `wake_app.py` | Streamlit uyku sorunu için Playwright tabanlı uyandırma scripti (TrendSurf Optima'dan uyarlandı) |
+| `.github/workflows/uygulamayi_uyandir.yml` | `wake_app.py`'yi 3 saatte bir çalıştıran GitHub Actions workflow'u |
 | `assets/favicon.png`, `logo.png`, `logo_icon.png`, `favicon.ico`, `apple-touch-icon.png` | Logo/favicon varlıkları (kaynak: kullanıcının `logo.png`'si, siyah arka plan şeffaflaştırıldı) |
 
 ## Oturum Geçmişi
@@ -418,3 +420,29 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   **Henüz eklenmedi:** kişisel beslenme profili filtrelemesi
   (`kisisel_beslenme_profilleri`), `menu_takvimi`/
   `menu_takvimi_ogeleri`'ne kaydetme — bunlar sıradaki adım.
+
+### 2 Ağustos 2026 — VI. Oturum (devam): Uyku Sorunu + Soğuk Başlangıç Hatası
+- **Streamlit uyku sorunu:** Community Cloud, trafiksiz uygulamaları
+  **12 saat** sonra uykuya yatırıyor (resmi dokümantasyon). Kullanıcı
+  TrendSurf Optima'nın PROJE_NOTLARI.md'sini paylaştı — orada bu sorun
+  için iki aşamalı bir geçmiş vardı: (1) v2.0.5.2'de basit bir curl
+  keep-alive denenmiş, (2) Temmuz 2026'da bunun ARTIK İŞE YARAMADIĞI
+  anlaşılmış çünkü Streamlit artık gerçek bir tarayıcı (JS +
+  `/_stcore/stream` WebSocket bağlantısı) olmadan hiç uyanmıyor; curl
+  sadece statik HTML kabuğu alıyor. Çözüm: Playwright ile gerçek headless
+  Chromium açıp "Yes, get this app back up!" butonunu arayıp tıklayan
+  `wake_app.py` + GitHub Actions. **Aynı yaklaşım burada da uygulandı:**
+  `wake_app.py` + `.github/workflows/uygulamayi_uyandir.yml` (3 saatte
+  bir — TrendSurf'ün "aşırı sık çalıştırma üst üste binme riski
+  yaratıyor" tecrübesiyle aynı frekans). **TrendSurf'teki gibi aynı
+  sınırlama geçerli: bu resmi/garantili bir çözüm değil, topluluk
+  workaround'u; sandbox'ın internet erişimi olmadığı için canlı
+  `menu-muhendisi.streamlit.app`'e karşı uçtan uca test EDİLEMEDİ.**
+  Bahri'nin push sonrası birkaç gün gözlemlemesi gerekiyor.
+- **Ayrı bulunan hata (uyku ile ilgisiz değil ama farklı sorun):**
+  Uygulama uykudan uyanırken `app.py`'de `httpx.ReadError` ile çöktü
+  (`isletme_aktif_abonelik` sorgusunda) — soğuk başlangıçta geçici bir
+  ağ kesintisi. `db.py`'ye `supabase_ile_dene()` (kısa beklemeli, 3
+  denemeli yeniden-deneme yardımcısı) eklendi, `app.py`'deki 3 kritik
+  başlangıç sorgusu (`auth.get_user`, `kullanicilar`,
+  `isletme_aktif_abonelik`) bununla sarmalandı.

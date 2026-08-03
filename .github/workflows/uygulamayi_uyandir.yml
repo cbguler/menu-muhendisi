@@ -1,0 +1,28 @@
+name: Uygulamayi Uyandir
+
+on:
+  schedule:
+    # TrendSurf Optima'daki risk azaltma deneyimine gore (asiri sik
+    # calistirma GitHub Actions'ta ust uste binme riski yaratmisti):
+    # her 3 saatte bir -- uyku esigi (12 saat) icin fazlasiyla yeterli.
+    - cron: "0 */3 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  uyandir:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Python kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Playwright kur
+        run: |
+          pip install playwright
+          playwright install --with-deps chromium
+
+      - name: Uygulamayi ziyaret et
+        env:
+          STREAMLIT_APP_URL: https://menu-muhendisi.streamlit.app
+        run: python wake_app.py
