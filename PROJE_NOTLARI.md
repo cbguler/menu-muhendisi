@@ -104,6 +104,8 @@ olarak diğer mutfaklara uygulanmaz.
 | `sql/12_tarif_kutuphanesi_global_receteler.sql` | `receteler` global tarif desteği + eksik SALATALIK kalemi |
 | `tarif_verisi.py` | 74 tariflik Türk mutfağı başlangıç kütüphanesi (veri) |
 | `yukle_tarifler.py` | Tarif kütüphanesi ETL scripti (global `receteler` + `recete_malzemeleri`) |
+| `uretim_algoritmasi.py` | Yıllık menü üretim motoru — anayasa madde 8/11/13 kural motoru (veri kaynağından bağımsız) |
+| `pages/5_Yillik_Menu.py` | Yıllık menü motoru UI (ilk sürüm) — Supabase'ten global tarifleri okuyup örnek haftalık menü üretir |
 | `assets/favicon.png`, `logo.png`, `logo_icon.png`, `favicon.ico`, `apple-touch-icon.png` | Logo/favicon varlıkları (kaynak: kullanıcının `logo.png`'si, siyah arka plan şeffaflaştırıldı) |
 
 ## Oturum Geçmişi
@@ -187,13 +189,14 @@ modeli genişlemesi gerektiriyor (yemek grubu I/II/III, uyumsuzluk/
 tamamlayıcı etiketleri, kişisel beslenme profili, menü takvimi tablosu).
 
 ## Sıradaki Adımlar (Kuyruk)
-1. **[TAMAMLANDI — bkz. IV. Oturum]** ~~Yıllık menü üretim motoru: şema
-   genişletmesi + tarif kütüphanesi veri girişi~~ → 74 tariflik set
-   hazırlandı, `12_tarif_kutuphanesi_global_receteler.sql` +
-   `yukle_tarifler.py` teslim edildi. **Sıradaki alt-adım:** SQL'i
-   Supabase'de çalıştır, `yukle_tarifler.py`'yi çalıştır, sonra menü
-   **üretim algoritmasının** (haftalık/yıllık takvim doldurma mantığı)
-   tasarımına geç.
+1. **[TAMAMLANDI — bkz. VI. Oturum]** ~~Üretim algoritması ilk sürümü~~ →
+   `uretim_algoritmasi.py` + `pages/5_Yillik_Menu.py` teslim edildi,
+   gerçek Supabase verisiyle çalışıyor. **Sıradaki alt-adım:** kişisel
+   beslenme profili filtrelemesi (`kisisel_beslenme_profilleri` tablosu
+   — alerjen/kısıtlama), üretilen menüyü `menu_takvimi`/
+   `menu_takvimi_ogeleri`'ne kaydetme, ve `4_Uretim_Asamalari.py` ile
+   isim karışıklığını önlemek için sayfa başlıklarının netliğini gözden
+   geçirmek.
 2. Streamlit uygulamasını Community Cloud'a deploy et — deploy tamamlandı
    (menu-muhendisi.streamlit.app canlı); **açık soru:** sol menüde
    "Uretim Asamalari" sayfası görünüyor mu, görünmüyorsa önce
@@ -381,3 +384,37 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   `st.columns([1, 1.3, 1])` ile ortalanmış dar bir sütuna alındı. Plan/
   deneme bitiş bilgisi iki ayrı renkli kutudan (`st.success`/`st.info`)
   tek satırlık gri `st.caption`'a sadeleştirildi.
+
+### 2 Ağustos 2026 — VI. Oturum: Üretim Algoritması İlk Sürümü + Animasyon Denemesi
+- **Animasyonlu logo denemesi:** Kullanıcı TrendSurf'teki animasyonlu
+  logo videosunu (`animated_logo.mp4`, beyaz zeminli) sidebar'da denemek
+  istedi. `sidebar_logo.py`'ye `animasyonlu` parametresi eklendi (True =
+  `mix-blend-mode:multiply` ile base64 gömülü `<video autoplay muted
+  loop playsinline>`, False = statik `logo.png`) — kolay geri dönüş için
+  bilerek bu şekilde tasarlandı. Kullanıcı beğenmedi, `animasyonlu=False`
+  yapılıp `assets/logo_animated.mp4` repodan silindi. `sidebar_logo.py`
+  altyapısı (iki seçenek) kalıcı olarak duruyor — ileride başka bir
+  animasyonla tekrar denenebilir.
+- **Üretim algoritması ilk sürümü** (`uretim_algoritmasi.py`): anayasa
+  madde 8 (her öğün I+II+III grup), madde 11 (uyumsuzluk kuralları —
+  **hiçbir koşulda gevşetilmez**), madde 13 (tamamlayıcı eşleştirme,
+  tercih), mevsimsellik (önce aynı mevsim + yıl_boyunca) kurallarını
+  uygulayan haftalık menü üretici. Veri kaynağından bağımsız tasarlandı
+  (`tarifler` parametresi alır) — hem yerel test (`tarif_verisi.py`) hem
+  gerçek uygulama (Supabase) için aynı modül kullanılabiliyor.
+  **Kendi QA kontrolümde bulunan ve düzeltilen hata:** ilk sürümde
+  haftalık havuz tükenince (74 tarif sınırlı olduğu için hafta sonlarına
+  doğru olabiliyor) devreye giren yedek plan, uyumsuzluk kontrolünü de
+  atlıyordu — düzeltildi, artık SADECE haftalık-tekrar kısıtı gevşetiliyor,
+  madde 11 asla ihlal edilmiyor (74 tariflik örneklemde 0 ihlal
+  doğrulandı; hafta-içi tekrar hâlâ olabiliyor, kütüphane büyüdükçe
+  azalacak — bilinen sınırlama).
+- **`pages/5_Yillik_Menu.py`** (yeni sayfa — `4_Uretim_Asamalari.py` ile
+  KARIŞTIRILMAMALI, o sayfa reçete üretim MALİYETİ/işçilik hesaplıyor,
+  bambaşka bir özellik): global tarif kütüphanesini (`receteler` where
+  `isletme_id is null`, `mutfak_kategorileri.sira` üzerinden grup)
+  Supabase'ten okuyup `uretim_algoritmasi.hafta_olustur`'u çağırıyor,
+  mevsim seçimi + üret butonuyla ekranda gösteriyor.
+  **Henüz eklenmedi:** kişisel beslenme profili filtrelemesi
+  (`kisisel_beslenme_profilleri`), `menu_takvimi`/
+  `menu_takvimi_ogeleri`'ne kaydetme — bunlar sıradaki adım.
