@@ -1,7 +1,7 @@
 # pages/3_Boston_Matrisi.py
 #
 # Ozellik kilitleme ornegi: bu sayfa sadece "boston_matrisi" ozelligi
-# acik olan planlarda (Pro ve Kurumsal) calisir. Kontrol_Paneli.py'de dolan
+# acik olan planlarda (Pro ve Kurumsal) calisir. app.py'de dolan
 # st.session_state uzerinden kontrol eder.
 
 import streamlit as st

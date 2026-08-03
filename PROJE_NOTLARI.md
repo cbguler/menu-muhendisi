@@ -530,3 +530,15 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   Çin/Fransız mutfaklarıyla birlikte dünyanın en zengin 3 mutfağından
   biri sayılıyor). Genişleme yöntemi (kategori bazlı mı, bölge bazlı mı)
   henüz kararlaştırılmadı — kullanıcıdan yön bekleniyor.
+
+### 3 Ağustos 2026 — VI. Oturum (devam 4): app.py İsim Değişikliği Geri Alındı
+- **`Kontrol_Paneli.py` → `app.py` geri alındı.** Streamlit Cloud'un
+  "App settings" panelinde "Main file path" diye düzenlenebilir bir alan
+  YOK (sadece App URL ve Python sürümü var) — yani deploy sonrası ana
+  dosya adı değiştirilemiyor, sadece uygulamayı silip yeniden oluşturarak
+  (secrets'ları tekrar girerek, muhtemelen URL riskiyle) yapılabilir.
+  Bu riske değmeyeceği için sidebar'daki "app" etiketi kozmetik bir
+  sorun olarak kabul edildi, kalıcı olarak `app.py` ismiyle devam
+  ediliyor. İleride gerçekten istenirse st.navigation()/st.Page()
+  API'sine geçiş (daha önce bu oturumda tartışılmıştı) bu sorunu kod
+  içinden çözebilir, dosya adı değiştirmeden.
