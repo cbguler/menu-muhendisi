@@ -280,9 +280,9 @@ if aylik:
 
     st.markdown(
         "<div style='font-size:13px; color:gray; margin:0.5rem 0 1rem;'>"
-        "<span style='color:#D85A30;'>●</span> I. Grup&nbsp;&nbsp;&nbsp;"
-        "<span style='color:#639922;'>●</span> II. Grup&nbsp;&nbsp;&nbsp;"
-        "<span style='color:#1D9E75;'>●</span> III. Grup</div>",
+        "<span style='color:#D85A30;'>●</span> Ana Yemek&nbsp;&nbsp;&nbsp;"
+        "<span style='color:#639922;'>●</span> Yardımcı Yemek&nbsp;&nbsp;&nbsp;"
+        "<span style='color:#1D9E75;'>●</span> Tamamlayıcılar</div>",
         unsafe_allow_html=True,
     )
 
