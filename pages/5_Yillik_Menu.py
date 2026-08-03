@@ -227,8 +227,7 @@ if hafta:
 
         alerjen_metin = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
 
-        kartlar.append(
-            f"""
+        kart_html = f"""
             <div style="border:0.5px solid var(--border, #ddd); border-radius:10px;
                         padding:10px 12px; font-size:12.5px; line-height:1.5;">
               <div style="font-weight:600; margin-bottom:4px; font-size:13.5px;">Gün {gun['gun']}</div>
@@ -243,7 +242,11 @@ if hafta:
               <div style="color:#666; margin-top:3px;">Alerjen: {alerjen_metin}</div>
             </div>
             """
-        )
+        # Tek satira sikistir: coklu-satirli/girintili HTML parcalari yan
+        # yana birlestirilince araya yanlislikla bos satir girip Streamlit'in
+        # markdown ayiricisinin "HTML blogu bitti" sanmasina (ve sonraki
+        # kartlari duz metin olarak kacis'lamasina) yol aciyordu.
+        kartlar.append(" ".join(kart_html.split()))
 
     st.markdown(
         "<div style='font-size:13px; color:gray; margin:0.5rem 0 1rem;'>"
