@@ -30,6 +30,10 @@
 7. Yeni/değişen dosya olduğunda Claude, kullanıcının çalıştırması için tam
    `git add / commit / push` komutlarını HER ZAMAN otomatik verir —
    kullanıcı ayrıca istemek zorunda kalmaz.
+8. **UI'da emoji ve widget kullanımı KESİNLİKLE YASAK** (3 Ağustos 2026,
+   Bahri'nin açık talebiyle — TrendSurf Optima'daki aynı kalıcı kuralın
+   buraya da uygulanması). Buton etiketleri, başlıklar, caption'lar,
+   hiçbir görünür metinde emoji ya da gereksiz widget olmayacak.
 
 ## Teknoloji Yığını
 | Katman | Seçim |
@@ -446,3 +450,18 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   denemeli yeniden-deneme yardımcısı) eklendi, `app.py`'deki 3 kritik
   başlangıç sorgusu (`auth.get_user`, `kullanicilar`,
   `isletme_aktif_abonelik`) bununla sarmalandı.
+
+### 3 Ağustos 2026 — VI. Oturum (devam): Kart Görünümü Düzeltmeleri
+- **HTML render hatası bulundu ve düzeltildi:** Gün kartları çok satırlı/
+  girintili f-string olarak oluşturulup yan yana birleştirilince, araya
+  yanlışlıkla boş satır giriyordu — Streamlit'in markdown ayırıcısı bunu
+  "HTML bloğu bitti" sanıp sonraki kartları kaçışlı düz metin olarak
+  gösteriyordu (sadece ilk kart doğru render oluyordu). Çözüm: her kart
+  HTML'i tek satıra sıkıştırılıyor (`" ".join(html.split())`).
+- **Kullanıcı talebiyle düzen değişti:** 7 gün artık kare şeklini bozarak
+  tek satırda yan yana (`grid-template-columns:repeat(7,1fr)`), her
+  öğündeki yemekler yan yana değil alt alta listeleniyor.
+- **Kalıcı kural eklendi (madde 8, Kalıcı Proje Kuralları):** UI'da emoji
+  ve widget kesinlikle yasak — TrendSurf Optima'daki aynı kural buraya da
+  uygulandı. Claude'un hafızasına da (memory_user_edits) aynı kural ayrı
+  bir proje-özel not olarak eklendi.

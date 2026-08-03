@@ -207,13 +207,12 @@ if hafta:
     for gun in hafta:
         ogun_html = ""
         for ogun_adi, tarif_adlari in gun["ogunler"].items():
-            renkli = "&nbsp;".join(
-                f"<span style='color:{RENKLER[i + 1]};'>●</span> {ad}"
+            satirlar = "".join(
+                f"<div style='margin-left:6px;'>"
+                f"<span style='color:{RENKLER[i + 1]};'>●</span> {ad}</div>"
                 for i, ad in enumerate(tarif_adlari)
             )
-            ogun_html += (
-                f"<div style='margin:2px 0;'><b>{ogun_adi}:</b> {renkli}</div>"
-            )
+            ogun_html += f"<div style='margin:4px 0;'><b>{ogun_adi}</b>{satirlar}</div>"
 
         t = _gun_toplami(gun, detay)
         gi_metin = f"{t['gi']}" if t["gi"] is not None else "-"
@@ -229,15 +228,13 @@ if hafta:
 
         kart_html = f"""
             <div style="border:0.5px solid var(--border, #ddd); border-radius:10px;
-                        padding:10px 12px; font-size:12.5px; line-height:1.5;">
-              <div style="font-weight:600; margin-bottom:4px; font-size:13.5px;">Gün {gun['gun']}</div>
+                        padding:10px 12px; font-size:11.5px; line-height:1.5;">
+              <div style="font-weight:600; margin-bottom:4px; font-size:13px;">Gün {gun['gun']}</div>
               {ogun_html}
               <hr style="margin:6px 0; border:none; border-top:0.5px solid #e2e2e2;">
-              <div style="color:#666;">
-                {round(t['kalori'])} kcal &nbsp;·&nbsp; P {round(t['protein'])}g
-                &nbsp;·&nbsp; Y {round(t['yag'])}g &nbsp;·&nbsp;
-                K {round(t['karbonhidrat'])}g &nbsp;·&nbsp; Gİ {gi_metin}
-              </div>
+              <div style="color:#666;">{round(t['kalori'])} kcal</div>
+              <div style="color:#666;">P {round(t['protein'])}g · Y {round(t['yag'])}g · K {round(t['karbonhidrat'])}g</div>
+              <div style="color:#666;">Gİ {gi_metin}</div>
               <div style="color:#666; margin-top:3px;">Maliyet: {maliyet_metin}</div>
               <div style="color:#666; margin-top:3px;">Alerjen: {alerjen_metin}</div>
             </div>
@@ -248,12 +245,14 @@ if hafta:
         # kartlari duz metin olarak kacis'lamasina) yol aciyordu.
         kartlar.append(" ".join(kart_html.split()))
 
+
+
     st.markdown(
         "<div style='font-size:13px; color:gray; margin:0.5rem 0 1rem;'>"
         "<span style='color:#D85A30;'>●</span> I. Grup&nbsp;&nbsp;&nbsp;"
         "<span style='color:#639922;'>●</span> II. Grup&nbsp;&nbsp;&nbsp;"
         "<span style='color:#1D9E75;'>●</span> III. Grup</div>"
-        "<div style='display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); "
-        "gap:12px;'>" + "".join(kartlar) + "</div>",
+        f"<div style='display:grid; grid-template-columns:repeat({len(hafta)}, 1fr); "
+        "gap:8px;'>" + "".join(kartlar) + "</div>",
         unsafe_allow_html=True,
     )
