@@ -542,3 +542,24 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   ediliyor. İleride gerçekten istenirse st.navigation()/st.Page()
   API'sine geçiş (daha önce bu oturumda tartışılmıştı) bu sorunu kod
   içinden çözebilir, dosya adı değiştirmeden.
+
+### 3 Ağustos 2026 — VI. Oturum (devam 5): SALATALIK Kaynak Dosyaya İşlendi + Eşanlamlı Desteği
+- Kullanıcı SALATALIK'i (HIYAR) `kaynak_duzeltilmis_v2.xlsx`'e de ekledi
+  (satır 47, SEBZELER bloğu). Eksik değerler için tam liste verildi:
+  yoğunluk 0,95; özgül ısı 4,0; bozulma süresi 7 gün; fire %0,1; saklama
+  10°C; kalori 15; protein 0,7; yağ 0,1; karbonhidrat 3,6; Gİ 15; mevsim
+  Yaz; ısı iletkenliği 0,55; yüzey alanı 150cm²; alerjen: yok.
+- **Alım fiyatı web araştırmasıyla düzeltildi:** Hal fiyatı ortalaması
+  ~21,28 TL/kg (26 Temmuz 2026) → 0,39 €/kg (EUR/TRY~54) — migration
+  12'deki geçici 0,30 değerinden daha isabetli.
+  `14_malzeme_diger_adlar_ve_fiyat_duzeltme.sql`: hem
+  `malzemeler.varsayilan_fiyat_eur`'u hem (eğer migration 13 zaten
+  çalıştırılmışsa) mevcut `malzeme_fiyat_gecmisi` satırlarını 0,39'a
+  güncelliyor.
+- **Eşanlamlı malzeme adı desteği eklendi:** Bazı tariflerde SALATALIK
+  yerine HIYAR geçebileceği belirtildi. `malzemeler.diger_adlar` (text[])
+  sütunu eklendi, SALATALIK için `{HIYAR}` set edildi.
+  `yukle_tarifler.py`'deki malzeme adı→id eşleme sözlüğü artık
+  `diger_adlar` içindeki tüm eşanlamlıları da otomatik indeksliyor —
+  ileride bir tarif "HIYAR" yazsa da doğru malzemeye bağlanacak. Kanonik
+  ad hâlâ `malzemeler.ad` (SALATALIK); bu sadece esneklik katmanı.

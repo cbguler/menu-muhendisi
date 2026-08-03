@@ -73,9 +73,16 @@ def main():
 
     print("Malzeme kataloğu (global, isletme_id NULL) okunuyor...")
     malzemeler = (
-        supabase.table("malzemeler").select("id, ad").is_("isletme_id", "null").execute()
+        supabase.table("malzemeler")
+        .select("id, ad, diger_adlar")
+        .is_("isletme_id", "null")
+        .execute()
     ).data
-    malzeme_id_by_ad = {m["ad"]: m["id"] for m in malzemeler}
+    malzeme_id_by_ad = {}
+    for m in malzemeler:
+        malzeme_id_by_ad[m["ad"]] = m["id"]
+        for esanlamli in (m.get("diger_adlar") or []):
+            malzeme_id_by_ad[esanlamli] = m["id"]
 
     # Önce tüm malzeme adlarını doğrula -- eksik varsa hiçbir şey yazmadan dur.
     eksikler = set()
