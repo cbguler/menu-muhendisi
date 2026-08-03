@@ -504,3 +504,29 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
 - **Sidebar sırası:** Kullanıcı "Yıllık Menü"nün en üstte olmasını istedi.
   `pages/5_Yillik_Menu.py` → `pages/0_Yillik_Menu.py` olarak yeniden
   adlandırıldı (Streamlit sayfa sırası dosya adı başındaki sayıya göre).
+
+### 3 Ağustos 2026 — VI. Oturum (devam 3): SALATALIK Fiyatı, "app" Sayfası, Mutfak Ölçeği
+- **SALATALIK'in tüm işletmelerde fiyatı eksikti (bug değil, zamanlama
+  sorunu):** `08_fiyat_gecmisini_geriye_donuk_doldur.sql` (Temmuz 2026)
+  sadece "işletmenin HİÇ fiyatı var mı" kontrolü yapıyordu, malzeme
+  bazında değil. SALATALIK bu backfill'den SONRA (12_...sql'de) eklendiği
+  için, o tarihte zaten var olan hiçbir işletme SALATALIK için varsayılan
+  fiyat almadı. `13_salatalik_fiyat_geriye_donuk_doldur.sql` eklendi —
+  malzeme bazında kontrol ederek SADECE SALATALIK'i, henüz fiyatı
+  olmayan her işletmeye geriye dönük ekliyor (idempotent).
+- **`app.py` → `Kontrol_Paneli.py` olarak yeniden adlandırıldı:**
+  Kullanıcı sidebar'daki "app" etiketinin ne işe yaradığını anlamadı.
+  Araştırınca gerçek bir işlevi olduğu ortaya çıktı — "Çıkış yap" butonu
+  SADECE bu sayfada tanımlı, kaldırılamaz. Ama etiket (dosya adından
+  türetiliyor) anlamsızdı. Streamlit'in klasik `pages/` modelinde ana
+  giriş dosyasının sidebar etiketi sadece dosya adı değiştirilerek
+  düzeltilebiliyor (kodda ayarlanamıyor). **Kullanıcının Streamlit Cloud
+  panelinde de Settings → Main file path'i `Kontrol_Paneli.py` olarak
+  güncellemesi gerekiyor** (kod tarafı tek başına yetmez).
+- **Türk mutfağının gerçek ölçeği (kullanıcıdan bağlam):** 74 tarif
+  sadece başlangıç seti olarak tasarlanmıştı zaten; kullanıcı Türk
+  mutfağının gerçekte 15.000-20.000+ yemek, 81 il/7 bölgeye yayılı
+  bölgesel çeşitlilik içerdiğini belirtti (UNESCO tescilli ürünler,
+  Çin/Fransız mutfaklarıyla birlikte dünyanın en zengin 3 mutfağından
+  biri sayılıyor). Genişleme yöntemi (kategori bazlı mı, bölge bazlı mı)
+  henüz kararlaştırılmadı — kullanıcıdan yön bekleniyor.

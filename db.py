@@ -1,7 +1,7 @@
 # db.py
 #
 # Streamlit sayfaları arasında paylaşılan Supabase istemcisi ve ortak
-# oturum yardımcıları. app.py ve pages/ altındaki her dosya bunu kullanır:
+# oturum yardımcıları. Kontrol_Paneli.py ve pages/ altındaki her dosya bunu kullanır:
 #
 #   from db import get_supabase, oturumu_uygula
 #   supabase = get_supabase()
@@ -37,7 +37,7 @@ def supabase_ile_dene(fonksiyon, deneme_sayisi=3, bekleme_saniye=1.0):
 
 def oturumu_uygula(supabase: Client):
     """Aktif Streamlit oturumundaki Supabase erisim token'ini istemciye uygular.
-    app.py disindaki her sayfanin basinda cagrilmali; oturum yoksa sayfayi durdurur."""
+    Kontrol_Paneli.py disindaki her sayfanin basinda cagrilmali; oturum yoksa sayfayi durdurur."""
     oturum = st.session_state.get("oturum")
     if oturum is None or "isletme_id" not in st.session_state:
         st.warning("Lütfen önce giriş yap.")
