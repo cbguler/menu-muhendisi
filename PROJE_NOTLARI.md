@@ -645,3 +645,14 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   + Öğle/Akşam için ayrı genişletilebilir bölümler (5 besin değeri ×
   min/maks). Kart görünümünde her öğünün altına "Hedefte" / "Hedef dışı"
   notu ekleniyor (hedef aktifse).
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Uyandırma Workflow'u Düzeltildi
+- **Benim hatam, kullanıcının değil:** `.github/workflows/uygulamayi_uyandir.yml`
+  ilk yazıldığında `actions/checkout` adımı unutulmuştu — bu adım olmadan
+  GitHub Actions sanal makinesi repoyu hiç klonlamıyor, bu yüzden
+  `wake_app.py` GitHub'da doğru şekilde dursa bile "No such file or
+  directory" hatası veriyordu. `git status`/`git push` çıktıları dosyanın
+  gerçekten commit'lendiğini doğruluyordu — sorun hep workflow'un kendi
+  eksikliğindeydi. Düzeltildi (`Kodu indir` adımı eklendi, ilk sıraya
+  alındı). Manuel "Run workflow" ile test edildi, başarılı: uygulama
+  ziyaret edildi, log "uyku ekranı görülmedi" dedi (zaten uyanıktı).
