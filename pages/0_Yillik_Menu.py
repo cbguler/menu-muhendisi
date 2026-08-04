@@ -206,18 +206,21 @@ st.caption(f"Kütüphanede {len(tarifler)} tarif bulundu.")
 st.markdown(
     """
     <style>
-    div[data-testid*="Pills"] button {
-        min-width: 150px;
-        justify-content: center;
+    [data-testid*="Pills"] button,
+    [data-testid*="Pills"] [data-testid*="BaseButton"] {
+        min-width: 150px !important;
+        justify-content: center !important;
         border-radius: 999px !important;
-        font-weight: 500;
-        transition: all 0.15s ease;
+        font-weight: 500 !important;
+        transition: all 0.15s ease !important;
     }
-    div[data-testid*="Pills"] button:hover {
+    [data-testid*="Pills"] [data-testid="stBaseButton-secondary"]:hover,
+    [data-testid*="Pills"] button:hover {
         border-color: #2C6B3C !important;
         color: #2C6B3C !important;
     }
-    div[data-testid*="Pills"] button[kind="primary"] {
+    [data-testid*="Pills"] [data-testid="stBaseButton-primary"],
+    [data-testid*="Pills"] button[kind="primary"] {
         background-color: #2C6B3C !important;
         border-color: #2C6B3C !important;
         color: white !important;
