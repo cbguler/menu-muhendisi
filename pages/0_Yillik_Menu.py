@@ -203,11 +203,12 @@ if not tarifler:
 
 st.caption(f"Kütüphanede {len(tarifler)} tarif bulundu.")
 
-bolgeler_mevcut = sorted({t["bolge"] for t in tarifler})
-secili_bolgeler = st.multiselect(
-    "Bölge (mutfak)", bolgeler_mevcut, default=bolgeler_mevcut,
+diger_bolgeler = sorted(b for b in {t["bolge"] for t in tarifler} if b != "Genel")
+bolgeler_mevcut = (["Genel"] if any(t["bolge"] == "Genel" for t in tarifler) else []) + diger_bolgeler
+secili_bolgeler = st.pills(
+    "Bölge (mutfak)", bolgeler_mevcut, selection_mode="multi", default=bolgeler_mevcut,
     help="Sadece belirli bölge(ler)in tariflerini kullanmak için daralt. "
-    "Boş bırakırsan tüm bölgeler kullanılır.",
+    "Hiçbiri seçili değilse tüm bölgeler kullanılır.",
 )
 if secili_bolgeler:
     tarifler = [t for t in tarifler if t["bolge"] in secili_bolgeler]
