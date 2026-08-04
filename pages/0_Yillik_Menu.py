@@ -221,6 +221,7 @@ if not tarifler:
 st.caption(f"Kütüphanede {len(tarifler)} tarif bulundu.")
 
 KISA_BOLGE_ADI = {
+    "Genel": "Klasik",
     "Doğu Anadolu": "Doğu",
     "Güneydoğu Anadolu": "Güneydoğu",
 }

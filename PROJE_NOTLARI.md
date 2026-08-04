@@ -855,3 +855,11 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   değil, sadece bir bölge değeri gibi davranıyor — ayrı bir
   `if secili_bolgeler == {"Genel"}` özel durumuna gerek kalmadı, kod da
   basitleşti. Buton altına açıklayıcı bir not eklendi.
+
+### 3 Ağustos 2026 — VII. Oturum (devam): "Genel" → "Klasik" Görünen Etiket
+- Kullanıcı "Genel" kelimesinin kafa karıştırdığını belirtti (sanki
+  "hepsini birleştiren/kapsayan" anlamına geliyormuş gibi algılanıyordu,
+  oysa 74'lük bağımsız/ayrık bir grup). Sadece GÖRÜNEN etiket "Klasik"
+  olarak değiştirildi (`KISA_BOLGE_ADI` sözlüğüne eklendi) — veritabanındaki
+  gerçek `bolge` değeri hâlâ "Genel" (hiçbir migration/veri değişikliği
+  gerekmedi, "Doğu Anadolu"→"Doğu" ile aynı yöntem).
