@@ -1007,3 +1007,22 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   kontrol edilince gerçekten sade pirinçle yazıldığı doğrulandı.
   `karadeniz_tarifleri.py` güncellendi, canlı veritabanı için
   `29_hamsili_pilav_ic_pilav_duzeltme.sql` ile düzeltildi.
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Pişirme Talimatları Altyapısı Kuruldu
+- **Yeni özellik altyapısı (kullanıcının onayıyla): "Tarif Kütüphanesi"
+  sayfası eklendi** (`pages/5_Tarif_Kutuphanesi.py`). 241 tariflik genel
+  kütüphaneyi bölge/gruba göre filtreleyip tek bir tarif seçmeyi,
+  istenen porsiyon sayısına göre malzeme miktarlarının, besin
+  değerlerinin ve maliyetin ÖLÇEKLENMİŞ hâlini görmeyi sağlıyor.
+  Glisemik indeks bir oran olduğu için porsiyon sayısından bağımsız
+  tutuldu (ölçeklenmiyor).
+- **Şema:** `receteler.hazirlik_talimati` (metin, NULL=henüz girilmedi)
+  eklendi (`30_hazirlik_talimati_ekle.sql`). Malzeme miktarları zaten
+  1 porsiyon baz alınarak tasarlandığı için ayrı bir ölçekleme alanına
+  gerek kalmadı — arayüz miktar_gram × porsiyon_sayısı işlemini
+  doğrudan yapıyor.
+- **st.navigation() listesine eklendi** — yeni sayfa unutulmadan
+  `app.py`'deki sayfa listesine dahil edildi (aksi halde hiç görünmez
+  olurdu, çünkü artık pages/ klasörü otomatik keşfedilmiyor).
+- **Sıradaki adım:** Talimatları kademeli doldurmak — kullanıcı hangi
+  tariflerden/hangi sırayla başlanmasını istediğini belirtecek.
