@@ -58,7 +58,7 @@ def _tarif_kutuphanesini_getir():
 
     receteler = (
         supabase.table("receteler")
-        .select("ad, mutfak_kategori_id, ozel_etiketler, mevsim_etiketi")
+        .select("ad, mutfak_kategori_id, ozel_etiketler, mevsim_etiketi, bolge")
         .is_("isletme_id", "null")
         .execute()
     ).data
@@ -74,6 +74,7 @@ def _tarif_kutuphanesini_getir():
                 "grup": grup,
                 "mevsim_etiketi": r["mevsim_etiketi"] or "yil_boyunca",
                 "etiketler": r["ozel_etiketler"] or [],
+                "bolge": r["bolge"] or "Genel",
             }
         )
     return tarifler
@@ -201,6 +202,21 @@ if not tarifler:
     st.stop()
 
 st.caption(f"Kütüphanede {len(tarifler)} tarif bulundu.")
+
+bolgeler_mevcut = sorted({t["bolge"] for t in tarifler})
+secili_bolgeler = st.multiselect(
+    "Bölge (mutfak)", bolgeler_mevcut, default=bolgeler_mevcut,
+    help="Sadece belirli bölge(ler)in tariflerini kullanmak için daralt. "
+    "Boş bırakırsan tüm bölgeler kullanılır.",
+)
+if secili_bolgeler:
+    tarifler = [t for t in tarifler if t["bolge"] in secili_bolgeler]
+
+if not tarifler:
+    st.warning("Seçtiğin bölge(ler)de hiç tarif bulunamadı.")
+    st.stop()
+
+st.caption(f"Seçili bölge(ler)de {len(tarifler)} tarif kullanılacak.")
 
 detay, fiyat_verisi_var = _tarif_detaylarini_getir(st.session_state.isletme_id)
 if not fiyat_verisi_var:

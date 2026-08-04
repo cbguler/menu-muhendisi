@@ -693,3 +693,23 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
 - **Kalan 5 bölge partisi:** Akdeniz, Güneydoğu Anadolu, İç Anadolu,
   Marmara, Doğu Anadolu — sıradaki adım kullanıcının yönlendirmesiyle
   belirlenecek.
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Bölgesel Mutfak Seçimi
+- **Yeni özellik: Yıllık Menü sayfasına bölge (mutfak) seçim kutusu
+  eklendi.** `receteler` tablosuna `bolge` sütunu eklendi
+  (`19_recete_bolge_ekle.sql`) — mevcut 120 tarif isimlerine göre geriye
+  dönük etiketlendi: 74 tarif "Genel", 20 tarif "Karadeniz", 26 tarif
+  "Ege". Sayfada artık bir çoklu-seçim kutusu var; varsayılan olarak tüm
+  bölgeler seçili (davranış değişmiyor), kullanıcı isterse örn. sadece
+  "Ege" ya da "Karadeniz + Ege" seçip üretim havuzunu daraltabiliyor.
+- **Gelecekteki partiler için otomatikleştirildi:** `karadeniz_tarifleri.py`
+  ve `ege_tarifleri.py`'ye `BOLGE_ADI` sabiti eklendi,
+  `yukle_yeni_tarifler.py` artık bunu okuyup her tarife otomatik
+  yazıyor — bundan sonraki bölge partileri (Akdeniz, Güneydoğu, İç
+  Anadolu, Marmara, Doğu Anadolu) için geriye dönük SQL güncellemesi
+  gerekmeyecek, sadece `BOLGE_ADI` doğru ayarlanacak.
+- **Bilinen sınırlama (küçük ölçek):** Bölge filtresi sadece tarif
+  HAVUZUNU daraltıyor — tek bir öğündeki 3 tarif (ana/yardımcı/tamamlayıcı)
+  farklı bölgelerden gelebilir (ör. Karadeniz ana yemek + Ege salata).
+  "Bir öğünün 3 tarifi de aynı bölgeden olsun" gibi daha katı bir kural
+  istenirse ayrı bir geliştirme olarak ele alınmalı.

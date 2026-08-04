@@ -6,6 +6,8 @@
 # Yeni malzemeler (18_ege_malzemeleri_ekle.sql ile eklendi):
 # BAKLA, PAZI, RADİKA, BADEM.
 
+BOLGE_ADI = "Ege"
+
 EGE_TARIFLERI = [
     # ---- I. Grup (ana yemek) -- 10 ----
     {"ad": "Zeytinyağlı Bakla", "grup": 1, "mevsim_etiketi": "ilkbahar",

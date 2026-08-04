@@ -6,7 +6,7 @@
 # eder), bu yuzden guvenle tekrar tekrar, farkli partilerle calistirilabilir.
 #
 # Kullanim: asagidaki iki satiri yeni partiye gore degistir, sonra calistir.
-#   from karadeniz_tarifleri import KARADENIZ_TARIFLERI as YENI_PARTI
+#   from karadeniz_tarifleri import KARADENIZ_TARIFLERI as YENI_PARTI, BOLGE_ADI
 #
 # Kurulum yukle_tarifler.py ile ayni (SUPABASE_URL + SERVICE_ROLE_KEY).
 
@@ -14,7 +14,7 @@ import os
 
 from supabase import create_client
 
-from ege_tarifleri import EGE_TARIFLERI as YENI_PARTI
+from ege_tarifleri import EGE_TARIFLERI as YENI_PARTI, BOLGE_ADI
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL") or input("SUPABASE_URL: ").strip()
 SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or input(
@@ -99,6 +99,7 @@ def main():
             "mutfak_kategori_id": kategori_id_by_sira[t["grup"]],
             "ozel_etiketler": t["etiketler"],
             "mevsim_etiketi": t["mevsim_etiketi"],
+            "bolge": BOLGE_ADI,
         }
         sonuc = supabase.table("receteler").insert(recete_satiri).execute()
         recete_id = sonuc.data[0]["id"]

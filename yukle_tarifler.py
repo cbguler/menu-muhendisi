@@ -1,19 +1,22 @@
 # yukle_tarifler.py
 #
-# BİR KEREYE MAHSUS ETL scripti: tarif_verisi.py içindeki 74 tariflik
-# Türk mutfağı başlangıç kütüphanesini Supabase'deki `receteler` ve
-# `recete_malzemeleri` tablolarına GLOBAL (isletme_id = NULL) tarif olarak
-# yükler. Yıllık menü üretim motorunun tarif havuzunu oluşturur.
+# ETL scripti: tarif_verisi.py (ilk 74) + tarif_verisi_ek1.py (ek 176)
+# tariflerini birlestirip Supabase'deki `receteler` ve
+# `recete_malzemeleri` tablolarina GLOBAL (isletme_id = NULL) tarif olarak
+# yukler. Yillik menu uretim motorunun tarif havuzunu olusturur.
 #
-# ÖN KOŞUL: 12_tarif_kutuphanesi_global_receteler.sql önceden çalıştırılmış
-# olmalı (receteler.isletme_id NULL desteği + eksik SALATALIK kalemi bu
+# IDEMPOTENT: Ismi zaten `receteler`de (global) var olan tarifler atlanir --
+# bu script birden fazla kez, kutuphane buyudukce tekrar tekrar calistirilabilir.
+#
+# ON KOSUL: 12_tarif_kutuphanesi_global_receteler.sql onceden calistirilmis
+# olmali (receteler.isletme_id NULL destegi + eksik SALATALIK kalemi bu
 # migration'da eklenir).
 #
-# GÜVENLİK: Bu script SERVICE_ROLE anahtarını kullanır (RLS'i bypass eder;
-# global tarif eklemek normal kullanıcı politikasıyla mümkün değildir).
-# Bu anahtarı ASLA app.py/secrets.toml içine koyma, ASLA GitHub'a commitleme.
+# GUVENLIK: Bu script SERVICE_ROLE anahtarini kullanir (RLS'i bypass eder;
+# global tarif eklemek normal kullanici politikasiyla mumkun degildir).
+# Bu anahtari ASLA app.py/secrets.toml icine koyma, ASLA GitHub'a commitleme.
 #
-# Kullanım (cmd):
+# Kullanim (cmd):
 #   set SUPABASE_URL=https://xxxx.supabase.co
 #   set SUPABASE_SERVICE_ROLE_KEY=xxxx
 #   python yukle_tarifler.py
@@ -23,6 +26,9 @@ import os
 from supabase import create_client
 
 from tarif_verisi import TARIFLER
+from tarif_verisi_ek1 import TARIFLER_EK1
+
+TUM_TARIFLER = TARIFLER + TARIFLER_EK1
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL") or input("SUPABASE_URL: ").strip()
 SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or input(
@@ -48,15 +54,15 @@ def kategori_belirle(etiketler):
 
 
 def main():
-    print(f"{len(TARIFLER)} tarif yüklenecek...")
+    print(f"{len(TUM_TARIFLER)} tarif taniniyor (mevcut kutuphane dahil).")
 
-    print("Mutfak kategorileri (Türk mutfağı I/II/III grup) okunuyor...")
+    print("Mutfak kategorileri (Turk mutfagi I/II/III grup) okunuyor...")
     mutfak = (
         supabase.table("mutfaklar").select("id").eq("kod", "turk").single().execute()
     ).data
     if not mutfak:
         raise RuntimeError(
-            "'turk' kodlu mutfak bulunamadı -- önce 11_coklu_mutfak_capraz_kesim.sql çalıştırılmalı."
+            "'turk' kodlu mutfak bulunamadi -- once 11_coklu_mutfak_capraz_kesim.sql calistirilmali."
         )
     mutfak_id = mutfak["id"]
 
@@ -69,9 +75,9 @@ def main():
     kategori_id_by_sira = {k["sira"]: k["id"] for k in kategoriler}
     for grup in (1, 2, 3):
         if grup not in kategori_id_by_sira:
-            raise RuntimeError(f"mutfak_kategorileri içinde sira={grup} bulunamadı.")
+            raise RuntimeError(f"mutfak_kategorileri icinde sira={grup} bulunamadi.")
 
-    print("Malzeme kataloğu (global, isletme_id NULL) okunuyor...")
+    print("Malzeme katalogu (global, isletme_id NULL) okunuyor...")
     malzemeler = (
         supabase.table("malzemeler")
         .select("id, ad, diger_adlar")
@@ -84,19 +90,33 @@ def main():
         for esanlamli in (m.get("diger_adlar") or []):
             malzeme_id_by_ad[esanlamli] = m["id"]
 
-    # Önce tüm malzeme adlarını doğrula -- eksik varsa hiçbir şey yazmadan dur.
+    print("Mevcut global tarifler (zaten yuklenmis olanlar) okunuyor...")
+    mevcut_receteler = (
+        supabase.table("receteler").select("ad").is_("isletme_id", "null").execute()
+    ).data
+    mevcut_adlar = {r["ad"] for r in mevcut_receteler}
+
+    yuklenecekler = [t for t in TUM_TARIFLER if t["ad"] not in mevcut_adlar]
+    atlanan = len(TUM_TARIFLER) - len(yuklenecekler)
+    if atlanan:
+        print(f"{atlanan} tarif zaten yuklu, atlanacak. {len(yuklenecekler)} yeni tarif yuklenecek.")
+    if not yuklenecekler:
+        print("Yuklenecek yeni tarif yok, cikiliyor.")
+        return
+
+    # Once tum malzeme adlarini dogrula -- eksik varsa hicbir sey yazmadan dur.
     eksikler = set()
-    for t in TARIFLER:
+    for t in yuklenecekler:
         for m in t["malzemeler"]:
             if m["ad"] not in malzeme_id_by_ad:
                 eksikler.add(m["ad"])
     if eksikler:
         raise RuntimeError(
-            "Şu malzemeler katalogda bulunamadı, önce eklenmeli: " + ", ".join(sorted(eksikler))
+            "Su malzemeler katalogda bulunamadi, once eklenmeli: " + ", ".join(sorted(eksikler))
         )
 
     eklenen = 0
-    for t in TARIFLER:
+    for t in yuklenecekler:
         kategori = kategori_belirle(t["etiketler"])
         recete_satiri = {
             "isletme_id": None,
@@ -107,6 +127,7 @@ def main():
             "mutfak_kategori_id": kategori_id_by_sira[t["grup"]],
             "ozel_etiketler": t["etiketler"],
             "mevsim_etiketi": t["mevsim_etiketi"],
+            "bolge": "Genel",
         }
         sonuc = supabase.table("receteler").insert(recete_satiri).execute()
         recete_id = sonuc.data[0]["id"]
@@ -123,9 +144,9 @@ def main():
         supabase.table("recete_malzemeleri").insert(malzeme_satirlari).execute()
 
         eklenen += 1
-        print(f"  {eklenen}/{len(TARIFLER)}  {t['ad']}")
+        print(f"  {eklenen}/{len(yuklenecekler)}  {t['ad']}")
 
-    print(f"Tamamlandı: {eklenen} tarif + malzeme ilişkileri yüklendi.")
+    print(f"Tamamlandi: {eklenen} yeni tarif + malzeme iliskileri yuklendi.")
 
 
 if __name__ == "__main__":
