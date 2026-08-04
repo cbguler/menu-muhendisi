@@ -726,3 +726,16 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   güncellendi.
 - **Kalan 4 bölge partisi:** Güneydoğu Anadolu, İç Anadolu, Marmara,
   Doğu Anadolu.
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Güneydoğu Anadolu (IV. Parti)
+- **IV. Parti: Güneydoğu Anadolu — 24 tarif teslim edildi**
+  (`guneydogu_tarifleri.py` — I. Grup 9, II. Grup 7, III. Grup 8).
+  Örnekler: Çiğ Köfte, Alinazik Kebap, İçli Köfte, Antep Usulü Baklava,
+  Antep Fıstıklı Künefe, Sumaklı Cacık. Toplam hedef: 144+24=168.
+- **Eksik malzeme:** sadece İSOT (Urfa biberi) eklendi
+  (`20_guneydogu_malzemeleri_ekle.sql`). NANE yerine katalogda zaten
+  `TAZE NANE`/`KURU NANE` ayrımı vardı, kullanıldı.
+- **Kendi kontrolümde yakalanan hata:** migration'da yanlışlıkla "ISOT"
+  (düz I) yazmışım, tariflerde "İSOT" (noktalı İ) kullanmışım —
+  doğrulama scripti eksik malzeme olarak yakaladı, migration düzeltildi.
+- **Kalan 3 bölge partisi:** İç Anadolu, Marmara, Doğu Anadolu.
