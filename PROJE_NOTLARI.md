@@ -1041,3 +1041,20 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   güncellenecek).
 - **Sıradaki adım:** II. Grup (yardımcı yemek, çorba/pilav/börek) ve
   III. Grup (tamamlayıcı) tarifleri, sonra bölgesel tarifler (166 adet).
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Pişirme Talimatları — Detay Seviyesi Yükseltildi
+- Kullanıcı ilk 30 talimatın çok yüzeysel kaldığını belirtti — malzeme
+  hazırlama teknikleri, ısıl işlem sıcaklık/süre detayları, PARALEL
+  yapılabilecek işlemler ve işçilik zamanlaması bekliyordu (Üretim
+  Aşamaları sayfasının metodolojisiyle uyumlu bir derinlik).
+- **`talimatlar_parti1.py` tamamen yeniden yazıldı (v2).** Yeni format,
+  her tarif için: Hazırlık/Mise en Place → Isıl İşlem aşama(lar)ı (tam
+  sıcaklık °C + süre + teknik detay) → açık "PARALEL YAPILABİLİRLİK"
+  notları (hangi aşamalar eş zamanlı yürütülebilir, kaç dakika
+  kazandırır) → "SÜRE ÖZETİ" (aktif işçilik dk vs pasif bekleme dk ayrı
+  ayrı). Örnek: Karnıyarık'ta patlıcan kızartma ile kıyma harcı
+  hazırlamanın ayrı ocak gözlerinde paralel yapılabileceği, bunun
+  ardışık 18 dk'yı ~10 dk'ya indirdiği açıkça belirtildi.
+- Aynı `talimat_yukle.py`/`.bat` ile tekrar yüklenebilir (UPDATE
+  olduğu için eski kısa metnin üzerine yeni detaylı metin yazılır,
+  idempotent).
