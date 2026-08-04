@@ -203,6 +203,29 @@ if not tarifler:
 
 st.caption(f"Kütüphanede {len(tarifler)} tarif bulundu.")
 
+st.markdown(
+    """
+    <style>
+    div[data-testid*="Pills"] button {
+        min-width: 150px;
+        justify-content: center;
+        border-radius: 999px !important;
+        font-weight: 500;
+        transition: all 0.15s ease;
+    }
+    div[data-testid*="Pills"] button:hover {
+        border-color: #2C6B3C !important;
+        color: #2C6B3C !important;
+    }
+    div[data-testid*="Pills"] button[kind="primary"] {
+        background-color: #2C6B3C !important;
+        border-color: #2C6B3C !important;
+        color: white !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 diger_bolgeler = sorted(b for b in {t["bolge"] for t in tarifler} if b != "Genel")
 bolgeler_mevcut = (["Genel"] if any(t["bolge"] == "Genel" for t in tarifler) else []) + diger_bolgeler
 secili_bolgeler = st.pills(
