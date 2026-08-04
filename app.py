@@ -58,8 +58,14 @@ def _coz(sifreli_metin: str):
         return None
 
 
-@st.cache_resource
 def _cerez_yoneticisi():
+    # ONEMLI: burayi @st.cache_resource ile onbelleklemeye CALISMA --
+    # stx.CookieManager()'in kendisi bir Streamlit bileseni (widget)
+    # render ediyor, ve Streamlit onbelleklenmis bir fonksiyon icinde
+    # widget kullanimini kesinlikle yasakliyor (CachedWidgetWarning,
+    # bu Streamlit surumunde sert bir hataya donusuyor). Onbellek
+    # olmadan her calismada yeniden olusturmak fonksiyonel olarak
+    # sorun degil, kutuphanenin resmi ornekleri de bunu boyle kullaniyor.
     return stx.CookieManager()
 
 

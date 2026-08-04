@@ -935,3 +935,12 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
 - **Not:** Bu, canlıda test edilememiş bir kütüphane değişikliği —
   ilk birkaç günlük gözlem önemli. Sorun çıkarsa geri dönüş noktası bu
   commit'ten önceki sürüm.
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Beni Hatırla Değişikliği Sonrası Çökme Düzeltildi
+- Kütüphane değişikliğinden hemen sonra `CachedWidgetWarning` ile sert
+  bir hata alındı: `stx.CookieManager()`'ı `@st.cache_resource` ile
+  önbelleklemeye çalışmıştım, ama bu sınıfın kendisi bir Streamlit
+  bileşeni (widget) render ediyor — Streamlit, önbelleklenmiş fonksiyon
+  içinde widget kullanımını kesinlikle yasaklıyor. `@st.cache_resource`
+  kaldırıldı, her çalıştırmada yeniden oluşturuluyor (fonksiyonel olarak
+  sorun değil, kütüphanenin resmi örnekleri de böyle kullanıyor).
