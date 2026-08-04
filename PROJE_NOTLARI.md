@@ -889,3 +889,16 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   özeti (kcal/P/Y/K/Gİ tek satırda), Alerjen, Maliyet, (besin hedefi
   aktifse) Hedef Durumu. Renkler ekrandaki legend ile aynı (#D85A30,
   #639922, #1D9E75), başlık dolgusu marka yeşili (#2C6B3C).
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Yeni Malzemelerin Fiyat Eksikliği Toplu Düzeltmesi
+- **Sistematik bir gözden kaçırma bulundu:** SALATALIK için yaptığım
+  "geriye dönük fiyat doldurma" adımını (madde bazında,
+  `malzeme_fiyat_gecmisi`'ne varsayılan fiyatı kopyalama), bölgesel
+  genişletme sırasında eklenen 13 yeni malzeme için (YUFKA, KARALAHANE,
+  FINDIK, BAKLA, PAZI, RADİKA, BADEM, İSOT, BUĞDAY (TAM TANE), TARHANA,
+  BAMYA, KESTANE, EKMEK KADAYIFI, OTLU PEYNİR) unutmuşum — her biri
+  sadece `malzemeler.varsayilan_fiyat_eur` aldı, mevcut işletmelerin
+  kendi fiyat geçmişine hiç kopyalanmadı. `25_yeni_malzemeler_fiyat_geriye_donuk_doldur.sql`
+  ile hepsi tek seferde, malzeme bazında kontrol ederek düzeltildi
+  (idempotent). Tüm 13 isim, ilgili migration dosyalarından programatik
+  olarak doğrulandı (Türkçe karakter hatası riski yaşanmadı bu sefer).
