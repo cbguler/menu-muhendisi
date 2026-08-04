@@ -224,85 +224,108 @@ st.session_state.ozellikler = abonelik_verisi["ozellikler"] or {}
 st.session_state.recete_limiti = abonelik_verisi["recete_limiti"]
 st.session_state.sube_limiti = abonelik_verisi["sube_limiti"]
 
-with st.sidebar:
-    plan_metni = f"Plan: {abonelik_verisi['plan_adi']}"
-    if abonelik_verisi["durum"] == "deneme":
-        plan_metni += f"  ·  Deneme bitiş: {abonelik_verisi['deneme_bitis_tarihi']}"
-    st.caption(plan_metni)
-    if st.button("Çıkış yap"):
-        supabase.auth.sign_out()
-        st.session_state.oturum = None
-        cerezler.delete("refresh_token", key="refresh_token_cikis_sidebar")
-        st.rerun()
+def kontrol_paneli_sayfasi():
+    with st.sidebar:
+        plan_metni = f"Plan: {abonelik_verisi['plan_adi']}"
+        if abonelik_verisi["durum"] == "deneme":
+            plan_metni += f"  ·  Deneme bitiş: {abonelik_verisi['deneme_bitis_tarihi']}"
+        st.caption(plan_metni)
+        if st.button("Çıkış yap"):
+            supabase.auth.sign_out()
+            st.session_state.oturum = None
+            cerezler.delete("refresh_token", key="refresh_token_cikis_sidebar")
+            st.rerun()
 
-st.title("Kontrol paneli")
-st.write(
-    "Bu sayfa uygulamanın giriş ekranı ve ana kontrol noktasıdır — oturum "
-    "açma/kapama ve abonelik durumu burada yönetilir. Aşağıda her bölümün "
-    "ne işe yaradığının ayrıntılı açıklamasını bulabilirsin."
-)
-
-with st.expander("Reçeteler — kendi yemeklerini oluştur ve maliyetlendir"):
+    st.title("Kontrol paneli")
     st.write(
-        "İşletmenin kendi yemek reçetelerini burada oluşturursun (Çorba, Ana "
-        "Yemek, Salata, Tatlı, İçecek, Başlangıç, Pizza, Burger kategorileri). "
-        "Bir reçeteye malzeme ekleyip çıkardıkça, o malzemelerin güncel "
-        "fiyatlarına göre porsiyon maliyeti anlık olarak hesaplanır. Plan "
-        "türüne göre kaç reçete oluşturabileceğin sınırlı olabilir. Bu "
-        "reçeteler, aşağıdaki \"Yıllık Menü\" bölümündeki 240 tariflik genel "
-        "Türk mutfağı kütüphanesinden AYRIDIR — burada kendi işletmene özel "
-        "yemeklerini tutarsın."
+        "Bu sayfa uygulamanın giriş ekranı ve ana kontrol noktasıdır — oturum "
+        "açma/kapama ve abonelik durumu burada yönetilir. Aşağıda her bölümün "
+        "ne işe yaradığının ayrıntılı açıklamasını bulabilirsin."
     )
 
-with st.expander("Menü — reçeteleri satışa sun, kâr marjını gör"):
-    st.write(
-        "Reçeteler bölümünde oluşturduğun bir yemeği buradan menüye "
-        "eklersin ve bir satış fiyatı belirlersin. Sistem, o yemeğin "
-        "maliyetiyle satış fiyatını karşılaştırıp kâr marjını anlık olarak "
-        "gösterir."
-    )
+    with st.expander("Reçeteler — kendi yemeklerini oluştur ve maliyetlendir"):
+        st.write(
+            "İşletmenin kendi yemek reçetelerini burada oluşturursun (Çorba, Ana "
+            "Yemek, Salata, Tatlı, İçecek, Başlangıç, Pizza, Burger kategorileri). "
+            "Bir reçeteye malzeme ekleyip çıkardıkça, o malzemelerin güncel "
+            "fiyatlarına göre porsiyon maliyeti anlık olarak hesaplanır. Plan "
+            "türüne göre kaç reçete oluşturabileceğin sınırlı olabilir. Bu "
+            "reçeteler, aşağıdaki \"Yıllık Menü\" bölümündeki 241 tariflik genel "
+            "Türk mutfağı kütüphanesinden AYRIDIR — burada kendi işletmene özel "
+            "yemeklerini tutarsın."
+        )
 
-with st.expander("Boston Matrisi — hangi ürün ne kadar kazandırıyor"):
-    st.write(
-        "Menündeki ürünleri kârlılık ve popülerliğe göre dört gruba ayırır: "
-        "Yıldız (çok satan + kârlı), Bulmaca (kârlı ama az satan), Atlı "
-        "(çok satan ama düşük kârlı) ve Köpek (az satan + düşük kârlı). Bu "
-        "klasik menü mühendisliği yöntemi, menüde neyi öne çıkarman ya da "
-        "menüden çıkarman gerektiğine karar vermene yardımcı olur. Plana "
-        "göre erişilebilir olabilir."
-    )
+    with st.expander("Menü — reçeteleri satışa sun, kâr marjını gör"):
+        st.write(
+            "Reçeteler bölümünde oluşturduğun bir yemeği buradan menüye "
+            "eklersin ve bir satış fiyatı belirlersin. Sistem, o yemeğin "
+            "maliyetiyle satış fiyatını karşılaştırıp kâr marjını anlık olarak "
+            "gösterir."
+        )
 
-with st.expander("Üretim Aşamaları — gerçek porsiyon maliyeti"):
-    st.write(
-        "Bir yemeğin sadece malzeme maliyetini değil, üretim aşamalarının "
-        "(ısıl işlem/enerji ve işçilik) maliyetini de hesaba katar. Paralel "
-        "yapılabilen işleri dikkate alarak gerçek toplam üretim süresini "
-        "bulur, genel giderleri de porsiyona yansıtarak \"gerçek maliyeti\" "
-        "ortaya çıkarır — sadece malzeme fiyatına bakmaktan çok daha "
-        "gerçekçi bir sonuç verir."
-    )
+    with st.expander("Boston Matrisi — hangi ürün ne kadar kazandırıyor"):
+        st.write(
+            "Menündeki ürünleri kârlılık ve popülerliğe göre dört gruba ayırır: "
+            "Yıldız (çok satan + kârlı), Bulmaca (kârlı ama az satan), Atlı "
+            "(çok satan ama düşük kârlı) ve Köpek (az satan + düşük kârlı). Bu "
+            "klasik menü mühendisliği yöntemi, menüde neyi öne çıkarman ya da "
+            "menüden çıkarman gerektiğine karar vermene yardımcı olur. Plana "
+            "göre erişilebilir olabilir."
+        )
 
-with st.expander("Yıllık Menü — otomatik aylık menü üretimi"):
-    st.write(
-        "240 tariflik genel bir Türk mutfağı kütüphanesinden (7 coğrafi "
-        "bölge + genel/klasik tarifler) anayasa kurallarına uygun aylık "
-        "menü üretir:\n"
-        "- **Mutfak / Bölge seçimi:** İstersen tüm kütüphaneyi, istersen "
-        "sadece belirli bölge(ler)i (Ege, Akdeniz, Karadeniz vb.) "
-        "kullanabilirsin. Bir bölgeye tıklamak sadece o bölgeyi devreye "
-        "sokar; hiçbiri seçili değilken tüm kütüphane kullanılır.\n"
-        "- **Mevsim / Ay seçimi:** Seçtiğin ay için 4 haftalık bir menü "
-        "üretilir, mevsime uygun tarifler önceliklendirilir.\n"
-        "- **Anayasa kuralları:** Her öğün üç gruptan (ana yemek, yardımcı "
-        "yemek, tamamlayıcı) birer tarif içerir; aynı hafta içinde bir "
-        "tarif mümkün olduğunca tekrar etmez; birbiriyle uyuşmayan yemek "
-        "kombinasyonları (ör. zeytinyağlı + etli sebze) hiçbir zaman bir "
-        "arada çıkmaz.\n"
-        "- **Besin hedefi (opsiyonel):** Öğle ve akşam için ayrı ayrı "
-        "kalori/protein/yağ/karbonhidrat/glisemik indeks aralığı "
-        "belirleyebilirsin; algoritma bu aralığa uyan kombinasyonları "
-        "önceliklendirir.\n"
-        "- **Excel'e indir:** Üretilen menüyü, ekrandaki kart görünümüyle "
-        "birebir aynı biçimde (gün sütunları, renkli yemek grupları, "
-        "besin/alerjen/maliyet bilgisi) tek tıkla indirebilirsin."
-    )
+    with st.expander("Üretim Aşamaları — gerçek porsiyon maliyeti"):
+        st.write(
+            "Bir yemeğin sadece malzeme maliyetini değil, üretim aşamalarının "
+            "(ısıl işlem/enerji ve işçilik) maliyetini de hesaba katar. Paralel "
+            "yapılabilen işleri dikkate alarak gerçek toplam üretim süresini "
+            "bulur, genel giderleri de porsiyona yansıtarak \"gerçek maliyeti\" "
+            "ortaya çıkarır — sadece malzeme fiyatına bakmaktan çok daha "
+            "gerçekçi bir sonuç verir."
+        )
+
+    with st.expander("Yıllık Menü — otomatik aylık menü üretimi"):
+        st.write(
+            "241 tariflik genel bir Türk mutfağı kütüphanesinden (7 coğrafi "
+            "bölge + genel/klasik tarifler) anayasa kurallarına uygun aylık "
+            "menü üretir:\n"
+            "- **Mutfak / Bölge seçimi:** İstersen tüm kütüphaneyi, istersen "
+            "sadece belirli bölge(ler)i (Ege, Akdeniz, Karadeniz vb.) "
+            "kullanabilirsin. Bir bölgeye tıklamak sadece o bölgeyi devreye "
+            "sokar; hiçbiri seçili değilken tüm kütüphane kullanılır.\n"
+            "- **Mevsim / Ay seçimi:** Seçtiğin ay için 4 haftalık bir menü "
+            "üretilir, mevsime uygun tarifler önceliklendirilir.\n"
+            "- **Anayasa kuralları:** Her öğün üç gruptan (ana yemek, yardımcı "
+            "yemek, tamamlayıcı) birer tarif içerir; aynı hafta içinde bir "
+            "tarif mümkün olduğunca tekrar etmez; birbiriyle uyuşmayan yemek "
+            "kombinasyonları (ör. zeytinyağlı + etli sebze) hiçbir zaman bir "
+            "arada çıkmaz.\n"
+            "- **Besin hedefi (opsiyonel):** Öğle ve akşam için ayrı ayrı "
+            "kalori/protein/yağ/karbonhidrat/glisemik indeks aralığı "
+            "belirleyebilirsin; algoritma bu aralığa uyan kombinasyonları "
+            "önceliklendirir.\n"
+            "- **Excel'e indir:** Üretilen menüyü, ekrandaki kart görünümüyle "
+            "birebir aynı biçimde (gün sütunları, renkli yemek grupları, "
+            "besin/alerjen/maliyet bilgisi) tek tıkla indirebilirsin."
+        )
+
+
+# ---------------------------------------------------------------------
+# 3) Sayfa gezinmesi -- st.Page ile HER sayfaya istedigimiz ismi
+# veriyoruz, dosya adindan bagimsiz olarak. Bu, Streamlit Cloud'un
+# deploy-sonrasi degistirilemeyen "main file path" kisitini asan tek
+# kod-ici cozum: giris dosyasi hala app.py (Cloud ayari degismiyor),
+# ama artik sidebar'da "app" degil "Kontrol Paneli" gorunuyor.
+# ---------------------------------------------------------------------
+
+kontrol_sayfasi = st.Page(kontrol_paneli_sayfasi, title="Kontrol Paneli", default=True)
+yillik_menu_sayfasi = st.Page("pages/0_Yillik_Menu.py", title="Yıllık Menü")
+receteler_sayfasi = st.Page("pages/1_Receteler.py", title="Reçeteler")
+menu_sayfasi = st.Page("pages/2_Menu.py", title="Menü")
+boston_sayfasi = st.Page("pages/3_Boston_Matrisi.py", title="Boston Matrisi")
+uretim_sayfasi = st.Page("pages/4_Uretim_Asamalari.py", title="Üretim Aşamaları")
+
+pg = st.navigation([
+    kontrol_sayfasi, yillik_menu_sayfasi, receteler_sayfasi,
+    menu_sayfasi, boston_sayfasi, uretim_sayfasi,
+])
+pg.run()
