@@ -12,10 +12,15 @@
 #     SUPABASE_ANON_KEY = "xxxx"
 #     COOKIE_SIFRESI = "uzun-rastgele-bir-metin"   # "Beni hatirla" cerezini sifrelemek icin
 
+import base64
+import hashlib
+from datetime import datetime, timedelta, timezone
+
+import extra_streamlit_components as stx
 import streamlit as st
+from cryptography.fernet import Fernet, InvalidToken
 
 from sidebar_logo import sidebar_logo_goster
-from streamlit_cookies_manager import EncryptedCookieManager
 
 from db import get_supabase, supabase_ile_dene
 
@@ -26,13 +31,46 @@ sidebar_logo_goster(animasyonlu=False)
 
 supabase = get_supabase()
 
-# "Beni hatırla" için tarayıcıda şifreli çerez tutuyoruz -- refresh_token
-# burada saklanır, bir sonraki ziyarette oturumu otomatik tazelemek için
-# kullanılır. cookies.ready() ilk yüklemede bir çerçeve gecikmesi ister;
-# bu normaldir.
-cookies = EncryptedCookieManager(prefix="menumuhendisi_", password=st.secrets["COOKIE_SIFRESI"])
-if not cookies.ready():
-    st.stop()
+BENI_HATIRLA_GUN = 30  # profesyonel sitelerde yaygin standart (Streamlit'in kendi
+                       # native auth ozelligi de varsayilan olarak 30 gun kullaniyor)
+
+
+def _fernet_anahtari() -> bytes:
+    # COOKIE_SIFRESI herhangi bir uzunlukta bir metin olabilir; Fernet tam
+    # olarak 32 bayt url-safe base64 bir anahtar bekliyor -- SHA-256 ile
+    # deterministik olarak turetiyoruz, boylece yeni bir secret eklemeye
+    # gerek kalmiyor, ayni COOKIE_SIFRESI ayni anahtari uretiyor.
+    ozet = hashlib.sha256(st.secrets["COOKIE_SIFRESI"].encode()).digest()
+    return base64.urlsafe_b64encode(ozet)
+
+
+_fernet = Fernet(_fernet_anahtari())
+
+
+def _sifrele(metin: str) -> str:
+    return _fernet.encrypt(metin.encode()).decode()
+
+
+def _coz(sifreli_metin: str):
+    try:
+        return _fernet.decrypt(sifreli_metin.encode()).decode()
+    except InvalidToken:
+        return None
+
+
+@st.cache_resource
+def _cerez_yoneticisi():
+    return stx.CookieManager()
+
+
+# "Beni hatırla" için tarayıcıda (kendi şifrelediğimiz) bir çerez tutuyoruz --
+# refresh_token burada saklanır, bir sonraki ziyarette oturumu otomatik
+# tazelemek için kullanılır. Onceki surumde kullandigimiz kutuphane
+# (streamlit-cookies-manager) cerez suresini ayarlamaya izin vermiyordu --
+# bu yuzden "beni hatirla" gercekte cok kisa surede (muhtemelen 1 gun ya da
+# tarayici kapanana kadar) unutuluyordu. extra-streamlit-components ile
+# artik acikca BENI_HATIRLA_GUN kadar bir sure ayarlayabiliyoruz.
+cerezler = _cerez_yoneticisi()
 
 
 def giris_yap(email: str, sifre: str):
@@ -62,7 +100,8 @@ if "oturum" not in st.session_state:
 
 # --- "Beni hatırla" çerezinden oturumu geri yüklemeyi dene ---
 if st.session_state.oturum is None:
-    saklanan_refresh = cookies.get("refresh_token")
+    saklanan_sifreli = cerezler.get("refresh_token")
+    saklanan_refresh = _coz(saklanan_sifreli) if saklanan_sifreli else None
     if saklanan_refresh:
         try:
             yenilenen = supabase.auth.refresh_session(saklanan_refresh)
@@ -72,13 +111,15 @@ if st.session_state.oturum is None:
             # gecersiz olur. Cerezi burada guncellemezsek "beni hatirla"
             # tam olarak BIR KERE calisir, bir sonraki ziyarette eski
             # (artik gecersiz) token cerezde kalir ve yenileme basarisiz olur.
-            cookies["refresh_token"] = yenilenen.session.refresh_token
-            cookies.save()
+            cerezler.set(
+                "refresh_token", _sifrele(yenilenen.session.refresh_token),
+                expires_at=datetime.now(timezone.utc) + timedelta(days=BENI_HATIRLA_GUN),
+                key="refresh_token_yenile",
+            )
         except Exception:
             # refresh token geçersiz/süresi dolmuş -- sessizce temizleyip
             # normal giriş ekranına düş
-            del cookies["refresh_token"]
-            cookies.save()
+            cerezler.delete("refresh_token", key="refresh_token_sil_gecersiz")
 
 if st.session_state.oturum is None:
     _, giris_sutunu, _ = st.columns([1, 1.3, 1])
@@ -97,8 +138,11 @@ if st.session_state.oturum is None:
                     sonuc = giris_yap(email, sifre)
                     st.session_state.oturum = sonuc.session
                     if beni_hatirla:
-                        cookies["refresh_token"] = sonuc.session.refresh_token
-                        cookies.save()
+                        cerezler.set(
+                            "refresh_token", _sifrele(sonuc.session.refresh_token),
+                            expires_at=datetime.now(timezone.utc) + timedelta(days=BENI_HATIRLA_GUN),
+                            key="refresh_token_yeni_giris",
+                        )
                     st.rerun()
                 except Exception:
                     st.error("Giriş başarısız: e-posta veya şifre hatalı.")
@@ -159,9 +203,7 @@ if abonelik_verisi is None or abonelik_verisi["durum"] in ("suresi_doldu", "ipta
     if st.button("Çıkış yap"):
         supabase.auth.sign_out()
         st.session_state.oturum = None
-        if "refresh_token" in cookies:
-            del cookies["refresh_token"]
-            cookies.save()
+        cerezler.delete("refresh_token", key="refresh_token_cikis_abonelik")
         st.rerun()
     st.stop()
 
@@ -184,13 +226,77 @@ with st.sidebar:
     if st.button("Çıkış yap"):
         supabase.auth.sign_out()
         st.session_state.oturum = None
-        if "refresh_token" in cookies:
-            del cookies["refresh_token"]
-            cookies.save()
+        cerezler.delete("refresh_token", key="refresh_token_cikis_sidebar")
         st.rerun()
 
 st.title("Kontrol paneli")
 st.write(
-    "Sol menüden reçete maliyeti, menü yönetimi ve (plana göre) "
-    "Boston Matrisi satış analizine erişebilirsin."
+    "Bu sayfa uygulamanın giriş ekranı ve ana kontrol noktasıdır — oturum "
+    "açma/kapama ve abonelik durumu burada yönetilir. Aşağıda her bölümün "
+    "ne işe yaradığının ayrıntılı açıklamasını bulabilirsin."
 )
+
+with st.expander("Reçeteler — kendi yemeklerini oluştur ve maliyetlendir"):
+    st.write(
+        "İşletmenin kendi yemek reçetelerini burada oluşturursun (Çorba, Ana "
+        "Yemek, Salata, Tatlı, İçecek, Başlangıç, Pizza, Burger kategorileri). "
+        "Bir reçeteye malzeme ekleyip çıkardıkça, o malzemelerin güncel "
+        "fiyatlarına göre porsiyon maliyeti anlık olarak hesaplanır. Plan "
+        "türüne göre kaç reçete oluşturabileceğin sınırlı olabilir. Bu "
+        "reçeteler, aşağıdaki \"Yıllık Menü\" bölümündeki 240 tariflik genel "
+        "Türk mutfağı kütüphanesinden AYRIDIR — burada kendi işletmene özel "
+        "yemeklerini tutarsın."
+    )
+
+with st.expander("Menü — reçeteleri satışa sun, kâr marjını gör"):
+    st.write(
+        "Reçeteler bölümünde oluşturduğun bir yemeği buradan menüye "
+        "eklersin ve bir satış fiyatı belirlersin. Sistem, o yemeğin "
+        "maliyetiyle satış fiyatını karşılaştırıp kâr marjını anlık olarak "
+        "gösterir."
+    )
+
+with st.expander("Boston Matrisi — hangi ürün ne kadar kazandırıyor"):
+    st.write(
+        "Menündeki ürünleri kârlılık ve popülerliğe göre dört gruba ayırır: "
+        "Yıldız (çok satan + kârlı), Bulmaca (kârlı ama az satan), Atlı "
+        "(çok satan ama düşük kârlı) ve Köpek (az satan + düşük kârlı). Bu "
+        "klasik menü mühendisliği yöntemi, menüde neyi öne çıkarman ya da "
+        "menüden çıkarman gerektiğine karar vermene yardımcı olur. Plana "
+        "göre erişilebilir olabilir."
+    )
+
+with st.expander("Üretim Aşamaları — gerçek porsiyon maliyeti"):
+    st.write(
+        "Bir yemeğin sadece malzeme maliyetini değil, üretim aşamalarının "
+        "(ısıl işlem/enerji ve işçilik) maliyetini de hesaba katar. Paralel "
+        "yapılabilen işleri dikkate alarak gerçek toplam üretim süresini "
+        "bulur, genel giderleri de porsiyona yansıtarak \"gerçek maliyeti\" "
+        "ortaya çıkarır — sadece malzeme fiyatına bakmaktan çok daha "
+        "gerçekçi bir sonuç verir."
+    )
+
+with st.expander("Yıllık Menü — otomatik aylık menü üretimi"):
+    st.write(
+        "240 tariflik genel bir Türk mutfağı kütüphanesinden (7 coğrafi "
+        "bölge + genel/klasik tarifler) anayasa kurallarına uygun aylık "
+        "menü üretir:\n"
+        "- **Mutfak / Bölge seçimi:** İstersen tüm kütüphaneyi, istersen "
+        "sadece belirli bölge(ler)i (Ege, Akdeniz, Karadeniz vb.) "
+        "kullanabilirsin. Bir bölgeye tıklamak sadece o bölgeyi devreye "
+        "sokar; hiçbiri seçili değilken tüm kütüphane kullanılır.\n"
+        "- **Mevsim / Ay seçimi:** Seçtiğin ay için 4 haftalık bir menü "
+        "üretilir, mevsime uygun tarifler önceliklendirilir.\n"
+        "- **Anayasa kuralları:** Her öğün üç gruptan (ana yemek, yardımcı "
+        "yemek, tamamlayıcı) birer tarif içerir; aynı hafta içinde bir "
+        "tarif mümkün olduğunca tekrar etmez; birbiriyle uyuşmayan yemek "
+        "kombinasyonları (ör. zeytinyağlı + etli sebze) hiçbir zaman bir "
+        "arada çıkmaz.\n"
+        "- **Besin hedefi (opsiyonel):** Öğle ve akşam için ayrı ayrı "
+        "kalori/protein/yağ/karbonhidrat/glisemik indeks aralığı "
+        "belirleyebilirsin; algoritma bu aralığa uyan kombinasyonları "
+        "önceliklendirir.\n"
+        "- **Excel'e indir:** Üretilen menüyü, ekrandaki kart görünümüyle "
+        "birebir aynı biçimde (gün sütunları, renkli yemek grupları, "
+        "besin/alerjen/maliyet bilgisi) tek tıkla indirebilirsin."
+    )

@@ -910,3 +910,28 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   ID'sine bağlı olduğu için hiçbir bağlantı bozulmadı). Yerel dosyalarda
   da (`karadeniz_tarifleri.py`, `17_karadeniz_malzemeleri_ekle.sql`,
   `25_yeni_malzemeler_fiyat_geriye_donuk_doldur.sql`) düzeltildi.
+
+### 3 Ağustos 2026 — VII. Oturum (devam): "Beni Hatırla" Kökten Düzeltildi (Kütüphane Değişikliği)
+- **Gerçek kök neden bulundu:** Streamlit'in resmi çerez sistemi
+  (`st.context.cookies`) sadece OKUMA yapabiliyor, yazma imkanı yok
+  (Streamlit'in kendi GitHub'ında hâlâ açık bir istek). Önceden
+  kullandığımız `streamlit-cookies-manager` kütüphanesi çerez SÜRESİNİ
+  hiç ayarlamaya izin vermiyordu (dokümantasyonunda `expires_at`/`max_age`
+  parametresi yok) — benzer topluluk kütüphanelerinin çoğu (streamlitextras,
+  extra-streamlit-components) açıkça ayarlanmazsa varsayılan olarak
+  SADECE 1 GÜN süreli çerez oluşturduğunu belgeliyor. Bu güçlü örüntü,
+  "beni hatırla"nın neden kısa sürede unuttuğunu açıklıyor.
+- **Çözüm: `extra-streamlit-components` kütüphanesine geçildi**
+  (`expires_at` parametresini açıkça destekliyor). Artık
+  `BENI_HATIRLA_GUN = 30` ile net bir süre ayarlanıyor (Streamlit'in
+  kendi yeni native auth özelliğinin de varsayılan olarak kullandığı
+  süreyle aynı). Bu kütüphane şifreleme yapmadığı için (eski
+  `EncryptedCookieManager`'ın aksine), `cryptography.fernet` ile KENDI
+  şifrelememizi ekledik — anahtar mevcut `COOKIE_SIFRESI` secret'ından
+  SHA-256 ile türetiliyor (yeni bir secret gerekmedi). Round-trip
+  şifreleme/çözme yerel olarak test edildi ve doğrulandı.
+- `requirements.txt`: `streamlit-cookies-manager` kaldırıldı,
+  `extra-streamlit-components` + `cryptography` eklendi.
+- **Not:** Bu, canlıda test edilememiş bir kütüphane değişikliği —
+  ilk birkaç günlük gözlem önemli. Sorun çıkarsa geri dönüş noktası bu
+  commit'ten önceki sürüm.
