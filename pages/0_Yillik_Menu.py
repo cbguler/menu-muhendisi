@@ -420,60 +420,89 @@ def _hafta_kart_izgarasi_html(hafta, detay, fiyat_verisi_var, hedefler):
 
 
 def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
-    """Aylık menüyü (tüm haftalar/günler/öğünler) düz bir veri tablosu
-    olarak Excel'e döker. Bir finansal model degil -- formul gerekmiyor,
-    sadece profesyonel bicimlendirilmis bir veri dokumu."""
+    """Aylık menüyü ekrandaki kart görünümüyle AYNI düzende Excel'e döker:
+    her gün bir sütun, altında Öğle/Akşam blokları (yemekler + besin +
+    alerjen + maliyet) aynı sırayla. Bir finansal model degil -- formul
+    gerekmiyor, sadece ekrandakiyle bire bir eslesen bir gorunum."""
     wb = Workbook()
     ws = wb.active
     ws.title = "Yıllık Menü"
 
-    basliklar = [
-        "Hafta", "Gün", "Öğün", "Ana Yemek", "Yardımcı Yemek", "Tamamlayıcı",
-        "Kalori (kcal)", "Protein (g)", "Yağ (g)", "Karbonhidrat (g)",
-        "Glisemik İndeks", "Alerjen", "Maliyet (€)", "Hedefte mi",
-    ]
     yazi_tipi = "Arial"
     baslik_yazi = Font(name=yazi_tipi, bold=True, color="FFFFFF")
     baslik_dolgu = PatternFill(start_color="2C6B3C", end_color="2C6B3C", fill_type="solid")
-    for sutun, baslik in enumerate(basliklar, start=1):
-        hucre = ws.cell(row=1, column=sutun, value=baslik)
-        hucre.font = baslik_yazi
-        hucre.fill = baslik_dolgu
-        hucre.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
-    ws.freeze_panes = "A2"
+    hafta_baslik_yazi = Font(name=yazi_tipi, bold=True, size=13)
+    alan_yazi = Font(name=yazi_tipi, bold=True)
+    normal_yazi = Font(name=yazi_tipi)
+    RENK_ANA, RENK_YARDIMCI, RENK_TAMAMLAYICI = "D85A30", "639922", "1D9E75"
 
-    satir = 2
-    for hafta_no, hafta in enumerate(aylik["haftalar"], start=1):
-        for gun in hafta:
-            for ogun_adi, tarif_adlari in gun["ogunler"].items():
-                t = _ogun_toplami(tarif_adlari, detay)
-                gi_deger = round(t["gi"]) if t["gi"] is not None else None
-                alerjen_metin = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
+    ALAN_SATIRLARI = [
+        ("Ana Yemek", RENK_ANA), ("Yardımcı Yemek", RENK_YARDIMCI), ("Tamamlayıcı", RENK_TAMAMLAYICI),
+        ("Besin (kcal/P/Y/K/Gİ)", None), ("Alerjen", None), ("Maliyet", None),
+    ]
 
+    def oyun_bloguna_yaz(satir, ogun_adi, tarif_adlari, t, gun_kolonu):
+        ws.cell(row=satir, column=1, value=ogun_adi).font = alan_yazi
+        satir += 1
+        alan_satirlari = list(ALAN_SATIRLARI)
+        if hedefler:
+            alan_satirlari.append(("Hedef Durumu", None))
+        for i, (etiket, renk) in enumerate(alan_satirlari):
+            hucre_etiket = ws.cell(row=satir, column=1, value=etiket)
+            hucre_etiket.font = Font(name=yazi_tipi, color=renk) if renk else normal_yazi
+            if i < 3:
+                deger = tarif_adlari[i]
+            elif etiket.startswith("Besin"):
+                gi_deger = f"{round(t['gi'])}" if t["gi"] is not None else "-"
+                deger = (
+                    f"{round(t['kalori'])} kcal · P{round(t['protein'])}g · "
+                    f"Y{round(t['yag'])}g · K{round(t['karbonhidrat'])}g · Gİ{gi_deger}"
+                )
+            elif etiket == "Alerjen":
+                deger = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
+            elif etiket == "Hedef Durumu":
+                hedefte = _hedefte_mi(ogun_adi, t, hedefler)
+                deger = {True: "Hedefte", False: "Hedef dışı", None: "-"}[hedefte]
+            else:  # Maliyet
                 if not fiyat_verisi_var:
-                    maliyet_deger = None
+                    deger = "-"
                 elif t["tam_fiyatli"]:
-                    maliyet_deger = round(t["maliyet_eur"], 2)
+                    deger = f"{t['maliyet_eur']:.2f} €"
                 else:
                     eksik_liste = ", ".join(sorted(t["eksik_malzemeler"]))
-                    maliyet_deger = f"≈{t['maliyet_eur']:.2f} (eksik: {eksik_liste})"
+                    deger = f"≈{t['maliyet_eur']:.2f} € (eksik: {eksik_liste})"
+            hucre = ws.cell(row=satir, column=gun_kolonu, value=deger)
+            hucre.font = normal_yazi
+            hucre.alignment = Alignment(wrap_text=True, vertical="top")
+            satir += 1
+        return satir
 
-                hedefte = _hedefte_mi(ogun_adi, t, hedefler)
-                hedef_metin = {True: "Evet", False: "Hayır", None: "-"}[hedefte]
+    satir = 1
+    for hafta_no, hafta in enumerate(aylik["haftalar"], start=1):
+        gun_sayisi = len(hafta)
 
-                degerler = [
-                    f"{hafta_no}. Hafta", gun["gun"], ogun_adi,
-                    tarif_adlari[0], tarif_adlari[1], tarif_adlari[2],
-                    round(t["kalori"]), round(t["protein"]), round(t["yag"]),
-                    round(t["karbonhidrat"]), gi_deger, alerjen_metin,
-                    maliyet_deger, hedef_metin,
-                ]
-                for sutun, deger in enumerate(degerler, start=1):
-                    hucre = ws.cell(row=satir, column=sutun, value=deger)
-                    hucre.font = Font(name=yazi_tipi)
-                satir += 1
+        ws.cell(row=satir, column=1, value=f"{aylik['ay']} — {hafta_no}. Hafta").font = hafta_baslik_yazi
+        satir += 1
 
-    genislikler = [10, 6, 8, 26, 26, 22, 12, 11, 9, 15, 13, 22, 24, 11]
+        baslik_satiri = satir
+        ws.cell(row=baslik_satiri, column=1, value="")
+        for g in range(gun_sayisi):
+            hucre = ws.cell(row=baslik_satiri, column=g + 2, value=f"Gün {g + 1}")
+            hucre.font = baslik_yazi
+            hucre.fill = baslik_dolgu
+            hucre.alignment = Alignment(horizontal="center")
+        satir += 1
+
+        blok_baslangic = satir
+        for g, gun in enumerate(hafta):
+            gun_kolonu = g + 2
+            s = blok_baslangic
+            for ogun_adi, tarif_adlari in gun["ogunler"].items():
+                t = _ogun_toplami(tarif_adlari, detay)
+                s = oyun_bloguna_yaz(s, ogun_adi, tarif_adlari, t, gun_kolonu)
+        satir = s + 1  # bir sonraki hafta bloğundan önce bos satir
+
+    genislikler = [24] + [24] * 7
     for i, genislik in enumerate(genislikler, start=1):
         ws.column_dimensions[get_column_letter(i)].width = genislik
 

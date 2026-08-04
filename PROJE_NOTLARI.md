@@ -878,3 +878,14 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
 - **Önlem eklendi:** dar bölge seçiliyken (< 60 tarif) VE besin hedefi
   aktifken, üret butonunun üstünde uyarı metni çıkıyor ("hedef aralığını
   genişlet veya daha fazla bölge seç" tavsiyesi).
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Excel Formatı Ekrandaki Kartlarla Eşleştirildi
+- Kullanıcı önceki Excel formatını (düz "1 satır = 1 öğün" veri tablosu)
+  beğenmedi, ekrandaki kart görünümüyle birebir aynı olmasını istedi.
+  `_aylik_menu_excel_olustur` tamamen yeniden yazıldı: artık her GÜN bir
+  SÜTUN (Gün 1..7), her hafta kendi bloğu (başlık + gün başlıkları +
+  Öğle bloğu + Akşam bloğu). Her öğün bloğunda ekrandaki sırayla: Ana
+  Yemek (kırmızı), Yardımcı Yemek (yeşil), Tamamlayıcı (teal), Besin
+  özeti (kcal/P/Y/K/Gİ tek satırda), Alerjen, Maliyet, (besin hedefi
+  aktifse) Hedef Durumu. Renkler ekrandaki legend ile aynı (#D85A30,
+  #639922, #1D9E75), başlık dolgusu marka yeşili (#2C6B3C).
