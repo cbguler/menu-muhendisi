@@ -840,3 +840,18 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   `BOLGE_SIRASI` listesiyle sabit sıra uygulandı; ileride bu listede
   olmayan yeni bir bölge eklenirse otomatik olarak sona (alfabetik)
   eklenir, koddan bir şey unutulmaz.
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Bölge Seçim Modeli Kökten Basitleştirildi
+- **Kullanıcının bulduğu gerçek karışıklık:** "sadece Marmara seçiliyken
+  216 tarif" gibi ters sonuçlar bildirdi. Kök neden: butonlar varsayılan
+  olarak HEPSİ SEÇİLİ başlıyordu, bir butona tıklamak o bölgeyi
+  AÇMIYOR, KAPATIYORDU (diğer 7'si açık kalıyordu) — yani "sadece X'e
+  tıkladım" aslında "X hariç hepsi" anlamına geliyordu (240-X). Sayılar
+  matematiksel olarak doğruydu ama etkileşim modeli sezgiye aykırıydı.
+- **Kökten basitleştirme:** Varsayılan artık BOŞ seçim (hiçbir buton
+  seçili değil). Hiçbir buton seçili değilken kısıt yok, tüm bölgeler
+  kullanılır (240). Bir butona tıklamak SADECE o bölgeyi ekler/çıkarır
+  (normal, sezgisel "toggle" davranışı). "Genel" artık özel bir durum
+  değil, sadece bir bölge değeri gibi davranıyor — ayrı bir
+  `if secili_bolgeler == {"Genel"}` özel durumuna gerek kalmadı, kod da
+  basitleşti. Buton altına açıklayıcı bir not eklendi.

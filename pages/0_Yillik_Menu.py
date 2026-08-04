@@ -232,9 +232,10 @@ diger_bolgeler += sorted(mevcut_diger_bolgeler - set(BOLGE_SIRASI))  # BOLGE_SIR
 bolgeler_mevcut = (["Genel"] if any(t["bolge"] == "Genel" for t in tarifler) else []) + diger_bolgeler
 
 if "secili_bolgeler_set" not in st.session_state:
-    st.session_state.secili_bolgeler_set = set(bolgeler_mevcut)
+    st.session_state.secili_bolgeler_set = set()  # bos = hicbir kisit yok, tumu kullanilir
 
 st.markdown("**Bölge (mutfak)**")
+st.caption("Hiçbiri seçili değilken tüm bölgeler kullanılır. Bir bölgeye tıklamak SADECE onu etkinleştirir.")
 kolonlar = st.columns(len(bolgeler_mevcut))
 for kolon, bolge in zip(kolonlar, bolgeler_mevcut):
     secili = bolge in st.session_state.secili_bolgeler_set
@@ -251,16 +252,19 @@ for kolon, bolge in zip(kolonlar, bolgeler_mevcut):
 
 secili_bolgeler = st.session_state.secili_bolgeler_set
 
-if secili_bolgeler == {"Genel"}:
-    pass  # SADECE Genel seciliyse (baska hicbir bolge secili degilse) TUM tarifler kullanilir
-elif secili_bolgeler:
+if secili_bolgeler:
     tarifler = [t for t in tarifler if t["bolge"] in secili_bolgeler]
+# secili_bolgeler bossa (hicbir buton tiklanmamissa) hicbir filtre uygulanmaz, tum bolgeler kullanilir
 
 if not tarifler:
     st.warning("Seçtiğin bölge(ler)de hiç tarif bulunamadı.")
     st.stop()
 
-st.caption(f"Seçili bölge(ler)de {len(tarifler)} tarif kullanılacak.")
+if secili_bolgeler:
+    st.caption(f"Seçili bölge(ler)de {len(tarifler)} tarif kullanılacak.")
+else:
+    st.caption(f"Hiçbir bölge seçilmedi, tüm {len(tarifler)} tarif kullanılacak.")
+
 
 detay, fiyat_verisi_var = _tarif_detaylarini_getir(st.session_state.isletme_id)
 if not fiyat_verisi_var:
