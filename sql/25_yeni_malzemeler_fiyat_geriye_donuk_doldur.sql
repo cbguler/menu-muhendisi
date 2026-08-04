@@ -9,7 +9,7 @@
 -- olmayan her isletmeye varsayilan fiyati ekliyor (idempotent, malzeme
 -- bazinda kontrol ediyor).
 --
--- Kapsanan malzemeler: YUFKA, KARALAHANE, FINDIK, BAKLA, PAZI, RADİKA,
+-- Kapsanan malzemeler: YUFKA, KARALAHANA, FINDIK, BAKLA, PAZI, RADİKA,
 -- BADEM, İSOT, BUĞDAY (TAM TANE), TARHANA, BAMYA, KESTANE,
 -- EKMEK KADAYIFI, OTLU PEYNİR.
 -- (SALATALIK zaten 13_...sql ile ayrica halledilmisti, tekrar gerekmiyor.)
@@ -19,7 +19,7 @@ select i.id, m.id, m.varsayilan_fiyat_eur, 'Varsayılan (bölgesel genişletme o
 from isletmeler i
 cross join malzemeler m
 where m.ad in (
-  'YUFKA', 'KARALAHANE', 'FINDIK', 'BAKLA', 'PAZI', 'RADİKA', 'BADEM',
+  'YUFKA', 'KARALAHANA', 'FINDIK', 'BAKLA', 'PAZI', 'RADİKA', 'BADEM',
   'İSOT', 'BUĞDAY (TAM TANE)', 'TARHANA', 'BAMYA', 'KESTANE',
   'EKMEK KADAYIFI', 'OTLU PEYNİR'
 )

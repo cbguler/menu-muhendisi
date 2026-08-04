@@ -5,7 +5,7 @@
 # yukle_yeni_tarifler.py ile (mevcutlari atlayarak) Supabase'e eklenir.
 #
 # Yeni malzemeler (bu partiyle birlikte 17_karadeniz_malzemeleri_ekle.sql
-# ile kataloga eklendi): KARALAHANE, FINDIK.
+# ile kataloga eklendi): KARALAHANA, FINDIK.
 
 BOLGE_ADI = "Karadeniz"
 
@@ -32,7 +32,7 @@ KARADENIZ_TARIFLERI = [
     {"ad": "Karalahana Sarması (Etli)", "grup": 1, "mevsim_etiketi": "kis",
      "etiketler": ["etli_sebze", "dolma", "etli_zeytinyagli_dolma"], "hazirlik_dakika": 80,
      "malzemeler": [
-        {"ad": "KARALAHANE", "miktar_gram": 200},
+        {"ad": "KARALAHANA", "miktar_gram": 200},
         {"ad": "SIĞIR KIYMA", "miktar_gram": 70},
         {"ad": "PİRİNÇ (HAM)", "miktar_gram": 30},
         {"ad": "MISIR UNU", "miktar_gram": 15},
@@ -89,7 +89,7 @@ KARADENIZ_TARIFLERI = [
     {"ad": "Karalahana Çorbası", "grup": 2, "mevsim_etiketi": "kis",
      "etiketler": ["corba"], "hazirlik_dakika": 50,
      "malzemeler": [
-        {"ad": "KARALAHANE", "miktar_gram": 150},
+        {"ad": "KARALAHANA", "miktar_gram": 150},
         {"ad": "KURU FASULYE", "miktar_gram": 40},
         {"ad": "MISIR UNU", "miktar_gram": 20},
         {"ad": "TEREYAĞI", "miktar_gram": 10},
@@ -176,7 +176,7 @@ KARADENIZ_TARIFLERI = [
     {"ad": "Karalahana Turşusu", "grup": 3, "mevsim_etiketi": "kis",
      "etiketler": ["tursu", "vejetaryen"], "hazirlik_dakika": 5,
      "malzemeler": [
-        {"ad": "KARALAHANE", "miktar_gram": 100},
+        {"ad": "KARALAHANA", "miktar_gram": 100},
         {"ad": "TUZ", "miktar_gram": 5},
         {"ad": "SİRKE", "miktar_gram": 10},
      ]},

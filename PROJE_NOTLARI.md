@@ -902,3 +902,11 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   ile hepsi tek seferde, malzeme bazında kontrol ederek düzeltildi
   (idempotent). Tüm 13 isim, ilgili migration dosyalarından programatik
   olarak doğrulandı (Türkçe karakter hatası riski yaşanmadı bu sefer).
+
+### 3 Ağustos 2026 — VII. Oturum (devam): KARALAHANE → KARALAHANA Yazım Düzeltmesi
+- Kullanıcı "KARALAHANE" yazımının yanlış olduğunu belirtti, doğrusu
+  "KARALAHANA". `26_karalahane_isim_duzeltme.sql` ile canlı veritabanında
+  düzeltildi (sadece isim güncelleniyor, tarifler/fiyat geçmişi malzeme
+  ID'sine bağlı olduğu için hiçbir bağlantı bozulmadı). Yerel dosyalarda
+  da (`karadeniz_tarifleri.py`, `17_karadeniz_malzemeleri_ekle.sql`,
+  `25_yeni_malzemeler_fiyat_geriye_donuk_doldur.sql`) düzeltildi.
