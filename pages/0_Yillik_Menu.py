@@ -44,6 +44,21 @@ st.caption(
 
 
 @st.cache_data(ttl=3600)
+def _mutfaklari_getir():
+    return (supabase.table("mutfaklar").select("kod, ad").execute()).data
+
+
+mutfaklar_listesi = _mutfaklari_getir()
+sol_mutfak, _bos_mutfak = st.columns([1, 3])
+with sol_mutfak:
+    mutfak_secimi = st.selectbox(
+        "Mutfak", mutfaklar_listesi, format_func=lambda m: m["ad"],
+    )
+# NOT: su an sadece Turk Mutfagi var; ileride baska mutfaklar eklendiginde
+# asagidaki tarif sorgusu mutfak_secimi["kod"]'a gore filtrelenmeli.
+
+
+@st.cache_data(ttl=3600)
 def _tarif_kutuphanesini_getir():
     mutfak = (
         supabase.table("mutfaklar").select("id").eq("kod", "turk").single().execute()
@@ -203,41 +218,35 @@ if not tarifler:
 
 st.caption(f"Kütüphanede {len(tarifler)} tarif bulundu.")
 
-st.markdown(
-    """
-    <style>
-    [data-testid*="Pills"] button,
-    [data-testid*="Pills"] [data-testid*="BaseButton"] {
-        min-width: 150px !important;
-        justify-content: center !important;
-        border-radius: 999px !important;
-        font-weight: 500 !important;
-        transition: all 0.15s ease !important;
-    }
-    [data-testid*="Pills"] [data-testid="stBaseButton-secondary"]:hover,
-    [data-testid*="Pills"] button:hover {
-        border-color: #2C6B3C !important;
-        color: #2C6B3C !important;
-    }
-    [data-testid*="Pills"] [data-testid="stBaseButton-primary"],
-    [data-testid*="Pills"] button[kind="primary"] {
-        background-color: #2C6B3C !important;
-        border-color: #2C6B3C !important;
-        color: white !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+KISA_BOLGE_ADI = {
+    "Doğu Anadolu": "Doğu",
+    "Güneydoğu Anadolu": "Güneydoğu",
+}
+
 diger_bolgeler = sorted(b for b in {t["bolge"] for t in tarifler} if b != "Genel")
 bolgeler_mevcut = (["Genel"] if any(t["bolge"] == "Genel" for t in tarifler) else []) + diger_bolgeler
-secili_bolgeler = st.pills(
-    "Bölge (mutfak)", bolgeler_mevcut, selection_mode="multi", default=bolgeler_mevcut,
-    help="\"Genel\" seçiliyken TÜM bölgeler kullanılır (240 tarifin tamamı). "
-    "Sadece belirli bölge(ler)e daraltmak için önce \"Genel\"i kaldır, sonra "
-    "istediğin bölge(ler)i seç.",
-)
-if "Genel" in (secili_bolgeler or []):
+
+if "secili_bolgeler_set" not in st.session_state:
+    st.session_state.secili_bolgeler_set = set(bolgeler_mevcut)
+
+st.markdown("**Bölge (mutfak)**")
+kolonlar = st.columns(len(bolgeler_mevcut))
+for kolon, bolge in zip(kolonlar, bolgeler_mevcut):
+    secili = bolge in st.session_state.secili_bolgeler_set
+    etiket = KISA_BOLGE_ADI.get(bolge, bolge)
+    if kolon.button(
+        etiket, key=f"bolge_buton_{bolge}", use_container_width=True,
+        type="primary" if secili else "secondary",
+    ):
+        if secili:
+            st.session_state.secili_bolgeler_set.discard(bolge)
+        else:
+            st.session_state.secili_bolgeler_set.add(bolge)
+        st.rerun()
+
+secili_bolgeler = st.session_state.secili_bolgeler_set
+
+if "Genel" in secili_bolgeler:
     pass  # "Genel" secili oldugu surece TUM bolgeler gosterilir (ozel bir "hepsi" davranisi)
 elif secili_bolgeler:
     tarifler = [t for t in tarifler if t["bolge"] in secili_bolgeler]
@@ -268,7 +277,7 @@ for t in tarifler:
     t2["gi"] = b.get("gi")
     tarifler_zengin.append(t2)
 
-sol, sag = st.columns([1, 1])
+sol, sag, _bos = st.columns([1, 1, 3])
 with sol:
     mevsim_secimi = st.selectbox("Mevsim", MEVSIMLER, format_func=lambda m: m.capitalize())
 with sag:

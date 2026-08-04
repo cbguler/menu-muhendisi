@@ -788,3 +788,28 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   bölgeler seçili olsun olmasın) TÜM bölgeler kullanılır.** Sadece
   belirli bir bölgeye daraltmak icin once "Genel" kaldırılıp sonra
   istenen bölge(ler) seçilmeli. Yardım metni buna göre güncellendi.
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Arayüz Düzeltmeleri (5 Madde)
+- **Bölge butonları artık `st.pills` değil, `st.columns` + `st.button`.**
+  İki kez `st.pills` üzerinde CSS ile eşit genişlik denendi, ikisi de
+  tutmadı (Streamlit bu bileşenin iç HTML yapısını belgelemiyor).
+  Güvenilir/belgeli bir API'ye geçildi: `st.columns(N)` doğası gereği
+  eşit genişlikte sütunlar üretir, her birine `use_container_width=True`
+  ile buton konularak genişlik garantili hale getirildi (CSS tahminine
+  gerek kalmadı). Seçim durumu `st.session_state.secili_bolgeler_set`
+  içinde tutuluyor, buton rengi `type="primary"/"secondary"` ile
+  (Streamlit'in resmi/belgeli parametresi) ayırt ediliyor.
+- **Kısa bölge adları:** "Doğu Anadolu"→"Doğu", "Güneydoğu Anadolu"→
+  "Güneydoğu" (sadece görünen etiket; veritabanındaki `bolge` değeri ve
+  filtreleme mantığı değişmedi, `KISA_BOLGE_ADI` sözlüğü sadece
+  görüntüleme içindir).
+- **"Genel" = hepsi davranışı** korunuyor (bir önceki oturumda eklendi);
+  seçili bölge(ler)deki tarif sayısı butonların hemen altında gösteriliyor.
+- **Mevsim/Ay** artık `st.columns([1,1,3])` ile dar ve yan yana (üçüncü
+  boş sütun kalan alanı yutuyor, ikisi tam genişlik kaplamıyor).
+- **Yeni: Mutfak seçimi (en üstte, dar).** `mutfaklar` tablosundan
+  (zaten çoklu-mutfak için hazırlanmıştı, `11_coklu_mutfak_capraz_kesim.sql`)
+  okunuyor; şu an sadece "Türk Mutfağı" var, ileride başka mutfak
+  eklenince aynı seçim kutusu otomatik büyüyecek. Şu an için filtreleme
+  mantığına henüz bağlanmadı (tek mutfak olduğu için gerek yok) — yorum
+  satırıyla işaretlendi.
