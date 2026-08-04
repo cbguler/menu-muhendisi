@@ -1000,3 +1000,10 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   Kontrol Paneli sayfasında görünüyor (diğer sayfalarda değil) — bu
   refactor'un kapsamı dışında tutuldu, ayrı bir iyileştirme olarak ele
   alınabilir.
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Hamsili Pilav de İç Pilav Tekniğine Düzeltildi
+- Kullanıcı "Hamsili Pilav"ın (Karadeniz) geleneksel olarak İç Pilav
+  tekniğiyle (çam fıstığı + kuş üzümü ile) pişirildiğini belirtti;
+  kontrol edilince gerçekten sade pirinçle yazıldığı doğrulandı.
+  `karadeniz_tarifleri.py` güncellendi, canlı veritabanı için
+  `29_hamsili_pilav_ic_pilav_duzeltme.sql` ile düzeltildi.

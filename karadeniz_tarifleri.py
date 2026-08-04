@@ -44,6 +44,8 @@ KARADENIZ_TARIFLERI = [
      "malzemeler": [
         {"ad": "HAMSİ", "miktar_gram": 150},
         {"ad": "PİRİNÇ (HAM)", "miktar_gram": 50},
+        {"ad": "ÇAM FISTIĞI", "miktar_gram": 10},
+        {"ad": "KUŞ ÜZÜMÜ", "miktar_gram": 10},
         {"ad": "KURU SOĞAN", "miktar_gram": 20},
         {"ad": "TEREYAĞI", "miktar_gram": 10},
         {"ad": "TUZ", "miktar_gram": 3},
