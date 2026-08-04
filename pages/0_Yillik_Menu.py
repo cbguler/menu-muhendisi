@@ -233,10 +233,13 @@ diger_bolgeler = sorted(b for b in {t["bolge"] for t in tarifler} if b != "Genel
 bolgeler_mevcut = (["Genel"] if any(t["bolge"] == "Genel" for t in tarifler) else []) + diger_bolgeler
 secili_bolgeler = st.pills(
     "Bölge (mutfak)", bolgeler_mevcut, selection_mode="multi", default=bolgeler_mevcut,
-    help="Sadece belirli bölge(ler)in tariflerini kullanmak için daralt. "
-    "Hiçbiri seçili değilse tüm bölgeler kullanılır.",
+    help="\"Genel\" seçiliyken TÜM bölgeler kullanılır (240 tarifin tamamı). "
+    "Sadece belirli bölge(ler)e daraltmak için önce \"Genel\"i kaldır, sonra "
+    "istediğin bölge(ler)i seç.",
 )
-if secili_bolgeler:
+if "Genel" in (secili_bolgeler or []):
+    pass  # "Genel" secili oldugu surece TUM bolgeler gosterilir (ozel bir "hepsi" davranisi)
+elif secili_bolgeler:
     tarifler = [t for t in tarifler if t["bolge"] in secili_bolgeler]
 
 if not tarifler:

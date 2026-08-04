@@ -780,3 +780,11 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   başına +25-30 daha), ya da (b) kategori bazlı bir genişleme yapılabilir
   (çorba/tatlı/et yemekleri gibi kategorilerin genel havuzda çeşidini
   artırmak). Kullanıcıya sorulacak.
+
+### 3 Ağustos 2026 — VII. Oturum (devam): "Genel" Butonu Düzeltmesi
+- Kullanıcı "Genel" seçilince tüm 240 tarifin görünmesini bekliyordu
+  (sadece 74'lük genel havuzu değil) — "Genel"i "hepsi" anlamında
+  kullanıyor. Davranış değiştirildi: **"Genel" seçiliyken (diğer
+  bölgeler seçili olsun olmasın) TÜM bölgeler kullanılır.** Sadece
+  belirli bir bölgeye daraltmak icin once "Genel" kaldırılıp sonra
+  istenen bölge(ler) seçilmeli. Yardım metni buna göre güncellendi.
