@@ -863,3 +863,18 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   olarak değiştirildi (`KISA_BOLGE_ADI` sözlüğüne eklendi) — veritabanındaki
   gerçek `bolge` değeri hâlâ "Genel" (hiçbir migration/veri değişikliği
   gerekmedi, "Doğu Anadolu"→"Doğu" ile aynı yöntem).
+
+### 3 Ağustos 2026 — VII. Oturum (devam): "Aynı Yemek Her Gün" Teşhisi
+- Kullanıcı tek bölgeye (Güneydoğu) daralttığında ve besin hedefi
+  açıkken, "Antep Usulü Mercimekli Köfte"nin 14/14 öğünde çıktığını
+  bildirdi. Sentetik veriyle test edilince algoritmanın kendisinde
+  yapısal bir sorun olmadığı doğrulandı (makul çeşitlilik üretti).
+  Kullanıcı hedefi kapatıp tekrar üretince çeşitlilik gerçekten düzeldi
+  — **teşhis doğrulandı: dar bölge (küçük havuz, grup başına 7-9 tarif)
+  + sıkı kalori hedefi birleşince, gerçek verilerde o aralığa uyan
+  neredeyse tek yemek varmış, algoritma da ona kilitleniyormuş.** Kod
+  hatası değil, matematiksel bir sınırlama (küçük kütüphane + sıkı
+  kısıt kombinasyonu).
+- **Önlem eklendi:** dar bölge seçiliyken (< 60 tarif) VE besin hedefi
+  aktifken, üret butonunun üstünde uyarı metni çıkıyor ("hedef aralığını
+  genişlet veya daha fazla bölge seç" tavsiyesi).

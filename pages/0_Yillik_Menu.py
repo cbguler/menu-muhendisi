@@ -323,6 +323,14 @@ if besin_hedefi_kullan:
                     )
                 hedefler[ogun_adi][anahtar] = (alt, ust)
 
+if hedefler and secili_bolgeler and len(tarifler) < 60:
+    st.caption(
+        "Dikkat: dar bir bölge seçiliyken besin hedefi de uygularsan, küçük "
+        "havuzda hedefe uyan tarif sayısı çok azalabilir ve menü tek bir "
+        "yemeğe kilitlenebilir. Çeşitlilik azsa hedef aralığını genişletmeyi "
+        "veya daha fazla bölge seçmeyi dene."
+    )
+
 if st.button("Ay için menü üret", type="primary"):
     ay_index = AYLAR_SIRALI.index(ay_secimi)
     haftalar = []
