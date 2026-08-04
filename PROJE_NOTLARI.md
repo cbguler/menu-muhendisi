@@ -833,3 +833,10 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   gerekmeyecek (mevcut `grup_by_kategori` eşleştirme mantığı zaten
   mutfağa özgü çalışıyordu, sadece sabit kodlanmış "turk" değeri
   parametreleştirildi).
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Bölge Sıralaması
+- Bölge butonları alfabetik yerine kullanıcının istediği sırayla:
+  Genel, Marmara, Ege, Akdeniz, Karadeniz, İç Anadolu, Doğu, Güneydoğu.
+  `BOLGE_SIRASI` listesiyle sabit sıra uygulandı; ileride bu listede
+  olmayan yeni bir bölge eklenirse otomatik olarak sona (alfabetik)
+  eklenir, koddan bir şey unutulmaz.

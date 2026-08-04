@@ -225,7 +225,10 @@ KISA_BOLGE_ADI = {
     "Güneydoğu Anadolu": "Güneydoğu",
 }
 
-diger_bolgeler = sorted(b for b in {t["bolge"] for t in tarifler} if b != "Genel")
+BOLGE_SIRASI = ["Marmara", "Ege", "Akdeniz", "Karadeniz", "İç Anadolu", "Doğu Anadolu", "Güneydoğu Anadolu"]
+mevcut_diger_bolgeler = {t["bolge"] for t in tarifler} - {"Genel"}
+diger_bolgeler = [b for b in BOLGE_SIRASI if b in mevcut_diger_bolgeler]
+diger_bolgeler += sorted(mevcut_diger_bolgeler - set(BOLGE_SIRASI))  # BOLGE_SIRASI'nda olmayan yeni bolgeler sona eklenir
 bolgeler_mevcut = (["Genel"] if any(t["bolge"] == "Genel" for t in tarifler) else []) + diger_bolgeler
 
 if "secili_bolgeler_set" not in st.session_state:
