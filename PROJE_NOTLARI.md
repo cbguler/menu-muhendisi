@@ -1026,3 +1026,18 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   olurdu, çünkü artık pages/ klasörü otomatik keşfedilmiyor).
 - **Sıradaki adım:** Talimatları kademeli doldurmak — kullanıcı hangi
   tariflerden/hangi sırayla başlanmasını istediğini belirtecek.
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Pişirme Talimatları I. Parti (30 Ana Yemek)
+- **ÇAM FISTIĞI'na eksik kalan sert kabuklu yemiş alerjeni**
+  `31_cam_fistigi_alerjen_duzeltme.sql` ile düzeltildi (27_...sql'de
+  unutulmuştu).
+- **Pişirme talimatları I. Parti:** orijinal 75 "Klasik" kütüphanenin
+  I. Grup (ana yemek) tariflerinin **tamamı (30/30)** için adım adım
+  talimat yazıldı (`talimatlar_parti1.py`). Yeniden kullanılabilir bir
+  yükleme scripti (`talimat_yukle.py` + `talimat_yukle_calistir.bat`)
+  oluşturuldu — `receteler.hazirlik_talimati` alanını isme göre UPDATE
+  ediyor, idempotent. Gelecekteki partiler için sadece import satırı
+  değiştirilecek (yeni bir `talimatlar_partiN.py` yazılıp import
+  güncellenecek).
+- **Sıradaki adım:** II. Grup (yardımcı yemek, çorba/pilav/börek) ve
+  III. Grup (tamamlayıcı) tarifleri, sonra bölgesel tarifler (166 adet).
