@@ -372,7 +372,18 @@ TARIFLER = [
         {"ad": "TUZ", "miktar_gram": 3},
      ]},
 
-    # -- Pilav (5) --
+    # -- Pilav (6) --
+    {"ad": "İç Pilav", "grup": 2, "mevsim_etiketi": "yil_boyunca",
+     "etiketler": ["pilav_makarna_borek", "vejetaryen"], "hazirlik_dakika": 35,
+     "malzemeler": [
+        {"ad": "PİRİNÇ (HAM)", "miktar_gram": 60},
+        {"ad": "ÇAM FISTIĞI", "miktar_gram": 15},
+        {"ad": "KUŞ ÜZÜMÜ", "miktar_gram": 15},
+        {"ad": "KURU SOĞAN", "miktar_gram": 25},
+        {"ad": "TEREYAĞI", "miktar_gram": 15},
+        {"ad": "YENİBAHAR", "miktar_gram": 1},
+        {"ad": "TUZ", "miktar_gram": 3},
+     ]},
     {"ad": "Sade Pirinç Pilavı", "grup": 2, "mevsim_etiketi": "yil_boyunca",
      "etiketler": ["pilav_makarna_borek", "vejetaryen"], "hazirlik_dakika": 25,
      "malzemeler": [
@@ -470,6 +481,8 @@ TARIFLER = [
         {"ad": "SALAMURA YAPRAK", "miktar_gram": 120},
         {"ad": "PİRİNÇ (HAM)", "miktar_gram": 40},
         {"ad": "KURU SOĞAN", "miktar_gram": 30},
+        {"ad": "ÇAM FISTIĞI", "miktar_gram": 15},
+        {"ad": "KUŞ ÜZÜMÜ", "miktar_gram": 10},
         {"ad": "ZEYTİNYAĞI", "miktar_gram": 20},
         {"ad": "LİMON SUYU", "miktar_gram": 10},
         {"ad": "TUZ", "miktar_gram": 3},
@@ -682,6 +695,7 @@ TARIFLER = [
         {"ad": "KURU FASULYE", "miktar_gram": 15},
         {"ad": "KURU KAYISI", "miktar_gram": 15},
         {"ad": "KURU ÜZÜM", "miktar_gram": 15},
+        {"ad": "KURU İNCİR", "miktar_gram": 15},
         {"ad": "CEVİZ (İÇ)", "miktar_gram": 10},
         {"ad": "ŞEKER", "miktar_gram": 30},
         {"ad": "SU", "miktar_gram": 200},

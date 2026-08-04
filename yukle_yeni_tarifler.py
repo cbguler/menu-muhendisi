@@ -14,7 +14,7 @@ import os
 
 from supabase import create_client
 
-from dogu_anadolu_tarifleri import DOGU_ANADOLU_TARIFLERI as YENI_PARTI, BOLGE_ADI
+from ek_tarifler import EK_TARIFLER as YENI_PARTI, BOLGE_ADI
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL") or input("SUPABASE_URL: ").strip()
 SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or input(

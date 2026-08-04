@@ -944,3 +944,59 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   içinde widget kullanımını kesinlikle yasaklıyor. `@st.cache_resource`
   kaldırıldı, her çalıştırmada yeniden oluşturuluyor (fonksiyonel olarak
   sorun değil, kütüphanenin resmi örnekleri de böyle kullanıyor).
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Çam Fıstığı/Kuş Üzümü/Kuru İncir Eksikliği
+- **Kullanıcının bulduğu gerçek eksiklik, sadece malzeme değil tarif
+  düzeyinde de:** ÇAM FISTIĞI (dolmalık fıstık) ve KUŞ ÜZÜMÜ hiç
+  katalogda yoktu, KURU İNCİR de eksikti (KURU KAYISI/KURU ÜZÜM zaten
+  vardı). Daha da önemlisi: **"Zeytinyağlı Yaprak Sarma" bu malzemeler
+  eksik olduğu için onlarsız yazılmıştı** — geleneksel tarifte
+  vazgeçilmez oldukları hâlde. "Aşure" de KURU İNCİR içermiyordu.
+- **Düzeltmeler** (`27_cam_fistigi_kus_uzumu_kuru_incir_ekle.sql` +
+  `28_mevcut_tarifleri_duzelt_ve_fiyat_doldur.sql`):
+  1. 3 yeni malzeme eklendi (Çam fıstığı fiyatı güncel piyasa
+     araştırmasına dayanıyor: ~3700 TL/kg perakende → ~61 €/kg toptan
+     referansı).
+  2. Mevcut "Zeytinyağlı Yaprak Sarma" (74) tarifine ÇAM FISTIĞI +
+     KUŞ ÜZÜMÜ eklendi; "Aşure"ye KURU İNCİR eklendi (recete_malzemeleri
+     tablosuna doğrudan, malzeme bazında kontrol ederek).
+  3. Mevcut işletmelere geriye dönük fiyat dolduruldu (13/25 ile aynı
+     yöntem).
+  4. `tarif_verisi.py` da güncellendi (gelecekteki sıfırdan kurulumlar
+     için tutarlılık).
+- **Yeni tarif: "İç Pilav"** eklendi (`ek_tarifler.py` + `tarif_verisi.py`,
+  bölge: Genel) — pirinç, çam fıstığı, kuş üzümü, kuru soğan, tereyağı,
+  yenibahar. Kütüphane artık 75 (genel) + 166 (7 bölge) = 241 tarif
+  hedefliyor. `yukle_yeni_tarifler.py`'nin import satırı bu tekil tarif
+  partisine güncellendi.
+
+### 3 Ağustos 2026 — VII. Oturum (devam): "app" İsim Sorunu KALICI Çözüldü (st.navigation)
+- Kullanıcı defalarca "app" etiketinin neden değiştirilemediğini sordu.
+  Daha önce (Streamlit Cloud'un deploy-sonrası "main file path"
+  değiştirilemediği için) bu kozmetik bir sınırlama olarak kabul
+  edilmişti. Bu sefer **gerçek bir kod-içi çözüm bulundu ve uygulandı:**
+  Streamlit'in yeni `st.navigation()` + `st.Page()` API'si (resmi
+  dokümantasyondan doğrulandı), dosya adından tamamen bağımsız olarak
+  her sayfaya istenilen ismi verebiliyor.
+- **Uygulama:** `app.py`'nin sonu yeniden yapılandırıldı — dashboard
+  içeriği (sidebar plan/çıkış + kullanım kılavuzu) `kontrol_paneli_sayfasi()`
+  fonksiyonuna sarıldı, ardından:
+  ```python
+  kontrol_sayfasi = st.Page(kontrol_paneli_sayfasi, title="Kontrol Paneli", default=True)
+  yillik_menu_sayfasi = st.Page("pages/0_Yillik_Menu.py", title="Yıllık Menü")
+  ... (digerleri de ayni sekilde, dosya yolu ile) ...
+  pg = st.navigation([...])
+  pg.run()
+  ```
+  Diğer sayfa dosyalarının (`pages/*.py`) İÇİNE HİÇ DOKUNULMADI — sadece
+  dosya yolu üzerinden referans veriliyor, kendi `st.set_page_config()`
+  çağrıları da (resmi dokümantasyona göre) sorunsuz çalışıyor
+  ("entrypoint'te varsayılan, sayfa içinde onu geçersiz kılma" deseni
+  resmi olarak destekleniyor).
+- **Streamlit Cloud ayarına HİÇ dokunulmadı** — giriş dosyası hâlâ
+  `app.py`, deploy ayarı değişmedi. Sidebar'da artık "Kontrol Paneli"
+  görünecek, "app" değil.
+- **Bilinen davranış (değişmedi):** Çıkış/plan bilgisi hâlâ sadece
+  Kontrol Paneli sayfasında görünüyor (diğer sayfalarda değil) — bu
+  refactor'un kapsamı dışında tutuldu, ayrı bir iyileştirme olarak ele
+  alınabilir.
