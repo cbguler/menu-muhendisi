@@ -54,14 +54,16 @@ with sol_mutfak:
     mutfak_secimi = st.selectbox(
         "Mutfak", mutfaklar_listesi, format_func=lambda m: m["ad"],
     )
-# NOT: su an sadece Turk Mutfagi var; ileride baska mutfaklar eklendiginde
-# asagidaki tarif sorgusu mutfak_secimi["kod"]'a gore filtrelenmeli.
+# Su an sadece Turk Mutfagi var, ama tarif sorgusu asagida mutfak_secimi["kod"]'a
+# gore calisiyor -- ileride yeni bir mutfak (ör. Fransiz Mutfagi) eklenip
+# kendi mutfak_kategorileri/receteler'i girildiginde, bolge butonlari ve
+# tum akis otomatik olarak o mutfaga gore calisacak, ek kod degisikligi gerekmez.
 
 
 @st.cache_data(ttl=3600)
-def _tarif_kutuphanesini_getir():
+def _tarif_kutuphanesini_getir(mutfak_kodu):
     mutfak = (
-        supabase.table("mutfaklar").select("id").eq("kod", "turk").single().execute()
+        supabase.table("mutfaklar").select("id").eq("kod", mutfak_kodu).single().execute()
     ).data
     kategoriler = (
         supabase.table("mutfak_kategorileri")
@@ -207,7 +209,7 @@ def _ogun_toplami(tarif_adlari, detay):
     return toplam
 
 
-tarifler = _tarif_kutuphanesini_getir()
+tarifler = _tarif_kutuphanesini_getir(mutfak_secimi["kod"])
 
 if not tarifler:
     st.warning(
@@ -246,8 +248,8 @@ for kolon, bolge in zip(kolonlar, bolgeler_mevcut):
 
 secili_bolgeler = st.session_state.secili_bolgeler_set
 
-if "Genel" in secili_bolgeler:
-    pass  # "Genel" secili oldugu surece TUM bolgeler gosterilir (ozel bir "hepsi" davranisi)
+if secili_bolgeler == {"Genel"}:
+    pass  # SADECE Genel seciliyse (baska hicbir bolge secili degilse) TUM tarifler kullanilir
 elif secili_bolgeler:
     tarifler = [t for t in tarifler if t["bolge"] in secili_bolgeler]
 

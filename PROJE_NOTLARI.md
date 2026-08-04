@@ -813,3 +813,23 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   eklenince aynı seçim kutusu otomatik büyüyecek. Şu an için filtreleme
   mantığına henüz bağlanmadı (tek mutfak olduğu için gerek yok) — yorum
   satırıyla işaretlendi.
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Bölge Sayım Mantığı Düzeltmesi + Çoklu Mutfak Altyapısı
+- **"Genel" mantığı yanlış anlaşılmıştı, düzeltildi:** Önceki kural
+  "Genel her seçiliyken hepsi" idi — kullanıcı bunu istemiyor. Doğru
+  kural: **SADECE Genel tek başına seçiliyse hepsi (240)**; Genel başka
+  bölgelerle BİRLİKTE seçiliyse kendi 74'ü ile normal toplama katılır
+  (ör. Genel + 6 bölge, Akdeniz hariç = 216). Bu, hem ekrandaki sayıyı
+  hem de **üretim motorunun fiilen kullandığı tarif havuzunu** aynı anda
+  düzeltti (aynı `tarifler` listesi ikisi için de kullanılıyordu).
+  16 test senaryosuyla doğrulandı (Akdeniz hariç hepsi→216, sadece
+  Genel→240, sadece Akdeniz→24, Genel+Akdeniz→98, hepsi doğru).
+- **Çoklu mutfak altyapısı tamamlandı:** `_tarif_kutuphanesini_getir()`
+  artık `mutfak_kodu` parametresi alıyor (önceden "turk" sabit
+  kodlanmıştı). İleride yeni bir mutfak (ör. Fransız Mutfağı) eklenip
+  kendi `mutfak_kategorileri`/`receteler` verisi girildiğinde, en
+  üstteki mutfak seçim kutusu + bölge butonları + tüm üretim akışı
+  otomatik olarak o mutfağa göre çalışacak, ekstra kod değişikliği
+  gerekmeyecek (mevcut `grup_by_kategori` eşleştirme mantığı zaten
+  mutfağa özgü çalışıyordu, sadece sabit kodlanmış "turk" değeri
+  parametreleştirildi).
