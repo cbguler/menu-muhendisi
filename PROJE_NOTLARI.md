@@ -739,3 +739,14 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   (düz I) yazmışım, tariflerde "İSOT" (noktalı İ) kullanmışım —
   doğrulama scripti eksik malzeme olarak yakaladı, migration düzeltildi.
 - **Kalan 3 bölge partisi:** İç Anadolu, Marmara, Doğu Anadolu.
+
+### 3 Ağustos 2026 — VII. Oturum (devam): İç Anadolu (V. Parti)
+- **V. Parti: İç Anadolu Bölgesi — 24 tarif teslim edildi**
+  (`ic_anadolu_tarifleri.py` — I. Grup 9, II. Grup 7, III. Grup 8).
+  Örnekler: Keşkek, Etli Ekmek (Konya), Kayseri Mantısı, Testi Kebabı,
+  Tarhana Çorbası, Höşmerim, Kuru Üzümlü İrmik Helvası. Toplam hedef:
+  168+24=192.
+- **Eksik malzemeler eklendi** (`21_ic_anadolu_malzemeleri_ekle.sql`):
+  BUĞDAY (TAM TANE) (keşkek icin), TARHANA, BAMYA. PASTIRMA ve SUCUK
+  zaten katalogda mevcuttu.
+- **Kalan 2 bölge partisi:** Marmara, Doğu Anadolu.
