@@ -358,8 +358,23 @@ def _hedefte_mi(ogun_adi, t, hedefler):
     return True
 
 
-DISH_KUTU_YUKSEKLIK = 240  # kutuphanedeki en uzun isim + 3 yemek dahil bolca pay
-BILGI_KUTU_YUKSEKLIK = 165
+BILGI_KUTU_YUKSEKLIK = 120  # tipik 3-4 kisa satir icin sikilastirilmis sabit
+
+
+def _dish_kutu_yuksekligi_hesapla(tarif_adlari, karakter_basina_px=7, satir_yuksekligi=30, taban_px=12):
+    """Bir gunun yemek adi listesi icin GERCEK metne dayali yukseklik tahmini
+    -- global bir sabit (onceki 240px) yerine, o haftanin o ogunundeki EN
+    UZUN gunun ihtiyacina gore hesaplaniyor. Boylece kisa listeli gunlerde
+    bosluk kalmiyor, uzun listeli gunlerde de tasma olmuyor. Sutun genisligi
+    ekrana gore degisebildigi icin bu yine de bir TAHMIN -- karakter_basina_px
+    ve satir_yuksekligi degerleri tipik masaustu genisligi icin ayarlandi,
+    cok dar/genis ekranlarda hafif sapma olabilir."""
+    sutun_karakter_kapasitesi = 22  # tek satira sigan yaklasik karakter sayisi
+    toplam = taban_px
+    for ad in tarif_adlari:
+        satir_sayisi = max(1, -(-len(ad) // sutun_karakter_kapasitesi))
+        toplam += satir_yuksekligi * satir_sayisi
+    return toplam
 
 
 def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, hafta_no):
@@ -369,19 +384,14 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
     yontemi; ham <a href> linkleri Streamlit'te bilinen sekilde
     guvenilmezdir).
 
-    NOT (5 Agustos 2026, dorduncu deneme): Once sabit yukseklikli container
-    (kenarlik/kaydirma sorunu) -> duz container (hizalama bozuldu) -> sabit
-    yukseklik + overflow:visible CSS (tasan icerik BIR SONRAKI elemente
-    bindi) -> tamamen cercevesiz (hizalama yok ama guvenli). Kullanici
-    AKSAM hizalamasini geri istedi -- bu sefer CSS hilesi degil,
-    st.container'in KENDI `border=False` parametresi kullanildi (Streamlit
-    surumune bagli olarak kenarligi gercekten kaldirabilir, CSS override
-    gibi yan etkisi yok). Yukseklik degerleri de (240/165) bolca pay
-    birakacak sekilde buyutuldu ki gercek tasma/kirpilma neredeyse hic
-    yasanmasin. YINE DE: eger bir gun cok uzun/coklu yemek icerirse nadir
-    durumda kirpilma veya (Streamlit surumune gore) ince bir kaydirma
-    cubugu gorulebilir -- boyle bir durum gorulurse haber verilmesi
-    gerekiyor, kesin cozulmus sayilmamali."""
+    NOT (5 Agustos 2026, besinci deneme): Sabit GLOBAL yukseklik (240px)
+    her hafta/ogun icin ayni kaldigindan, kisa listeli gunlerde buyuk bir
+    bosluk birakip yemek adiyla alt bilgi arasini gereksiz aciyordu.
+    Bunun yerine her hafta+ogun SATIRI icin (ör. "1. Hafta - Ogle") o
+    satirdaki 7 gunun GERCEK yemek adlarina bakip EN UZUN olana gore
+    yukseklik hesaplaniyor (_dish_kutu_yuksekligi_hesapla) -- boylece kisa
+    haftalarda kutu kucuk, uzun haftalarda buyuk oluyor, hep tam ihtiyaca
+    gore. Kenarlik hala st.container(border=False) ile kapali."""
     # st.page_link varsayilan olarak metni tek satirda kirpiyor (uzun
     # tarif isimleri sigmayinca "..." ile kesiliyor) -- bunu alt satira
     # kaydiracak sekilde zorluyoruz.
@@ -392,6 +402,17 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
         "</style>",
         unsafe_allow_html=True,
     )
+
+    # Bu haftadaki her ogun (Ogle/Aksam) icin, 7 gunun en uzun yemek
+    # listesine gore GEREKEN yukseklik -- render dongusunden ONCE, tek
+    # seferde hesaplaniyor.
+    ogun_adlari = list(hafta[0]["ogunler"].keys()) if hafta else []
+    dish_yukseklikleri = {
+        ogun_adi: max(
+            _dish_kutu_yuksekligi_hesapla(gun["ogunler"][ogun_adi]) for gun in hafta
+        )
+        for ogun_adi in ogun_adlari
+    }
 
     kolonlar = st.columns(len(hafta), gap="small")
     for kolon, gun in zip(kolonlar, hafta):
@@ -404,7 +425,7 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
                 st.markdown(f"**{ogun_adi.upper()}**")
 
                 dish_key = f"dish-box-{ay_adi}-{hafta_no}-{gun['gun']}-{ogun_adi}"
-                with st.container(height=DISH_KUTU_YUKSEKLIK, border=False, key=dish_key):
+                with st.container(height=dish_yukseklikleri[ogun_adi], border=False, key=dish_key):
                     for ad in tarif_adlari:
                         st.page_link(
                             "pages/5_Tarif_Kutuphanesi.py", label=ad,
@@ -552,3 +573,4 @@ if aylik:
     for i, hafta in enumerate(aylik["haftalar"], start=1):
         st.markdown(f"**{aylik['ay']} — {i}. Hafta**")
         _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, kayitli_hedefler, aylik["ay"], i)
+        st.divider()
