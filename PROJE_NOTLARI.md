@@ -1092,3 +1092,22 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   değiştirilmedi.
 - **Sıradaki adım:** Kalan 27 ana yemek + II./III. Grup + bölgesel
   tarifler için aşama verisi kademeli eklenecek.
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Aşama RLS Düzeltmesi + Yıllık Menü'den Tarif Kütüphanesi'ne Tıklanabilir Link
+- **Gerçek maliyet neden görünmüyordu:** `recete_asamalari`/`asama_malzemeleri`/
+  `asama_bagimliliklari` muhtemelen sadece "kendi işletmesi" için RLS
+  izni taşıyordu — global (bölgesiz) tariflere ait aşamalar hiçbir
+  kullanıcıya görünmüyordu (`asama_yukle.py` service_role ile yazdığı
+  için RLS'i atlamıştı, ama normal oturum okurken engelleniyordu — bu
+  projede daha önce de defalarca karşılaşılan bir kalıp: mutfaklar,
+  malzeme_alerjen vb.). `32_recete_asamalari_global_rls_duzeltme.sql`
+  ile üç tabloya da EKLEME nitelikli (mevcut politikaları değiştirmeyen)
+  "global tarifler için herkese açık okuma" politikası eklendi.
+- **Yıllık Menü'deki yemek isimleri artık tıklanabilir link.** Her yemek
+  adı, Tarif Kütüphanesi'ne `?tarif=<isim>` sorgu parametresiyle giden
+  bir bağlantıya dönüştürüldü (`urllib.parse.quote` ile Türkçe
+  karakter/boşluk güvenli kodlanıyor). `app.py`'de Tarif Kütüphanesi
+  sayfasına sabit bir URL yolu (`url_path="tarif-kutuphanesi"`) verildi.
+  Tarif Kütüphanesi sayfası açılışta `st.query_params`'tan "tarif"
+  değerini okuyup, varsa o tarifi otomatik seçili getiriyor (yoksa
+  normal ilk sıradaki tarife düşüyor, hata vermiyor).

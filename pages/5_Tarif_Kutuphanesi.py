@@ -172,7 +172,9 @@ if not filtrelenmis:
     st.stop()
 
 isimler_sirali = sorted(t["ad"] for t in filtrelenmis)
-secilen_ad = st.selectbox("Tarif", isimler_sirali)
+query_tarif = st.query_params.get("tarif")
+varsayilan_index = isimler_sirali.index(query_tarif) if query_tarif in isimler_sirali else 0
+secilen_ad = st.selectbox("Tarif", isimler_sirali, index=varsayilan_index)
 tarif = next(t for t in filtrelenmis if t["ad"] == secilen_ad)
 
 porsiyon = st.number_input("Porsiyon sayısı", min_value=1, max_value=200, value=1, step=1)

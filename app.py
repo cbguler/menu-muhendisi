@@ -332,7 +332,9 @@ receteler_sayfasi = st.Page("pages/1_Receteler.py", title="Reçeteler")
 menu_sayfasi = st.Page("pages/2_Menu.py", title="Menü")
 boston_sayfasi = st.Page("pages/3_Boston_Matrisi.py", title="Boston Matrisi")
 uretim_sayfasi = st.Page("pages/4_Uretim_Asamalari.py", title="Üretim Aşamaları")
-tarif_kutuphanesi_sayfasi = st.Page("pages/5_Tarif_Kutuphanesi.py", title="Tarif Kütüphanesi")
+tarif_kutuphanesi_sayfasi = st.Page(
+    "pages/5_Tarif_Kutuphanesi.py", title="Tarif Kütüphanesi", url_path="tarif-kutuphanesi",
+)
 
 pg = st.navigation([
     kontrol_sayfasi, yillik_menu_sayfasi, receteler_sayfasi,

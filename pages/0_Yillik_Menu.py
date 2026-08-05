@@ -7,6 +7,7 @@
 
 import io
 import random
+import urllib.parse
 
 import streamlit as st
 from openpyxl import Workbook
@@ -365,7 +366,9 @@ def _hafta_kart_izgarasi_html(hafta, detay, fiyat_verisi_var, hedefler):
         for ogun_adi, tarif_adlari in gun["ogunler"].items():
             satirlar = "".join(
                 f"<div style='margin-left:6px;'>"
-                f"<span style='color:{RENKLER[i + 1]};'>●</span> {ad}</div>"
+                f"<span style='color:{RENKLER[i + 1]};'>●</span> "
+                f"<a href='tarif-kutuphanesi?tarif={urllib.parse.quote(ad)}' "
+                f"target='_self' style='color:inherit; text-decoration:underline;'>{ad}</a></div>"
                 for i, ad in enumerate(tarif_adlari)
             )
 
