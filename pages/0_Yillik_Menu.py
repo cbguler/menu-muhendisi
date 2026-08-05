@@ -364,7 +364,19 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler):
     Kutuphanesi'ne tiklanabilir olur (resmi/desteklenen navigasyon
     yontemi; ham <a href> linkleri Streamlit'te bilinen sekilde
     guvenilmezdir). Kart gorunumu st.container(border=True) ile korunur."""
-    kolonlar = st.columns(len(hafta))
+    # st.page_link varsayilan olarak metni tek satirda kirpiyor (uzun
+    # tarif isimleri sigmayinca "..." ile kesiliyor) -- bunu alt satira
+    # kaydiracak sekilde zorluyoruz. NOT: data-testid secici Streamlit'in
+    # standart adlandirma kalibiyle tutarli ama garantili degil; tutmazsa
+    # farkli bir yaklasima geceriz.
+    st.markdown(
+        "<style>"
+        "[data-testid='stPageLink'] p { white-space: normal !important; "
+        "word-break: break-word !important; }"
+        "</style>",
+        unsafe_allow_html=True,
+    )
+    kolonlar = st.columns(len(hafta), gap="small")
     for kolon, gun in zip(kolonlar, hafta):
         with kolon:
             with st.container(border=True):

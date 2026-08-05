@@ -1217,3 +1217,16 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   (1.4.0) yayınlanmış, API'sini değiştirmiş, Streamlit 1.61.0'ın dahili
   kodu buna henüz uyumlu değildi. `requirements.txt`'e `starlette<1.4`
   eklendi (önceki çalışan deploy'da `starlette==1.3.1` kullanılıyordu).
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Yıllık Menü Kart Genişliği ve Metin Kaydırma
+- Kullanıcı link çözümünü onayladı ("istediğim gibi olmuş") ama yeni
+  kart görünümünde (gerçek widget'lara geçiş sonrası) yemek isimlerinin
+  sığmadığını, sütunlar arası boşluğun fazla olduğunu bildirdi.
+- `st.columns(len(hafta), gap="small")` ile sütun arası boşluk daraltıldı.
+- `st.page_link` varsayılan olarak uzun metni tek satırda kırpıyor
+  ("...") — bunu alt satıra kaydırmaya zorlayan bir CSS eklendi
+  (`[data-testid='stPageLink'] p { white-space: normal; word-break:
+  break-word; }`). NOT: bu CSS seçicisi Streamlit'in standart
+  adlandırma kalıbıyla tutarlı ama garantili değil (bu projede daha
+  önce bazı CSS denemeleri tutmamıştı) — tutmazsa alternatif
+  yaklaşıma (ör. st.page_link yerine farklı bir gösterim) geçilecek.
