@@ -358,65 +358,47 @@ def _hedefte_mi(ogun_adi, t, hedefler):
     return True
 
 
-def _hafta_kart_izgarasi_html(hafta, detay, fiyat_verisi_var, hedefler):
-    kartlar = []
-    for gun in hafta:
-        ogun_html = ""
-        for ogun_adi, tarif_adlari in gun["ogunler"].items():
-            satirlar = "".join(
-                f"<div style='margin-left:6px;'>"
-                f"<span style='color:{RENKLER[i + 1]};'>●</span> {ad}</div>"
-                for i, ad in enumerate(tarif_adlari)
-            )
+def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler):
+    """Haftayi ekrana GERCEK Streamlit widget'lariyla render eder (ham HTML
+    string DEGIL) -- boylece her yemek adi st.page_link ile Tarif
+    Kutuphanesi'ne tiklanabilir olur (resmi/desteklenen navigasyon
+    yontemi; ham <a href> linkleri Streamlit'te bilinen sekilde
+    guvenilmezdir). Kart gorunumu st.container(border=True) ile korunur."""
+    kolonlar = st.columns(len(hafta))
+    for kolon, gun in zip(kolonlar, hafta):
+        with kolon:
+            with st.container(border=True):
+                st.markdown(f"**Gün {gun['gun']}**")
+                for ogun_adi, tarif_adlari in gun["ogunler"].items():
+                    st.markdown(f"*{ogun_adi}*")
+                    for ad in tarif_adlari:
+                        st.page_link(
+                            "pages/5_Tarif_Kutuphanesi.py", label=ad,
+                            query_params={"tarif": ad}, use_container_width=True,
+                        )
 
-            t = _ogun_toplami(tarif_adlari, detay)
-            gi_metin = f"{t['gi']}" if t["gi"] is not None else "-"
+                    t = _ogun_toplami(tarif_adlari, detay)
+                    gi_metin = f"{round(t['gi'])}" if t["gi"] is not None else "-"
+                    st.caption(
+                        f"{round(t['kalori'])} kcal · P{round(t['protein'])}g · "
+                        f"Y{round(t['yag'])}g · K{round(t['karbonhidrat'])}g · Gİ{gi_metin}"
+                    )
+                    alerjen_metin = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
+                    st.caption(f"Alerjen: {alerjen_metin}")
 
-            if not fiyat_verisi_var:
-                maliyet_metin = "-"
-            elif t["tam_fiyatli"]:
-                maliyet_metin = f"{t['maliyet_eur']:.2f} €"
-            else:
-                eksik_liste = ", ".join(sorted(t["eksik_malzemeler"]))
-                maliyet_metin = f"≈{t['maliyet_eur']:.2f} € (eksik fiyat: {eksik_liste})"
+                    if not fiyat_verisi_var:
+                        st.caption("Maliyet: -")
+                    elif t["tam_fiyatli"]:
+                        st.caption(f"Maliyet: {t['maliyet_eur']:.2f} €")
+                    else:
+                        eksik_liste = ", ".join(sorted(t["eksik_malzemeler"]))
+                        st.caption(f"Maliyet: ≈{t['maliyet_eur']:.2f} € (eksik fiyat: {eksik_liste})")
 
-            alerjen_metin = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
-
-            hedef_metin = ""
-            hedefte = _hedefte_mi(ogun_adi, t, hedefler)
-            if hedefte is True:
-                hedef_metin = "<div style='color:#1D9E75;'>Hedefte</div>"
-            elif hedefte is False:
-                hedef_metin = "<div style='color:#D85A30;'>Hedef dışı</div>"
-
-            ogun_html += (
-                f"<div style='margin:6px 0;'><b>{ogun_adi}</b>{satirlar}"
-                f"<div style='color:#666; margin-top:3px;'>{round(t['kalori'])} kcal · "
-                f"P {round(t['protein'])}g · Y {round(t['yag'])}g · "
-                f"K {round(t['karbonhidrat'])}g · Gİ {gi_metin}</div>"
-                f"<div style='color:#666;'>Alerjen: {alerjen_metin}</div>"
-                f"<div style='color:#666;'>Maliyet: {maliyet_metin}</div>"
-                f"{hedef_metin}"
-                f"</div>"
-            )
-
-        kart_html = f"""
-            <div style="border:0.5px solid var(--border, #ddd); border-radius:10px;
-                        padding:10px 12px; font-size:11.5px; line-height:1.5;">
-              <div style="font-weight:600; margin-bottom:4px; font-size:13px;">Gün {gun['gun']}</div>
-              {ogun_html}
-            </div>
-            """
-        # Tek satira sikistir: coklu-satirli/girintili HTML parcalari yan
-        # yana birlestirilince araya yanlislikla bos satir girip Streamlit'in
-        # markdown ayiricisinin "HTML blogu bitti" sanmasina (ve sonraki
-        # kartlari duz metin olarak kacis'lamasina) yol aciyordu.
-        kartlar.append(" ".join(kart_html.split()))
-
-    return (
-        f"<div style='display:grid; grid-template-columns:repeat({len(hafta)}, 1fr); "
-        "gap:8px;'>" + "".join(kartlar) + "</div>"
-    )
+                    hedefte = _hedefte_mi(ogun_adi, t, hedefler)
+                    if hedefte is True:
+                        st.caption(":green[Hedefte]")
+                    elif hedefte is False:
+                        st.caption(":orange[Hedef dışı]")
 
 
 def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
@@ -533,26 +515,4 @@ if aylik:
 
     for i, hafta in enumerate(aylik["haftalar"], start=1):
         st.markdown(f"**{aylik['ay']} — {i}. Hafta**")
-        st.markdown(
-            _hafta_kart_izgarasi_html(hafta, detay, fiyat_verisi_var, kayitli_hedefler),
-            unsafe_allow_html=True,
-        )
-
-    st.divider()
-    st.write("**Bir tarifin detayına git**")
-    st.caption(
-        "Yukarıdaki menüde geçen tariflerden birini seçip Tarif Kütüphanesi'nde "
-        "(malzeme/besin/maliyet/hazırlık talimatı) açabilirsin."
-    )
-    ay_ici_tarifler = sorted({
-        ad
-        for hafta in aylik["haftalar"]
-        for gun in hafta
-        for tarif_adlari in gun["ogunler"].values()
-        for ad in tarif_adlari
-    })
-    secilen_tarif = st.selectbox("Tarif", ay_ici_tarifler, key="yillik_menu_tarife_git")
-    st.page_link(
-        "pages/5_Tarif_Kutuphanesi.py", label="Tarif Kütüphanesi'nde aç",
-        query_params={"tarif": secilen_tarif},
-    )
+        _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, kayitli_hedefler)

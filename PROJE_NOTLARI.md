@@ -1183,3 +1183,26 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   bir seçim kutusu + `st.page_link("pages/5_Tarif_Kutuphanesi.py",
   query_params={"tarif": secilen_tarif})` ile Tarif Kütüphanesi'ne
   doğru tarifle giden resmi bir link butonu.
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Tarif Linki NİHAİ Çözüm — Kart Gerçek Widget'lara Çevrildi
+- Kullanıcı kendi hatasını buldu: URL'ler aslında doğru değişiyormuş
+  (Tarif Kütüphanesi gerçekten `/tarif-kutuphanesi` adresine gidiyor,
+  önceki "hiç değişmiyor" gözlemi bir test hatasıymış). Bu, `st.page_link`
+  yönteminin doğru olduğunu kesinleştirdi.
+- **Kullanıcı "Bir tarifin detayına git" ayrı seçicisini istemedi**,
+  doğrudan yemek isimlerine tıklama deneyimini istedi. Bunun için kart
+  görünümü (`_hafta_kart_izgarasi_html`, tek dev HTML string döndüren
+  fonksiyon) TAMAMEN kaldırıldı, yerine `_hafta_kartlarini_goster` —
+  gerçek Streamlit widget'larıyla (st.columns + st.container(border=True)
+  + st.page_link) doğrudan ekrana çizen bir fonksiyon geldi. Artık her
+  yemek adı gerçek bir `st.page_link(..., query_params={"tarif": ad})`
+  çağrısı, kart görünümü korundu (border=True container).
+- **Bilinen görsel ödün:** Eski HTML sürümünde her yemeğin önünde
+  grup rengine göre bir nokta (●) vardı (kırmızı/yeşil/teal). `st.page_link`
+  kendi görünümünü kullandığı için bu renkli nokta artık yok — üstteki
+  "Ana Yemek/Yardımcı Yemek/Tamamlayıcılar" renk lejantı hâlâ duruyor,
+  ama satır satır renk eşleşmesi kayboldu. Kullanıcı bunu fark ederse
+  ayrıca ele alınabilir (ör. st.page_link'in icon parametresiyle emoji
+  DIŞI bir işaretleme denenebilir).
+- Önceki geçici "Bir tarifin detayına git" bölümü kaldırıldı (artık
+  gereksiz).
