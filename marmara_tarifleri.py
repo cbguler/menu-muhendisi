@@ -14,9 +14,11 @@ MARMARA_TARIFLERI = [
      "etiketler": ["kirmizi_et"], "hazirlik_dakika": 40,
      "malzemeler": [
         {"ad": "DANA BİFTEK", "miktar_gram": 130},
+        {"ad": "PİDE", "miktar_gram": 100},
         {"ad": "YOĞURT (TAM)", "miktar_gram": 60},
         {"ad": "KONSERVE DOMATES SALÇASI", "miktar_gram": 20},
         {"ad": "TEREYAĞI", "miktar_gram": 15},
+        {"ad": "KORNİŞON TURŞU", "miktar_gram": 20},
      ]},
     {"ad": "Hünkar Beğendi", "grup": 1, "mevsim_etiketi": "yaz",
      "etiketler": ["etli_sebze"], "hazirlik_dakika": 55,

@@ -1275,3 +1275,16 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
 - Nadir bir durumda (3 yemeğin hepsi aynı anda çok uzun isimliyse) kutu
   taşabilir, bu durumda o kutu kendi içinde kayar (hizalama bozulmaz,
   sadece o kutuda küçük bir kaydırma çubuğu görünür).
+
+### 3 Ağustos 2026 — VII. Oturum (devam): İskender Kebap'ta Pide ve Kornişon Turşu Eksikliği
+- Kullanıcı "İskender Kebap"ta pide (etin altına serilen) hiç olmadığını
+  fark etti — kontrol edilince doğrulandı (sadece dana biftek, yoğurt,
+  salça, tereyağı vardı). Kornişon turşu (geleneksel servis garnitürü)
+  de eksikti. İkisi de kataloğa hiç girmemiş.
+- `34_pide_kornison_ekle.sql`: PİDE (kategori 8, Gluten alerjeni) ve
+  KORNİŞON TURŞU (kategori 2) eklendi.
+- `35_iskender_duzelt_ve_fiyat_doldur.sql`: mevcut "İskender Kebap"
+  tarifine PİDE (100g) ve KORNİŞON TURŞU (20g) eklendi + mevcut
+  işletmelere geriye dönük fiyat dolduruldu.
+- `marmara_tarifleri.py` güncellendi (gelecekteki sıfırdan kurulumlar
+  için tutarlılık).
