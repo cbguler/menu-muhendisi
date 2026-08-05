@@ -358,14 +358,9 @@ def _hedefte_mi(ogun_adi, t, hedefler):
     return True
 
 
-def _tahmini_satir_sayisi(tarif_adlari, karakter_per_satir=13):
-    """Bir yemek listesinin kabaca kac satir kaplayacagini tahmin eder
-    (dar sutun genisliginde, kelimeler cogunlukla kendi satirina dusuyor).
-    Piksel-kusursuz degil -- sadece 7 gunluk siradaki kartlarin Ogle/Aksam
-    baslangic hizasini ve alt sinirini yaklasik esitlemek icin bir
-    tahmindir."""
-    import math
-    return sum(max(1, math.ceil(len(ad) / karakter_per_satir)) for ad in tarif_adlari)
+DISH_KUTU_YUKSEKLIK = 220  # 3 yemek adi icin sabit yukseklik (kutuphanedeki en uzun
+                            # isim -- 41 karakter -- dahil, tasma olursa kutu kaydirilir)
+BILGI_KUTU_YUKSEKLIK = 150  # kcal/alerjen/maliyet/hedef bilgi bloğu icin sabit yukseklik
 
 
 def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler):
@@ -373,12 +368,17 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler):
     string DEGIL) -- boylece her yemek adi st.page_link ile Tarif
     Kutuphanesi'ne tiklanabilir olur (resmi/desteklenen navigasyon
     yontemi; ham <a href> linkleri Streamlit'te bilinen sekilde
-    guvenilmezdir). Kart gorunumu st.container(border=True) ile korunur."""
+    guvenilmezdir). Kart gorunumu st.container(border=True) ile korunur.
+
+    Ogle/Aksam bolumlerinin TUM gunlerde (ve TUM haftalarda) ayni hizada
+    baslamasi ve kartlarin ayni boyutta olmasi icin, yemek adlari ve bilgi
+    bloklari SABIT yukseklikli kutulara (st.container(height=...)) alindi
+    -- bu, karakter sayisina dayali tahminden cok daha guvenilir: yukseklik
+    kutuphanedeki EN UZUN ismi (41 karakter) kapsayacak sekilde ayarlandi,
+    tasma olursa (cok nadir) kutu kendi ici kaydirilir, hizalama bozulmaz."""
     # st.page_link varsayilan olarak metni tek satirda kirpiyor (uzun
     # tarif isimleri sigmayinca "..." ile kesiliyor) -- bunu alt satira
-    # kaydiracak sekilde zorluyoruz. NOT: data-testid secici Streamlit'in
-    # standart adlandirma kalibiyle tutarli ama garantili degil; tutmazsa
-    # farkli bir yaklasima geceriz.
+    # kaydiracak sekilde zorluyoruz.
     st.markdown(
         "<style>"
         "[data-testid='stPageLink'] p { white-space: normal !important; "
@@ -387,19 +387,8 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler):
         unsafe_allow_html=True,
     )
 
-    SATIR_YUKSEKLIGI_PX = 26  # tek bir yemek adi satirinin kabaca yuksekligi
-
-    # Ogle/Aksam basliklarinin 7 gun boyunca ayni hizada baslamasi icin,
-    # once TUM gunlerin tahmini satir sayisini hesaplayip en uzununu buluyoruz.
-    ogle_satir_by_gun = [_tahmini_satir_sayisi(gun["ogunler"].get("Öğle", [])) for gun in hafta]
-    aksam_satir_by_gun = [_tahmini_satir_sayisi(gun["ogunler"].get("Akşam", [])) for gun in hafta]
-    maks_ogle_satir = max(ogle_satir_by_gun) if ogle_satir_by_gun else 0
-    maks_aksam_satir = max(aksam_satir_by_gun) if aksam_satir_by_gun else 0
-
     kolonlar = st.columns(len(hafta), gap="small")
-    for kolon, gun, ogle_satir, aksam_satir in zip(
-        kolonlar, hafta, ogle_satir_by_gun, aksam_satir_by_gun
-    ):
+    for kolon, gun in zip(kolonlar, hafta):
         with kolon:
             with st.container(border=True):
                 st.markdown(f"**Gün {gun['gun']}**")
@@ -408,44 +397,37 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler):
                         st.write("")
                         st.write("")
                     st.markdown(f"**{ogun_adi.upper()}**")
-                    for ad in tarif_adlari:
-                        st.page_link(
-                            "pages/5_Tarif_Kutuphanesi.py", label=ad,
-                            query_params={"tarif": ad}, use_container_width=True,
-                        )
+
+                    with st.container(height=DISH_KUTU_YUKSEKLIK):
+                        for ad in tarif_adlari:
+                            st.page_link(
+                                "pages/5_Tarif_Kutuphanesi.py", label=ad,
+                                query_params={"tarif": ad}, use_container_width=True,
+                            )
 
                     t = _ogun_toplami(tarif_adlari, detay)
-                    gi_metin = f"{round(t['gi'])}" if t["gi"] is not None else "-"
-                    st.caption(
-                        f"{round(t['kalori'])} kcal · P{round(t['protein'])}g · "
-                        f"Y{round(t['yag'])}g · K{round(t['karbonhidrat'])}g · Gİ{gi_metin}"
-                    )
-                    alerjen_metin = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
-                    st.caption(f"Alerjen: {alerjen_metin}")
-
-                    if not fiyat_verisi_var:
-                        st.caption("Maliyet: -")
-                    elif t["tam_fiyatli"]:
-                        st.caption(f"Maliyet: {t['maliyet_eur']:.2f} €")
-                    else:
-                        eksik_liste = ", ".join(sorted(t["eksik_malzemeler"]))
-                        st.caption(f"Maliyet: ≈{t['maliyet_eur']:.2f} € (eksik fiyat: {eksik_liste})")
-
-                    hedefte = _hedefte_mi(ogun_adi, t, hedefler)
-                    if hedefte is True:
-                        st.caption(":green[Hedefte]")
-                    elif hedefte is False:
-                        st.caption(":orange[Hedef dışı]")
-
-                    # Bu gunun bu ogunu, 7 gun icindeki en uzun ogunden kisaysa,
-                    # farki bosluk olarak ekleyip Aksam basligini/kart altini hizala.
-                    kendi_satir = ogle_satir if ogun_adi == "Öğle" else aksam_satir
-                    maks_satir = maks_ogle_satir if ogun_adi == "Öğle" else maks_aksam_satir
-                    fark_px = (maks_satir - kendi_satir) * SATIR_YUKSEKLIGI_PX
-                    if fark_px > 0:
-                        st.markdown(
-                            f"<div style='height:{fark_px}px;'></div>", unsafe_allow_html=True,
+                    with st.container(height=BILGI_KUTU_YUKSEKLIK):
+                        gi_metin = f"{round(t['gi'])}" if t["gi"] is not None else "-"
+                        st.caption(
+                            f"{round(t['kalori'])} kcal · P{round(t['protein'])}g · "
+                            f"Y{round(t['yag'])}g · K{round(t['karbonhidrat'])}g · Gİ{gi_metin}"
                         )
+                        alerjen_metin = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
+                        st.caption(f"Alerjen: {alerjen_metin}")
+
+                        if not fiyat_verisi_var:
+                            st.caption("Maliyet: -")
+                        elif t["tam_fiyatli"]:
+                            st.caption(f"Maliyet: {t['maliyet_eur']:.2f} €")
+                        else:
+                            eksik_liste = ", ".join(sorted(t["eksik_malzemeler"]))
+                            st.caption(f"Maliyet: ≈{t['maliyet_eur']:.2f} € (eksik fiyat: {eksik_liste})")
+
+                        hedefte = _hedefte_mi(ogun_adi, t, hedefler)
+                        if hedefte is True:
+                            st.caption(":green[Hedefte]")
+                        elif hedefte is False:
+                            st.caption(":orange[Hedef dışı]")
 
 
 def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):

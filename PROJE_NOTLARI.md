@@ -1256,3 +1256,22 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   **Bu piksel-kusursuz bir çözüm DEĞİL** — kelime sınırlarına göre
   gerçek satır kırılması karakter sayısıyla tam örtüşmeyebilir,
   kalibrasyon (13) gerçek sonuçlara göre ince ayar gerektirebilir.
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Kart Hizalama — Sabit Yükseklik Yöntemine Geçildi
+- Karakter-sayısına dayalı tahmin yöntemi Akşam'ı hizalayamadı ("eksik
+  fiyat" gibi değişken uzunluklu satırları hesaba katmıyordu) ve kart
+  altlarını da eşitlemiyordu.
+- **Çok daha sağlam bir yönteme geçildi: sabit yükseklikli kutular**
+  (`st.container(height=...)`, Streamlit'in resmi/stabil bir özelliği,
+  tahmin değil). Kütüphanedeki EN UZUN tarif adı (241 tarif arasında,
+  41 karakter: "Van Usulü Kahvaltı Tabağı (Otlu Peynirli)") programatik
+  olarak bulundu ve yemek adları kutusu (`DISH_KUTU_YUKSEKLIK=220px`)
+  bunu kapsayacak şekilde ayarlandı; bilgi bloğu (kcal/alerjen/maliyet/
+  hedef) için de sabit bir yükseklik (`BILGI_KUTU_YUKSEKLIK=150px`)
+  verildi. Artık HER kartın toplam yüksekliği, içerikten bağımsız olarak
+  HER ZAMAN aynı — bu da Öğle/Akşam hizasını VE kart alt sınırlarını
+  otomatik olarak eşitliyor (haftadan haftaya da tutarlı, önceki
+  yöntemde olmayan bir garanti).
+- Nadir bir durumda (3 yemeğin hepsi aynı anda çok uzun isimliyse) kutu
+  taşabilir, bu durumda o kutu kendi içinde kayar (hizalama bozulmaz,
+  sadece o kutuda küçük bir kaydırma çubuğu görünür).
