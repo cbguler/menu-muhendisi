@@ -3,3 +3,4 @@ supabase>=2.6
 extra-streamlit-components>=0.1.60
 cryptography>=42
 openpyxl>=3.1
+starlette<1.4

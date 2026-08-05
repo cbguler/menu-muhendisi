@@ -1206,3 +1206,14 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   DIŞI bir işaretleme denenebilir).
 - Önceki geçici "Bir tarifin detayına git" bölümü kaldırıldı (artık
   gereksiz).
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Reboot Sonrası Çökme — starlette Bağımlılık Sürüm Uyumsuzluğu
+- Reboot sonrası "Oh no" hatası — kodla İLGİSİZ, saf bağımlılık sürüm
+  kaymasi (dependency drift). Log: `TypeError: GZipResponder.__init__()
+  missing 1 required keyword-only argument: 'thread_minimum_size'`,
+  Streamlit'in KENDİ dahili `starlette_gzip_middleware.py` dosyasında
+  (app.py hiç çalışmadan, sunucu seviyesinde) oluşuyordu. `starlette`
+  kütüphanesi requirements.txt'te hiç sabitlenmemişti — yeni bir sürüm
+  (1.4.0) yayınlanmış, API'sini değiştirmiş, Streamlit 1.61.0'ın dahili
+  kodu buna henüz uyumlu değildi. `requirements.txt`'e `starlette<1.4`
+  eklendi (önceki çalışan deploy'da `starlette==1.3.1` kullanılıyordu).
