@@ -18,8 +18,9 @@ from supabase import create_client
 from asamalar_parti1 import ASAMALAR as ASAMALAR_1
 from asamalar_parti2 import ASAMALAR as ASAMALAR_2
 from asamalar_parti3 import ASAMALAR as ASAMALAR_3
+from asamalar_marmara import ASAMALAR as ASAMALAR_MARMARA
 
-ASAMALAR = {**ASAMALAR_1, **ASAMALAR_2, **ASAMALAR_3}
+ASAMALAR = {**ASAMALAR_1, **ASAMALAR_2, **ASAMALAR_3, **ASAMALAR_MARMARA}
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL") or input("SUPABASE_URL: ").strip()
 SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or input(

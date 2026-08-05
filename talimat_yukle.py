@@ -16,8 +16,9 @@ from supabase import create_client
 
 from talimatlar_parti1 import TALIMATLAR as TALIMATLAR_PARTI1
 from talimatlar_parti2 import TALIMATLAR as TALIMATLAR_PARTI2
+from talimatlar_marmara import TALIMATLAR as TALIMATLAR_MARMARA
 
-TALIMATLAR = {**TALIMATLAR_PARTI1, **TALIMATLAR_PARTI2}
+TALIMATLAR = {**TALIMATLAR_PARTI1, **TALIMATLAR_PARTI2, **TALIMATLAR_MARMARA}
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL") or input("SUPABASE_URL: ").strip()
 SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or input(
