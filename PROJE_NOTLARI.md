@@ -1135,3 +1135,12 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   aşaması (165 dk toplam) artık sadece 6 dk aktif işçilik sayıyor;
   Karnıyarık'ın "Montaj ve Fırınlama" aşaması (22 dk toplam) 4 dk aktif
   sayıyor. Yeni işçilik: Kuzu Tandır için ~31 dk (önceden 190 dk).
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Tarif Linkleri Düzeltildi (Göreli → Mutlak Yol)
+- Kullanıcı Yıllık Menü'deki yemek linklerinin "saçma sapan yerlere"
+  yönlendirdiğini bildirdi. Kök neden: link göreli (relative) yazılmıştı
+  (`tarif-kutuphanesi?tarif=...`) — tarayıcı bunu şu anki sayfanın
+  ALTINDA bir alt yol gibi yorumluyordu, site kökünden bağımsız değil.
+  Başına `/` eklenerek mutlak yola (`/tarif-kutuphanesi?tarif=...`)
+  çevrildi — artık hangi sayfadan tıklanırsa tıklansın doğru,
+  kök-göreli adrese gidiyor.

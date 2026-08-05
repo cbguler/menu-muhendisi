@@ -367,7 +367,7 @@ def _hafta_kart_izgarasi_html(hafta, detay, fiyat_verisi_var, hedefler):
             satirlar = "".join(
                 f"<div style='margin-left:6px;'>"
                 f"<span style='color:{RENKLER[i + 1]};'>●</span> "
-                f"<a href='tarif-kutuphanesi?tarif={urllib.parse.quote(ad)}' "
+                f"<a href='/tarif-kutuphanesi?tarif={urllib.parse.quote(ad)}' "
                 f"target='_self' style='color:inherit; text-decoration:underline;'>{ad}</a></div>"
                 for i, ad in enumerate(tarif_adlari)
             )
