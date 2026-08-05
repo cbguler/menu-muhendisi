@@ -1243,3 +1243,16 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   kalan boşluk azaltıldı). NOT: bu seçiciler (`stSidebar`,
   `stMainBlockContainer`) otomatik üretilen sınıflara göre çok daha
   stabil ama yine de garantili değil.
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Öğle/Akşam Başlıkları + Yaklaşık Satır Hizalama
+- **Öğle/Akşam artık büyük harf + kalın**, aralarında 2 satır boşluk
+  (`st.write("")` x2).
+- **7 günlük kartların Öğle/Akşam hizası ve alt sınırı yaklaşık
+  eşitlendi:** Streamlit'te render-sonrası gerçek piksel yüksekliği
+  ölçmek mümkün olmadığı için, her günün Öğle/Akşam yemek adlarının
+  TOPLAM KARAKTER uzunluğuna göre kaç satır kaplayacağı tahmin ediliyor
+  (`_tahmini_satir_sayisi`, ~13 karakter/satır kalibrasyonu), 7 gün
+  içindeki en uzun tahmine göre kısa kalan günlere boş alan ekleniyor.
+  **Bu piksel-kusursuz bir çözüm DEĞİL** — kelime sınırlarına göre
+  gerçek satır kırılması karakter sayısıyla tam örtüşmeyebilir,
+  kalibrasyon (13) gerçek sonuçlara göre ince ayar gerektirebilir.

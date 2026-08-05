@@ -358,6 +358,16 @@ def _hedefte_mi(ogun_adi, t, hedefler):
     return True
 
 
+def _tahmini_satir_sayisi(tarif_adlari, karakter_per_satir=13):
+    """Bir yemek listesinin kabaca kac satir kaplayacagini tahmin eder
+    (dar sutun genisliginde, kelimeler cogunlukla kendi satirina dusuyor).
+    Piksel-kusursuz degil -- sadece 7 gunluk siradaki kartlarin Ogle/Aksam
+    baslangic hizasini ve alt sinirini yaklasik esitlemek icin bir
+    tahmindir."""
+    import math
+    return sum(max(1, math.ceil(len(ad) / karakter_per_satir)) for ad in tarif_adlari)
+
+
 def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler):
     """Haftayi ekrana GERCEK Streamlit widget'lariyla render eder (ham HTML
     string DEGIL) -- boylece her yemek adi st.page_link ile Tarif
@@ -376,13 +386,28 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler):
         "</style>",
         unsafe_allow_html=True,
     )
+
+    SATIR_YUKSEKLIGI_PX = 26  # tek bir yemek adi satirinin kabaca yuksekligi
+
+    # Ogle/Aksam basliklarinin 7 gun boyunca ayni hizada baslamasi icin,
+    # once TUM gunlerin tahmini satir sayisini hesaplayip en uzununu buluyoruz.
+    ogle_satir_by_gun = [_tahmini_satir_sayisi(gun["ogunler"].get("Öğle", [])) for gun in hafta]
+    aksam_satir_by_gun = [_tahmini_satir_sayisi(gun["ogunler"].get("Akşam", [])) for gun in hafta]
+    maks_ogle_satir = max(ogle_satir_by_gun) if ogle_satir_by_gun else 0
+    maks_aksam_satir = max(aksam_satir_by_gun) if aksam_satir_by_gun else 0
+
     kolonlar = st.columns(len(hafta), gap="small")
-    for kolon, gun in zip(kolonlar, hafta):
+    for kolon, gun, ogle_satir, aksam_satir in zip(
+        kolonlar, hafta, ogle_satir_by_gun, aksam_satir_by_gun
+    ):
         with kolon:
             with st.container(border=True):
                 st.markdown(f"**Gün {gun['gun']}**")
-                for ogun_adi, tarif_adlari in gun["ogunler"].items():
-                    st.markdown(f"*{ogun_adi}*")
+                for i, (ogun_adi, tarif_adlari) in enumerate(gun["ogunler"].items()):
+                    if i > 0:
+                        st.write("")
+                        st.write("")
+                    st.markdown(f"**{ogun_adi.upper()}**")
                     for ad in tarif_adlari:
                         st.page_link(
                             "pages/5_Tarif_Kutuphanesi.py", label=ad,
@@ -411,6 +436,16 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler):
                         st.caption(":green[Hedefte]")
                     elif hedefte is False:
                         st.caption(":orange[Hedef dışı]")
+
+                    # Bu gunun bu ogunu, 7 gun icindeki en uzun ogunden kisaysa,
+                    # farki bosluk olarak ekleyip Aksam basligini/kart altini hizala.
+                    kendi_satir = ogle_satir if ogun_adi == "Öğle" else aksam_satir
+                    maks_satir = maks_ogle_satir if ogun_adi == "Öğle" else maks_aksam_satir
+                    fark_px = (maks_satir - kendi_satir) * SATIR_YUKSEKLIGI_PX
+                    if fark_px > 0:
+                        st.markdown(
+                            f"<div style='height:{fark_px}px;'></div>", unsafe_allow_html=True,
+                        )
 
 
 def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
