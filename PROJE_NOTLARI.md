@@ -1166,3 +1166,20 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
 - **Sıradaki adım:** II./III. Grup (çorba/pilav/börek/tatlı, ~45 tarif)
   ve ardından 166 bölgesel tarif için hem pişirme talimatı hem aşama
   verisi kademeli olarak eklenecek.
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Tarif Linki Kökten Düzeltildi (st.page_link)
+- **Gerçek kök neden bulundu:** Streamlit'in resmi forum/GitHub kayıtları,
+  ham HTML (`<a href>`) linkleriyle alt sayfaya gitmenin BİRDEN FAZLA
+  sürümde bilinen, kırılgan bir yöntem olduğunu gösteriyor (Streamlit'i
+  "takılı döngüye" sokabiliyor) — benim iki denemem (göreli/mutlak yol)
+  de bu yüzden işe yaramadı, sorun yol formatı değil, YÖNTEMİN KENDİSİYDİ.
+  Resmi/desteklenen mekanizma `st.page_link()` ve onun `query_params`
+  parametresi.
+- **Çözüm:** Kart içine gömülü ham HTML linkleri tamamen kaldırıldı
+  (`st.page_link` gerçek bir widget olduğu için tek bir HTML string
+  bloğu içine gömülemiyor, kart tasarımını bozmadan içine koyulamaz).
+  Bunun yerine, üretilen ayın altına AYRI, güvenilir bir "Bir tarifin
+  detayına git" bölümü eklendi: o ayda geçen tüm tariflerin listelendiği
+  bir seçim kutusu + `st.page_link("pages/5_Tarif_Kutuphanesi.py",
+  query_params={"tarif": secilen_tarif})` ile Tarif Kütüphanesi'ne
+  doğru tarifle giden resmi bir link butonu.

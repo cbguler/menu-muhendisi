@@ -7,7 +7,6 @@
 
 import io
 import random
-import urllib.parse
 
 import streamlit as st
 from openpyxl import Workbook
@@ -366,9 +365,7 @@ def _hafta_kart_izgarasi_html(hafta, detay, fiyat_verisi_var, hedefler):
         for ogun_adi, tarif_adlari in gun["ogunler"].items():
             satirlar = "".join(
                 f"<div style='margin-left:6px;'>"
-                f"<span style='color:{RENKLER[i + 1]};'>●</span> "
-                f"<a href='/tarif-kutuphanesi?tarif={urllib.parse.quote(ad)}' "
-                f"target='_self' style='color:inherit; text-decoration:underline;'>{ad}</a></div>"
+                f"<span style='color:{RENKLER[i + 1]};'>●</span> {ad}</div>"
                 for i, ad in enumerate(tarif_adlari)
             )
 
@@ -540,3 +537,22 @@ if aylik:
             _hafta_kart_izgarasi_html(hafta, detay, fiyat_verisi_var, kayitli_hedefler),
             unsafe_allow_html=True,
         )
+
+    st.divider()
+    st.write("**Bir tarifin detayına git**")
+    st.caption(
+        "Yukarıdaki menüde geçen tariflerden birini seçip Tarif Kütüphanesi'nde "
+        "(malzeme/besin/maliyet/hazırlık talimatı) açabilirsin."
+    )
+    ay_ici_tarifler = sorted({
+        ad
+        for hafta in aylik["haftalar"]
+        for gun in hafta
+        for tarif_adlari in gun["ogunler"].values()
+        for ad in tarif_adlari
+    })
+    secilen_tarif = st.selectbox("Tarif", ay_ici_tarifler, key="yillik_menu_tarife_git")
+    st.page_link(
+        "pages/5_Tarif_Kutuphanesi.py", label="Tarif Kütüphanesi'nde aç",
+        query_params={"tarif": secilen_tarif},
+    )
