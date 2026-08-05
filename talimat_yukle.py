@@ -1,17 +1,23 @@
 # talimat_yukle.py
 #
-# TEKRAR TEKRAR KULLANILABILIR script: bir TALIMATLAR sozlugunu
+# TEKRAR TEKRAR KULLANILABILIR script: TALIMATLAR sozluklerini
 # ({tarif_adi: talimat_metni}) isme gore recete_id bularak
 # receteler.hazirlik_talimati alanina UPDATE eder. Idempotent -- ayni
 # tarif icin tekrar calistirilirsa sadece metni gunceller, hata vermez.
 #
-# Kullanim: asagidaki import satirini yeni partiye gore degistir.
+# Artik parti1 (I. Grup, 30 tarif) + parti2 (II./III. Grup, 44 tarif)
+# birlikte yukleniyor. Gelecekteki partiler icin: yeni bir
+# talimatlar_partiN.py yaz, asagidaki import ve TALIMATLAR birlestirme
+# satirina ekle.
 
 import os
 
 from supabase import create_client
 
-from talimatlar_parti1 import TALIMATLAR
+from talimatlar_parti1 import TALIMATLAR as TALIMATLAR_PARTI1
+from talimatlar_parti2 import TALIMATLAR as TALIMATLAR_PARTI2
+
+TALIMATLAR = {**TALIMATLAR_PARTI1, **TALIMATLAR_PARTI2}
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL") or input("SUPABASE_URL: ").strip()
 SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or input(
