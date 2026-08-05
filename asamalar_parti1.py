@@ -41,7 +41,7 @@ ASAMALAR = {
          "enerji_kaynagi": "dogalgaz", "baslangic_sicaklik": 20, "hedef_sicaklik": 150,
          "verimlilik_orani": 0.5, "malzemeler": ["SIĞIR KIYMA", "KURU SOĞAN", "DOMATES"],
          "bagimli": ["Hazırlık"]},  # Patlıcan Kızartma İLE PARALEL -- ona bağımlı DEĞİL
-        {"ad": "Montaj ve Fırınlama", "sira": 3, "sure_dakika": 22, "isil_islem_mi": True,
+        {"ad": "Montaj ve Fırınlama", "sira": 3, "sure_dakika": 22, "aktif_dakika": 4, "isil_islem_mi": True,
          "enerji_kaynagi": "elektrik", "baslangic_sicaklik": 20, "hedef_sicaklik": 180,
          "verimlilik_orani": 0.6, "malzemeler": ["PATLICAN", "SIĞIR KIYMA"],
          "bagimli": ["Patlıcan Kızartma", "Kıyma Harcı"]},
@@ -49,7 +49,7 @@ ASAMALAR = {
     "Kuzu Tandır": [
         {"ad": "Hazırlık", "sira": 1, "sure_dakika": 10, "isil_islem_mi": False,
          "malzemeler": [], "bagimli": []},
-        {"ad": "Ağır Ateş Fırınlama", "sira": 2, "sure_dakika": 165, "isil_islem_mi": True,
+        {"ad": "Ağır Ateş Fırınlama", "sira": 2, "sure_dakika": 165, "aktif_dakika": 6, "isil_islem_mi": True,
          "enerji_kaynagi": "elektrik", "baslangic_sicaklik": 20, "hedef_sicaklik": 155,
          "verimlilik_orani": 0.55, "malzemeler": ["KUZU TANDIR"], "bagimli": ["Hazırlık"]},
         {"ad": "Kızartma", "sira": 3, "sure_dakika": 15, "isil_islem_mi": True,

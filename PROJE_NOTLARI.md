@@ -1111,3 +1111,27 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   Tarif Kütüphanesi sayfası açılışta `st.query_params`'tan "tarif"
   değerini okuyup, varsa o tarifi otomatik seçili getiriyor (yoksa
   normal ilk sıradaki tarife düşüyor, hata vermiyor).
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Aktif/Pasif İşçilik Ayrımı + Genel Gider Geçici Kaldırma
+- Kullanıcı Kuzu Tandır'da işçilik 15,83€ (aşırı yüksek), enerji 0,00€
+  (Q=mcΔT formülünün uzun ısıl işlemlerde ekipman ısı kaybını
+  hesaba katmaması yüzünden) ve genel gider bulgularını doğru tespit
+  etti — üçü de gerçek sorun.
+- **Genel gider payı Tarif Kütüphanesi'nden ŞİMDİLİK tamamen çıkarıldı**
+  (kullanıcı kararı) — sadece malzeme+enerji+işçilik gösteriliyor.
+- **Aktif/pasif işçilik ayrımı eklendi** (kullanıcı kararı, küçük şema
+  değişikliği): `recete_asamalari`'ye `aktif_dakika` sütunu eklendi
+  (`33_aktif_dakika_ekle.sql`). NULL = eski davranış (sure_dakika ile
+  aynı, GERİYE UYUMLU — mevcut kullanıcı reçeteleri bozulmadan çalışmaya
+  devam eder). `asama_iscilik_maliyeti` view'i `coalesce(aktif_dakika,
+  sure_dakika)` kullanacak şekilde güncellendi (hem kendi reçeteler hem
+  kütüphane tarifleri için ortak).
+- **`4_Uretim_Asamalari.py`'ye de aynı özellik eklendi** (kullanıcının
+  kendi tarifleri için de kullanılabilir): "Bu aşamanın büyük kısmı
+  pasif" onay kutusu + "gerçek aktif işçilik süresi" girişi. Ayrıca bu
+  dosyada fark edilen bir emoji (🔥, ısıl işlem satırında) kalıcı kurala
+  aykırı olduğu için temizlendi.
+- **Pilot 3 tarifte düzeltme:** Kuzu Tandır'ın "Ağır Ateş Fırınlama"
+  aşaması (165 dk toplam) artık sadece 6 dk aktif işçilik sayıyor;
+  Karnıyarık'ın "Montaj ve Fırınlama" aşaması (22 dk toplam) 4 dk aktif
+  sayıyor. Yeni işçilik: Kuzu Tandır için ~31 dk (önceden 190 dk).

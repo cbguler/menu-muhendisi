@@ -149,12 +149,15 @@ else:
         ) or "yok (baştan başlayabilir)"
 
         isil = (
-            f"🔥 {a['baslangic_sicaklik']}°C → {a['hedef_sicaklik']}°C ({a['enerji_kaynagi']})"
+            f"{a['baslangic_sicaklik']}°C → {a['hedef_sicaklik']}°C ({a['enerji_kaynagi']})"
             if a["isil_islem_mi"]
             else "—"
         )
+        sure_metni = f"{a['sure_dakika']:.0f} dk"
+        if a.get("aktif_dakika") is not None and a["aktif_dakika"] != a["sure_dakika"]:
+            sure_metni += f" (aktif işçilik: {a['aktif_dakika']:.0f} dk)"
         st.markdown(
-            f"**{a['sira']}. {a['ad']}** ({a['sure_dakika']:.0f} dk) — "
+            f"**{a['sira']}. {a['ad']}** ({sure_metni}) — "
             f"Malzeme: {kullanilan} — Isıl işlem: {isil} — Bağımlı olduğu: {bagimlilik_metni}"
         )
         if st.button("Sil", key=f"asama_sil_{a['id']}"):
@@ -171,7 +174,24 @@ with st.form("yeni_asama_formu", clear_on_submit=True):
     c1, c2, c3 = st.columns(3)
     ad = c1.text_input("Aşama adı (ör. 'Sebzeleri haşla')")
     sira = c2.number_input("Sıra", min_value=1, value=len(asamalar) + 1, step=1)
-    sure_dakika = c3.number_input("Süre (dakika)", min_value=0.0, value=10.0, step=1.0)
+    sure_dakika = c3.number_input(
+        "Toplam süre (dakika)", min_value=0.0, value=10.0, step=1.0,
+        help="Bu aşamanın başlangıcından bitişine geçen GERÇEK süre "
+        "(kritik yol/toplam üretim süresi hesabında kullanılır).",
+    )
+
+    pasif_asama_mi = st.checkbox(
+        "Bu aşamanın büyük kısmı pasif (fırın/haşlama/bekletme gibi, personel "
+        "sürekli meşgul değil)",
+    )
+    aktif_dakika = None
+    if pasif_asama_mi:
+        aktif_dakika = st.number_input(
+            "Bu aşamada personelin GERÇEKTEN meşgul olduğu süre (dakika)",
+            min_value=0.0, value=min(5.0, sure_dakika), step=1.0,
+            help="Sadece işçilik maliyeti hesabında kullanılır (ör. periyodik "
+            "kontrol). Toplam süre yukarıdaki değeri kullanmaya devam eder.",
+        )
 
     isil_islem_mi = st.checkbox("Isıl işlem içerir (pişirme/haşlama/kızartma vb.)")
     enerji_kaynagi = baslangic_sicaklik = hedef_sicaklik = verimlilik = None
@@ -203,6 +223,7 @@ with st.form("yeni_asama_formu", clear_on_submit=True):
                         "ad": ad.strip(),
                         "sira": int(sira),
                         "sure_dakika": sure_dakika,
+                        "aktif_dakika": aktif_dakika,
                         "isil_islem_mi": isil_islem_mi,
                         "enerji_kaynagi": enerji_kaynagi,
                         "baslangic_sicaklik": baslangic_sicaklik,

@@ -217,7 +217,7 @@ with sutun_bilgi:
 def _uretim_asamalarini_getir(recete_id):
     asamalar = (
         supabase.table("recete_asamalari")
-        .select("id, ad, sira, sure_dakika, isil_islem_mi, enerji_kaynagi, baslangic_sicaklik, hedef_sicaklik, verimlilik_orani")
+        .select("id, ad, sira, sure_dakika, aktif_dakika, isil_islem_mi, enerji_kaynagi, baslangic_sicaklik, hedef_sicaklik, verimlilik_orani")
         .eq("recete_id", recete_id)
         .order("sira")
         .execute()
@@ -279,7 +279,7 @@ def _gercek_maliyet_hesapla(asamalar, ayarlar, porsiyon):
     enerji_eur = 0.0
     iscilik_dk = 0.0
     for a in asamalar:
-        iscilik_dk += a["sure_dakika"]
+        iscilik_dk += a["aktif_dakika"] if a["aktif_dakika"] is not None else a["sure_dakika"]
         if a["isil_islem_mi"] and a["agirlikli_ozgul_isi"] and a["isitilan_kutle_gram"]:
             kutle = a["isitilan_kutle_gram"] * porsiyon  # 1 porsiyon baz -> istenen porsiyona olcekle
             delta_t = a["hedef_sicaklik"] - a["baslangic_sicaklik"]
@@ -297,7 +297,7 @@ def _gercek_maliyet_hesapla(asamalar, ayarlar, porsiyon):
 
 tarif_asamalari = _uretim_asamalarini_getir(tarif["id"])
 
-st.write("**Gerçek üretim maliyeti (malzeme + enerji + işçilik + genel gider)**")
+st.write("**Gerçek üretim maliyeti (malzeme + enerji + işçilik)**")
 if not tarif_asamalari:
     st.info(
         "Bu tarif için üretim aşaması (ısıl işlem/işçilik) verisi henüz "
@@ -313,23 +313,24 @@ else:
     ayarlar = _maliyet_ayarlarini_getir(st.session_state.isletme_id)
     enerji_eur, iscilik_eur = _gercek_maliyet_hesapla(tarif_asamalari, ayarlar, porsiyon)
     malzeme_eur = tarif["maliyet_eur"] * porsiyon
-    ara_toplam = malzeme_eur + enerji_eur + iscilik_eur
-    genel_gider_eur = ara_toplam * (ayarlar["genel_gider_yuzdesi"] / 100.0)
-    toplam_eur = ara_toplam + genel_gider_eur
+    toplam_eur = malzeme_eur + enerji_eur + iscilik_eur
 
-    m1, m2, m3, m4 = st.columns(4)
+    m1, m2, m3 = st.columns(3)
     m1.metric("Malzeme", f"{malzeme_eur:.2f} €")
     m2.metric("Enerji (ısıl işlem)", f"{enerji_eur:.2f} €")
     m3.metric("İşçilik", f"{iscilik_eur:.2f} €")
-    m4.metric("Genel gider payı", f"{genel_gider_eur:.2f} €")
-    st.metric(f"**Toplam gerçek maliyet ({porsiyon} porsiyon)**", f"{toplam_eur:.2f} €")
+    st.metric(f"**Toplam ({porsiyon} porsiyon)**", f"{toplam_eur:.2f} €")
     st.caption(
-        "Enerji/işçilik oranları senin \"Üretim Aşamaları\" sayfasındaki "
-        "işletme ayarlarından okunur. Enerji hesabı Q=m·c·ΔT (duyulur ısı) "
-        "formülüne, verimlilik oranıyla düzeltilerek dayanır; işçilik "
-        "süresi paralel yapılabilirlikten etkilenmez (her aşama kendi "
-        "süresince ücretlendirilir), sadece bu sayfadaki toplam süre "
-        "özeti paralel çalışmayı dikkate alır."
+        "Genel gider payı şimdilik bu hesaba dahil edilmiyor (enerji/işçilik "
+        "rakamları henüz olgunlaşmadan genel gideri karıştırmak yanıltıcı "
+        "olur). Enerji/işçilik oranları senin \"Üretim Aşamaları\" "
+        "sayfasındaki işletme ayarlarından okunur. İşçilik, her aşamanın "
+        "\"aktif dakika\" değerini kullanır (girilmemişse aşamanın toplam "
+        "süresiyle aynı sayılır) — uzun pasif süreçlerde (fırın, bekletme) "
+        "bu ikisi kasıtlı olarak farklıdır. Enerji hesabı Q=m·c·ΔT (duyulur "
+        "ısı) formülüne dayanır ve ekipmanın kendi ısınma/ısı kaybını "
+        "hesaba katmaz — özellikle uzun ısıl işlemlerde gerçek değerin "
+        "altında kalabilir."
     )
 
 st.write("**Hazırlık talimatı**")

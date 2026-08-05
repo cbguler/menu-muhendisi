@@ -64,6 +64,8 @@ def main():
                 "sure_dakika": a["sure_dakika"],
                 "isil_islem_mi": a["isil_islem_mi"],
             }
+            if "aktif_dakika" in a:
+                satir["aktif_dakika"] = a["aktif_dakika"]
             if a["isil_islem_mi"]:
                 satir.update({
                     "enerji_kaynagi": a["enerji_kaynagi"],
