@@ -358,6 +358,10 @@ def _hedefte_mi(ogun_adi, t, hedefler):
     return True
 
 
+DISH_KUTU_YUKSEKLIK = 240  # kutuphanedeki en uzun isim + 3 yemek dahil bolca pay
+BILGI_KUTU_YUKSEKLIK = 165
+
+
 def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, hafta_no):
     """Haftayi ekrana GERCEK Streamlit widget'lariyla render eder (ham HTML
     string DEGIL) -- boylece her yemek adi st.page_link ile Tarif
@@ -365,17 +369,19 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
     yontemi; ham <a href> linkleri Streamlit'te bilinen sekilde
     guvenilmezdir).
 
-    NOT (5 Agustos 2026, ucuncu deneme): Once sabit yukseklikli container
-    (kenarlik/kaydirma cubugu sorunu) -> duz container (hizalama bozuldu)
-    -> sabit yukseklik + overflow:visible CSS (bu sefer taskan icerik bir
-    SONRAKI elemente BINDI -- overflow:visible kutunun kendi kapladigi
-    alani BUYUTMUYOR, sadece icerigi kutunun disina gorsel olarak tasiyor,
-    boylece sonraki eleman hemen ustune biniyor). Kullanici talebiyle
-    TAMAMEN CERCEVESIZ dogal akisa donuldu -- hicbir kenarlik/sabit
-    yukseklik/CSS yok, hicbir bindirme veya cerceve-icinde-cerceve riski
-    yok. Bedel: bir gunde digerlerinden fazla yemek varsa o gunun AKSAM
-    basligi ve kart yuksekligi diger gunlerden farkli hizada baslayabilir
-    (piksel-kusursuz hizalama garantisi yok)."""
+    NOT (5 Agustos 2026, dorduncu deneme): Once sabit yukseklikli container
+    (kenarlik/kaydirma sorunu) -> duz container (hizalama bozuldu) -> sabit
+    yukseklik + overflow:visible CSS (tasan icerik BIR SONRAKI elemente
+    bindi) -> tamamen cercevesiz (hizalama yok ama guvenli). Kullanici
+    AKSAM hizalamasini geri istedi -- bu sefer CSS hilesi degil,
+    st.container'in KENDI `border=False` parametresi kullanildi (Streamlit
+    surumune bagli olarak kenarligi gercekten kaldirabilir, CSS override
+    gibi yan etkisi yok). Yukseklik degerleri de (240/165) bolca pay
+    birakacak sekilde buyutuldu ki gercek tasma/kirpilma neredeyse hic
+    yasanmasin. YINE DE: eger bir gun cok uzun/coklu yemek icerirse nadir
+    durumda kirpilma veya (Streamlit surumune gore) ince bir kaydirma
+    cubugu gorulebilir -- boyle bir durum gorulurse haber verilmesi
+    gerekiyor, kesin cozulmus sayilmamali."""
     # st.page_link varsayilan olarak metni tek satirda kirpiyor (uzun
     # tarif isimleri sigmayinca "..." ile kesiliyor) -- bunu alt satira
     # kaydiracak sekilde zorluyoruz.
@@ -397,34 +403,38 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
                     st.write("")
                 st.markdown(f"**{ogun_adi.upper()}**")
 
-                for ad in tarif_adlari:
-                    st.page_link(
-                        "pages/5_Tarif_Kutuphanesi.py", label=ad,
-                        query_params={"tarif": ad}, use_container_width=True,
-                    )
+                dish_key = f"dish-box-{ay_adi}-{hafta_no}-{gun['gun']}-{ogun_adi}"
+                with st.container(height=DISH_KUTU_YUKSEKLIK, border=False, key=dish_key):
+                    for ad in tarif_adlari:
+                        st.page_link(
+                            "pages/5_Tarif_Kutuphanesi.py", label=ad,
+                            query_params={"tarif": ad}, use_container_width=True,
+                        )
 
                 t = _ogun_toplami(tarif_adlari, detay)
-                gi_metin = f"{round(t['gi'])}" if t["gi"] is not None else "-"
-                st.caption(
-                    f"{round(t['kalori'])} kcal · P{round(t['protein'])}g · "
-                    f"Y{round(t['yag'])}g · K{round(t['karbonhidrat'])}g · Gİ{gi_metin}"
-                )
-                alerjen_metin = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
-                st.caption(f"Alerjen: {alerjen_metin}")
+                info_key = f"info-box-{ay_adi}-{hafta_no}-{gun['gun']}-{ogun_adi}"
+                with st.container(height=BILGI_KUTU_YUKSEKLIK, border=False, key=info_key):
+                    gi_metin = f"{round(t['gi'])}" if t["gi"] is not None else "-"
+                    st.caption(
+                        f":blue[{round(t['kalori'])} kcal · P{round(t['protein'])}g · "
+                        f"Y{round(t['yag'])}g · K{round(t['karbonhidrat'])}g · Gİ{gi_metin}]"
+                    )
+                    alerjen_metin = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
+                    st.caption(f":blue[Alerjen: {alerjen_metin}]")
 
-                if not fiyat_verisi_var:
-                    st.caption("Maliyet: -")
-                elif t["tam_fiyatli"]:
-                    st.caption(f"Maliyet: {t['maliyet_eur']:.2f} €")
-                else:
-                    eksik_liste = ", ".join(sorted(t["eksik_malzemeler"]))
-                    st.caption(f"Maliyet: ≈{t['maliyet_eur']:.2f} € (eksik fiyat: {eksik_liste})")
+                    if not fiyat_verisi_var:
+                        st.caption(":green[Maliyet: -]")
+                    elif t["tam_fiyatli"]:
+                        st.caption(f":green[Maliyet: {t['maliyet_eur']:.2f} €]")
+                    else:
+                        eksik_liste = ", ".join(sorted(t["eksik_malzemeler"]))
+                        st.caption(f":green[Maliyet: ≈{t['maliyet_eur']:.2f} € (eksik fiyat: {eksik_liste})]")
 
-                hedefte = _hedefte_mi(ogun_adi, t, hedefler)
-                if hedefte is True:
-                    st.caption(":green[Hedefte]")
-                elif hedefte is False:
-                    st.caption(":orange[Hedef dışı]")
+                    hedefte = _hedefte_mi(ogun_adi, t, hedefler)
+                    if hedefte is True:
+                        st.caption(":green[Hedefte]")
+                    elif hedefte is False:
+                        st.caption(":orange[Hedef dışı]")
 
 
 def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
