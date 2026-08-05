@@ -17,8 +17,18 @@ from supabase import create_client
 from talimatlar_parti1 import TALIMATLAR as TALIMATLAR_PARTI1
 from talimatlar_parti2 import TALIMATLAR as TALIMATLAR_PARTI2
 from talimatlar_marmara import TALIMATLAR as TALIMATLAR_MARMARA
+from talimatlar_karadeniz import TALIMATLAR as TALIMATLAR_KARADENIZ
+from talimatlar_ege import TALIMATLAR as TALIMATLAR_EGE
+from talimatlar_akdeniz import TALIMATLAR as TALIMATLAR_AKDENIZ
+from talimatlar_dogu_anadolu import TALIMATLAR as TALIMATLAR_DOGU_ANADOLU
+from talimatlar_guneydogu import TALIMATLAR as TALIMATLAR_GUNEYDOGU
+from talimatlar_ic_anadolu import TALIMATLAR as TALIMATLAR_IC_ANADOLU
 
-TALIMATLAR = {**TALIMATLAR_PARTI1, **TALIMATLAR_PARTI2, **TALIMATLAR_MARMARA}
+TALIMATLAR = {
+    **TALIMATLAR_PARTI1, **TALIMATLAR_PARTI2, **TALIMATLAR_MARMARA,
+    **TALIMATLAR_KARADENIZ, **TALIMATLAR_EGE, **TALIMATLAR_AKDENIZ,
+    **TALIMATLAR_DOGU_ANADOLU, **TALIMATLAR_GUNEYDOGU, **TALIMATLAR_IC_ANADOLU,
+}
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL") or input("SUPABASE_URL: ").strip()
 SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or input(
