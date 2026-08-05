@@ -28,6 +28,20 @@ def sidebar_logo_goster(animasyonlu: bool = True, genislik: int = 220):
                           animasyonlu=False yapılıp geri dönülebilir)
     animasyonlu=False -> assets/logo.png (önceki, statik sürüm)
     """
+    # Sidebar'ı daralt + ana icerik alaninin sag/sol bosluklarini azalt --
+    # kullanicinin "bosluklari kullanalim" istegi. NOT: bu secicilerin
+    # (stSidebar, stMainBlockContainer) Streamlit surumler arasi kararlilik
+    # garantisi yok ama otomatik-uretilen (st-emotion-cache-...) siniflara
+    # gore cok daha stabil, yaygin kullanilan sabit isimler.
+    st.markdown(
+        "<style>"
+        "[data-testid='stSidebar'] { min-width: 260px !important; max-width: 260px !important; }"
+        ".stMainBlockContainer { padding-left: 1.5rem !important; padding-right: 1.5rem !important; "
+        "max-width: 100% !important; }"
+        "</style>",
+        unsafe_allow_html=True,
+    )
+
     if animasyonlu:
         video_b64 = _video_base64("assets/logo_animated.mp4")
         st.sidebar.markdown(

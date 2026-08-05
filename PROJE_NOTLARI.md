@@ -1230,3 +1230,16 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   adlandırma kalıbıyla tutarlı ama garantili değil (bu projede daha
   önce bazı CSS denemeleri tutmamıştı) — tutmazsa alternatif
   yaklaşıma (ör. st.page_link yerine farklı bir gösterim) geçilecek.
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Sidebar Daraltıldı, Ana İçerik Boşlukları Azaltıldı
+- Metin kaydırma düzeltmesi çalıştı (ekran görüntüsünde doğrulandı).
+  Kullanıcı hâlâ sağ/sol boşlukları fark etti, sidebar'ın da
+  daraltılabileceğini önerdi.
+- `sidebar_logo.py` (HER sayfada çağrılıyor, bu yüzden tek yerden tüm
+  uygulamaya uygulanıyor) içine global CSS eklendi:
+  sidebar genişliği 260px'e sabitlendi (önceki Streamlit varsayılanı
+  ~336px), ana içerik alanının sağ/sol dolgusu 1,5rem'e düşürüldü ve
+  max-width %100 yapıldı (Streamlit'in "wide" modunda bile bıraktığı
+  kalan boşluk azaltıldı). NOT: bu seçiciler (`stSidebar`,
+  `stMainBlockContainer`) otomatik üretilen sınıflara göre çok daha
+  stabil ama yine de garantili değil.
