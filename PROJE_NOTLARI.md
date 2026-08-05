@@ -1144,3 +1144,25 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   Başına `/` eklenerek mutlak yola (`/tarif-kutuphanesi?tarif=...`)
   çevrildi — artık hangi sayfadan tıklanırsa tıklansın doğru,
   kök-göreli adrese gidiyor.
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Üretim Aşamaları II. Parti — 27 Ana Yemek Daha
+- **Kullanıcı isteği: "maliyet hesabını tüm tariflere uygula".** 241'in
+  tamamı tek seferde gerçekçi değil, ama zaten detaylı pişirme talimatı
+  yazılmış olan 30 ana yemeğin (74'lük Klasik kütüphane, I. Grup)
+  TAMAMI için yapılandırılmış aşama verisi tamamlandı (`asamalar_parti2.py`
+  — kalan 27 tarif; ilk 3'ü zaten `asamalar_parti1.py`'de vardı).
+- **Basitleştirme kararı:** Ardışık aynı-kap ısıl işlemler (ör.
+  "kaynatma" + "ağır kaynama") TEK bir aşamada birleştirildi — ayrı
+  tutulsaydı ikinci aşama zaten hedef sıcaklıkta başlayacağından
+  Q=mcΔT formülünde ΔT=0 çıkıp enerji maliyetini yanlış sıfırlardı.
+  Çoğu tarif 2-3 aşamaya indirgendi (Hazırlık + birleşik Isıl İşlem,
+  bazılarında ek Dinlendirme/Montaj).
+- **Doğrulama:** Tüm 30 tarifin (a) bağımlılık referansları geçerli,
+  (b) ısıl işlem alanları eksiksiz, (c) her aşamaya atanan malzemenin
+  GERÇEKTEN o tarifin kendi malzeme listesinde var olduğu programatik
+  olarak teyit edildi (0 hata).
+- `asama_yukle.py` artık `asamalar_parti1.py` + `asamalar_parti2.py`'yi
+  birleştirip tek seferde işliyor (30 tarif, aynı `.bat` ile).
+- **Sıradaki adım:** II./III. Grup (çorba/pilav/börek/tatlı, ~45 tarif)
+  ve ardından 166 bölgesel tarif için hem pişirme talimatı hem aşama
+  verisi kademeli olarak eklenecek.
