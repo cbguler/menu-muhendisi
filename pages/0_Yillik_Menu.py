@@ -358,31 +358,49 @@ def _hedefte_mi(ogun_adi, t, hedefler):
     return True
 
 
-def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler):
+DISH_KUTU_YUKSEKLIK = 220  # kutuphanedeki en uzun isim (41 karakter) dahil tasmayacak sekilde
+BILGI_KUTU_YUKSEKLIK = 150
+
+
+def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, hafta_no):
     """Haftayi ekrana GERCEK Streamlit widget'lariyla render eder (ham HTML
     string DEGIL) -- boylece her yemek adi st.page_link ile Tarif
     Kutuphanesi'ne tiklanabilir olur (resmi/desteklenen navigasyon
     yontemi; ham <a href> linkleri Streamlit'te bilinen sekilde
     guvenilmezdir). Kart gorunumu st.container(border=True) ile korunur.
 
-    NOT (5 Agustos 2026): Yemek adlari ve bilgi bloklari onceden SABIT
-    yukseklikli kutulara (st.container(height=...)) alinmisti -- amac
-    Ogle/Aksam bolumlerinin tum gunlerde ayni hizada baslamasiydi. Ama
-    st.container(height=...) tasan icerikte KENDI kenarligini ve kaydirma
-    cubugunu ciziyor -- bu da bir gunde birden fazla yemek oldugunda
-    "cerceve icinde cerceve" gorunumune ve yemek isimlerinin sigmamasina
-    yol aciyordu. Kullanici talebiyle sabit yukseklik kaldirildi (duz
-    st.container()) -- yemek isimleri artik rahat sigiyor, ic cerceve/
-    kaydirma cubugu yok. Bedel: bir gunde cok yemek varsa o kartin
-    Ogle/Aksam hizasi ve kart yuksekligi diger gunlerden biraz farkli
-    olabilir (piksel-kusursuz hizalama garantisi kalkti)."""
+    NOT (5 Agustos 2026, iki asamali duzeltme):
+    1) Yemek adlari/bilgi bloklari SABIT yukseklikli st.container(height=...)
+       kullaniyordu -- Ogle/Aksam hizalamasi icin gerekliydi, ama tasan
+       icerikte KENDI kenarligini ve kaydirma cubugunu ciziyordu ("cerceve
+       icinde cerceve"). Kullanici talebiyle duz st.container()'a gecildi.
+    2) Ama duz container'la GUN'ler arasi hizalama bozuldu (bir gunde 3
+       yemek varken digerinde 1 yemek oldugunda AKSAM basligi farkli
+       yukseklikte basliyordu). Kullanici bu ikisini de (cercevesiz GORUNUM
+       + hizali YERLESIM) istedi -- ikisi ayni anda sadece su sekilde
+       saglanabiliyor: st.container(height=...) GERI getirilir (guvenilir
+       sabit yukseklik icin), ama benzersiz bir `key` verilip CSS ile o
+       spesifik container'in kenarligi/gölgesi kaldirilir ve
+       `overflow: visible` yapilir -- boylece kutu görünmez kalir, tasan
+       icerik (nadir durumda) kaydirilmadan/kirpilmadan sadece kutunun
+       disina tasar (kayip veri olmaz), kisa icerikliler ise kutunun tam
+       yuksekligine kadar bos alan birakip AKSAM'in hep ayni hizada
+       baslamasini saglar."""
     # st.page_link varsayilan olarak metni tek satirda kirpiyor (uzun
     # tarif isimleri sigmayinca "..." ile kesiliyor) -- bunu alt satira
-    # kaydiracak sekilde zorluyoruz.
+    # kaydiracak sekilde zorluyoruz. Ayrica sabit yukseklikli kutularin
+    # (key'i "dish-box-"/"info-box-" ile baslayan) kenarligini/golgesini
+    # kaldirip tasmayi (nadir durumda) gorunmez sekilde disariya birakiyoruz
+    # -- boylece hizalama icin sabit yukseklik korunurken "cerceve icinde
+    # cerceve" gorunumu bir daha cikmiyor.
     st.markdown(
         "<style>"
         "[data-testid='stPageLink'] p { white-space: normal !important; "
         "word-break: break-word !important; }"
+        "div[class*='st-key-dish-box'], div[class*='st-key-info-box'] {"
+        "  border: none !important; box-shadow: none !important;"
+        "  overflow: visible !important;"
+        "}"
         "</style>",
         unsafe_allow_html=True,
     )
@@ -398,7 +416,8 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler):
                         st.write("")
                     st.markdown(f"**{ogun_adi.upper()}**")
 
-                    with st.container():
+                    dish_key = f"dish-box-{ay_adi}-{hafta_no}-{gun['gun']}-{ogun_adi}"
+                    with st.container(height=DISH_KUTU_YUKSEKLIK, key=dish_key):
                         for ad in tarif_adlari:
                             st.page_link(
                                 "pages/5_Tarif_Kutuphanesi.py", label=ad,
@@ -406,7 +425,8 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler):
                             )
 
                     t = _ogun_toplami(tarif_adlari, detay)
-                    with st.container():
+                    info_key = f"info-box-{ay_adi}-{hafta_no}-{gun['gun']}-{ogun_adi}"
+                    with st.container(height=BILGI_KUTU_YUKSEKLIK, key=info_key):
                         gi_metin = f"{round(t['gi'])}" if t["gi"] is not None else "-"
                         st.caption(
                             f"{round(t['kalori'])} kcal · P{round(t['protein'])}g · "
@@ -544,4 +564,4 @@ if aylik:
 
     for i, hafta in enumerate(aylik["haftalar"], start=1):
         st.markdown(f"**{aylik['ay']} — {i}. Hafta**")
-        _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, kayitli_hedefler)
+        _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, kayitli_hedefler, aylik["ay"], i)
