@@ -33,6 +33,25 @@ st.caption(
 )
 
 
+def _sayfalayarak_getir(sorgu_uret, sayfa_boyutu=1000):
+    """Supabase/PostgREST, .range() belirtilmese bile sorgu basina
+    varsayilan olarak en fazla 1000 satir donduruyor -- sinirin uzerindeki
+    satirlar HATA VERMEDEN sessizce kesiliyor. Bu fonksiyon .range() ile
+    sayfa sayfa cekip TUM satirlari birlestirir. `sorgu_uret`, her
+    cagrildiginda henuz .range()/.execute() uygulanmamis YENI bir sorgu
+    builder'i donduren bir fonksiyon olmali (ayni builder tekrar
+    kullanilamiyor)."""
+    tumu = []
+    offset = 0
+    while True:
+        sayfa = sorgu_uret().range(offset, offset + sayfa_boyutu - 1).execute().data
+        tumu.extend(sayfa)
+        if len(sayfa) < sayfa_boyutu:
+            break
+        offset += sayfa_boyutu
+    return tumu
+
+
 @st.cache_data(ttl=3600)
 def _tarif_kutuphanesi_detayli_getir():
     mutfak = (
@@ -48,25 +67,21 @@ def _tarif_kutuphanesi_detayli_getir():
     ).data
     grup_by_kategori = {k["id"]: k["sira"] for k in kategoriler}
 
-    receteler = (
-        supabase.table("receteler")
+    receteler = _sayfalayarak_getir(lambda: supabase.table("receteler")
         .select("id, ad, mutfak_kategori_id, mevsim_etiketi, ozel_etiketler, bolge, hazirlik_talimati")
         .is_("isletme_id", "null")
-        .execute()
-    ).data
+    )
 
-    malzeme_kalemleri = (
-        supabase.table("recete_malzemeleri")
+    malzeme_kalemleri = _sayfalayarak_getir(lambda: supabase.table("recete_malzemeleri")
         .select(
             "recete_id, malzeme_id, miktar_gram, "
             "malzemeler(ad, kalori, protein, yag, karbonhidrat, glisemik_indeks)"
         )
-        .execute()
-    ).data
+    )
 
-    alerjen_kayitlari = (
-        supabase.table("malzeme_alerjen").select("malzeme_id, alerjenler(ad)").execute()
-    ).data
+    alerjen_kayitlari = _sayfalayarak_getir(
+        lambda: supabase.table("malzeme_alerjen").select("malzeme_id, alerjenler(ad)")
+    )
     alerjen_by_malzeme = {}
     for kayit in alerjen_kayitlari:
         ad = (kayit.get("alerjenler") or {}).get("ad")
@@ -74,12 +89,10 @@ def _tarif_kutuphanesi_detayli_getir():
             alerjen_by_malzeme.setdefault(kayit["malzeme_id"], set()).add(ad)
 
     isletme_id = st.session_state.isletme_id
-    fiyat_kayitlari = (
-        supabase.table("malzeme_guncel_fiyat")
+    fiyat_kayitlari = _sayfalayarak_getir(lambda: supabase.table("malzeme_guncel_fiyat")
         .select("malzeme_id, fiyat_eur")
         .eq("isletme_id", isletme_id)
-        .execute()
-    ).data
+    )
     fiyat_by_malzeme = {f["malzeme_id"]: f["fiyat_eur"] for f in fiyat_kayitlari}
     fiyat_verisi_var = len(fiyat_by_malzeme) > 0
 
