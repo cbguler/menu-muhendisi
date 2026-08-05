@@ -27,7 +27,12 @@ from db import get_supabase, supabase_ile_dene
 st.set_page_config(
     page_title="Menü Mühendisliği", page_icon="assets/favicon.png", layout="wide"
 )
-sidebar_logo_goster(animasyonlu=False)
+# NOT: sidebar_logo_goster() burada DEGIL, kontrol_paneli_sayfasi()
+# fonksiyonunun icinde cagriliyor. st.navigation() kullandigimizdan beri
+# HER sayfa gecisinde app.py'nin TAMAMI yeniden calisiyor -- burada
+# cagrilsaydi, diger sayfalarin (Tarif Kutuphanesi, Yillik Menu vb.)
+# kendi ustlerindeki sidebar_logo_goster() cagrisiyla birlikte logo IKI
+# KEZ render oluyordu.
 
 supabase = get_supabase()
 
@@ -128,6 +133,7 @@ if st.session_state.oturum is None:
             cerezler.delete("refresh_token", key="refresh_token_sil_gecersiz")
 
 if st.session_state.oturum is None:
+    sidebar_logo_goster(animasyonlu=False)
     _, giris_sutunu, _ = st.columns([1, 1.3, 1])
     with giris_sutunu:
         st.title("Menü Mühendisliği")
@@ -204,6 +210,7 @@ abonelik_sonuc = supabase_ile_dene(
 abonelik_verisi = abonelik_sonuc.data[0] if abonelik_sonuc.data else None
 
 if abonelik_verisi is None or abonelik_verisi["durum"] in ("suresi_doldu", "iptal_edildi"):
+    sidebar_logo_goster(animasyonlu=False)
     st.warning("Aboneliğin bulunmuyor ya da sona ermiş.")
     st.link_button("Plan seç ve devam et", url="https://ORNEK-ODEME-SAYFASI-LINKI")
     if st.button("Çıkış yap"):
@@ -225,6 +232,8 @@ st.session_state.recete_limiti = abonelik_verisi["recete_limiti"]
 st.session_state.sube_limiti = abonelik_verisi["sube_limiti"]
 
 def kontrol_paneli_sayfasi():
+    sidebar_logo_goster(animasyonlu=False)
+
     with st.sidebar:
         plan_metni = f"Plan: {abonelik_verisi['plan_adi']}"
         if abonelik_verisi["durum"] == "deneme":

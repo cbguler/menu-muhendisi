@@ -128,6 +128,7 @@ def _tarif_kutuphanesi_detayli_getir():
         gi = (gi_agirlikli / gi_karb_toplam) if gi_karb_toplam > 0 else None
 
         tarifler.append({
+            "id": r["id"],
             "ad": r["ad"],
             "grup": grup,
             "bolge": r["bolge"] or "Genel",
@@ -209,6 +210,125 @@ with sutun_bilgi:
     else:
         eksik_liste = ", ".join(sorted(tarif["eksik_malzemeler"]))
         st.write(f"Maliyet: ≈{tarif['maliyet_eur'] * porsiyon:.2f} € (eksik fiyat: {eksik_liste})")
+
+@st.cache_data(ttl=3600)
+def _uretim_asamalarini_getir(recete_id):
+    asamalar = (
+        supabase.table("recete_asamalari")
+        .select("id, ad, sira, sure_dakika, isil_islem_mi, enerji_kaynagi, baslangic_sicaklik, hedef_sicaklik, verimlilik_orani")
+        .eq("recete_id", recete_id)
+        .order("sira")
+        .execute()
+    ).data
+    if not asamalar:
+        return []
+
+    asama_malzeme_kayitlari = (
+        supabase.table("asama_malzemeleri")
+        .select("asama_id, recete_malzemeleri(miktar_gram, malzemeler(ozgul_isi))")
+        .in_("asama_id", [a["id"] for a in asamalar])
+        .execute()
+    ).data
+
+    for a in asamalar:
+        a["isitilan_kutle_gram"] = sum(
+            (k["recete_malzemeleri"] or {}).get("miktar_gram", 0)
+            for k in asama_malzeme_kayitlari
+            if k["asama_id"] == a["id"]
+        )
+        a["agirlikli_ozgul_isi"] = None
+        kayitlar_bu_asama = [
+            k for k in asama_malzeme_kayitlari
+            if k["asama_id"] == a["id"] and k.get("recete_malzemeleri")
+        ]
+        if kayitlar_bu_asama and a["isitilan_kutle_gram"] > 0:
+            toplam_ozgul_isi_agirlikli = sum(
+                k["recete_malzemeleri"]["miktar_gram"]
+                * ((k["recete_malzemeleri"].get("malzemeler") or {}).get("ozgul_isi") or 0)
+                for k in kayitlar_bu_asama
+            )
+            a["agirlikli_ozgul_isi"] = toplam_ozgul_isi_agirlikli / a["isitilan_kutle_gram"]
+
+    return asamalar
+
+
+@st.cache_data(ttl=3600)
+def _maliyet_ayarlarini_getir(isletme_id):
+    sonuc = (
+        supabase.table("isletme_maliyet_ayarlari")
+        .select("*")
+        .eq("isletme_id", isletme_id)
+        .execute()
+    ).data
+    if sonuc:
+        return sonuc[0]
+    # Kayit yoksa varsayilan degerlerle (tabloya hic yazmadan, sadece
+    # hesap icin) don -- kullanici Uretim Asamalari sayfasinda kendi
+    # oranlarini girdiginde bu degerler otomatik guncel gelir.
+    return {
+        "elektrik_birim_fiyat_eur_kwh": 0.12,
+        "dogalgaz_birim_fiyat_eur_kwh": 0.08,
+        "personel_saat_ucreti_eur": 5.0,
+        "genel_gider_yuzdesi": 15.0,
+    }
+
+
+def _gercek_maliyet_hesapla(asamalar, ayarlar, porsiyon):
+    enerji_eur = 0.0
+    iscilik_dk = 0.0
+    for a in asamalar:
+        iscilik_dk += a["sure_dakika"]
+        if a["isil_islem_mi"] and a["agirlikli_ozgul_isi"] and a["isitilan_kutle_gram"]:
+            kutle = a["isitilan_kutle_gram"] * porsiyon  # 1 porsiyon baz -> istenen porsiyona olcekle
+            delta_t = a["hedef_sicaklik"] - a["baslangic_sicaklik"]
+            joule = kutle * a["agirlikli_ozgul_isi"] * delta_t
+            kwh = joule / 3_600_000.0 / a["verimlilik_orani"]
+            birim_fiyat = (
+                ayarlar["elektrik_birim_fiyat_eur_kwh"] if a["enerji_kaynagi"] == "elektrik"
+                else ayarlar["dogalgaz_birim_fiyat_eur_kwh"]
+            )
+            enerji_eur += kwh * birim_fiyat
+
+    iscilik_eur = (iscilik_dk / 60.0) * ayarlar["personel_saat_ucreti_eur"]
+    return enerji_eur, iscilik_eur
+
+
+tarif_asamalari = _uretim_asamalarini_getir(tarif["id"])
+
+st.write("**Gerçek üretim maliyeti (malzeme + enerji + işçilik + genel gider)**")
+if not tarif_asamalari:
+    st.info(
+        "Bu tarif için üretim aşaması (ısıl işlem/işçilik) verisi henüz "
+        "eklenmedi — sadece malzeme maliyeti yukarıda gösteriliyor. "
+        "Aşama verisi kademeli olarak ekleniyor."
+    )
+elif not fiyat_verisi_var or not tarif["tam_fiyatli"]:
+    st.caption(
+        "Malzeme fiyatı eksik olduğu için gerçek maliyet hesaplanamıyor "
+        "(yukarıdaki eksik fiyat uyarısına bakın)."
+    )
+else:
+    ayarlar = _maliyet_ayarlarini_getir(st.session_state.isletme_id)
+    enerji_eur, iscilik_eur = _gercek_maliyet_hesapla(tarif_asamalari, ayarlar, porsiyon)
+    malzeme_eur = tarif["maliyet_eur"] * porsiyon
+    ara_toplam = malzeme_eur + enerji_eur + iscilik_eur
+    genel_gider_eur = ara_toplam * (ayarlar["genel_gider_yuzdesi"] / 100.0)
+    toplam_eur = ara_toplam + genel_gider_eur
+
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Malzeme", f"{malzeme_eur:.2f} €")
+    m2.metric("Enerji (ısıl işlem)", f"{enerji_eur:.2f} €")
+    m3.metric("İşçilik", f"{iscilik_eur:.2f} €")
+    m4.metric("Genel gider payı", f"{genel_gider_eur:.2f} €")
+    st.metric(f"**Toplam gerçek maliyet ({porsiyon} porsiyon)**", f"{toplam_eur:.2f} €")
+    st.caption(
+        "Enerji/işçilik oranları senin \"Üretim Aşamaları\" sayfasındaki "
+        "işletme ayarlarından okunur. Enerji hesabı Q=m·c·ΔT (duyulur ısı) "
+        "formülüne, verimlilik oranıyla düzeltilerek dayanır; işçilik "
+        "süresi paralel yapılabilirlikten etkilenmez (her aşama kendi "
+        "süresince ücretlendirilir), sadece bu sayfadaki toplam süre "
+        "özeti paralel çalışmayı dikkate alır."
+    )
 
 st.write("**Hazırlık talimatı**")
 if tarif["hazirlik_talimati"]:

@@ -1058,3 +1058,37 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
 - Aynı `talimat_yukle.py`/`.bat` ile tekrar yüklenebilir (UPDATE
   olduğu için eski kısa metnin üzerine yeni detaylı metin yazılır,
   idempotent).
+
+### 3 Ağustos 2026 — VII. Oturum (devam): Çift Logo Düzeltmesi + Gerçek Maliyet Motoru Kütüphaneye Bağlandı
+- **Çift logo hatası düzeltildi:** `st.navigation()`'a geçtiğimizden beri
+  app.py'nin TAMAMI her sayfa geçişinde yeniden çalışıyor. `sidebar_logo_goster()`
+  eskiden en üst seviyede (fonksiyon dışında) çağrılıyordu — bu da her
+  sayfanın kendi üstündeki çağrıyla birleşip logoyu ÇİFT gösteriyordu.
+  Çözüm: üst seviye çağrı kaldırıldı, sadece login ekranı / abonelik-yok
+  ekranı / Kontrol Paneli fonksiyonu içinde (üç ayrı, birbirini
+  dışlayan dal) çağrılıyor — her zaman tam olarak BİR kez render olur.
+- **Gerçek üretim maliyeti (enerji+işçilik+genel gider) kütüphaneye
+  bağlandı.** Kritik bulgu: mevcut `recete_uretim_maliyeti` view'i
+  `isletme_maliyet_ayarlari` ile SIKI (`r.isletme_id = ima.isletme_id`)
+  join yapıyor — global (isletme_id NULL) tarifler için bu hiç eşleşmez,
+  çünkü enerji/işçilik/genel gider oranları oturum açan İŞLETMEYE özel
+  (herkes için tek bir "doğru" enerji fiyatı yok). Var olan şemayı
+  (`recete_asamalari`/`asama_malzemeleri`/`asama_bagimliliklari` — zaten
+  herhangi bir recete_id için çalışıyor, isletmeye özel değil) DEĞİŞTİRMEDEN,
+  Tarif Kütüphanesi sayfasına AYRI bir Python hesaplaması eklendi: aşama
+  verisini (global tarif) + oturum açan işletmenin KENDİ maliyet
+  ayarlarını ayrı ayrı çekip aynı Q=m·c·ΔT formülüyle birleştiriyor.
+  Mevcut çalışan sistem (`4_Uretim_Asamalari.py`, kullanıcının kendi
+  reçeteleri) hiç değiştirilmedi, sıfır risk.
+- **I. Parti (kanıt-kavram): 3 tarif için aşama verisi eklendi**
+  (`asamalar_parti1.py` + `asama_yukle.py` + `.bat`) — Menemen (basit
+  sıralı), Karnıyarık (paralel işlem örneği), Kuzu Tandır (uzun pasif
+  fırın). `asama_yukle.py` idempotent (aynı tarif için tekrar
+  çalıştırılırsa eski aşamaları silip yeniden ekler).
+- **Dürüst sınırlama notu:** Enerji formülü (Q=mcΔT) sadece yemeğin
+  kütlesini ısıtma enerjisini hesaplıyor, fırın/ocak ekipmanının kendi
+  ısınma/ısı kaybı enerjisini içermiyor — bu, `10_uretim_maliyet_semasi.sql`'in
+  kendi yorumunda da açıkça kabul edilen bir v1 sınırlaması, bu oturumda
+  değiştirilmedi.
+- **Sıradaki adım:** Kalan 27 ana yemek + II./III. Grup + bölgesel
+  tarifler için aşama verisi kademeli eklenecek.
