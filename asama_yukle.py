@@ -6,7 +6,10 @@
 # calistirilirsa, o recetenin mevcut asamalarini SILIP yeniden ekler
 # (idempotent -- eski/yanlis veri birikmez).
 #
-# Kullanim: asagidaki import satirini yeni partiye gore degistir.
+# Artik parti1 (I. Grup pilot, 3 tarif) + parti2 (I. Grup kalan, 27 tarif)
+# + parti3 (II./III. Grup, 44 tarif) birlikte yukleniyor. Gelecekteki
+# partiler icin: yeni bir asamalar_partiN.py yaz, asagidaki import ve
+# ASAMALAR birlestirme satirina ekle.
 
 import os
 
@@ -14,8 +17,9 @@ from supabase import create_client
 
 from asamalar_parti1 import ASAMALAR as ASAMALAR_1
 from asamalar_parti2 import ASAMALAR as ASAMALAR_2
+from asamalar_parti3 import ASAMALAR as ASAMALAR_3
 
-ASAMALAR = {**ASAMALAR_1, **ASAMALAR_2}
+ASAMALAR = {**ASAMALAR_1, **ASAMALAR_2, **ASAMALAR_3}
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL") or input("SUPABASE_URL: ").strip()
 SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or input(

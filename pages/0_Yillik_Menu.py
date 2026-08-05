@@ -358,11 +358,6 @@ def _hedefte_mi(ogun_adi, t, hedefler):
     return True
 
 
-DISH_KUTU_YUKSEKLIK = 220  # 3 yemek adi icin sabit yukseklik (kutuphanedeki en uzun
-                            # isim -- 41 karakter -- dahil, tasma olursa kutu kaydirilir)
-BILGI_KUTU_YUKSEKLIK = 150  # kcal/alerjen/maliyet/hedef bilgi bloğu icin sabit yukseklik
-
-
 def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler):
     """Haftayi ekrana GERCEK Streamlit widget'lariyla render eder (ham HTML
     string DEGIL) -- boylece her yemek adi st.page_link ile Tarif
@@ -370,12 +365,17 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler):
     yontemi; ham <a href> linkleri Streamlit'te bilinen sekilde
     guvenilmezdir). Kart gorunumu st.container(border=True) ile korunur.
 
-    Ogle/Aksam bolumlerinin TUM gunlerde (ve TUM haftalarda) ayni hizada
-    baslamasi ve kartlarin ayni boyutta olmasi icin, yemek adlari ve bilgi
-    bloklari SABIT yukseklikli kutulara (st.container(height=...)) alindi
-    -- bu, karakter sayisina dayali tahminden cok daha guvenilir: yukseklik
-    kutuphanedeki EN UZUN ismi (41 karakter) kapsayacak sekilde ayarlandi,
-    tasma olursa (cok nadir) kutu kendi ici kaydirilir, hizalama bozulmaz."""
+    NOT (5 Agustos 2026): Yemek adlari ve bilgi bloklari onceden SABIT
+    yukseklikli kutulara (st.container(height=...)) alinmisti -- amac
+    Ogle/Aksam bolumlerinin tum gunlerde ayni hizada baslamasiydi. Ama
+    st.container(height=...) tasan icerikte KENDI kenarligini ve kaydirma
+    cubugunu ciziyor -- bu da bir gunde birden fazla yemek oldugunda
+    "cerceve icinde cerceve" gorunumune ve yemek isimlerinin sigmamasina
+    yol aciyordu. Kullanici talebiyle sabit yukseklik kaldirildi (duz
+    st.container()) -- yemek isimleri artik rahat sigiyor, ic cerceve/
+    kaydirma cubugu yok. Bedel: bir gunde cok yemek varsa o kartin
+    Ogle/Aksam hizasi ve kart yuksekligi diger gunlerden biraz farkli
+    olabilir (piksel-kusursuz hizalama garantisi kalkti)."""
     # st.page_link varsayilan olarak metni tek satirda kirpiyor (uzun
     # tarif isimleri sigmayinca "..." ile kesiliyor) -- bunu alt satira
     # kaydiracak sekilde zorluyoruz.
@@ -398,7 +398,7 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler):
                         st.write("")
                     st.markdown(f"**{ogun_adi.upper()}**")
 
-                    with st.container(height=DISH_KUTU_YUKSEKLIK):
+                    with st.container():
                         for ad in tarif_adlari:
                             st.page_link(
                                 "pages/5_Tarif_Kutuphanesi.py", label=ad,
@@ -406,7 +406,7 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler):
                             )
 
                     t = _ogun_toplami(tarif_adlari, detay)
-                    with st.container(height=BILGI_KUTU_YUKSEKLIK):
+                    with st.container():
                         gi_metin = f"{round(t['gi'])}" if t["gi"] is not None else "-"
                         st.caption(
                             f"{round(t['kalori'])} kcal · P{round(t['protein'])}g · "
