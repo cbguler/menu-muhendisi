@@ -19,8 +19,9 @@ TALIMATLAR = {
 **SÜRE ÖZETİ:** Aktif işçilik ~13 dk (temizleme dahil) · Pasif bekleme (pişme) ~15 dk · Toplam ~25 dk""",
 
     "Akçaabat Köfte": """**Hazırlık / Mise en Place**
-1. Kıymayı soğan, pul biber, tuz ve karabiberle iyice yoğurun.
-2. Harçtan ince uzun köfteler şekillendirin.
+1. Soğanı rendeleyin — çok su bırakıyorsa suyunu hafifçe süzün.
+2. Kıymayı rendelenmiş soğan, pul biber, tuz ve karabiberle iyice yoğurun.
+3. Harçtan ince uzun köfteler şekillendirin.
 
 **Isıl İşlem**
 1. Izgara (~200°C, 10 dk): köfteleri her yüzü pişene kadar ızgarada çevirerek pişirin.

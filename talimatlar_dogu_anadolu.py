@@ -7,7 +7,8 @@
 TALIMATLAR = {
 
     "Cağ Kebabı": """**Hazırlık / Mise en Place**
-1. Kuzu tandırı ince dilimler halinde soğan ve karabiberle marine edip yatay şişe dizin.
+1. Soğanı rendeleyin — marinasyonda etin daha iyi yumuşaması için soğan suyu doğrudan etle temas etmeli.
+2. Kuzu tandırı ince dilimler halinde rendelenmiş soğan ve karabiberle marine edip yatay şişe dizin.
 
 **Isıl İşlem**
 1. Izgara (~200°C, yatay şişte, 15 dk): şişi döndürerek dış yüzeyi kızaran kısmı ince ince kesip servis edin, dönüşümlü olarak pişirmeye devam edin.

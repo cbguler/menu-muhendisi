@@ -218,13 +218,9 @@ with sutun_bilgi:
     alerjen_metin = ", ".join(sorted(tarif["alerjenler"])) if tarif["alerjenler"] else "Yok"
     st.write(f"Alerjen: {alerjen_metin}")
 
-    if not fiyat_verisi_var:
-        st.write("Maliyet: -")
-    elif tarif["tam_fiyatli"]:
-        st.write(f"Maliyet: {tarif['maliyet_eur'] * porsiyon:.2f} €")
-    else:
+    if fiyat_verisi_var and not tarif["tam_fiyatli"]:
         eksik_liste = ", ".join(sorted(tarif["eksik_malzemeler"]))
-        st.write(f"Maliyet: ≈{tarif['maliyet_eur'] * porsiyon:.2f} € (eksik fiyat: {eksik_liste})")
+        st.caption(f"Eksik fiyat: {eksik_liste}")
 
 @st.cache_data(ttl=3600)
 def _uretim_asamalarini_getir(recete_id):
@@ -328,16 +324,18 @@ else:
     malzeme_eur = tarif["maliyet_eur"] * porsiyon
     toplam_eur = malzeme_eur + enerji_eur + iscilik_eur
 
-    m1, m2, m3 = st.columns(3)
-    m1.metric("Malzeme", f"{malzeme_eur:.2f} €")
-    m2.metric("Enerji (ısıl işlem)", f"{enerji_eur:.2f} €")
-    m3.metric("İşçilik", f"{iscilik_eur:.2f} €")
-    st.metric(f"**Toplam ({porsiyon} porsiyon)**", f"{toplam_eur:.2f} €")
+    m1, m2, m3, m4 = st.columns(4)
+    for kolon, baslik, deger in (
+        (m1, "Malzeme", malzeme_eur), (m2, "Enerji", enerji_eur),
+        (m3, "İşçilik", iscilik_eur), (m4, f"Toplam ({porsiyon} p.)", toplam_eur),
+    ):
+        kolon.markdown(
+            f"<div style='font-size:12px; color:gray;'>{baslik}</div>"
+            f"<div style='font-size:20px; font-weight:600;'>{deger:.2f} €</div>",
+            unsafe_allow_html=True,
+        )
     st.caption(
-        "Genel gider payı şimdilik bu hesaba dahil edilmiyor (enerji/işçilik "
-        "rakamları henüz olgunlaşmadan genel gideri karıştırmak yanıltıcı "
-        "olur). Enerji/işçilik oranları senin \"Üretim Aşamaları\" "
-        "sayfasındaki işletme ayarlarından okunur. İşçilik, her aşamanın "
+        "Genel gider payı bu hesaba dahil değildir. İşçilik, her aşamanın "
         "\"aktif dakika\" değerini kullanır (girilmemişse aşamanın toplam "
         "süresiyle aynı sayılır) — uzun pasif süreçlerde (fırın, bekletme) "
         "bu ikisi kasıtlı olarak farklıdır. Enerji hesabı Q=m·c·ΔT (duyulur "

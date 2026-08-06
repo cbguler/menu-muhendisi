@@ -6,7 +6,8 @@
 TALIMATLAR = {
 
     "Adana Kebap": """**Hazırlık / Mise en Place**
-1. Kıymayı pul biber ve soğanla iyice yoğurun, şişlere sarın.
+1. Soğanı rendeleyin (ya da robotta çekip ezin) — köfte/kebap harcında soğan doğranmış değil, rendelenmiş kullanılır; çok su bırakıyorsa suyunu hafifçe süzün.
+2. Kıymayı rendelenmiş soğan ve pul biberle iyice yoğurun, şişlere sarın.
 
 **Isıl İşlem**
 1. Izgara (~200°C, 10 dk): şişleri her yüzü pişene kadar çevirerek ızgarada pişirin.
@@ -48,7 +49,8 @@ TALIMATLAR = {
 **SÜRE ÖZETİ:** Aktif işçilik ~12 dk · Pasif bekleme (fırınlama) ~20 dk · Toplam ~35 dk""",
 
     "Nar Ekşili Köfte": """**Hazırlık / Mise en Place**
-1. Kıymayı soğan ve nar ekşisiyle yoğurup köfte şekli verin.
+1. Soğanı rendeleyin — çok su bırakıyorsa suyunu hafifçe süzün.
+2. Kıymayı rendelenmiş soğan ve nar ekşisiyle yoğurup köfte şekli verin.
 
 **Isıl İşlem**
 1. Izgara (~200°C, 10 dk): köfteleri her yüzü pişene kadar ızgarada çevirerek pişirin.

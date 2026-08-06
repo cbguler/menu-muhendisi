@@ -51,8 +51,9 @@ TALIMATLAR = {
 **SÜRE ÖZETİ:** Aktif işçilik ~12 dk · Pasif bekleme (fırınlama) ~20 dk · Toplam ~35 dk""",
 
     "İzmir Köfte": """**Hazırlık / Mise en Place**
-1. Kıymayı soğanla yoğurup köfte şekli verin.
-2. Patatesi doğrayın.
+1. Soğanı rendeleyin — çok su bırakıyorsa suyunu hafifçe süzün.
+2. Kıymayı rendelenmiş soğanla yoğurup köfte şekli verin.
+3. Patatesi doğrayın.
 
 **Isıl İşlem**
 1. Köfte Kızartma (~175°C, tavada, 10 dk): köfteleri her yüzü pişene kadar kızartın.

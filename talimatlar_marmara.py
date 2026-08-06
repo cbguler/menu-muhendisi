@@ -66,8 +66,9 @@ TALIMATLAR = {
 **SÜRE ÖZETİ:** Aktif işçilik ~8 dk · Pasif bekleme (fırınlama) ~18 dk · Toplam ~25 dk""",
 
     "Bursa Usulü İnegöl Köfte": """**Hazırlık / Mise en Place**
-1. Kıymayı soğan, sarımsak ve tuzla iyice yoğurun.
-2. Harçtan köfte şekli verin.
+1. Soğanı rendeleyin — çok su bırakıyorsa suyunu hafifçe süzün.
+2. Kıymayı rendelenmiş soğan, sarımsak ve tuzla iyice yoğurun.
+3. Harçtan köfte şekli verin.
 
 **Isıl İşlem**
 1. Izgara (~200°C, 10 dk): köfteleri her yüzü pişene kadar ızgarada çevirerek pişirin.
