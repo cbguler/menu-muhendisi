@@ -99,7 +99,7 @@ if not receteler:
 # ---------------------------------------------------------------------
 malzemeler = (
     supabase.table("malzemeler")
-    .select("id, ad")
+    .select("id, ad, kalori, protein, yag, karbonhidrat, glisemik_indeks")
     .or_(f"isletme_id.is.null,isletme_id.eq.{isletme_id}")
     .order("ad")
     .execute()
@@ -107,6 +107,7 @@ malzemeler = (
 
 malzeme_adi = {m["id"]: m["ad"] for m in malzemeler}
 malzeme_id_by_ad = {m["ad"]: m["id"] for m in malzemeler}
+malzeme_bilgi = {m["id"]: m for m in malzemeler}
 
 # ---------------------------------------------------------------------
 # Reçete listesi — her biri kendi malzeme + maliyet paneliyle
@@ -173,3 +174,37 @@ for recete in receteler:
             mc2.metric("Porsiyon başı maliyet", f"{maliyet['porsiyon_maliyeti_eur']:.2f} €")
             if maliyet.get("porsiyon_kalori") is not None:
                 mc3.metric("Porsiyon başı kalori", f"{maliyet['porsiyon_kalori']:.0f} kcal")
+
+        # -------------------------------------------------------------
+        # Besin degerleri (protein/yag/karbonhidrat/GI) -- kalorinin
+        # aksine bunlar recete_guncel_maliyet view'inden gelmiyor, Tarif
+        # Kutuphanesi'ndeki (5_Tarif_Kutuphanesi.py) ayni yontemle
+        # burada Python tarafinda hesaplaniyor: her malzemenin
+        # miktar_gram/100 orani kadar katkisi toplanir, GI ise
+        # karbonhidrat agirlikli ortalama olarak hesaplanir (porsiyon
+        # sayisindan bagimsiz bir orandir, olceklenmez).
+        # -------------------------------------------------------------
+        if recete_malzemeleri:
+            toplam_protein = toplam_yag = toplam_karbonhidrat = 0.0
+            gi_agirlikli = gi_karb_toplam = 0.0
+            for rm in recete_malzemeleri:
+                bilgi = malzeme_bilgi.get(rm["malzeme_id"], {})
+                oran = rm["miktar_gram"] / 100.0
+                toplam_protein += (bilgi.get("protein") or 0) * oran
+                toplam_yag += (bilgi.get("yag") or 0) * oran
+                karb = (bilgi.get("karbonhidrat") or 0) * oran
+                toplam_karbonhidrat += karb
+                gi = bilgi.get("glisemik_indeks")
+                if gi is not None and karb > 0:
+                    gi_agirlikli += gi * karb
+                    gi_karb_toplam += karb
+
+            porsiyon_sayisi = recete.get("porsiyon_sayisi") or 1
+            gi_deger = (gi_agirlikli / gi_karb_toplam) if gi_karb_toplam > 0 else None
+
+            st.write("**Besin değerleri (porsiyon başı)**")
+            bd1, bd2, bd3, bd4 = st.columns(4)
+            bd1.metric("Protein", f"{toplam_protein / porsiyon_sayisi:.0f} g")
+            bd2.metric("Yağ", f"{toplam_yag / porsiyon_sayisi:.0f} g")
+            bd3.metric("Karbonhidrat", f"{toplam_karbonhidrat / porsiyon_sayisi:.0f} g")
+            bd4.metric("Glisemik İndeks", f"{gi_deger:.0f}" if gi_deger is not None else "-")
