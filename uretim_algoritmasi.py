@@ -191,12 +191,40 @@ def ogun_olustur(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta
     )
 
 
+def _fast_food_sec(grup4_havuz, birlesik_etiketler, rastgele):
+    """ISTEGE BAGLI 4. yuva (6 Agustos 2026 eklendi): isletmenin kendi
+    ozel recetelerinden Icecek/Baslangic/Pizza/Burger kategorisindeki
+    tarifler (grup=4). Anayasa madde 8'in ZORUNLU 3'lusune dahil DEGIL --
+    bu yuzden:
+      - Madde 11 (uyumsuzluk) yine de kontrol edilir (tutarlilik icin),
+        ama bir aday bulunamazsa ogun YINE DE GECERLI sayilir, sadece bu
+        yuva bos kalir.
+      - Haftalik tekrar kisiti (madde 2) burada UYGULANMAZ -- bu havuz
+        genelde kucuk (isletmenin kendi menusu) oldugu icin tekrarsizlik
+        zorlanirsa yuva birkac gunde tukenip surekli bos kalirdi.
+      - Mevsim kisiti da uygulanmaz (ozel receteler icin mevsim_etiketi
+        zaten hep 'yil_boyunca').
+    Uygun aday yoksa None doner."""
+    if not grup4_havuz:
+        return None
+    adaylar = [
+        t for t in grup4_havuz
+        if _uyumlu_mu(birlesik_etiketler | set(t.get("etiketler") or []))
+    ]
+    if not adaylar:
+        return None
+    return rastgele.choice(adaylar)
+
+
 def hafta_olustur(tarifler, mevsim, rastgele, hedefler=None, gun_sayisi=7):
-    """tarifler: [{"ad","grup"(1/2/3),"mevsim_etiketi","etiketler", ...besin}, ...]
-    hedefler: {"Öğle": {"kalori":(min,max), ...}, "Akşam": {...}} ya da None."""
+    """tarifler: [{"ad","grup"(1/2/3, opsiyonel 4),"mevsim_etiketi","etiketler", ...besin}, ...]
+    hedefler: {"Öğle": {"kalori":(min,max), ...}, "Akşam": {...}} ya da None.
+    grup=4 (isletmenin kendi Icecek/Baslangic/Pizza/Burger receteleri)
+    varsa, her ogune ISTEGE BAGLI 4. bir tarif eklenir -- bkz. _fast_food_sec."""
     grup1 = [t for t in tarifler if t["grup"] == 1]
     grup2 = [t for t in tarifler if t["grup"] == 2]
     grup3 = [t for t in tarifler if t["grup"] == 3]
+    grup4 = [t for t in tarifler if t["grup"] == 4]
 
     kullanilan_hafta = set()
     hafta = []
@@ -207,7 +235,15 @@ def hafta_olustur(tarifler, mevsim, rastgele, hedefler=None, gun_sayisi=7):
             t1, t2, t3 = ogun_olustur(grup1, grup2, grup3, mevsim, kullanilan_hafta, rastgele, hedef)
             for t in (t1, t2, t3):
                 kullanilan_hafta.add(t["ad"])
-            gun["ogunler"][ogun_adi] = [t1["ad"], t2["ad"], t3["ad"]]
+            ogun_tarifleri = [t1["ad"], t2["ad"], t3["ad"]]
+
+            if grup4:
+                birlesik = set(t1["etiketler"]) | set(t2["etiketler"]) | set(t3["etiketler"])
+                t4 = _fast_food_sec(grup4, birlesik, rastgele)
+                if t4 is not None:
+                    ogun_tarifleri.append(t4["ad"])
+
+            gun["ogunler"][ogun_adi] = ogun_tarifleri
         hafta.append(gun)
     return hafta
 

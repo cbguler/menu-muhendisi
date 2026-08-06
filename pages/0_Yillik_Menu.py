@@ -209,6 +209,141 @@ def _ogun_toplami(tarif_adlari, detay):
     return toplam
 
 
+@st.cache_data(ttl=3600)
+def _isletme_receteler_ve_detay_getir(isletme_id):
+    """Isletmenin kendi ozel receteleri (1_Receteler.py'de olusturulan)
+    -- Yillik Menu'ye ISTEGE BAGLI olarak eklenebilir (bkz. asagidaki
+    'kendi menu' butonu). Kutuphane tarifleriyle AYNI sekle
+    (ad/grup/mevsim_etiketi/etiketler/bolge + besin/maliyet detayi)
+    donusturulur ki uretim_algoritmasi.py'ye hic dokunmadan ayni
+    fonksiyona (hafta_olustur) verilebilsin.
+
+    Kategori -> anayasa grubu eslesmesi (6 Agustos 2026, kullaniciyla
+    netlestirildi):
+      ana_yemek -> 1 (Ana Yemek), corba -> 2 (Yardimci Yemek),
+      salata/tatli -> 3 (Tamamlayici),
+      icecek/baslangic/pizza/burger -> 4 (ISTEGE BAGLI Fast Food yuvasi
+      -- anayasa madde 8'in ZORUNLU 3'lusune DAHIL DEGIL, bkz.
+      uretim_algoritmasi.py._fast_food_sec).
+
+    Bolge: ozel receteler bolge bilgisi TASIMAZ ve bolge filtresinden
+    MUAF tutulur (kullanicinin acik talebi, 6 Agustos 2026) -- "bolge"
+    alani sentinel bir deger (__isletme__) tasir ama cagiran kod bunlari
+    zaten bolge filtresi UYGULANDIKTAN SONRA havuza ekler, o yuzden bu
+    deger hicbir filtrede kullanilmaz.
+
+    Maliyet hesabi kutuphane fonksiyonuyla (_tarif_detaylarini_getir)
+    AYNI dogrudan malzeme_guncel_fiyat yontemini kullanir (1_Receteler.py
+    'deki recete_guncel_maliyet VIEW'inden FARKLI bir yol -- iki ayri
+    yontemin sonucu ayni olmali ama bagimsiz olarak hesaplaniyor)."""
+    KATEGORI_GRUP = {
+        "ana_yemek": 1, "corba": 2, "salata": 3, "tatli": 3,
+        "icecek": 4, "baslangic": 4, "pizza": 4, "burger": 4,
+    }
+
+    receteler = (
+        supabase.table("receteler")
+        .select("id, ad, kategori, porsiyon_sayisi")
+        .eq("isletme_id", isletme_id)
+        .execute()
+    ).data or []
+    if not receteler:
+        return [], {}, False
+
+    id_to_ad = {r["id"]: r["ad"] for r in receteler}
+    porsiyon_by_id = {r["id"]: (r["porsiyon_sayisi"] or 1) for r in receteler}
+
+    malzeme_kalemleri = (
+        supabase.table("recete_malzemeleri")
+        .select(
+            "recete_id, malzeme_id, miktar_gram, "
+            "malzemeler(ad, kalori, protein, yag, karbonhidrat, glisemik_indeks)"
+        )
+        .in_("recete_id", list(id_to_ad.keys()))
+        .execute()
+    ).data or []
+
+    alerjen_kayitlari = (
+        supabase.table("malzeme_alerjen").select("malzeme_id, alerjenler(ad)").execute()
+    ).data or []
+    alerjen_by_malzeme = {}
+    for kayit in alerjen_kayitlari:
+        ad = (kayit.get("alerjenler") or {}).get("ad")
+        if ad:
+            alerjen_by_malzeme.setdefault(kayit["malzeme_id"], set()).add(ad)
+
+    fiyat_kayitlari = (
+        supabase.table("malzeme_guncel_fiyat")
+        .select("malzeme_id, fiyat_eur")
+        .eq("isletme_id", isletme_id)
+        .execute()
+    ).data or []
+    fiyat_by_malzeme = {f["malzeme_id"]: f["fiyat_eur"] for f in fiyat_kayitlari}
+    fiyat_verisi_var = len(fiyat_by_malzeme) > 0
+
+    ham = {}
+    for kalem in malzeme_kalemleri:
+        recete_id = kalem["recete_id"]
+        if recete_id not in id_to_ad:
+            continue
+        m = kalem.get("malzemeler") or {}
+        oran = kalem["miktar_gram"] / 100.0
+        girdi = ham.setdefault(
+            recete_id, {"kalori": 0.0, "protein": 0.0, "yag": 0.0, "karbonhidrat": 0.0,
+                        "gi_agirlikli": 0.0, "gi_karb_toplam": 0.0, "maliyet_eur": 0.0,
+                        "tam_fiyatli": True, "eksik_malzemeler": set(), "alerjenler": set()}
+        )
+        girdi["kalori"] += (m.get("kalori") or 0) * oran
+        girdi["protein"] += (m.get("protein") or 0) * oran
+        girdi["yag"] += (m.get("yag") or 0) * oran
+        karb = (m.get("karbonhidrat") or 0) * oran
+        girdi["karbonhidrat"] += karb
+        gi = m.get("glisemik_indeks")
+        if gi is not None and karb > 0:
+            girdi["gi_agirlikli"] += gi * karb
+            girdi["gi_karb_toplam"] += karb
+
+        malzeme_id = kalem["malzeme_id"]
+        fiyat = fiyat_by_malzeme.get(malzeme_id)
+        if fiyat is None:
+            girdi["tam_fiyatli"] = False
+            malzeme_adi = m.get("ad")
+            if malzeme_adi:
+                girdi["eksik_malzemeler"].add(malzeme_adi)
+        else:
+            girdi["maliyet_eur"] += (kalem["miktar_gram"] / 1000.0) * fiyat
+        girdi["alerjenler"] |= alerjen_by_malzeme.get(malzeme_id, set())
+
+    tarif_listesi = []
+    detay = {}
+    for r in receteler:
+        grup = KATEGORI_GRUP.get(r["kategori"])
+        if grup is None:
+            continue  # bilinmeyen/yeni bir kategori -- sessizce atla
+        tarif_listesi.append({
+            "ad": r["ad"], "grup": grup, "mevsim_etiketi": "yil_boyunca",
+            "etiketler": [], "bolge": "__isletme__",
+        })
+
+        v = ham.get(r["id"])
+        porsiyon = porsiyon_by_id[r["id"]]
+        if v is None:
+            detay[r["ad"]] = {
+                "kalori": 0.0, "protein": 0.0, "yag": 0.0, "karbonhidrat": 0.0, "gi": None,
+                "maliyet_eur": 0.0, "tam_fiyatli": True, "eksik_malzemeler": set(), "alerjenler": set(),
+            }
+            continue
+        gi = (v["gi_agirlikli"] / v["gi_karb_toplam"]) if v["gi_karb_toplam"] > 0 else None
+        detay[r["ad"]] = {
+            "kalori": v["kalori"] / porsiyon, "protein": v["protein"] / porsiyon,
+            "yag": v["yag"] / porsiyon, "karbonhidrat": v["karbonhidrat"] / porsiyon, "gi": gi,
+            "maliyet_eur": v["maliyet_eur"] / porsiyon, "tam_fiyatli": v["tam_fiyatli"],
+            "eksik_malzemeler": v["eksik_malzemeler"], "alerjenler": v["alerjenler"],
+        }
+
+    return tarif_listesi, detay, fiyat_verisi_var
+
+
 tarifler = _tarif_kutuphanesini_getir(mutfak_secimi["kod"])
 
 if not tarifler:
@@ -234,11 +369,22 @@ bolgeler_mevcut = (["Genel"] if any(t["bolge"] == "Genel" for t in tarifler) els
 
 if "secili_bolgeler_set" not in st.session_state:
     st.session_state.secili_bolgeler_set = set()  # bos = hicbir kisit yok, tumu kullanilir
+if "kendi_menu_dahil" not in st.session_state:
+    st.session_state.kendi_menu_dahil = False
+
+isletme_bilgi = (
+    supabase.table("isletmeler").select("ad").eq("id", st.session_state.isletme_id).single().execute()
+).data
+isletme_adi = (isletme_bilgi or {}).get("ad") or "Kendi Menüm"
 
 st.markdown("**Bölge (mutfak)**")
-st.caption("Hiçbiri seçili değilken tüm bölgeler kullanılır. Bir bölgeye tıklamak SADECE onu etkinleştirir.")
-kolonlar = st.columns(len(bolgeler_mevcut))
-for kolon, bolge in zip(kolonlar, bolgeler_mevcut):
+st.caption(
+    "Hiçbiri seçili değilken tüm bölgeler kullanılır. Bir bölgeye tıklamak "
+    f"SADECE onu etkinleştirir. \"{isletme_adi}\" butonu, işletmenin kendi "
+    "özel reçetelerini (bölge seçiminden bağımsız, her zaman) menüye dahil eder."
+)
+kolonlar = st.columns(len(bolgeler_mevcut) + 1)
+for kolon, bolge in zip(kolonlar[:-1], bolgeler_mevcut):
     secili = bolge in st.session_state.secili_bolgeler_set
     etiket = KISA_BOLGE_ADI.get(bolge, bolge)
     if kolon.button(
@@ -251,11 +397,34 @@ for kolon, bolge in zip(kolonlar, bolgeler_mevcut):
             st.session_state.secili_bolgeler_set.add(bolge)
         st.rerun()
 
+with kolonlar[-1]:
+    if st.button(
+        isletme_adi, key="kendi_menu_buton", use_container_width=True,
+        type="primary" if st.session_state.kendi_menu_dahil else "secondary",
+    ):
+        st.session_state.kendi_menu_dahil = not st.session_state.kendi_menu_dahil
+        st.rerun()
+
 secili_bolgeler = st.session_state.secili_bolgeler_set
 
 if secili_bolgeler:
     tarifler = [t for t in tarifler if t["bolge"] in secili_bolgeler]
 # secili_bolgeler bossa (hicbir buton tiklanmamissa) hicbir filtre uygulanmaz, tum bolgeler kullanilir
+
+# "Kendi menum" -- BOLGE FILTRESI UYGULANDIKTAN SONRA, filtreden MUAF
+# olarak havuza ekleniyor (kullanicinin acik talebi).
+detay_ozel = {}
+fiyat_ozel_var = False
+if st.session_state.kendi_menu_dahil:
+    ozel_tarifler, detay_ozel, fiyat_ozel_var = _isletme_receteler_ve_detay_getir(
+        st.session_state.isletme_id
+    )
+    if not ozel_tarifler:
+        st.caption(
+            f"\"{isletme_adi}\" için henüz Ana Yemek/Çorba/Salata/Tatlı/"
+            "İçecek/Başlangıç/Pizza/Burger kategorisinde bir reçete yok."
+        )
+    tarifler = tarifler + ozel_tarifler
 
 if not tarifler:
     st.warning("Seçtiğin bölge(ler)de hiç tarif bulunamadı.")
@@ -268,6 +437,9 @@ else:
 
 
 detay, fiyat_verisi_var = _tarif_detaylarini_getir(st.session_state.isletme_id)
+if detay_ozel:
+    detay = {**detay, **detay_ozel}
+    fiyat_verisi_var = fiyat_verisi_var or fiyat_ozel_var
 if not fiyat_verisi_var:
     st.caption(
         "Bu işletme için henüz malzeme fiyatı girilmemiş — maliyet "
@@ -473,23 +645,32 @@ def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
     hafta_baslik_yazi = Font(name=yazi_tipi, bold=True, size=13)
     alan_yazi = Font(name=yazi_tipi, bold=True)
     normal_yazi = Font(name=yazi_tipi)
-    RENK_ANA, RENK_YARDIMCI, RENK_TAMAMLAYICI = "D85A30", "639922", "1D9E75"
-
-    ALAN_SATIRLARI = [
-        ("Ana Yemek", RENK_ANA), ("Yardımcı Yemek", RENK_YARDIMCI), ("Tamamlayıcı", RENK_TAMAMLAYICI),
-        ("Besin (kcal/P/Y/K/Gİ)", None), ("Alerjen", None), ("Maliyet", None),
-    ]
+    RENK_ANA, RENK_YARDIMCI, RENK_TAMAMLAYICI, RENK_FAST_FOOD = "D85A30", "639922", "1D9E75", "BA7517"
 
     def oyun_bloguna_yaz(satir, ogun_adi, tarif_adlari, t, gun_kolonu):
         ws.cell(row=satir, column=1, value=ogun_adi).font = alan_yazi
         satir += 1
-        alan_satirlari = list(ALAN_SATIRLARI)
+        # Yemek satirlari, o ogunde 4. (istege bagli Fast Food) tarif
+        # var mi yok mu -- 6 Agustos 2026'da eklendi -- gore DINAMIK
+        # olarak olusturuluyor. Sabit 3'lu bir liste kullanip
+        # tarif_adlari[i] ile eslestirmek (eski kod), 4. tarif eklenince
+        # onu sessizce Excel'den dusururdu.
+        yemek_satirlari = [
+            ("Ana Yemek", RENK_ANA), ("Yardımcı Yemek", RENK_YARDIMCI), ("Tamamlayıcı", RENK_TAMAMLAYICI),
+        ]
+        if len(tarif_adlari) >= 4:
+            yemek_satirlari.append(("Fast Food", RENK_FAST_FOOD))
+        yemek_sayisi = len(yemek_satirlari)
+
+        alan_satirlari = yemek_satirlari + [
+            ("Besin (kcal/P/Y/K/Gİ)", None), ("Alerjen", None), ("Maliyet", None),
+        ]
         if hedefler:
             alan_satirlari.append(("Hedef Durumu", None))
         for i, (etiket, renk) in enumerate(alan_satirlari):
             hucre_etiket = ws.cell(row=satir, column=1, value=etiket)
             hucre_etiket.font = Font(name=yazi_tipi, color=renk) if renk else normal_yazi
-            if i < 3:
+            if i < yemek_sayisi:
                 deger = tarif_adlari[i]
             elif etiket.startswith("Besin"):
                 gi_deger = f"{round(t['gi'])}" if t["gi"] is not None else "-"
@@ -562,11 +743,15 @@ if aylik:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
+    fast_food_notasi = (
+        "&nbsp;&nbsp;&nbsp;<span style='color:#BA7517;'>●</span> Fast Food"
+        if st.session_state.get("kendi_menu_dahil") else ""
+    )
     st.markdown(
         "<div style='font-size:13px; color:gray; margin:0.5rem 0 1rem;'>"
         "<span style='color:#D85A30;'>●</span> Ana Yemek&nbsp;&nbsp;&nbsp;"
         "<span style='color:#639922;'>●</span> Yardımcı Yemek&nbsp;&nbsp;&nbsp;"
-        "<span style='color:#1D9E75;'>●</span> Tamamlayıcılar</div>",
+        f"<span style='color:#1D9E75;'>●</span> Tamamlayıcılar{fast_food_notasi}</div>",
         unsafe_allow_html=True,
     )
 
