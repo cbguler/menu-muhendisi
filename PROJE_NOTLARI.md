@@ -1288,3 +1288,78 @@ Kullanıcı geri bildirimiyle birkaç turda son hâline ulaşıldı:
   işletmelere geriye dönük fiyat dolduruldu.
 - `marmara_tarifleri.py` güncellendi (gelecekteki sıfırdan kurulumlar
   için tutarlılık).
+### 6 Ağustos 2026 — [Oturum No] Oturum: 7 Bölgenin Tamamı + Kalite Düzeltmeleri
+
+**Kütüphane tamamlandı: 240 tarif (74 Klasik + 166 bölgesel, 7 bölgenin
+tamamı).** Marmara, Karadeniz, Ege, Akdeniz, Doğu Anadolu, Güneydoğu
+Anadolu, İç Anadolu — hepsi için hem pişirme talimatı (v2 format:
+Hazırlık/Mise en Place → Isıl İşlem → Paralel Yapılabilirlik → Süre
+Özeti) hem üretim aşaması (recete_asamalari/asama_malzemeleri) verisi
+yazıldı, malzeme adı + bağımlılık + ısıl işlem alanı doğrulaması her
+bölgede programatik olarak yapıldı (0 hata).
+
+**Verimlilik oranları kaynaklandırıldı.** Uygulamanın TİCARİ (restoran)
+kullanım için tasarlandığı netleştirildi — bu yüzden verimlilik_orani
+değerleri ev tipi değil ticari mutfak ekipmanı verilerine göre web
+araştırmasıyla düzeltildi: dogalgaz ocak/kavurma 0.42, dogalgaz kızartma
+0.4, elektrik fırın 0.58 (ENERGY STAR + sanayi kaynakları). Izgara için
+kaynak bulunamadı, projenin ilk oturumundan kalan tahmini 0.35 korundu.
+6 dosyada (pilot dahil) toplam 173 değer otomatik script ile retroaktif
+düzeltildi.
+
+**Kalite kontrolleri (kullanıcı tarafından tespit edildi):**
+- Köfte/kebap tariflerinde (6 tarif: Adana Kebap, Akçaabat Köfte, Nar
+  Ekşili Köfte, Bursa Usulü İnegöl Köfte, İzmir Köfte, Cağ Kebabı) soğan
+  hazırlama adımı eksikti — hepsine "soğanı rendeleyin" adımı eklendi.
+- "Kavurmalı X" adındaki 3 tarifte (Kavurmalı Nohut, Erzincan Usulü
+  Kavurmalı Yumurta, Erzurum Usulü Kavurmalı Kuru Fasulye) kavurma
+  (korunmuş et ürünü) yerine yanlışlıkla pastırma/kıyma kullanılmıştı.
+  Yeni malzeme **KAVURMA** kataloğa eklendi (345 kcal/20.62g
+  protein/28.53g yağ per 100g — kaynaklı; fiyat TEK bir perakende
+  kaynağına dayanıyor, doğrulanması gerekiyor), 3 tarif buna göre
+  düzeltildi (SQL + talimat metni + aşama verisi).
+- Diğer "kavurma" geçen 3 tarif (Pazı Kavurma, Kavurma (Erzurum Usulü),
+  Küşleme) kontrol edildi, sorun yok (kavurma orada yöntem, malzeme
+  değil).
+
+**Teknik düzeltmeler:**
+- Tarif Kütüphanesi: PostgREST'in varsayılan 1000 satır limitini aşan
+  sayfalama eklendi (recete_malzemeleri sessizce kesiliyordu).
+- İskender Kebap: eksik pide/kornişon turşu düzeltildi (Türkçe İ/I
+  karakter uyumsuzluğu kök nedendi).
+- Yıllık Menü: haftalık kart görünümü — iç çerçeve/kaydırma sorunu,
+  hizalama, üst üste binme dertleri sırayla çözüldü; final çözüm: her
+  hafta/öğün satırı için gerçek veriye göre hesaplanan dinamik yükseklik
+  + `border=False`. Renkli metin (kalori mavi, maliyet yeşil), hafta
+  sonu ayırıcı çizgi eklendi.
+- Tarif Kütüphanesi maliyet gösterimi: tekrarlayan "Maliyet" satırı
+  kaldırıldı, 4 kalem (Malzeme/Enerji/İşçilik/Toplam) tek satırda
+  hizalandı, not metni sadeleştirildi.
+- Kontrol Paneli tamamen yeniden tasarlandı: açılır menüler kaldırıldı,
+  görsel destekli aşağı-kaydırmalı tanıtım sayfasına dönüştürüldü
+  (görseller `assets/tanitim_*.png` olarak eklenmeyi bekliyor). Sidebar'daki
+  gereksiz "Plan: 14 Günlük Deneme" metni kaldırıldı. Besin/alerjen
+  takibinin kimlere hizmet ettiğini anlatan bir misyon bölümü eklendi
+  (diyetisyenler, kronik hastalar, alerjikler, kurumsal mutfaklar vb.).
+
+**Kalıcı kural hatırlatması (5 Ağustos 2026'da eklendi):** Claude hiçbir
+zaman emin olmadığı bir değeri uydurmayacak — kaynak bulamazsa tahmin
+kullanır ama kodda/notlarda açıkça "tahmindir, doğrulanmamıştır" diye
+işaretler.
+
+---
+
+## NİHAİ HEDEF (6 Ağustos 2026 eklendi)
+
+Uygulama WordPress üzerinden kurulacak bir tanıtım/pazarlama sitesiyle
+(muhtemelen `menumuhendisi.com`) birlikte sunulacak; asıl uygulama ayrı
+bir alt alan adında (ör. `app.menumuhendisi.com`) Streamlit Cloud'da
+barınmaya devam edecek — WordPress'e iframe ile gömülmeyecek (oturum/
+çerez ve mobil görünüm sorunları çıkarır), bunun yerine WordPress'teki
+"Giriş Yap" butonu kullanıcıyı doğrudan uygulamaya yönlendirecek.
+Kullanıcıların cep telefonundan da erişebilmesi hedefleniyor — Streamlit
+uygulaması zaten tarayıcı üzerinden mobilde açılabiliyor, ama bazı
+sayfaların (özellikle Yıllık Menü'nün 7 sütunlu hafta görünümü) mobil
+ekranda kullanışlı olması için ayrıca bir arayüz uyarlaması gerekecek.
+Bu, ileride ele alınacak ayrı bir iş kalemi olarak not edildi, şu an için
+sadece hedef olarak kayıtlı.
