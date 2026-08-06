@@ -1363,3 +1363,33 @@ sayfaların (özellikle Yıllık Menü'nün 7 sütunlu hafta görünümü) mobil
 ekranda kullanışlı olması için ayrıca bir arayüz uyarlaması gerekecek.
 Bu, ileride ele alınacak ayrı bir iş kalemi olarak not edildi, şu an için
 sadece hedef olarak kayıtlı.
+
+## NİHAİ HEDEF: Premium Plan / Erişim Stratejisi (6 Ağustos 2026 eklendi)
+
+**Model (iki seviyeli, "deneme" kavramı yok):**
+- **Ücretsiz kullanıcı:** Sadece Kontrol Paneli (tanıtım sayfası) görünür.
+  Diğer sayfalara (Yıllık Menü, Reçeteler, Menü, Boston Matrisi, Üretim
+  Aşamaları, Tarif Kütüphanesi) tıklayınca gerçek içerik yerine bir
+  "Premium gerekli" uyarı ekranı çıkacak.
+- **Premium kullanıcı:** Belirli bir süre için ücret ödeyen herkes tüm
+  özelliklere erişir.
+
+**Plan kodu:** Veritabanında (`isletme_aktif_abonelik.plan_kodu`) paylı
+plan için **"premium"** ismi kullanılacak (kod tarafında bu string
+üzerinden kontrol edilecek). Şu an veritabanında sadece Bahri'nin kendi
+test hesabına ait `plan_kodu = 'deneme'` satırı var — gerçek `premium`
+planı henüz tanımlanmadı, kontrol edilip netleştirilecek.
+
+**Ödeme/upgrade akışı: ŞİMDİLİK KURULMAYACAK.** Sıralama şöyle:
+1. Önce uygulamanın geri kalanı (özellik/içerik tarafı) tamamlanacak.
+2. Sonra altyapı WordPress ortamına taşınacak (bkz. yukarıdaki "WordPress
+   + mobil erişim" nihai hedefi).
+3. En son aşamada gerçek ödeme sayfası linki (PayTR) ve plan/upgrade
+   mekanizması kurulacak.
+
+Yani şu an için: sayfa erişim kısıtlaması (Premium olmayan kullanıcıya
+"Premium gerekli" ekranı gösterme) kod tarafında HENÜZ UYGULANMADI —
+bu bilinçli bir erteleme, unutulmuş bir iş değil. Gelecekteki bir
+oturumda bu adıma gelindiğinde: `app.py`'deki `st.Page(...)` sayfa
+tanımlarına, `st.session_state.plan_kodu != "premium"` kontrolüyle
+içerik yerine yükseltme daveti gösteren bir sarmalayıcı eklenecek.
