@@ -255,6 +255,7 @@ def kontrol_paneli_sayfasi():
     # dosya henuz yoksa gorsel yerine sessizce bos birakiyor (sayfa
     # kirilmiyor, sadece o gorsel eksik kaliyor).
     # -------------------------------------------------------------
+    import base64
     import os
 
     def _gorsel_varsa_goster(dosya_adi, *args, **kwargs):
@@ -264,6 +265,30 @@ def kontrol_paneli_sayfasi():
         else:
             st.caption(f"(Görsel henüz eklenmedi: assets/{dosya_adi})")
 
+    def _video_varsa_goster(dosya_adi):
+        # assets/logo_animated.mp4'te (TrendSurf Optima'daki animasyonlu
+        # logo splash) kullanilan ayni yontem: dosya calisma zamaninda
+        # okunup base64 data-URI olarak <video> etiketine gomuluyor --
+        # Streamlit'in st.video() widget'i kontrol cubuklariyla geliyor,
+        # sessiz/donguleyen bir "hero" video icin ham HTML gerekiyor.
+        # NOT: base64 kodlama dosya boyutunu ~%33 artirir -- bu video
+        # ~2.7 MB, yani sayfaya ~3.6 MB gomulu metin ekleniyor. Sayfa
+        # yuklemesi yavas hissedilirse videoyu sikistirmak (ffmpeg ile
+        # cozunurluk/bitrate dusurme) faydali olur.
+        yol = f"assets/{dosya_adi}"
+        if not os.path.exists(yol):
+            st.caption(f"(Video henüz eklenmedi: assets/{dosya_adi})")
+            return
+        with open(yol, "rb") as f:
+            video_b64 = base64.b64encode(f.read()).decode()
+        st.markdown(
+            f'<video autoplay loop muted playsinline '
+            f'style="width:100%; border-radius:12px; display:block;">'
+            f'<source src="data:video/mp4;base64,{video_b64}" type="video/mp4">'
+            f'</video>',
+            unsafe_allow_html=True,
+        )
+
     st.title("Menü Mühendisi'ne Hoş Geldin")
     st.write(
         "Bu sayfa, uygulamanın tüm bölümlerini kısaca tanıtır. İstediğin "
@@ -271,10 +296,12 @@ def kontrol_paneli_sayfasi():
         "sadece neyin nerede olduğunu görmen için."
     )
 
+    _video_varsa_goster("tanitim_video.mp4")
+
     st.divider()
 
     # ---- 0) Bu Uygulamanın Amacı ----
-    st.header("🎯 Bu Uygulamanın Amacı")
+    st.header("Bu Uygulamanın Amacı")
     st.write(
         "Menü Mühendisi; ticari işletmelerin, okul kantinlerinin, hastane "
         "mutfaklarının, kurumsal yemekhanelerin ve benzeri kurum/kuruluşların "
@@ -375,7 +402,7 @@ def kontrol_paneli_sayfasi():
     # ---- 1) Reçeteler ----
     sutun_metin, sutun_gorsel = st.columns([1.1, 1])
     with sutun_metin:
-        st.header("📋 Reçeteler")
+        st.header("Reçeteler")
         st.write(
             "İşletmenin kendi yemek reçetelerini burada oluşturursun "
             "(Çorba, Ana Yemek, Salata, Tatlı, İçecek, Başlangıç, Pizza, "
@@ -398,7 +425,7 @@ def kontrol_paneli_sayfasi():
     with sutun_gorsel:
         _gorsel_varsa_goster("tanitim_menu.png", use_container_width=True)
     with sutun_metin:
-        st.header("🍽️ Menü")
+        st.header("Menü")
         st.write(
             "Reçeteler bölümünde oluşturduğun bir yemeği buradan menüye "
             "eklersin ve bir satış fiyatı belirlersin. Sistem, o yemeğin "
@@ -411,7 +438,7 @@ def kontrol_paneli_sayfasi():
     # ---- 3) Boston Matrisi ----
     sutun_metin, sutun_gorsel = st.columns([1.1, 1])
     with sutun_metin:
-        st.header("⭐ Boston Matrisi")
+        st.header("Boston Matrisi")
         st.write(
             "Menündeki ürünleri kârlılık ve popülerliğe göre dört gruba "
             "ayırır: **Yıldız** (çok satan + kârlı), **Bulmaca** (kârlı ama "
@@ -431,7 +458,7 @@ def kontrol_paneli_sayfasi():
     with sutun_gorsel:
         _gorsel_varsa_goster("tanitim_uretim_asamalari.png", use_container_width=True)
     with sutun_metin:
-        st.header("🔥 Üretim Aşamaları")
+        st.header("Üretim Aşamaları")
         st.write(
             "Bir yemeğin sadece malzeme maliyetini değil, üretim "
             "aşamalarının (ısıl işlem/enerji ve işçilik) maliyetini de "
@@ -443,7 +470,7 @@ def kontrol_paneli_sayfasi():
     st.divider()
 
     # ---- 5) Yıllık Menü ----
-    st.header("📅 Yıllık Menü")
+    st.header("Yıllık Menü")
     _gorsel_varsa_goster("tanitim_yillik_menu.png", use_container_width=True)
     st.write(
         "241 tariflik genel bir Türk mutfağı kütüphanesinden (7 coğrafi "
