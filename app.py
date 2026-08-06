@@ -399,10 +399,12 @@ def kontrol_paneli_sayfasi():
 
     st.divider()
 
-    # ---- 1) Reçeteler ----
+    # ---- 1) Reçete Üretimi (eskiden "Reçeteler" + "Üretim Aşamaları"
+    # diye iki ayrı sayfaydı, kullanıcı talebiyle 6 Ağustos 2026'da
+    # birleştirildi) ----
     sutun_metin, sutun_gorsel = st.columns([1.1, 1])
     with sutun_metin:
-        st.header("Reçeteler")
+        st.header("Reçete Üretimi")
         st.write(
             "İşletmene özel kendi yemek reçetelerini burada oluşturursun "
             "(Çorba, Ana Yemek, Salata, Tatlı, İçecek, Başlangıç, Pizza, "
@@ -411,23 +413,26 @@ def kontrol_paneli_sayfasi():
             "maliyetini ve porsiyon başı kaloriyi anlık olarak hesaplar."
         )
         st.write(
-            "Malzemeleri girdikten sonra **Üretim Aşamaları** sayfasına "
-            "geçip pişirme sürecini aşama aşama tarif edebilirsin: her "
-            "aşamada malzemeyi nerede, kaç dereceye kadar ısıttığını "
-            "seçeneklerden seçersin; aşamalar arasında hangisinin "
-            "hangisinden önce bitmesi gerektiğini (ya da hangi aşamaların "
-            "aynı anda/paralel yapılabildiğini) belirleyebilirsin. Bu "
-            "veriyle sistem sana malzeme + enerji + işçilik + genel gider "
-            "dahil **gerçek porsiyon maliyetini** çıkarır."
+            "Aynı sayfada, hemen altında pişirme sürecini aşama aşama "
+            "tarif edersin: her aşamada malzemeyi nerede, kaç dereceye "
+            "kadar ısıttığını seçeneklerden seçersin; aşamalar arasında "
+            "hangisinin hangisinden önce bitmesi gerektiğini (ya da hangi "
+            "aşamaların aynı anda/paralel yapılabildiğini) belirlersin. "
+            "Bağımlı olmayan aşamalar otomatik olarak paralel sayılır, "
+            "sistem gerçek toplam üretim süresini (kritik yol) buna göre "
+            "hesaplar. Bu veriyle malzeme + enerji + işçilik + genel "
+            "gider dahil **gerçek porsiyon maliyetini** çıkarır. "
+            "Elektrik/doğalgaz birim fiyatını, personel saat ücretini ve "
+            "genel gider payını kendi işletme ayarlarından belirlersin."
         )
         st.caption(
             "Özel reçetelerini sadece sen görürsün, başka işletmeler "
             "erişemez. Bu reçeteler, aşağıdaki \"Yıllık Menü\" bölümündeki "
             "241 tariflik genel Türk mutfağı kütüphanesinden AYRIDIR — "
-            "hazır olduğunda Menü sayfasından satışa sunabilirsin."
+            "hazır olduğunda Özel Menü Üretimi sayfasından satışa sunabilirsin."
         )
     with sutun_gorsel:
-        _gorsel_varsa_goster("tanitim_receteler.png", use_container_width=True)
+        _gorsel_varsa_goster("tanitim_uretim_asamalari.png", use_container_width=True)
 
     st.divider()
 
@@ -436,9 +441,9 @@ def kontrol_paneli_sayfasi():
     with sutun_gorsel:
         _gorsel_varsa_goster("tanitim_menu.png", use_container_width=True)
     with sutun_metin:
-        st.header("Menü")
+        st.header("Özel Menü Üretimi")
         st.write(
-            "Reçeteler bölümünde oluşturduğun bir yemeği buradan menüye "
+            "Reçete Üretimi bölümünde oluşturduğun bir yemeği buradan menüye "
             "eklersin ve bir satış fiyatı belirlersin. Sistem, o yemeğin "
             "maliyetiyle satış fiyatını karşılaştırıp kâr marjını anlık "
             "olarak gösterir — malzeme fiyatı değiştiğinde kâr marjı da "
@@ -458,7 +463,7 @@ def kontrol_paneli_sayfasi():
             "değiştirmeden önce görebilirsin.\n"
             "- **Boston Matrisi'nin veri kaynağı:** Buraya eklediğin "
             "ürünler ve fiyatlar, aşağıdaki Boston Matrisi analizinin "
-            "girdisini oluşturur — yani Menü bölümü sadece fiyat "
+            "girdisini oluşturur — yani Özel Menü Üretimi bölümü sadece fiyat "
             "listesi değil, bir sonraki adımın (kârlılık analizi) temeli."
         )
 
@@ -505,29 +510,6 @@ def kontrol_paneli_sayfasi():
 
     st.divider()
 
-    # ---- 4) Üretim Aşamaları ----
-    sutun_gorsel, sutun_metin = st.columns([1, 1.1])
-    with sutun_gorsel:
-        _gorsel_varsa_goster("tanitim_uretim_asamalari.png", use_container_width=True)
-    with sutun_metin:
-        st.header("Üretim Aşamaları")
-        st.write(
-            "Bir yemeğin sadece malzeme maliyetini değil, üretim "
-            "aşamalarının (ısıl işlem/enerji ve işçilik) maliyetini de "
-            "hesaba katar. Reçeteler sayfasında oluşturduğun her yemek "
-            "için pişirme sürecini aşama aşama girersin: aşamanın adı, "
-            "süresi, hangi malzemeleri işlediği, ısıl işlem içeriyorsa "
-            "başlangıç/hedef sıcaklığı ve enerji kaynağı (elektrik/"
-            "doğalgaz). Aşamalar arasında hangisinin hangisinden önce "
-            "bitmesi gerektiğini belirlersin — bağımlı olmayan aşamalar "
-            "otomatik olarak paralel sayılır, sistem gerçek toplam "
-            "üretim süresini (kritik yol) buna göre hesaplar. Elektrik/"
-            "doğalgaz birim fiyatını, personel saat ücretini ve genel "
-            "gider payını kendi işletme ayarlarından belirlersin."
-        )
-
-    st.divider()
-
     # ---- 5) Yıllık Menü ----
     st.header("Yıllık Menü")
     _gorsel_varsa_goster("tanitim_yillik_menu.png", use_container_width=True)
@@ -570,16 +552,15 @@ def kontrol_paneli_sayfasi():
 
 kontrol_sayfasi = st.Page(kontrol_paneli_sayfasi, title="Kontrol Paneli", default=True)
 yillik_menu_sayfasi = st.Page("pages/0_Yillik_Menu.py", title="Yıllık Menü")
-receteler_sayfasi = st.Page("pages/1_Receteler.py", title="Reçeteler")
-menu_sayfasi = st.Page("pages/2_Menu.py", title="Menü")
+recete_uretimi_sayfasi = st.Page("pages/1_Recete_Uretimi.py", title="Reçete Üretimi")
+menu_sayfasi = st.Page("pages/2_Menu.py", title="Özel Menü Üretimi")
 boston_sayfasi = st.Page("pages/3_Boston_Matrisi.py", title="Boston Matrisi")
-uretim_sayfasi = st.Page("pages/4_Uretim_Asamalari.py", title="Üretim Aşamaları")
 tarif_kutuphanesi_sayfasi = st.Page(
     "pages/5_Tarif_Kutuphanesi.py", title="Tarif Kütüphanesi", url_path="tarif-kutuphanesi",
 )
 
 pg = st.navigation([
-    kontrol_sayfasi, yillik_menu_sayfasi, receteler_sayfasi,
-    menu_sayfasi, boston_sayfasi, uretim_sayfasi, tarif_kutuphanesi_sayfasi,
+    kontrol_sayfasi, yillik_menu_sayfasi, recete_uretimi_sayfasi,
+    menu_sayfasi, boston_sayfasi, tarif_kutuphanesi_sayfasi,
 ])
 pg.run()
