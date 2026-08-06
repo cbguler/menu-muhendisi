@@ -245,77 +245,138 @@ def kontrol_paneli_sayfasi():
             cerezler.delete("refresh_token", key="refresh_token_cikis_sidebar")
             st.rerun()
 
-    st.title("Kontrol paneli")
+    # -------------------------------------------------------------
+    # Bu fonksiyon artik bir "kontrol paneli" degil, gercekte bir
+    # TANITIM/ONBOARDING sayfasi -- 5 Agustos 2026'da acilir menuler
+    # (st.expander) kaldirilip asagi-kaydirmali, gorsel destekli bir
+    # duzene cevrildi. Her bolumdeki st.image() cagrisi assets/
+    # klasorunde bir dosya bekliyor -- o dosyalar HENUZ orada degil,
+    # gercek uygulama ekran goruntuleriyle doldurulmasi gerekiyor (bkz.
+    # PROJE_NOTLARI.md'deki liste: hangi sayfanin ekran goruntusunun
+    # hangi dosya adiyla kaydedilmesi gerektigi). Dosya yoksa
+    # st.image() hata FIRLATIR -- bu yuzden asagida once dosyanin var
+    # olup olmadigini kontrol eden kucuk bir yardimci kullaniliyor;
+    # dosya henuz yoksa gorsel yerine sessizce bos birakiyor (sayfa
+    # kirilmiyor, sadece o gorsel eksik kaliyor).
+    # -------------------------------------------------------------
+    import os
+
+    def _gorsel_varsa_goster(dosya_adi, *args, **kwargs):
+        yol = f"assets/{dosya_adi}"
+        if os.path.exists(yol):
+            st.image(yol, *args, **kwargs)
+        else:
+            st.caption(f"(Görsel henüz eklenmedi: assets/{dosya_adi})")
+
+    st.title("Menü Mühendisi'ne Hoş Geldin")
     st.write(
-        "Bu sayfa uygulamanın giriş ekranı ve ana kontrol noktasıdır — oturum "
-        "açma/kapama ve abonelik durumu burada yönetilir. Aşağıda her bölümün "
-        "ne işe yaradığının ayrıntılı açıklamasını bulabilirsin."
+        "Bu sayfa, uygulamanın tüm bölümlerini kısaca tanıtır. İstediğin "
+        "an sol menüden doğrudan çalışmaya başlayabilirsin — aşağısı "
+        "sadece neyin nerede olduğunu görmen için."
     )
 
-    with st.expander("Reçeteler — kendi yemeklerini oluştur ve maliyetlendir"):
-        st.write(
-            "İşletmenin kendi yemek reçetelerini burada oluşturursun (Çorba, Ana "
-            "Yemek, Salata, Tatlı, İçecek, Başlangıç, Pizza, Burger kategorileri). "
-            "Bir reçeteye malzeme ekleyip çıkardıkça, o malzemelerin güncel "
-            "fiyatlarına göre porsiyon maliyeti anlık olarak hesaplanır. Plan "
-            "türüne göre kaç reçete oluşturabileceğin sınırlı olabilir. Bu "
-            "reçeteler, aşağıdaki \"Yıllık Menü\" bölümündeki 241 tariflik genel "
-            "Türk mutfağı kütüphanesinden AYRIDIR — burada kendi işletmene özel "
-            "yemeklerini tutarsın."
-        )
+    st.divider()
 
-    with st.expander("Menü — reçeteleri satışa sun, kâr marjını gör"):
+    # ---- 1) Reçeteler ----
+    sutun_metin, sutun_gorsel = st.columns([1.1, 1])
+    with sutun_metin:
+        st.header("📋 Reçeteler")
+        st.write(
+            "İşletmenin kendi yemek reçetelerini burada oluşturursun "
+            "(Çorba, Ana Yemek, Salata, Tatlı, İçecek, Başlangıç, Pizza, "
+            "Burger kategorileri). Bir reçeteye malzeme ekleyip çıkardıkça, "
+            "o malzemelerin güncel fiyatlarına göre porsiyon maliyeti anlık "
+            "olarak hesaplanır."
+        )
+        st.caption(
+            "Not: bu reçeteler, aşağıdaki \"Yıllık Menü\" bölümündeki 241 "
+            "tariflik genel Türk mutfağı kütüphanesinden AYRIDIR — burada "
+            "kendi işletmene özel yemeklerini tutarsın."
+        )
+    with sutun_gorsel:
+        _gorsel_varsa_goster("tanitim_receteler.png", use_container_width=True)
+
+    st.divider()
+
+    # ---- 2) Menü ----
+    sutun_gorsel, sutun_metin = st.columns([1, 1.1])
+    with sutun_gorsel:
+        _gorsel_varsa_goster("tanitim_menu.png", use_container_width=True)
+    with sutun_metin:
+        st.header("🍽️ Menü")
         st.write(
             "Reçeteler bölümünde oluşturduğun bir yemeği buradan menüye "
             "eklersin ve bir satış fiyatı belirlersin. Sistem, o yemeğin "
-            "maliyetiyle satış fiyatını karşılaştırıp kâr marjını anlık olarak "
-            "gösterir."
+            "maliyetiyle satış fiyatını karşılaştırıp kâr marjını anlık "
+            "olarak gösterir."
         )
 
-    with st.expander("Boston Matrisi — hangi ürün ne kadar kazandırıyor"):
+    st.divider()
+
+    # ---- 3) Boston Matrisi ----
+    sutun_metin, sutun_gorsel = st.columns([1.1, 1])
+    with sutun_metin:
+        st.header("⭐ Boston Matrisi")
         st.write(
-            "Menündeki ürünleri kârlılık ve popülerliğe göre dört gruba ayırır: "
-            "Yıldız (çok satan + kârlı), Bulmaca (kârlı ama az satan), Atlı "
-            "(çok satan ama düşük kârlı) ve Köpek (az satan + düşük kârlı). Bu "
-            "klasik menü mühendisliği yöntemi, menüde neyi öne çıkarman ya da "
-            "menüden çıkarman gerektiğine karar vermene yardımcı olur. Plana "
-            "göre erişilebilir olabilir."
+            "Menündeki ürünleri kârlılık ve popülerliğe göre dört gruba "
+            "ayırır: **Yıldız** (çok satan + kârlı), **Bulmaca** (kârlı ama "
+            "az satan), **Atlı** (çok satan ama düşük kârlı) ve **Köpek** "
+            "(az satan + düşük kârlı). Bu klasik menü mühendisliği yöntemi, "
+            "menüde neyi öne çıkarman ya da menüden çıkarman gerektiğine "
+            "karar vermene yardımcı olur."
+        )
+        st.caption("Plana göre erişilebilir olabilir.")
+    with sutun_gorsel:
+        _gorsel_varsa_goster("tanitim_boston_matrisi.png", use_container_width=True)
+
+    st.divider()
+
+    # ---- 4) Üretim Aşamaları ----
+    sutun_gorsel, sutun_metin = st.columns([1, 1.1])
+    with sutun_gorsel:
+        _gorsel_varsa_goster("tanitim_uretim_asamalari.png", use_container_width=True)
+    with sutun_metin:
+        st.header("🔥 Üretim Aşamaları")
+        st.write(
+            "Bir yemeğin sadece malzeme maliyetini değil, üretim "
+            "aşamalarının (ısıl işlem/enerji ve işçilik) maliyetini de "
+            "hesaba katar. Paralel yapılabilen işleri dikkate alarak "
+            "gerçek toplam üretim süresini bulur — sadece malzeme "
+            "fiyatına bakmaktan çok daha gerçekçi bir sonuç verir."
         )
 
-    with st.expander("Üretim Aşamaları — gerçek porsiyon maliyeti"):
-        st.write(
-            "Bir yemeğin sadece malzeme maliyetini değil, üretim aşamalarının "
-            "(ısıl işlem/enerji ve işçilik) maliyetini de hesaba katar. Paralel "
-            "yapılabilen işleri dikkate alarak gerçek toplam üretim süresini "
-            "bulur, genel giderleri de porsiyona yansıtarak \"gerçek maliyeti\" "
-            "ortaya çıkarır — sadece malzeme fiyatına bakmaktan çok daha "
-            "gerçekçi bir sonuç verir."
-        )
+    st.divider()
 
-    with st.expander("Yıllık Menü — otomatik aylık menü üretimi"):
-        st.write(
-            "241 tariflik genel bir Türk mutfağı kütüphanesinden (7 coğrafi "
-            "bölge + genel/klasik tarifler) anayasa kurallarına uygun aylık "
-            "menü üretir:\n"
-            "- **Mutfak / Bölge seçimi:** İstersen tüm kütüphaneyi, istersen "
-            "sadece belirli bölge(ler)i (Ege, Akdeniz, Karadeniz vb.) "
-            "kullanabilirsin. Bir bölgeye tıklamak sadece o bölgeyi devreye "
-            "sokar; hiçbiri seçili değilken tüm kütüphane kullanılır.\n"
-            "- **Mevsim / Ay seçimi:** Seçtiğin ay için 4 haftalık bir menü "
-            "üretilir, mevsime uygun tarifler önceliklendirilir.\n"
-            "- **Anayasa kuralları:** Her öğün üç gruptan (ana yemek, yardımcı "
-            "yemek, tamamlayıcı) birer tarif içerir; aynı hafta içinde bir "
-            "tarif mümkün olduğunca tekrar etmez; birbiriyle uyuşmayan yemek "
-            "kombinasyonları (ör. zeytinyağlı + etli sebze) hiçbir zaman bir "
-            "arada çıkmaz.\n"
-            "- **Besin hedefi (opsiyonel):** Öğle ve akşam için ayrı ayrı "
-            "kalori/protein/yağ/karbonhidrat/glisemik indeks aralığı "
-            "belirleyebilirsin; algoritma bu aralığa uyan kombinasyonları "
-            "önceliklendirir.\n"
-            "- **Excel'e indir:** Üretilen menüyü, ekrandaki kart görünümüyle "
-            "birebir aynı biçimde (gün sütunları, renkli yemek grupları, "
-            "besin/alerjen/maliyet bilgisi) tek tıkla indirebilirsin."
-        )
+    # ---- 5) Yıllık Menü ----
+    st.header("📅 Yıllık Menü")
+    _gorsel_varsa_goster("tanitim_yillik_menu.png", use_container_width=True)
+    st.write(
+        "241 tariflik genel bir Türk mutfağı kütüphanesinden (7 coğrafi "
+        "bölge + genel/klasik tarifler) anayasa kurallarına uygun aylık "
+        "menü üretir:"
+    )
+    st.markdown(
+        "- **Mutfak / Bölge seçimi:** İstersen tüm kütüphaneyi, istersen "
+        "sadece belirli bölge(ler)i (Ege, Akdeniz, Karadeniz vb.) "
+        "kullanabilirsin. Bir bölgeye tıklamak sadece o bölgeyi devreye "
+        "sokar; hiçbiri seçili değilken tüm kütüphane kullanılır.\n"
+        "- **Mevsim / Ay seçimi:** Seçtiğin ay için 4 haftalık bir menü "
+        "üretilir, mevsime uygun tarifler önceliklendirilir.\n"
+        "- **Anayasa kuralları:** Her öğün üç gruptan (ana yemek, "
+        "yardımcı yemek, tamamlayıcı) birer tarif içerir; aynı hafta "
+        "içinde bir tarif mümkün olduğunca tekrar etmez; birbiriyle "
+        "uyuşmayan yemek kombinasyonları (ör. zeytinyağlı + etli sebze) "
+        "hiçbir zaman bir arada çıkmaz.\n"
+        "- **Besin hedefi (opsiyonel):** Öğle ve akşam için ayrı ayrı "
+        "kalori/protein/yağ/karbonhidrat/glisemik indeks aralığı "
+        "belirleyebilirsin; algoritma bu aralığa uyan kombinasyonları "
+        "önceliklendirir.\n"
+        "- **Excel'e indir:** Üretilen menüyü, ekrandaki kart "
+        "görünümüyle birebir aynı biçimde tek tıkla indirebilirsin."
+    )
+
+    st.divider()
+    st.caption("Sol menüden istediğin bölüme geçip çalışmaya başlayabilirsin.")
 
 
 # ---------------------------------------------------------------------
