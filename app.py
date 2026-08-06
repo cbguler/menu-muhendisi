@@ -235,10 +235,6 @@ def kontrol_paneli_sayfasi():
     sidebar_logo_goster(animasyonlu=False)
 
     with st.sidebar:
-        plan_metni = f"Plan: {abonelik_verisi['plan_adi']}"
-        if abonelik_verisi["durum"] == "deneme":
-            plan_metni += f"  ·  Deneme bitiş: {abonelik_verisi['deneme_bitis_tarihi']}"
-        st.caption(plan_metni)
         if st.button("Çıkış yap"):
             supabase.auth.sign_out()
             st.session_state.oturum = None
