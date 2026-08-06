@@ -65,10 +65,10 @@ ASAMALAR = {
     "Kavurmalı Nohut": [
         {"ad": "Hazırlık", "sira": 1, "sure_dakika": 5, "isil_islem_mi": False,
          "malzemeler": [], "bagimli": []},
-        {"ad": "Kavurma ve Pişirme", "sira": 2, "sure_dakika": 30, "aktif_dakika": 12,
+        {"ad": "Isıtma ve Pişirme", "sira": 2, "sure_dakika": 25, "aktif_dakika": 10,
          "isil_islem_mi": True, "enerji_kaynagi": "dogalgaz",
          "baslangic_sicaklik": 20, "hedef_sicaklik": 110, "verimlilik_orani": 0.42,
-         "malzemeler": ["KURU SOĞAN", "PASTIRMA", "NOHUT"], "bagimli": ["Hazırlık"]},
+         "malzemeler": ["KURU SOĞAN", "KAVURMA", "NOHUT"], "bagimli": ["Hazırlık"]},
     ],
     "Sucuklu Kuru Fasulye": [
         {"ad": "Hazırlık", "sira": 1, "sure_dakika": 10, "isil_islem_mi": False,

@@ -40,9 +40,9 @@ ASAMALAR = {
     "Erzincan Usulü Kavurmalı Yumurta": [
         {"ad": "Hazırlık", "sira": 1, "sure_dakika": 3, "isil_islem_mi": False,
          "malzemeler": [], "bagimli": []},
-        {"ad": "Pişirme", "sira": 2, "sure_dakika": 7, "isil_islem_mi": True,
+        {"ad": "Pişirme", "sira": 2, "sure_dakika": 6, "isil_islem_mi": True,
          "enerji_kaynagi": "dogalgaz", "baslangic_sicaklik": 20, "hedef_sicaklik": 100,
-         "verimlilik_orani": 0.42, "malzemeler": ["PASTIRMA", "TAVUK YUMURTASI", "TEREYAĞI"],
+         "verimlilik_orani": 0.42, "malzemeler": ["KAVURMA", "TAVUK YUMURTASI", "TEREYAĞI"],
          "bagimli": ["Hazırlık"]},
     ],
     "Tulumlu Kuzu Tandır": [
@@ -125,10 +125,10 @@ ASAMALAR = {
     "Erzurum Usulü Kavurmalı Kuru Fasulye": [
         {"ad": "Hazırlık", "sira": 1, "sure_dakika": 10, "isil_islem_mi": False,
          "malzemeler": [], "bagimli": []},
-        {"ad": "Kavurma ve Pişirme", "sira": 2, "sure_dakika": 55, "aktif_dakika": 15,
+        {"ad": "Kavurma ve Pişirme", "sira": 2, "sure_dakika": 50, "aktif_dakika": 12,
          "isil_islem_mi": True, "enerji_kaynagi": "dogalgaz",
          "baslangic_sicaklik": 20, "hedef_sicaklik": 100, "verimlilik_orani": 0.42,
-         "malzemeler": ["KURU SOĞAN", "SIĞIR KIYMA", "KURU FASULYE"], "bagimli": ["Hazırlık"]},
+         "malzemeler": ["KURU SOĞAN", "KAVURMA", "KURU FASULYE"], "bagimli": ["Hazırlık"]},
     ],
     "Otlu Peynirli Börek": [
         {"ad": "Hazırlık", "sira": 1, "sure_dakika": 15, "isil_islem_mi": False,

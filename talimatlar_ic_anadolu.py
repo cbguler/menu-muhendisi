@@ -74,14 +74,14 @@ TALIMATLAR = {
 **SÜRE ÖZETİ:** Aktif işçilik ~15 dk · Pasif bekleme (pişme) ~20 dk · Toplam ~45 dk""",
 
     "Kavurmalı Nohut": """**Hazırlık / Mise en Place**
-1. Soğanı doğrayın, pastırmayı dilimleyin.
+1. Soğanı doğrayın, kavurmayı küçük parçalara ayırın.
 
 **Isıl İşlem**
-1. Kavurma ve Pişirme (~110°C, tavada, 30 dk): soğan ve pastırmayı kavurup nohudu ekleyin, birkaç dk daha pişirin.
+1. Isıtma ve Pişirme (~110°C, tavada, 25 dk): soğanı kavurup kavurmayı ekleyin (kavurma zaten pişmiş olduğu için sadece ısıtılıp soğanla harmanlanır), nohudu katıp birkaç dk daha pişirin.
 
 **PARALEL YAPILABİLİRLİK:** Tek kap, sıralı süreç — paralel fırsatı yok.
 
-**SÜRE ÖZETİ:** Aktif işçilik ~12 dk · Pasif bekleme (pişme) ~18 dk · Toplam ~40 dk""",
+**SÜRE ÖZETİ:** Aktif işçilik ~10 dk · Pasif bekleme (pişme) ~15 dk · Toplam ~35 dk""",
 
     "Sucuklu Kuru Fasulye": """**Hazırlık / Mise en Place**
 1. Soğanı doğrayın, sucuğu dilimleyin.

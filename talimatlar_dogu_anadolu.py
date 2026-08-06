@@ -42,14 +42,14 @@ TALIMATLAR = {
 **SÜRE ÖZETİ:** Aktif işçilik ~30 dk (sarma dahil) · Pasif bekleme (fırınlama) ~17 dk · Toplam ~55 dk""",
 
     "Erzincan Usulü Kavurmalı Yumurta": """**Hazırlık / Mise en Place**
-1. Pastırmayı ince dilimleyin.
+1. Kavurmayı küçük parçalara ayırın.
 
 **Isıl İşlem**
-1. Pişirme (~100°C, tavada, 7 dk): tereyağında pastırmayı kavurup yumurtaları kırıp üzerinde pişirin.
+1. Pişirme (~100°C, tavada, 6 dk): tereyağında kavurmayı ısıtıp yumurtaları kırıp üzerinde pişirin.
 
 **PARALEL YAPILABİLİRLİK:** Tek adımlı, hızlı bir tarif — paralel fırsatı yok.
 
-**SÜRE ÖZETİ:** Aktif işçilik ~7 dk · Pasif bekleme yok · Toplam ~10 dk""",
+**SÜRE ÖZETİ:** Aktif işçilik ~6 dk · Pasif bekleme yok · Toplam ~10 dk""",
 
     "Tulumlu Kuzu Tandır": """**Hazırlık / Mise en Place**
 1. Soğanı doğrayın.
@@ -138,14 +138,14 @@ TALIMATLAR = {
 **SÜRE ÖZETİ:** Aktif işçilik ~7 dk · Pasif bekleme (pişme + demlenme) ~18 dk · Toplam ~25 dk""",
 
     "Erzurum Usulü Kavurmalı Kuru Fasulye": """**Hazırlık / Mise en Place**
-1. Soğanı doğrayın, kuru fasulyeyi (önceden ıslatılmış/haşlanmış) süzün.
+1. Soğanı doğrayın, kuru fasulyeyi (önceden ıslatılmış/haşlanmış) süzün, kavurmayı küçük parçalara ayırın.
 
 **Isıl İşlem**
-1. Kavurma ve Pişirme (100°C, 55 dk): soğanı kavurup kıymayı ekleyin, fasulyeyi katıp az suyla yumuşayana kadar pişirin.
+1. Kavurma ve Pişirme (100°C, 50 dk): soğanı kavurup kavurmayı ekleyin, fasulyeyi katıp az suyla yumuşayana kadar pişirin.
 
 **PARALEL YAPILABİLİRLİK:** Tek kap, sıralı süreç — paralel fırsatı yok.
 
-**SÜRE ÖZETİ:** Aktif işçilik ~15 dk · Pasif bekleme (pişme) ~45 dk · Toplam ~70 dk""",
+**SÜRE ÖZETİ:** Aktif işçilik ~12 dk · Pasif bekleme (pişme) ~40 dk · Toplam ~65 dk""",
 
     "Otlu Peynirli Börek": """**Hazırlık / Mise en Place**
 1. Yufka katmanları arasına otlu peyniri serpiştirin.
