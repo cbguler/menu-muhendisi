@@ -430,7 +430,25 @@ def kontrol_paneli_sayfasi():
             "Reçeteler bölümünde oluşturduğun bir yemeği buradan menüye "
             "eklersin ve bir satış fiyatı belirlersin. Sistem, o yemeğin "
             "maliyetiyle satış fiyatını karşılaştırıp kâr marjını anlık "
-            "olarak gösterir."
+            "olarak gösterir — malzeme fiyatı değiştiğinde kâr marjı da "
+            "otomatik olarak yeniden hesaplanır, elle güncelleme "
+            "gerekmez."
+        )
+        st.markdown(
+            "- **Kategori bazlı organizasyon:** Çorba, Ana Yemek, Salata, "
+            "Tatlı, İçecek, Başlangıç, Pizza, Burger — menünü mutfağının "
+            "gerçek yapısına göre düzenlersin.\n"
+            "- **Anlık kâr marjı:** Her ürünün yanında maliyet, satış "
+            "fiyatı ve aradaki farkın yüzdesi tek bakışta görünür — "
+            "hangi ürünün gerçekte ne kazandırdığını tahmin etmek "
+            "yerine kesin olarak bilirsin.\n"
+            "- **Fiyatlandırma denemeleri:** Bir ürünün satış fiyatını "
+            "değiştirip kâr marjının nasıl değişeceğini, menüyü fiilen "
+            "değiştirmeden önce görebilirsin.\n"
+            "- **Boston Matrisi'nin veri kaynağı:** Buraya eklediğin "
+            "ürünler ve fiyatlar, aşağıdaki Boston Matrisi analizinin "
+            "girdisini oluşturur — yani Menü bölümü sadece fiyat "
+            "listesi değil, bir sonraki adımın (kârlılık analizi) temeli."
         )
 
     st.divider()
@@ -440,14 +458,37 @@ def kontrol_paneli_sayfasi():
     with sutun_metin:
         st.header("Boston Matrisi")
         st.write(
-            "Menündeki ürünleri kârlılık ve popülerliğe göre dört gruba "
-            "ayırır: **Yıldız** (çok satan + kârlı), **Bulmaca** (kârlı ama "
-            "az satan), **Atlı** (çok satan ama düşük kârlı) ve **Köpek** "
-            "(az satan + düşük kârlı). Bu klasik menü mühendisliği yöntemi, "
-            "menüde neyi öne çıkarman ya da menüden çıkarman gerektiğine "
-            "karar vermene yardımcı olur."
+            "Boston Consulting Group'un ürün portföyü analizi için "
+            "geliştirdiği klasik yöntemin, restoran menüsüne uyarlanmış "
+            "hâlidir — literatürde \"menü mühendisliği\" olarak bilinir. "
+            "Menündeki her ürünü iki eksende değerlendirir: **popülerlik** "
+            "(ne kadar sık satılıyor) ve **kârlılık** (birim başına ne "
+            "kadar kazandırıyor). Bu iki eksen, ürünleri dört gruba ayırır "
+            "— ve her grup için farklı bir aksiyon önerir:"
         )
-        st.caption("Plana göre erişilebilir olabilir.")
+        st.markdown(
+            "- **Yıldız** (çok satan + kârlı): Menünün en değerli "
+            "ürünleri. Koru, öne çıkar, fiyatı değiştirmeye temkinli "
+            "yaklaş — bunlar zaten işini yapıyor.\n"
+            "- **Bulmaca** (kârlı ama az satan): Potansiyeli yüksek ama "
+            "fark edilmiyor. Menüde daha görünür bir yere taşımak, "
+            "sunumunu güçlendirmek ya da tanıtımını yapmak satışını "
+            "artırabilir.\n"
+            "- **Atlı** (çok satan ama düşük kârlı): Müşteri seviyor ama "
+            "işletmeye az kazandırıyor. Fiyatı hafifçe artırmak ya da "
+            "malzeme/porsiyon maliyetini düşürmek (Üretim Aşamaları "
+            "bölümündeki gerçek maliyet verisiyle) kâr marjını iyileştirir.\n"
+            "- **Köpek** (az satan + düşük kârlı): Menüde yer kaplayan "
+            "ama işe yaramayan ürünler. Menüden çıkarmayı ya da baştan "
+            "tasarlamayı düşünmenin zamanı."
+        )
+        st.write(
+            "Amacı basit: menü kararlarını sezgiyle değil, gerçek satış "
+            "ve maliyet verisiyle vermeni sağlamak — hangi ürünün öne "
+            "çıkarılacağına, hangisinin fiyatının gözden geçirileceğine "
+            "ya da hangisinin menüden kaldırılacağına dair net bir yol "
+            "haritası çıkarır."
+        )
     with sutun_gorsel:
         _gorsel_varsa_goster("tanitim_boston_matrisi.png", use_container_width=True)
 
