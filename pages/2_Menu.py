@@ -9,7 +9,7 @@ from sidebar_logo import sidebar_logo_goster
 
 from db import get_supabase, oturumu_uygula
 
-st.set_page_config(page_title="Menü", page_icon="assets/favicon.png", layout="wide")
+st.set_page_config(page_title="Özel Menü Üretimi", page_icon="assets/favicon.png", layout="wide")
 sidebar_logo_goster(animasyonlu=False)
 
 supabase = get_supabase()
@@ -17,7 +17,7 @@ oturumu_uygula(supabase)
 
 isletme_id = st.session_state.isletme_id
 
-st.title("Menü Yönetimi")
+st.title("Özel Menü Üretimi")
 
 receteler = (
     supabase.table("receteler")
@@ -28,7 +28,7 @@ receteler = (
 ).data or []
 
 if not receteler:
-    st.info("Önce Reçeteler sayfasından en az bir reçete oluşturmalısın.")
+    st.info("Önce Reçete Üretimi sayfasından en az bir reçete oluşturmalısın.")
     st.stop()
 
 recete_id_by_ad = {r["ad"]: r["id"] for r in receteler}
