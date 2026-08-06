@@ -273,6 +273,105 @@ def kontrol_paneli_sayfasi():
 
     st.divider()
 
+    # ---- 0) Bu Uygulamanın Amacı ----
+    st.header("🎯 Bu Uygulamanın Amacı")
+    st.write(
+        "Menü Mühendisi; ticari işletmelerin, okul kantinlerinin, hastane "
+        "mutfaklarının, kurumsal yemekhanelerin ve benzeri kurum/kuruluşların "
+        "**bölgesel tarifleri ve mevsimlik ürünleri gözeterek** haftalık, "
+        "aylık, mevsimlik ve yıllık menülerini hazırlaması için kuruldu."
+    )
+
+    st.markdown(
+        """
+<svg width="100%" viewBox="0 0 680 116" role="img">
+<title>Bölgesel ve mevsimlik tariflerden doğru kitleye ulaşan menü üretim süreci</title>
+<defs><marker id="ok1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#888780" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<rect x="48" y="40" width="101" height="56" rx="8" fill="#FAECE7" stroke="#993C1D" stroke-width="0.5"/>
+<text x="98" y="58" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="#712B13">7 bölge</text>
+<text x="98" y="78" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#993C1D">+ mevsimlik</text>
+<rect x="179" y="40" width="122" height="56" rx="8" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.5"/>
+<text x="240" y="58" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="#444441">Menü üretimi</text>
+<text x="240" y="78" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#5F5E5A">Anayasa kuralı</text>
+<rect x="331" y="40" width="144" height="56" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text x="403" y="58" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="#085041">Besin &amp; alerjen</text>
+<text x="403" y="78" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#0F6E56">6 veri noktası</text>
+<rect x="505" y="40" width="128" height="56" rx="8" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
+<text x="569" y="58" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="#633806">Doğru kitleye</text>
+<text x="569" y="78" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#854F0B">Sağlık + kurum</text>
+<line x1="149" y1="68" x2="179" y2="68" stroke="#888780" stroke-width="1.5" marker-end="url(#ok1)"/>
+<line x1="301" y1="68" x2="331" y2="68" stroke="#888780" stroke-width="1.5" marker-end="url(#ok1)"/>
+<line x1="475" y1="68" x2="505" y2="68" stroke="#888780" stroke-width="1.5" marker-end="url(#ok1)"/>
+</svg>
+""",
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        "- **Bölge / mevsim gözeten üretim:** 7 coğrafi bölgenin 241 "
+        "tariflik kütüphanesinden, mevsime uygun ürünleri önceliklendirerek "
+        "haftalık/aylık/mevsimlik/yıllık menü üretir — anayasa kuralları "
+        "(grup dengesi, tekrar etmeme, uyumsuz kombinasyonların engellenmesi) "
+        "her menünün tutarlı ve dengeli olmasını garanti eder.\n"
+        "- **Sadece maliyet değil, sağlık bilgisi de:** Her yemek için "
+        "hesaplanan kalori, protein, yağ, karbonhidrat, glisemik indeks ve "
+        "alerjen bilgisi sadece bir maliyet aracı değil — amaçlarımızdan "
+        "biri de bu bilgiyi gerçekten ihtiyacı olan insanlara ulaştırmak."
+    )
+
+    st.markdown(
+        """
+<svg width="100%" viewBox="0 0 680 164" role="img">
+<title>Menüde takip edilen altı besin ve alerjen veri noktası</title>
+<rect x="120" y="40" width="130" height="44" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text x="185" y="62" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="#085041">Kalori</text>
+<rect x="274" y="40" width="130" height="44" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text x="339" y="62" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="#085041">Protein</text>
+<rect x="428" y="40" width="130" height="44" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text x="493" y="62" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="#085041">Yağ</text>
+<rect x="120" y="100" width="130" height="44" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text x="185" y="122" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="#085041">Karbonhidrat</text>
+<rect x="274" y="100" width="130" height="44" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text x="339" y="122" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="#085041">GI</text>
+<rect x="428" y="100" width="130" height="44" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text x="493" y="122" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="#085041">Alerjen</text>
+</svg>
+""",
+        unsafe_allow_html=True,
+    )
+    st.caption("GI: Glisemik İndeks")
+
+    st.write("**Bu verilerin şeffaf sunulması, aşağıdaki gibi pek çok kişi ve kuruma gerçek bir fark yaratabilir:**")
+    sutun1, sutun2, sutun3 = st.columns(3)
+    with sutun1:
+        st.markdown(
+            "**Beslenme ve sağlık takibi**\n"
+            "- Diyetisyenler\n"
+            "- Diyet yapanlar ve kilo vermek isteyenler\n"
+            "- Sporcular\n"
+            "- Gelişme çağındaki çocuklar\n"
+            "- Hamile ve emziren anneler"
+        )
+    with sutun2:
+        st.markdown(
+            "**Kronik durumlar**\n"
+            "- Şeker hastaları (glisemik indeks)\n"
+            "- Endokrin sistem hastalıkları olanlar\n"
+            "- Kalp-damar / hipertansiyon hastaları\n"
+            "- Böbrek ve karaciğer hastaları\n"
+            "- Bariatrik cerrahi sonrası hastalar"
+        )
+    with sutun3:
+        st.markdown(
+            "**Alerjen ve kurumsal ihtiyaçlar**\n"
+            "- Alerjik bünyeye sahip olanlar\n"
+            "- Çölyak hastaları (gluten takibi)\n"
+            "- Kanser tedavisinde beslenme desteği alanlar\n"
+            "- Okul kantinleri, hastane mutfakları, kurumsal yemekhaneler"
+        )
+
+    st.divider()
+
     # ---- 1) Reçeteler ----
     sutun_metin, sutun_gorsel = st.columns([1.1, 1])
     with sutun_metin:
