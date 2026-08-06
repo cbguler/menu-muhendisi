@@ -404,16 +404,27 @@ def kontrol_paneli_sayfasi():
     with sutun_metin:
         st.header("Reçeteler")
         st.write(
-            "İşletmenin kendi yemek reçetelerini burada oluşturursun "
+            "İşletmene özel kendi yemek reçetelerini burada oluşturursun "
             "(Çorba, Ana Yemek, Salata, Tatlı, İçecek, Başlangıç, Pizza, "
-            "Burger kategorileri). Bir reçeteye malzeme ekleyip çıkardıkça, "
-            "o malzemelerin güncel fiyatlarına göre porsiyon maliyeti anlık "
-            "olarak hesaplanır."
+            "Burger kategorileri) — malzemelerini ve miktarlarını "
+            "girersin, sistem güncel malzeme fiyatlarına göre porsiyon "
+            "maliyetini ve porsiyon başı kaloriyi anlık olarak hesaplar."
+        )
+        st.write(
+            "Malzemeleri girdikten sonra **Üretim Aşamaları** sayfasına "
+            "geçip pişirme sürecini aşama aşama tarif edebilirsin: her "
+            "aşamada malzemeyi nerede, kaç dereceye kadar ısıttığını "
+            "seçeneklerden seçersin; aşamalar arasında hangisinin "
+            "hangisinden önce bitmesi gerektiğini (ya da hangi aşamaların "
+            "aynı anda/paralel yapılabildiğini) belirleyebilirsin. Bu "
+            "veriyle sistem sana malzeme + enerji + işçilik + genel gider "
+            "dahil **gerçek porsiyon maliyetini** çıkarır."
         )
         st.caption(
-            "Not: bu reçeteler, aşağıdaki \"Yıllık Menü\" bölümündeki 241 "
-            "tariflik genel Türk mutfağı kütüphanesinden AYRIDIR — burada "
-            "kendi işletmene özel yemeklerini tutarsın."
+            "Özel reçetelerini sadece sen görürsün, başka işletmeler "
+            "erişemez. Bu reçeteler, aşağıdaki \"Yıllık Menü\" bölümündeki "
+            "241 tariflik genel Türk mutfağı kütüphanesinden AYRIDIR — "
+            "hazır olduğunda Menü sayfasından satışa sunabilirsin."
         )
     with sutun_gorsel:
         _gorsel_varsa_goster("tanitim_receteler.png", use_container_width=True)
@@ -503,9 +514,16 @@ def kontrol_paneli_sayfasi():
         st.write(
             "Bir yemeğin sadece malzeme maliyetini değil, üretim "
             "aşamalarının (ısıl işlem/enerji ve işçilik) maliyetini de "
-            "hesaba katar. Paralel yapılabilen işleri dikkate alarak "
-            "gerçek toplam üretim süresini bulur — sadece malzeme "
-            "fiyatına bakmaktan çok daha gerçekçi bir sonuç verir."
+            "hesaba katar. Reçeteler sayfasında oluşturduğun her yemek "
+            "için pişirme sürecini aşama aşama girersin: aşamanın adı, "
+            "süresi, hangi malzemeleri işlediği, ısıl işlem içeriyorsa "
+            "başlangıç/hedef sıcaklığı ve enerji kaynağı (elektrik/"
+            "doğalgaz). Aşamalar arasında hangisinin hangisinden önce "
+            "bitmesi gerektiğini belirlersin — bağımlı olmayan aşamalar "
+            "otomatik olarak paralel sayılır, sistem gerçek toplam "
+            "üretim süresini (kritik yol) buna göre hesaplar. Elektrik/"
+            "doğalgaz birim fiyatını, personel saat ücretini ve genel "
+            "gider payını kendi işletme ayarlarından belirlersin."
         )
 
     st.divider()
