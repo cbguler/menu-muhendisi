@@ -143,6 +143,7 @@ if st.session_state.oturum is None and not st.session_state.cerez_kontrol_edildi
 if st.session_state.oturum is None:
     saklanan_sifreli = cerezler.get("refresh_token")
     saklanan_refresh = _coz(saklanan_sifreli) if saklanan_sifreli else None
+    _teshis_hata = None
     if saklanan_refresh:
         try:
             yenilenen = supabase.auth.refresh_session(saklanan_refresh)
@@ -157,10 +158,25 @@ if st.session_state.oturum is None:
                 expires_at=datetime.now(timezone.utc) + timedelta(days=BENI_HATIRLA_GUN),
                 key="refresh_token_yenile",
             )
-        except Exception:
+        except Exception as e:
             # refresh token geçersiz/süresi dolmuş -- sessizce temizleyip
             # normal giriş ekranına düş
+            _teshis_hata = repr(e)
             cerezler.delete("refresh_token", key="refresh_token_sil_gecersiz")
+
+    # ------------------------------------------------------------------
+    # GECICI TESHIS BLOGU (6 Agustos 2026) -- "beni hatirla" sorunu icin.
+    # Iki onceki duzeltme denemesi de isi cozmedi -- tahmin etmek yerine
+    # gercek veriye bakmamiz lazim. Sorun cozulunce bu blok kaldirilacak.
+    # ------------------------------------------------------------------
+    if st.session_state.oturum is None:
+        with st.expander("Teşhis bilgisi (geçici)", expanded=True):
+            st.write("cerez_kontrol_edildi:", st.session_state.get("cerez_kontrol_edildi"))
+            st.write("tum cerezler (get_all):", cerezler.get_all())
+            st.write("refresh_token cerezi bulundu mu:", saklanan_sifreli is not None)
+            st.write("cozulmus refresh token bulundu mu:", saklanan_refresh is not None)
+            if _teshis_hata:
+                st.write("refresh_session hatasi:", _teshis_hata)
 
 if st.session_state.oturum is None:
     sidebar_logo_goster(animasyonlu=False)
