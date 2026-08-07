@@ -14,6 +14,7 @@
 
 import base64
 import hashlib
+import time
 from datetime import datetime, timedelta, timezone
 
 import extra_streamlit_components as stx
@@ -110,6 +111,32 @@ if "oturum" not in st.session_state:
     st.session_state.oturum = None
 
 # --- "Beni hatırla" çerezinden oturumu geri yüklemeyi dene ---
+#
+# ONEMLI TEKNIK NOT (6 Agustos 2026): extra_streamlit_components.CookieManager
+# arka planda GERCEK bir Streamlit ozel bileseni -- tarayicidaki cerezleri
+# Python'a JS uzerinden ASENKRON bir round-trip ile bildiriyor. Bu yuzden
+# script'in ILK CALISTIGI ANDA cerezler.get(...)/.get_all() COGU ZAMAN BOS
+# doner -- gercek deger henuz tarayicidan gelmemistir. Bu, kutuphanenin
+# kendi kaynak kodunda (bkz. CookieManager.__init__: default={} ile
+# component cagriliyor) ve Streamlit forumunda cok sayida kullanicinin
+# bagimsiz olarak dogruladigi bir davranis ("ilk anda gorunmuyor, bir-iki
+# saniye sonra aniden beliriyor"). Once buraya bakmadan "cerez yok" sonucuna
+# varmak, "beni hatirla" isaretli olsa bile oturumun geri yuklenmemesine
+# (kullanicinin her seferinde yeniden giris yapmasina) yol aciyordu.
+#
+# Cozum: session_state'te "bu tarayici oturumunda bir kere kontrol ettik mi"
+# bayragi tutuyoruz -- ilk kontrolde bos gelirse KISA bir sure bekleyip bir
+# kez daha deniyoruz (bilesenin gercek degeri raporlamasi icin makul sure);
+# bu gecikme sadece sayfa ilk acildiginda, TEK SEFER yasaniyor, sonraki her
+# rerun'da tekrarlanmiyor.
+if "cerez_kontrol_edildi" not in st.session_state:
+    st.session_state.cerez_kontrol_edildi = False
+
+if st.session_state.oturum is None and not st.session_state.cerez_kontrol_edildi:
+    if not cerezler.get_all():
+        time.sleep(0.5)
+    st.session_state.cerez_kontrol_edildi = True
+
 if st.session_state.oturum is None:
     saklanan_sifreli = cerezler.get("refresh_token")
     saklanan_refresh = _coz(saklanan_sifreli) if saklanan_sifreli else None
