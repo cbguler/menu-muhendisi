@@ -338,7 +338,6 @@ def kontrol_paneli_sayfasi():
     # dosya henuz yoksa gorsel yerine sessizce bos birakiyor (sayfa
     # kirilmiyor, sadece o gorsel eksik kaliyor).
     # -------------------------------------------------------------
-    import base64
     import os
 
     def _gorsel_varsa_goster(dosya_adi, *args, **kwargs):
@@ -349,28 +348,23 @@ def kontrol_paneli_sayfasi():
             st.caption(f"(Görsel henüz eklenmedi: assets/{dosya_adi})")
 
     def _video_varsa_goster(dosya_adi):
-        # assets/logo_animated.mp4'te (TrendSurf Optima'daki animasyonlu
-        # logo splash) kullanilan ayni yontem: dosya calisma zamaninda
-        # okunup base64 data-URI olarak <video> etiketine gomuluyor --
-        # Streamlit'in st.video() widget'i kontrol cubuklariyla geliyor,
-        # sessiz/donguleyen bir "hero" video icin ham HTML gerekiyor.
-        # NOT: base64 kodlama dosya boyutunu ~%33 artirir -- bu video
-        # ~2.7 MB, yani sayfaya ~3.6 MB gomulu metin ekleniyor. Sayfa
-        # yuklemesi yavas hissedilirse videoyu sikistirmak (ffmpeg ile
-        # cozunurluk/bitrate dusurme) faydali olur.
+        # IKINCI DUZELTME (6 Agustos 2026, mobil sorunu): base64 data-URI
+        # hilesi masaustunde calisiyordu ama MOBILDE video hic
+        # gorunmuyordu -- muhtemelen mobil tarayicilarin gomulu (data-URI)
+        # video kaynaklarina koydugu boyut/uyumluluk kisitlarina takiliyordu
+        # (bu video base64'te ~3.6 MB). st.video()'nun artik NATIVE
+        # autoplay/loop/muted parametreleri var (eskiden yoktu, sonradan
+        # eklenmis) -- Streamlit'in kendi (st.logo() ile ayni turden)
+        # duzgun medya sunum mekanizmasini kullaniyor, data-URI degil.
+        # BEDEL: native versiyon bazi tarayicilarda kontrol cubugunu
+        # gosterebilir (eski hackte hic yoktu) -- islevsellik icin bu
+        # kabul edildi.
         yol = f"assets/{dosya_adi}"
         if not os.path.exists(yol):
             st.caption(f"(Video henüz eklenmedi: assets/{dosya_adi})")
             return
         with open(yol, "rb") as f:
-            video_b64 = base64.b64encode(f.read()).decode()
-        st.markdown(
-            f'<video autoplay loop muted playsinline '
-            f'style="width:100%; border-radius:12px; display:block;">'
-            f'<source src="data:video/mp4;base64,{video_b64}" type="video/mp4">'
-            f'</video>',
-            unsafe_allow_html=True,
-        )
+            st.video(f.read(), format="video/mp4", autoplay=True, loop=True, muted=True)
 
     st.title("Menü Mühendisi'ne Hoş Geldin")
     st.write(

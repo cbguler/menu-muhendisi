@@ -24,16 +24,20 @@ def sidebar_logo_goster(animasyonlu: bool = True, genislik: int = 220):
     eski cagrilarin (sidebar_logo_goster(animasyonlu=False) gibi)
     hata vermemesi icin imzada duruyorlar.
     """
-    # LOGO BOYUTU -- BESINCI DUZELTME (6 Agustos 2026): 56px yeterince
-    # buyuk degildi (kullanici 2x daha istedi -> ~112px), ama daha once
-    # 120px'te USTTEN KIRPILMISTI -- kirpilmanin gercek nedeni logo degil,
-    # basligin KENDI YUKSEKLIGI logo kadar buyumuyordu (header kutusu
-    # sabit/kucuk, tasan kisim gizleniyordu). Bu sefer HEM logoyu HEM DE
-    # basligin (stHeader) kendi min-height'ini birlikte buyutuyoruz --
-    # kutu artik logoyu kirpmadan icine alacak kadar buyuk.
+    # SIDEBAR GIZLEME -- ALTINCI DUZELTME (6 Agustos 2026, mobil sorunu):
+    # [data-testid='stSidebar'] { display: none } TUM ekran boyutlarinda
+    # uygulaniyordu -- masaustunde iyi calisiyordu ama MOBILDE, dar
+    # ekranda ust menu sigmayinca Streamlit'in kendi "daralt/genislet"
+    # (>>) davranisi TAM DA bu sidebar alanini kullaniyor gibi gorunuyor
+    # -- kullanici ">>" ikonuna tiklayinca menu hic acilmiyordu, cunku
+    # acilmasi gereken yer zaten gizliydi. Cozum: sidebar'i SADECE genis
+    # (masaustu) ekranlarda gizle, mobilde (dar ekran) dokunma -- boylece
+    # Streamlit'in kendi mobil-uyumlu davranisi bozulmuyor.
     st.markdown(
         "<style>"
-        "[data-testid='stSidebar'] { display: none !important; }"
+        "@media (min-width: 768px) {"
+        "  [data-testid='stSidebar'] { display: none !important; }"
+        "}"
         "[data-testid='stHeader'] { min-height: 90px !important; height: auto !important; }"
         "[data-testid='stHeaderLogo'] { height: 100px !important; width: auto !important; max-width: none !important; }"
         "</style>",
