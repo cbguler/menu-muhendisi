@@ -112,33 +112,44 @@ if "oturum" not in st.session_state:
 
 # --- "Beni hatırla" çerezinden oturumu geri yüklemeyi dene ---
 #
-# ONEMLI TEKNIK NOT (6 Agustos 2026, IKINCI DUZELTME): extra_streamlit_
+# ONEMLI TEKNIK NOT (6 Agustos 2026, UCUNCU DUZELTME): extra_streamlit_
 # components.CookieManager arka planda GERCEK bir Streamlit ozel bileseni
 # -- tarayicidaki cerezleri Python'a JS uzerinden ASENKRON bir round-trip
 # ile bildiriyor. Bu yuzden script'in ILK CALISTIGI ANDA cerezler.get(...)/
 # .get_all() COGU ZAMAN BOS doner -- gercek deger henuz tarayicidan
 # gelmemistir.
 #
-# ILK DUZELTMEM (sadece time.sleep() eklemek) YANLISTI: sleep() sadece
-# Python'u bekletiyor, bilesenin gercek degeri Streamlit'e SADECE BIR
-# RERUN SIRASINDA ulasiyor -- ayni script calistirmasi icinde ne kadar
-# beklersem bekleyeyim, cerezler nesnesi hep ayni (bos) degeri donduruyordu.
-# Bu yuzden kullanici hala kisa bir "login ekrani" flasi goruyordu (arka
-# planda Streamlit'in KENDI otomatik component-rerun mekanizmasi devreye
-# girip duzeltiyordu, ama gecikmeli).
+# ILK DUZELTME (sadece time.sleep()): isE yaramadi, ayni calistirma
+# icinde beklemek bilesenin degerini gunceletmiyor.
 #
-# DOGRU COZUM: bos geldiginde kisa bir sure bekleyip script'i GERCEKTEN
-# YENIDEN BASLATMAK (st.rerun()) -- bu, LOGIN EKRANI HIC RENDER EDILMEDEN
-# (bu blok, login formunu ciren kod bloğundan ONCE calisiyor) kisa bir
-# yukleniyor animasyonuyla dogrudan uygulamaya gecmeyi saglar.
-if "cerez_kontrol_edildi" not in st.session_state:
-    st.session_state.cerez_kontrol_edildi = False
+# IKINCI DUZELTME (TEK SEFERLIK zorla st.rerun()): TESHIS VERISIYLE
+# DOGRULANDI KI ISI DAHA DA KOTULESTIRDI -- bazi denemelerde bilesen
+# zorla yeniden baslatilinca kendi dogal (yavas ama calisan) cozunme
+# donguSunu hic tamamlayamadan sinirli deneme hakkimiz (1) tukeniyordu,
+# TUM cerezler (get_all()) bomboş donuyordu (sadece refresh_token degil,
+# _ga gibi sıradan cerezler bile gorunmuyordu) -- yani bilesen o calismada
+# HICBIR veri alamamisti.
+#
+# UCUNCU DUZELTME: tek seferlik agresif rerun yerine, SINIRLI SAYIDA (3)
+# kisa deneme dongusu -- her denemede biraz bekleyip yeniden baslatarak
+# bilesene birden fazla firsat taniyoruz. Deneme hakki bitene kadar CIPLAK
+# LOGIN FORMU DEGIL, sadece bir yukleniyor mesaji gosteriliyor.
+CEREZ_MAX_DENEME = 3
 
-if st.session_state.oturum is None and not st.session_state.cerez_kontrol_edildi:
-    st.session_state.cerez_kontrol_edildi = True
+if "cerez_deneme_sayisi" not in st.session_state:
+    st.session_state.cerez_deneme_sayisi = 0
+
+if st.session_state.oturum is None and st.session_state.cerez_deneme_sayisi < CEREZ_MAX_DENEME:
     if not cerezler.get_all():
-        time.sleep(0.5)
-        st.rerun()
+        st.session_state.cerez_deneme_sayisi += 1
+        if st.session_state.cerez_deneme_sayisi < CEREZ_MAX_DENEME:
+            st.info("Yükleniyor...")
+            time.sleep(0.5)
+            st.rerun()
+        # son denemede de bos geldiyse asagida normal akisa (login
+        # ekranina) duSuluyor -- gercekten cerez yok demektir.
+    else:
+        st.session_state.cerez_deneme_sayisi = CEREZ_MAX_DENEME  # veri geldi, beklemeyi kes
 
 if st.session_state.oturum is None:
     saklanan_sifreli = cerezler.get("refresh_token")
@@ -166,12 +177,12 @@ if st.session_state.oturum is None:
 
     # ------------------------------------------------------------------
     # GECICI TESHIS BLOGU (6 Agustos 2026) -- "beni hatirla" sorunu icin.
-    # Iki onceki duzeltme denemesi de isi cozmedi -- tahmin etmek yerine
+    # Onceki iki duzeltme denemesi de isi cozmedi -- tahmin etmek yerine
     # gercek veriye bakmamiz lazim. Sorun cozulunce bu blok kaldirilacak.
     # ------------------------------------------------------------------
     if st.session_state.oturum is None:
         with st.expander("Teşhis bilgisi (geçici)", expanded=True):
-            st.write("cerez_kontrol_edildi:", st.session_state.get("cerez_kontrol_edildi"))
+            st.write("cerez_deneme_sayisi:", st.session_state.get("cerez_deneme_sayisi"))
             st.write("tum cerezler (get_all):", cerezler.get_all())
             st.write("refresh_token cerezi bulundu mu:", saklanan_sifreli is not None)
             st.write("cozulmus refresh token bulundu mu:", saklanan_refresh is not None)
