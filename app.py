@@ -611,8 +611,11 @@ tarif_kutuphanesi_sayfasi = st.Page(
     "pages/5_Tarif_Kutuphanesi.py", title="Tarif Kütüphanesi", url_path="tarif-kutuphanesi",
 )
 
-pg = st.navigation([
-    kontrol_sayfasi, yillik_menu_sayfasi, recete_uretimi_sayfasi,
-    menu_sayfasi, boston_sayfasi, tarif_kutuphanesi_sayfasi,
-])
+pg = st.navigation(
+    [
+        kontrol_sayfasi, yillik_menu_sayfasi, recete_uretimi_sayfasi,
+        menu_sayfasi, boston_sayfasi, tarif_kutuphanesi_sayfasi,
+    ],
+    position="top",
+)
 pg.run()
