@@ -112,51 +112,41 @@ if "oturum" not in st.session_state:
 
 # --- "Beni hatırla" çerezinden oturumu geri yüklemeyi dene ---
 #
-# ONEMLI TEKNIK NOT (6 Agustos 2026, UCUNCU DUZELTME): extra_streamlit_
-# components.CookieManager arka planda GERCEK bir Streamlit ozel bileseni
-# -- tarayicidaki cerezleri Python'a JS uzerinden ASENKRON bir round-trip
-# ile bildiriyor. Bu yuzden script'in ILK CALISTIGI ANDA cerezler.get(...)/
-# .get_all() COGU ZAMAN BOS doner -- gercek deger henuz tarayicidan
-# gelmemistir.
+# ONEMLI TEKNIK NOT (6 Agustos 2026, BEŞİNCİ VE SON DÜZELTME):
+# extra_streamlit_components.CookieManager arka planda GERCEK bir
+# Streamlit ozel bileseni -- tarayicidaki cerezleri Python'a JS uzerinden
+# ASENKRON bir round-trip ile bildiriyor. Script'in ILK CALISTIGI ANDA bu
+# deger COGU ZAMAN BOS doner.
 #
-# ILK DUZELTME (sadece time.sleep()): isE yaramadi, ayni calistirma
-# icinde beklemek bilesenin degerini gunceletmiyor.
+# DENENEN VE ISE YARAMAYAN YAKLASIMLAR:
+#   1) Sadece time.sleep(): ise yaramadi -- ayni script calistirmasi
+#      icinde beklemek bilesenin degerini gunceletmiyor (bilesenin GERCEK
+#      degeri Streamlit'e SADECE BIR RERUN SIRASINDA ulasabiliyor).
+#   2-4) time.sleep() + zorla st.rerun() (tek seferlik ya da 3 denemelik
+#      dongu): TESHIS VERISIYLE DOGRULANDI KI DAHA DA KOTU -- zorla rerun,
+#      bilesenin kendi DOGAL (yavas ama calisan) cozunme dongusunu hic
+#      tamamlanmadan sürekli kesintiye ugratiyor, ust uste denesek bile
+#      hicbir zaman gercek veriye ulasamiyor.
 #
-# IKINCI DUZELTME (TEK SEFERLIK zorla st.rerun()): TESHIS VERISIYLE
-# DOGRULANDI KI ISI DAHA DA KOTULESTIRDI -- bazi denemelerde bilesen
-# zorla yeniden baslatilinca kendi dogal (yavas ama calisan) cozunme
-# donguSunu hic tamamlayamadan sinirli deneme hakkimiz (1) tukeniyordu,
-# TUM cerezler (get_all()) bomboş donuyordu (sadece refresh_token degil,
-# _ga gibi sıradan cerezler bile gorunmuyordu) -- yani bilesen o calismada
-# HICBIR veri alamamisti.
-#
-# UCUNCU DUZELTME: tek seferlik agresif rerun yerine, SINIRLI SAYIDA (3)
-# kisa deneme dongusu -- her denemede biraz bekleyip yeniden baslatarak
-# bilesene birden fazla firsat taniyoruz. Deneme hakki bitene kadar CIPLAK
-# LOGIN FORMU DEGIL, sadece bir yukleniyor mesaji gosteriliyor.
-CEREZ_MAX_DENEME = 3
+# SONUC: Streamlit'in KENDI otomatik component-rerun mekanizmasina
+# MUDAHALE ETMEMEK gerekiyor. Ilk denemede cerez bos gelirse, LOGIN
+# EKRANINI GOSTERMEK YERINE bir yukleniyor mesaji gosterip script'i
+# NORMAL SEKILDE BITIRIYORUZ (st.rerun() YOK, st.stop() YOK) -- bilesen
+# tarayicidan gercek veriyi aldiginda Streamlit KENDISI otomatik olarak
+# script'i yeniden calistiriyor, o çalıştırmada cerez gercekten
+# okunabiliyor. Bu, kisa bir "yukleniyor" anı disinda LOGIN FORMUNUN HIC
+# GORUNMEMESINI saglar (onceki halde oldugu gibi formun kendisi
+# flaslamiyor, sadece bir yukleniyor mesaji flaslıyor).
+if "cerez_ilk_kontrol" not in st.session_state:
+    st.session_state.cerez_ilk_kontrol = True
+else:
+    st.session_state.cerez_ilk_kontrol = False
 
-if "cerez_deneme_sayisi" not in st.session_state:
-    st.session_state.cerez_deneme_sayisi = 0
-
-# NOT (6 Agustos 2026, DORDUNCU DUZELTME): cerezler.get_all() SADECE BIR
-# KEZ cagriliyor (sonucu asagida teshis panelinde de kullanmak icin
-# _tum_cerezler'de saklaniyor) -- ayni script calistirmasinda BIRDEN
-# FAZLA cagirmak StreamlitDuplicateElementKey hatasi veriyordu (bilesenin
-# dahili anahtari sabit; teshis panelindeki ikinci cagri bunu tetikliyordu).
 _tum_cerezler = cerezler.get_all() if st.session_state.oturum is None else {}
 
-if st.session_state.oturum is None and st.session_state.cerez_deneme_sayisi < CEREZ_MAX_DENEME:
-    if not _tum_cerezler:
-        st.session_state.cerez_deneme_sayisi += 1
-        if st.session_state.cerez_deneme_sayisi < CEREZ_MAX_DENEME:
-            st.info("Yükleniyor...")
-            time.sleep(0.5)
-            st.rerun()
-        # son denemede de bos geldiyse asagida normal akisa (login
-        # ekranina) duSuluyor -- gercekten cerez yok demektir.
-    else:
-        st.session_state.cerez_deneme_sayisi = CEREZ_MAX_DENEME  # veri geldi, beklemeyi kes
+if st.session_state.oturum is None and st.session_state.cerez_ilk_kontrol and not _tum_cerezler:
+    st.info("Yükleniyor...")
+    st.stop()
 
 if st.session_state.oturum is None:
     saklanan_sifreli = cerezler.get("refresh_token")
@@ -184,12 +174,12 @@ if st.session_state.oturum is None:
 
     # ------------------------------------------------------------------
     # GECICI TESHIS BLOGU (6 Agustos 2026) -- "beni hatirla" sorunu icin.
-    # Onceki iki duzeltme denemesi de isi cozmedi -- tahmin etmek yerine
-    # gercek veriye bakmamiz lazim. Sorun cozulunce bu blok kaldirilacak.
+    # Onceki denemeler isi cozmedi -- tahmin etmek yerine gercek veriye
+    # bakmamiz lazim. Sorun cozulunce bu blok kaldirilacak.
     # ------------------------------------------------------------------
     if st.session_state.oturum is None:
         with st.expander("Teşhis bilgisi (geçici)", expanded=True):
-            st.write("cerez_deneme_sayisi:", st.session_state.get("cerez_deneme_sayisi"))
+            st.write("cerez_ilk_kontrol (bu calistirmada ilk mi):", st.session_state.get("cerez_ilk_kontrol"))
             st.write("tum cerezler (get_all):", _tum_cerezler)
             st.write("refresh_token cerezi bulundu mu:", saklanan_sifreli is not None)
             st.write("cozulmus refresh token bulundu mu:", saklanan_refresh is not None)
