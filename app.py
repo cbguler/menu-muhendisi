@@ -139,8 +139,15 @@ CEREZ_MAX_DENEME = 3
 if "cerez_deneme_sayisi" not in st.session_state:
     st.session_state.cerez_deneme_sayisi = 0
 
+# NOT (6 Agustos 2026, DORDUNCU DUZELTME): cerezler.get_all() SADECE BIR
+# KEZ cagriliyor (sonucu asagida teshis panelinde de kullanmak icin
+# _tum_cerezler'de saklaniyor) -- ayni script calistirmasinda BIRDEN
+# FAZLA cagirmak StreamlitDuplicateElementKey hatasi veriyordu (bilesenin
+# dahili anahtari sabit; teshis panelindeki ikinci cagri bunu tetikliyordu).
+_tum_cerezler = cerezler.get_all() if st.session_state.oturum is None else {}
+
 if st.session_state.oturum is None and st.session_state.cerez_deneme_sayisi < CEREZ_MAX_DENEME:
-    if not cerezler.get_all():
+    if not _tum_cerezler:
         st.session_state.cerez_deneme_sayisi += 1
         if st.session_state.cerez_deneme_sayisi < CEREZ_MAX_DENEME:
             st.info("Yükleniyor...")
@@ -183,7 +190,7 @@ if st.session_state.oturum is None:
     if st.session_state.oturum is None:
         with st.expander("Teşhis bilgisi (geçici)", expanded=True):
             st.write("cerez_deneme_sayisi:", st.session_state.get("cerez_deneme_sayisi"))
-            st.write("tum cerezler (get_all):", cerezler.get_all())
+            st.write("tum cerezler (get_all):", _tum_cerezler)
             st.write("refresh_token cerezi bulundu mu:", saklanan_sifreli is not None)
             st.write("cozulmus refresh token bulundu mu:", saklanan_refresh is not None)
             if _teshis_hata:
