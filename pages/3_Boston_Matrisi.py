@@ -6,7 +6,7 @@
 
 import streamlit as st
 
-from sidebar_logo import sidebar_logo_goster
+from sidebar_logo import sidebar_logo_goster, cikis_butonu_goster
 
 from db import get_supabase, oturumu_uygula
 
@@ -15,6 +15,7 @@ sidebar_logo_goster(animasyonlu=False)
 
 supabase = get_supabase()
 oturumu_uygula(supabase)
+cikis_butonu_goster(supabase)
 
 if not st.session_state.ozellikler.get("boston_matrisi", False):
     st.info("Boston Matrisi analizi Pro plana özeldir.")

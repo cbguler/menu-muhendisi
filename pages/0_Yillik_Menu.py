@@ -13,7 +13,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
-from sidebar_logo import sidebar_logo_goster
+from sidebar_logo import sidebar_logo_goster, cikis_butonu_goster
 
 from db import get_supabase, oturumu_uygula
 from uretim_algoritmasi import MEVSIMLER, hafta_olustur
@@ -34,6 +34,7 @@ sidebar_logo_goster(animasyonlu=False)
 
 supabase = get_supabase()
 oturumu_uygula(supabase)
+cikis_butonu_goster(supabase)
 
 st.title("Yıllık Menü Üretim Motoru")
 st.caption(

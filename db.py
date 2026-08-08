@@ -9,6 +9,7 @@
 
 import time
 
+import extra_streamlit_components as stx
 import streamlit as st
 from supabase import create_client, Client
 
@@ -43,3 +44,14 @@ def oturumu_uygula(supabase: Client):
         st.warning("Lütfen önce giriş yap.")
         st.stop()
     supabase.auth.set_session(oturum.access_token, oturum.refresh_token)
+
+
+def cerez_yoneticisi():
+    """Sayfalar arasinda paylasilan cerez yoneticisi (6 Agustos 2026
+    eklendi) -- app.py'deki "beni hatirla" cerez mantiginin kullandigi
+    AYNI kutuphane (extra_streamlit_components). Bunu app.py'nin kendi
+    _cerez_yoneticisi()'ndan AYRI tutuyoruz -- app.py'deki mantik zaten
+    uzun bir sure ugrasip duzelttigimiz, calisan bir kod, ona dokunma
+    riski almiyoruz. Bu fonksiyon sadece SAYFALARIN (Cikis yap butonu
+    icin) cerez temizleyebilmesi icin var."""
+    return stx.CookieManager(key="sayfa_cerez_yoneticisi")
