@@ -1,8 +1,9 @@
 # pages/3_Boston_Matrisi.py
 #
-# Ozellik kilitleme ornegi: bu sayfa sadece "boston_matrisi" ozelligi
-# acik olan planlarda (Pro ve Kurumsal) calisir. app.py'de dolan
-# st.session_state uzerinden kontrol eder.
+# Menu ogelerini karlilik ve populerlige gore Yildiz/Bulmaca/Atli/Kopek
+# olarak siniflandirir. 6 Agustos 2026: plan kilidi (Pro'ya ozel) kaldirildi
+# -- Premium plan/erisim stratejisi henuz kurulmadi (bkz. PROJE_NOTLARI.md),
+# bu yuzden sayfa simdilik herkese acik.
 
 import streamlit as st
 
@@ -16,11 +17,6 @@ sidebar_logo_goster(animasyonlu=False)
 supabase = get_supabase()
 oturumu_uygula(supabase)
 
-if not st.session_state.ozellikler.get("boston_matrisi", False):
-    st.info("Boston Matrisi analizi Pro plana özeldir.")
-    st.link_button("Pro plana yükselt", url="https://ORNEK-ODEME-SAYFASI-LINKI")
-    st.stop()
-
 st.title("Boston Matrisi")
 st.caption("Menü ögelerini kârlılık ve popülerliğe göre Yıldız / Bulmaca / Atlı / Köpek olarak sınıflandırır.")
 
@@ -28,3 +24,11 @@ st.caption("Menü ögelerini kârlılık ve popülerliğe göre Yıldız / Bulma
 # donemsel toplam satis adedi cekilip 2x2 matris olarak gorsellestirilir.
 # (recete_guncel_maliyet ve menu_ogesi_karlilik view'lari zaten SQL
 # tarafinda hazir; burada sadece sorgulayip grafiğe dokmek kaliyor.)
+# NOT (6 Agustos 2026): satislar tablosunun semasi (hangi kolonlar var,
+# tarih araligi nasil tutuluyor) hen henuz gorulmedi -- gercek analiz
+# kodu, o sema bilinmeden GUVENLE yazilamiyor. Kullanicidan bekleniyor.
+st.info(
+    "Gerçek analiz (Yıldız/Bulmaca/Atlı/Köpek hesaplaması) henüz "
+    "eklenmedi -- \"satislar\" tablosunun şemasını görmeden güvenle "
+    "yazılamıyor, bu bilgi bekleniyor."
+)

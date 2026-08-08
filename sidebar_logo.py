@@ -24,15 +24,18 @@ def sidebar_logo_goster(animasyonlu: bool = True, genislik: int = 220):
     eski cagrilarin (sidebar_logo_goster(animasyonlu=False) gibi)
     hata vermemesi icin imzada duruyorlar.
     """
-    # LOGO BOYUTU -- DORDUNCU DUZELTME (6 Agustos 2026): DevTools'tan
-    # dogrulanan gercek testid "stHeaderLogo". 120px denendi ama basligin
-    # kendi yuksekligi buna yetmedigi icin gorsel USTTEN KIRPILDI --
-    # basligin kendi yuksekligine daha uygun, daha olculu bir deger
-    # (56px, eskisinin ~1.75 kati) deneniyor.
+    # LOGO BOYUTU -- BESINCI DUZELTME (6 Agustos 2026): 56px yeterince
+    # buyuk degildi (kullanici 2x daha istedi -> ~112px), ama daha once
+    # 120px'te USTTEN KIRPILMISTI -- kirpilmanin gercek nedeni logo degil,
+    # basligin KENDI YUKSEKLIGI logo kadar buyumuyordu (header kutusu
+    # sabit/kucuk, tasan kisim gizleniyordu). Bu sefer HEM logoyu HEM DE
+    # basligin (stHeader) kendi min-height'ini birlikte buyutuyoruz --
+    # kutu artik logoyu kirpmadan icine alacak kadar buyuk.
     st.markdown(
         "<style>"
         "[data-testid='stSidebar'] { display: none !important; }"
-        "[data-testid='stHeaderLogo'] { height: 56px !important; width: auto !important; max-width: none !important; }"
+        "[data-testid='stHeader'] { min-height: 90px !important; height: auto !important; }"
+        "[data-testid='stHeaderLogo'] { height: 100px !important; width: auto !important; max-width: none !important; }"
         "</style>",
         unsafe_allow_html=True,
     )
