@@ -18,6 +18,8 @@ oturumu_uygula(supabase)
 isletme_id = st.session_state.isletme_id
 
 st.title("Özel Menü Üretimi")
+if st.session_state.get("salt_okunur"):
+    st.info("Önizleme modundasın — admin onayı gelene kadar işlem yapamazsın.")
 
 receteler = (
     supabase.table("receteler")
@@ -40,7 +42,7 @@ with st.expander("Menüye yeni ürün ekle"):
         menu_adi = c2.text_input("Menüde görünecek ad")
         satis_fiyati = c3.number_input("Satış fiyatı (€)", min_value=0.0, step=0.5)
         aciklama = st.text_area("Açıklama (opsiyonel)")
-        ekle = st.form_submit_button("Menüye ekle", type="primary")
+        ekle = st.form_submit_button("Menüye ekle", type="primary", disabled=st.session_state.get("salt_okunur", False))
 
         if ekle:
             if not menu_adi.strip():
@@ -89,7 +91,7 @@ for oge in menu_ogeleri:
             if oge.get("aciklama"):
                 st.caption(oge["aciklama"])
         with ust2:
-            aktif = st.toggle("Aktif", value=oge["aktif_mi"], key=f"aktif_{oge['id']}")
+            aktif = st.toggle("Aktif", value=oge["aktif_mi"], key=f"aktif_{oge['id']}", disabled=st.session_state.get("salt_okunur", False))
             if aktif != oge["aktif_mi"]:
                 supabase.table("menu_ogeleri").update({"aktif_mi": aktif}).eq("id", oge["id"]).execute()
                 st.rerun()
@@ -103,6 +105,6 @@ for oge in menu_ogeleri:
         else:
             m2.caption("Maliyet hesaplanamadı — reçetede malzeme eksik olabilir.")
 
-        if st.button("Menüden sil", key=f"menu_sil_{oge['id']}"):
+        if st.button("Menüden sil", key=f"menu_sil_{oge['id']}", disabled=st.session_state.get("salt_okunur", False)):
             supabase.table("menu_ogeleri").delete().eq("id", oge["id"]).execute()
             st.rerun()

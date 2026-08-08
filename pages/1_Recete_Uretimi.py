@@ -41,6 +41,8 @@ st.caption(
     "sürecini aşama aşama tarif et — sistem malzeme, enerji ve işçilik "
     "dahil gerçek porsiyon maliyetini hesaplar."
 )
+if st.session_state.get("salt_okunur"):
+    st.info("Önizleme modundasın — admin onayı gelene kadar işlem yapamazsın.")
 
 # ---------------------------------------------------------------------
 # İşletme maliyet ayarları (enerji/işçilik/genel gider oranları) --
@@ -77,7 +79,7 @@ with st.expander("İşletme maliyet ayarları"):
         genel_gider = c4.number_input(
             "Genel gider payı (%)", value=float(ayarlar["genel_gider_yuzdesi"]), step=1.0
         )
-        if st.form_submit_button("Kaydet"):
+        if st.form_submit_button("Kaydet", disabled=st.session_state.get("salt_okunur", False)):
             supabase.table("isletme_maliyet_ayarlari").update(
                 {
                     "elektrik_birim_fiyat_eur_kwh": elektrik,
@@ -125,7 +127,7 @@ else:
             with col3:
                 porsiyon = st.number_input("Porsiyon sayısı", min_value=1, value=1, step=1)
             hazirlik = st.number_input("Hazırlık süresi (dakika)", min_value=0, value=15, step=5)
-            kaydet = st.form_submit_button("Reçeteyi oluştur", type="primary")
+            kaydet = st.form_submit_button("Reçeteyi oluştur", type="primary", disabled=st.session_state.get("salt_okunur", False))
 
             if kaydet:
                 if not ad.strip():
@@ -184,7 +186,7 @@ with ust1:
         f"— {recete['porsiyon_sayisi']} porsiyon"
     )
 with ust2:
-    if st.button("Reçeteyi sil", key=f"sil_{recete_id}"):
+    if st.button("Reçeteyi sil", key=f"sil_{recete_id}", disabled=st.session_state.get("salt_okunur", False)):
         supabase.table("receteler").delete().eq("id", recete_id).execute()
         st.rerun()
 
@@ -205,7 +207,7 @@ if recete_malzemeleri:
         mc1, mc2, mc3 = st.columns([3, 2, 1])
         mc1.write(malzeme_adi.get(rm["malzeme_id"], "(silinmiş malzeme)"))
         mc2.write(f"{rm['miktar_gram']:.0f} g")
-        if mc3.button("Çıkar", key=f"cikar_{rm['id']}"):
+        if mc3.button("Çıkar", key=f"cikar_{rm['id']}", disabled=st.session_state.get("salt_okunur", False)):
             supabase.table("recete_malzemeleri").delete().eq("id", rm["id"]).execute()
             st.rerun()
 else:
@@ -219,7 +221,7 @@ with st.form(f"malzeme_ekle_{recete_id}", clear_on_submit=True):
     miktar = ec2.number_input(
         "Miktar (gram)", min_value=1.0, value=100.0, step=10.0, key=f"miktar_{recete_id}"
     )
-    ekle = ec3.form_submit_button("Ekle")
+    ekle = ec3.form_submit_button("Ekle", disabled=st.session_state.get("salt_okunur", False))
     if ekle:
         supabase.table("recete_malzemeleri").insert(
             {
@@ -340,7 +342,7 @@ else:
             f"**{a['sira']}. {a['ad']}** ({sure_metni}) — "
             f"Malzeme: {kullanilan} — Isıl işlem: {isil} — Bağımlı olduğu: {bagimlilik_metni}"
         )
-        if st.button("Sil", key=f"asama_sil_{a['id']}"):
+        if st.button("Sil", key=f"asama_sil_{a['id']}", disabled=st.session_state.get("salt_okunur", False)):
             supabase.table("recete_asamalari").delete().eq("id", a["id"]).execute()
             st.rerun()
 
@@ -386,7 +388,7 @@ with st.form("yeni_asama_formu", clear_on_submit=True):
         options=list(asama_ad_by_id.keys()), format_func=lambda k: asama_ad_by_id[k],
     )
 
-    if st.form_submit_button("Aşamayı ekle", type="primary"):
+    if st.form_submit_button("Aşamayı ekle", type="primary", disabled=st.session_state.get("salt_okunur", False)):
         if not asama_adi_girdi.strip():
             st.error("Aşama adı boş olamaz.")
         else:

@@ -189,7 +189,7 @@ if st.session_state.oturum is None:
     _, giris_sutunu, _ = st.columns([1, 1.3, 1])
     with giris_sutunu:
         st.title("Menü Mühendisliği")
-        st.caption("Reçete maliyeti, kâr marjı ve Boston Matrisi analizini tek yerden yönet.")
+        st.caption("Reçete maliyeti ve kâr marjını tek yerden yönet.")
 
         sekme_giris, sekme_kayit = st.tabs(["Giriş yap", "Hesap oluştur"])
 
@@ -274,6 +274,34 @@ if abonelik_verisi is None or abonelik_verisi["durum"] in ("suresi_doldu", "ipta
 
 if abonelik_verisi["durum"] == "odeme_gecikti":
     st.warning("Son ödemen alınamadı. Kesintisiz erişim için ödeme yöntemini güncelle.")
+
+# ADMIN TESPITI -- 6 Agustos 2026, kullanicinin acik talebi: admin
+# SADECE Bahri'nin kendi hesabina ozgu, HARDCODE edilmis bir e-posta
+# kontrolu -- kullanicilar.rol gibi genel bir alan KULLANILMIYOR, cunku
+# 'rol' zaten 'sahip' degerini tasiyor ve bu "BU ISLETMENIN sahibi"
+# anlamina geliyor -- ileride HER musteri kendi isletmesinde 'sahip'
+# rolune sahip olacak. Platform genelinde TEK admin olmasi icin bu
+# ayrimin rol alanindan tamamen BAGIMSIZ tutulmasi sart.
+ADMIN_EPOSTA = "bahriguler@gmail.com"
+st.session_state.admin_mi = (kullanici.user.email == ADMIN_EPOSTA)
+
+# YENI ABONELIK DURUMU -- 6 Agustos 2026: "deneme" kavrami tamamen
+# kaldirildi (bkz. 41_deneme_plani_kaldir.sql). Yeni akis: kullanici
+# parayi oder -> durum='odeme_alindi_onay_bekliyor' olur -> admin
+# onaylayinca durum='aktif' olur. Admin bu bekleme durumundan MUAF --
+# her zaman tam erisimi var. Herkes icin: sayfaya girebilir (tamamen
+# engellenmiyor, suresi_doldu/iptal_edildi'den FARKLI olarak), ama
+# Yillik Menu/Recete Uretimi/Ozel Menu Uretimi/Tarif Kutuphanesi
+# sayfalarinda SADECE ONIZLEME yapabilir -- o 4 sayfadaki HER etkilesimli
+# widget'a disabled=st.session_state.salt_okunur veriliyor.
+st.session_state.salt_okunur = (
+    abonelik_verisi["durum"] == "odeme_alindi_onay_bekliyor" and not st.session_state.admin_mi
+)
+if st.session_state.salt_okunur:
+    st.info(
+        "Ödemen alındı, teşekkürler! Hesabın admin onayı bekliyor — onaylanana "
+        "kadar sayfaları görüntüleyebilirsin ama işlem yapamazsın."
+    )
 
 # Diger sayfalarin okuyacagi ortak oturum bilgisi
 st.session_state.isletme_id = isletme_id
@@ -506,57 +534,12 @@ def kontrol_paneli_sayfasi():
             "yerine kesin olarak bilirsin.\n"
             "- **Fiyatlandırma denemeleri:** Bir ürünün satış fiyatını "
             "değiştirip kâr marjının nasıl değişeceğini, menüyü fiilen "
-            "değiştirmeden önce görebilirsin.\n"
-            "- **Boston Matrisi'nin veri kaynağı:** Buraya eklediğin "
-            "ürünler ve fiyatlar, aşağıdaki Boston Matrisi analizinin "
-            "girdisini oluşturur — yani Özel Menü Üretimi bölümü sadece fiyat "
-            "listesi değil, bir sonraki adımın (kârlılık analizi) temeli."
+            "değiştirmeden önce görebilirsin."
         )
 
     st.divider()
 
-    # ---- 3) Boston Matrisi ----
-    sutun_metin, sutun_gorsel = st.columns([1.1, 1])
-    with sutun_metin:
-        st.header("Boston Matrisi")
-        st.write(
-            "Boston Consulting Group'un ürün portföyü analizi için "
-            "geliştirdiği klasik yöntemin, restoran menüsüne uyarlanmış "
-            "hâlidir — literatürde \"menü mühendisliği\" olarak bilinir. "
-            "Menündeki her ürünü iki eksende değerlendirir: **popülerlik** "
-            "(ne kadar sık satılıyor) ve **kârlılık** (birim başına ne "
-            "kadar kazandırıyor). Bu iki eksen, ürünleri dört gruba ayırır "
-            "— ve her grup için farklı bir aksiyon önerir:"
-        )
-        st.markdown(
-            "- **Yıldız** (çok satan + kârlı): Menünün en değerli "
-            "ürünleri. Koru, öne çıkar, fiyatı değiştirmeye temkinli "
-            "yaklaş — bunlar zaten işini yapıyor.\n"
-            "- **Bulmaca** (kârlı ama az satan): Potansiyeli yüksek ama "
-            "fark edilmiyor. Menüde daha görünür bir yere taşımak, "
-            "sunumunu güçlendirmek ya da tanıtımını yapmak satışını "
-            "artırabilir.\n"
-            "- **Atlı** (çok satan ama düşük kârlı): Müşteri seviyor ama "
-            "işletmeye az kazandırıyor. Fiyatı hafifçe artırmak ya da "
-            "malzeme/porsiyon maliyetini düşürmek (Üretim Aşamaları "
-            "bölümündeki gerçek maliyet verisiyle) kâr marjını iyileştirir.\n"
-            "- **Köpek** (az satan + düşük kârlı): Menüde yer kaplayan "
-            "ama işe yaramayan ürünler. Menüden çıkarmayı ya da baştan "
-            "tasarlamayı düşünmenin zamanı."
-        )
-        st.write(
-            "Amacı basit: menü kararlarını sezgiyle değil, gerçek satış "
-            "ve maliyet verisiyle vermeni sağlamak — hangi ürünün öne "
-            "çıkarılacağına, hangisinin fiyatının gözden geçirileceğine "
-            "ya da hangisinin menüden kaldırılacağına dair net bir yol "
-            "haritası çıkarır."
-        )
-    with sutun_gorsel:
-        _gorsel_varsa_goster("tanitim_boston_matrisi.png", use_container_width=True)
-
-    st.divider()
-
-    # ---- 5) Yıllık Menü ----
+    # ---- 4) Yıllık Menü ----
     st.header("Yıllık Menü")
     _gorsel_varsa_goster("tanitim_yillik_menu.png", use_container_width=True)
     st.write(
@@ -600,17 +583,23 @@ kontrol_sayfasi = st.Page(kontrol_paneli_sayfasi, title="Kontrol Paneli", defaul
 yillik_menu_sayfasi = st.Page("pages/0_Yillik_Menu.py", title="Yıllık Menü")
 recete_uretimi_sayfasi = st.Page("pages/1_Recete_Uretimi.py", title="Reçete Üretimi")
 menu_sayfasi = st.Page("pages/2_Menu.py", title="Özel Menü Üretimi")
-boston_sayfasi = st.Page("pages/3_Boston_Matrisi.py", title="Boston Matrisi")
 tarif_kutuphanesi_sayfasi = st.Page(
     "pages/5_Tarif_Kutuphanesi.py", title="Tarif Kütüphanesi", url_path="tarif-kutuphanesi",
 )
 abonelik_sayfasi = st.Page("pages/6_Abonelik.py", title="Abonelik")
 
-pg = st.navigation(
-    [
-        kontrol_sayfasi, yillik_menu_sayfasi, recete_uretimi_sayfasi,
-        menu_sayfasi, boston_sayfasi, tarif_kutuphanesi_sayfasi, abonelik_sayfasi,
-    ],
-    position="top",
-)
+sayfa_listesi = [
+    kontrol_sayfasi, yillik_menu_sayfasi, recete_uretimi_sayfasi,
+    menu_sayfasi, tarif_kutuphanesi_sayfasi, abonelik_sayfasi,
+]
+# Admin sayfasi SADECE admin oturumunda navigasyon listesine ekleniyor --
+# st.navigation() sadece kendisine verilen sayfalari taniyor, listede
+# olmayan bir sayfaya dogrudan URL ile gidilmeye calisilirsa "page not
+# found" olur -- yani bu sadece gorsel bir gizleme degil, gercek bir
+# erisim kisitlamasi.
+if st.session_state.admin_mi:
+    admin_sayfasi = st.Page("pages/7_Admin.py", title="Admin")
+    sayfa_listesi.append(admin_sayfasi)
+
+pg = st.navigation(sayfa_listesi, position="top")
 pg.run()
