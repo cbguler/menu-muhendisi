@@ -22,11 +22,21 @@ oturumu_uygula(supabase)
 st.title("Abonelik")
 
 plan_kodu = st.session_state.get("plan_kodu", "-")
-st.write(f"Mevcut plan: **{plan_kodu}**")
+if st.session_state.get("odeme_bekleniyor"):
+    st.warning(
+        "Henüz bir ödeme yapmadın. Ödeme sonrası hesabın admin onayına "
+        "geçecek, onaylanınca tüm sayfalara erişebileceksin."
+    )
+elif st.session_state.get("salt_okunur"):
+    st.info(
+        "Ödemen alındı, teşekkürler! Admin onayı bekleniyor -- onaylanana "
+        "kadar sayfaları görüntüleyebilirsin ama işlem yapamazsın."
+    )
+else:
+    st.write(f"Mevcut plan: **{plan_kodu}**")
 st.caption(
-    "Premium plan / yükseltme akışı henüz kurulmadı (bkz. PROJE_NOTLARI.md "
-    "\"Premium Plan / Erişim Stratejisi\" nihai hedefi) -- şimdilik sadece "
-    "mevcut plan bilgisi gösteriliyor."
+    "Gerçek ödeme akışı (PayTR vb.) henüz kurulmadı (bkz. PROJE_NOTLARI.md "
+    "\"Premium Plan / Erişim Stratejisi\" nihai hedefi)."
 )
 
 st.divider()

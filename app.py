@@ -303,6 +303,16 @@ if st.session_state.salt_okunur:
         "kadar sayfaları görüntüleyebilirsin ama işlem yapamazsın."
     )
 
+# UCUNCU KADEME -- 6 Agustos 2026: hic odeme yapmamis (yeni kayit olmus)
+# kullanici. Bu durumda Yillik Menu/Recete Uretimi/Ozel Menu Uretimi/
+# Tarif Kutuphanesi sayfalari NAVIGASYONDA BILE GORUNMUYOR (salt_okunur'dan
+# FARKLI -- o sayfalar gorunur ama etkilesimsiz; burada sayfalarin
+# kendisi navigasyon listesine hic eklenmiyor, asagida st.navigation
+# olusturulurken kullaniliyor).
+st.session_state.odeme_bekleniyor = (
+    abonelik_verisi["durum"] == "odeme_bekleniyor" and not st.session_state.admin_mi
+)
+
 # Diger sayfalarin okuyacagi ortak oturum bilgisi
 st.session_state.isletme_id = isletme_id
 st.session_state.rol = kullanici_kaydi.data["rol"]
@@ -588,10 +598,17 @@ tarif_kutuphanesi_sayfasi = st.Page(
 )
 abonelik_sayfasi = st.Page("pages/6_Abonelik.py", title="Abonelik")
 
-sayfa_listesi = [
-    kontrol_sayfasi, yillik_menu_sayfasi, recete_uretimi_sayfasi,
-    menu_sayfasi, tarif_kutuphanesi_sayfasi, abonelik_sayfasi,
-]
+sayfa_listesi = [kontrol_sayfasi]
+# UCUNCU KADEME: hic odeme yapmamis kullanici icin bu 4 sayfa navigasyona
+# HIC EKLENMIYOR (yukarida tanimlanan odeme_bekleniyor bayragi) -- sadece
+# Kontrol Paneli + Abonelik goruyor. Odeme sonrasi (onaylansa da
+# onaylanmasa da) bu sayfalar navigasyonda goruniyor; onay bekleyen
+# durumdaki kisitlama (islem yapamama) salt_okunur ile ayri saglaniyor.
+if not st.session_state.odeme_bekleniyor:
+    sayfa_listesi += [
+        yillik_menu_sayfasi, recete_uretimi_sayfasi, menu_sayfasi, tarif_kutuphanesi_sayfasi,
+    ]
+sayfa_listesi.append(abonelik_sayfasi)
 # Admin sayfasi SADECE admin oturumunda navigasyon listesine ekleniyor --
 # st.navigation() sadece kendisine verilen sayfalari taniyor, listede
 # olmayan bir sayfaya dogrudan URL ile gidilmeye calisilirsa "page not
