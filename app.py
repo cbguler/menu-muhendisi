@@ -616,5 +616,40 @@ if st.session_state.admin_mi:
     admin_sayfasi = st.Page("pages/7_Admin.py", title="Admin")
     sayfa_listesi.append(admin_sayfasi)
 
-pg = st.navigation(sayfa_listesi, position="top")
+# OZEL NAVIGASYON (6 Agustos 2026): Streamlit'in native st.navigation(
+# position="top") menusu, kendi GitHub deposunda birden fazla ONAYLANMIS
+# hata iceriyor (ornegin ust menu+sidebar'da CIFT gorunmesi, tek sayfali
+# gruplarin gizlenmesi) -- kullanicinin mobilde menuyu hic acamamasi da
+# muhtemelen bu olgunlasmamisligin bir sonucu (kesin dogrulanmis bir hata
+# raporuyla birebir eslesmedi ama cok yakin/iliskili sorunlar bulundu).
+#
+# COZUM: native menuyu TAMAMEN GIZLEYIP (position="hidden" -- bu SADECE
+# GORSEL kismini kapatiyor, st.navigation/pg.run() yine de sayfa
+# yonlendirmesini/routing'i yapmaya devam ediyor), KENDI ozel menumuzu
+# kuruyoruz: masaustunde yatay bir satir (st.page_link), mobilde
+# st.popover ile acilir bir menu -- ikisi de AYNI sayfa listesinden
+# besleniyor, hangisinin gorunecegi CSS media query ile (ekran
+# genisligine gore) seciliyor. st.popover, Streamlit'in kendi native,
+# mobil-uyumlu bir bileseni oldugu icin position="top" menusunun
+# yasadigi turden hatalara girme riski cok daha dusuk.
+st.markdown(
+    "<style>"
+    "@media (min-width: 768px) { .st-key-mobil_nav { display: none !important; } }"
+    "@media (max-width: 767px) { .st-key-masaustu_nav { display: none !important; } }"
+    "</style>",
+    unsafe_allow_html=True,
+)
+
+with st.container(key="masaustu_nav"):
+    _kolonlar = st.columns(len(sayfa_listesi))
+    for _kolon, _sayfa in zip(_kolonlar, sayfa_listesi):
+        with _kolon:
+            st.page_link(_sayfa, use_container_width=True)
+
+with st.container(key="mobil_nav"):
+    with st.popover("Menü"):
+        for _sayfa in sayfa_listesi:
+            st.page_link(_sayfa, use_container_width=True)
+
+pg = st.navigation(sayfa_listesi, position="hidden")
 pg.run()
