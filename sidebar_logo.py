@@ -31,4 +31,4 @@ def sidebar_logo_goster(animasyonlu: bool = True, genislik: int = 220):
         "<style>[data-testid='stSidebar'] { display: none !important; }</style>",
         unsafe_allow_html=True,
     )
-    st.logo("assets/logo.png")
+    st.logo("assets/logo.png", size="large")
