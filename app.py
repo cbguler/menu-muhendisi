@@ -135,7 +135,13 @@ if "oturum" not in st.session_state:
 # yani pes etmeden once bilesene birden fazla dogal firsat taniyoruz,
 # ama HICBIRINI kendimiz zorlamiyoruz, sadece HAZIR OLANA KADAR gercek
 # formu render etmeyi erteliyoruz.
-CEREZ_BEKLE_TUR = 5
+# MOBIL DUZELTMESI (6 Agustos 2026): mobil tarayicilarda "beni hatirla"
+# guvenilir calismadigi bildirildi -- muhtemel neden, mobil cihaz/aglarin
+# genelde daha yavas olmasi, bilesenin gercek veriyi bildirmesi icin
+# yeterli zaman/dogal rerun sayisi olmamasi. Deneme sayisi ve son care
+# bekleme suresi arttirildi (masaustunde zaten calisan mekanizmayi
+# bozmadan, sadece daha CIMRI davranmayi biraktik).
+CEREZ_BEKLE_TUR = 8
 
 if "cerez_bekleme_turu" not in st.session_state:
     st.session_state.cerez_bekleme_turu = 0
@@ -150,16 +156,14 @@ if st.session_state.oturum is None and not _tum_cerezler:
         st.info("Yükleniyor...")
         st.stop()
     elif not st.session_state.cerez_son_care_denendi:
-        # GUVENLIK AGI: 5 dogal tur da bos gelirse (ör. gercekten hic
+        # GUVENLIK AGI: N dogal tur da bos gelirse (ör. gercekten hic
         # cerezi olmayan yeni bir kullanici -- bilesenin "kesin bos"
         # raporu Streamlit'i yeniden calistirmaya yetmeyebilir, sonsuza
         # kadar "Yukleniyor" ekraninda kalinabilirdi). SADECE BURADA,
-        # SADECE BIR KEZ, UZUN bir bekleme (2sn -- onceki basarisiz
-        # denemelerdeki 0.5sn'den cok daha fazla) sonrasi zorla kontrol
-        # ediyoruz.
+        # SADECE BIR KEZ, UZUN bir bekleme sonrasi zorla kontrol ediyoruz.
         st.session_state.cerez_son_care_denendi = True
         st.info("Yükleniyor...")
-        time.sleep(2)
+        time.sleep(4)
         st.rerun()
 
 if st.session_state.oturum is None:
