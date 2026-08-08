@@ -26,25 +26,16 @@ def sidebar_logo_goster(animasyonlu: bool = True, genislik: int = 220):
     eski cagrilarin (sidebar_logo_goster(animasyonlu=False) gibi)
     hata vermemesi icin imzada duruyorlar.
     """
-    # Navigasyon ust menuye tasindigi ve sidebar'da baska bir icerik
-    # kalmadigi icin sidebar'i tamamen gizleyip alanini ana icerige
-    # kazandiriyoruz.
-    #
-    # LOGO BOYUTU -- IKINCI DENEME (6 Agustos 2026): ilk denemede
-    # [data-testid='stLogo'] secicisi ISE YARAMADI (buyumedi) -- st.logo()
-    # dokumantasyonu "hem uygulamanin hem sidebar'inin sol ustune" render
-    # ettigini soyluyor, yani muhtemelen IKI AYRI kopya olusturuyor (biri
-    # sidebar icin, biri "sidebar kapaliyken/yokken" gorunen ust kose
-    # icin) ve bu ikisinin FARKLI testid'leri olabilir -- ben yanlislikla
-    # (artik gizli olan) sidebar kopyasini buyutmus, gercekte gorunen
-    # kopyaya hic dokunmamis olabilirim. Bunun yerine, Streamlit'in ic
-    # isimlendirmesinden BAGIMSIZ, gorselin KAYNAGINA (src) gore hedefleyen
-    # daha saglam bir secici kullaniyoruz -- hangi testid'e sahip olursa
-    # olsun, "logo.png" iceren HER img etiketini buyutur.
+    # LOGO BOYUTU -- UCUNCU VE KESIN DUZELTME (6 Agustos 2026): DevTools
+    # ile GERCEK HTML'e bakildi -- data-testid GERCEKTE "stHeaderLogo"
+    # (benim tahmin ettigim "stLogo" DEGIL), ve src Streamlit'in kendi
+    # hash'ledigi bir medya adresi (".../media/01ed5cf....png") -- "logo.png"
+    # DEGIL. Iki onceki CSS denemem de bu yuzden hicbir seye denk
+    # gelmemisti. Simdi DOGRU/DOGRULANMIS secici kullaniliyor.
     st.markdown(
         "<style>"
         "[data-testid='stSidebar'] { display: none !important; }"
-        "img[src*='logo.png'] { height: 64px !important; width: auto !important; }"
+        "[data-testid='stHeaderLogo'] { height: 120px !important; width: auto !important; max-width: none !important; }"
         "</style>",
         unsafe_allow_html=True,
     )
@@ -53,20 +44,18 @@ def sidebar_logo_goster(animasyonlu: bool = True, genislik: int = 220):
 
 def cikis_butonu_goster(supabase):
     """Her sayfada tutarli sekilde "Cikis yap" butonu gosterir (6
-    Agustos 2026 eklendi -- daha once sadece Kontrol Paneli'nde vardi),
-    ust menunun EN SAGINA (Share/yildiz/kalem/GitHub ikonlarinin yanina)
-    gorsel olarak yerlestirilmis sekilde.
+    Agustos 2026 eklendi -- daha once sadece Kontrol Paneli'nde vardi).
 
-    ONEMLI KISIT: Streamlit'in native ust navigasyon cubuguna (st.navigation
-    position="top") GERCEKTEN eleman eklemek MUMKUN DEGIL -- o cubuk sadece
-    sayfa linklerini gosteriyor, ozel/harici bir ogeye acik degil. Bu
-    yuzden burada bir HILE kullaniliyor: buton normal sekilde sayfa
-    icerigine (st.button ile) basiliyor, ama CSS ile `position: fixed`
-    kullanilarak GORSEL OLARAK ust menunun sag tarafina, native
-    Share/yildiz/kalem ikonlarinin SOLUNA sabitleniyor. Bu tam anlamiyla
-    menunun bir parcasi DEGIL, sadece oyle GORUNUYOR -- ekran genisligi
-    cok degisirse ya da Streamlit kendi ust cubugunun duzenini
-    degistirirse (surum guncellemesi), bu konumlandirma bozulabilir.
+    KONUMLANDIRMA HAKKINDA (ucuncu deneme): DevTools ile bakildiginda
+    st.button()'in KENDISI (key= parametresine ragmen) benzersiz/kararli
+    bir CSS class ALMIYOR -- sadece HERKESE ORTAK "stButton"/
+    "stBaseButton-secondary" class'lari ve DEGISKEN (surumden surume
+    farkli olabilen) "st-emotion-cache-XXXXX" hash'leri var. Bu yuzden
+    butonu DOGRUDAN CSS ile hedeflemek guvenilir degil.
+    Cozum: butonu, benzersiz bir key verilen bir st.container() ICINE
+    sarmaliyoruz -- container'lar (Yillik Menu sayfasinda daha once
+    basariyla kullandigimiz ayni yontemle) GERCEKTEN "st-key-{key}"
+    class'i aliyor, bu da guvenilir bir CSS hedefi saglıyor.
 
     Kendi cerez yoneticisini (db.py'deki cerez_yoneticisi(), app.py'nin
     kendi "beni hatirla" mantigindan AYRI ama ayni kutuphane/desen)
@@ -75,14 +64,15 @@ def cikis_butonu_goster(supabase):
     adimlarindan SONRA cagirmali."""
     st.markdown(
         "<style>"
-        ".st-key-cikis_yap_ortak { position: fixed; top: 10px; right: 220px; "
-        "z-index: 999; }"
+        ".st-key-cikis_yap_sarmalayici { position: fixed; top: 14px; "
+        "right: 230px; z-index: 999; }"
         "</style>",
         unsafe_allow_html=True,
     )
-    cerezler = cerez_yoneticisi()
-    if st.button("Çıkış yap", key="cikis_yap_ortak"):
-        supabase.auth.sign_out()
-        st.session_state.oturum = None
-        cerezler.delete("refresh_token", key="refresh_token_cikis_ortak")
-        st.rerun()
+    with st.container(key="cikis_yap_sarmalayici"):
+        cerezler = cerez_yoneticisi()
+        if st.button("Çıkış yap", key="cikis_yap_ortak"):
+            supabase.auth.sign_out()
+            st.session_state.oturum = None
+            cerezler.delete("refresh_token", key="refresh_token_cikis_ortak")
+            st.rerun()
