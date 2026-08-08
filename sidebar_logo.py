@@ -24,22 +24,24 @@ def sidebar_logo_goster(animasyonlu: bool = True, genislik: int = 220):
     eski cagrilarin (sidebar_logo_goster(animasyonlu=False) gibi)
     hata vermemesi icin imzada duruyorlar.
     """
-    # SIDEBAR GIZLEME -- ALTINCI DUZELTME (6 Agustos 2026, mobil sorunu):
-    # [data-testid='stSidebar'] { display: none } TUM ekran boyutlarinda
-    # uygulaniyordu -- masaustunde iyi calisiyordu ama MOBILDE, dar
-    # ekranda ust menu sigmayinca Streamlit'in kendi "daralt/genislet"
-    # (>>) davranisi TAM DA bu sidebar alanini kullaniyor gibi gorunuyor
-    # -- kullanici ">>" ikonuna tiklayinca menu hic acilmiyordu, cunku
-    # acilmasi gereken yer zaten gizliydi. Cozum: sidebar'i SADECE genis
-    # (masaustu) ekranlarda gizle, mobilde (dar ekran) dokunma -- boylece
-    # Streamlit'in kendi mobil-uyumlu davranisi bozulmuyor.
+    # YEDINCI DUZELTME (6 Agustos 2026, mobil sorunu devam ediyor):
+    # Sadece sidebar gizlemeyi media query'ye almak yetmedi -- kullanici
+    # mobilde logo/menu ikonunun dokununca belirip tekrar dokununca
+    # kaybolmasi gibi baska bir bozulma bildirdi. Muhtemel neden: baslik
+    # yuksekligi (min-height:90px) ve logo boyutu (height:100px) CSS'i
+    # HALA tum ekran boyutlarinda uygulaniyordu -- mobildeki farkli
+    # baslik/menu yapisiyla cakismis olabilir. Guvenli tarafta kalmak
+    # icin TUM ozel CSS'i (sidebar gizleme DAHIL, baslik/logo boyutu DA
+    # DAHIL) SADECE genis (masaustu, >=768px) ekranlarda uygulanacak
+    # sekilde sinirliyoruz -- mobilde Streamlit'in tamamen kendi
+    # varsayilan (kucuk ama CALISAN) gorunumune donuyoruz.
     st.markdown(
         "<style>"
         "@media (min-width: 768px) {"
         "  [data-testid='stSidebar'] { display: none !important; }"
+        "  [data-testid='stHeader'] { min-height: 90px !important; height: auto !important; }"
+        "  [data-testid='stHeaderLogo'] { height: 100px !important; width: auto !important; max-width: none !important; }"
         "}"
-        "[data-testid='stHeader'] { min-height: 90px !important; height: auto !important; }"
-        "[data-testid='stHeaderLogo'] { height: 100px !important; width: auto !important; max-width: none !important; }"
         "</style>",
         unsafe_allow_html=True,
     )
