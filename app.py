@@ -286,13 +286,6 @@ st.session_state.sube_limiti = abonelik_verisi["sube_limiti"]
 def kontrol_paneli_sayfasi():
     sidebar_logo_goster(animasyonlu=False)
 
-    with st.sidebar:
-        if st.button("Çıkış yap"):
-            supabase.auth.sign_out()
-            st.session_state.oturum = None
-            cerezler.delete("refresh_token", key="refresh_token_cikis_sidebar")
-            st.rerun()
-
     # -------------------------------------------------------------
     # Bu fonksiyon artik bir "kontrol paneli" degil, gercekte bir
     # TANITIM/ONBOARDING sayfasi -- 5 Agustos 2026'da acilir menuler
@@ -341,10 +334,18 @@ def kontrol_paneli_sayfasi():
             unsafe_allow_html=True,
         )
 
-    st.title("Menü Mühendisi'ne Hoş Geldin")
+    baslik_sutun, cikis_sutun = st.columns([5, 1])
+    with baslik_sutun:
+        st.title("Menü Mühendisi'ne Hoş Geldin")
+    with cikis_sutun:
+        if st.button("Çıkış yap"):
+            supabase.auth.sign_out()
+            st.session_state.oturum = None
+            cerezler.delete("refresh_token", key="refresh_token_cikis_sidebar")
+            st.rerun()
     st.write(
         "Bu sayfa, uygulamanın tüm bölümlerini kısaca tanıtır. İstediğin "
-        "an sol menüden doğrudan çalışmaya başlayabilirsin — aşağısı "
+        "an üst menüden doğrudan çalışmaya başlayabilirsin — aşağısı "
         "sadece neyin nerede olduğunu görmen için."
     )
 
@@ -591,7 +592,7 @@ def kontrol_paneli_sayfasi():
     )
 
     st.divider()
-    st.caption("Sol menüden istediğin bölüme geçip çalışmaya başlayabilirsin.")
+    st.caption("Üst menüden istediğin bölüme geçip çalışmaya başlayabilirsin.")
 
 
 # ---------------------------------------------------------------------
