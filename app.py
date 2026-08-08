@@ -112,46 +112,59 @@ if "oturum" not in st.session_state:
 
 # --- "Beni hatırla" çerezinden oturumu geri yüklemeyi dene ---
 #
-# ONEMLI TEKNIK NOT (6 Agustos 2026, BEŞİNCİ VE SON DÜZELTME):
-# extra_streamlit_components.CookieManager arka planda GERCEK bir
+# TEKNIK NOT (6 Agustos 2026, ALTINCI DUZELTME -- gorsel flas sorunu):
+# extra_streamlit_components.CookieManager arka planda gercek bir
 # Streamlit ozel bileseni -- tarayicidaki cerezleri Python'a JS uzerinden
-# ASENKRON bir round-trip ile bildiriyor. Script'in ILK CALISTIGI ANDA bu
-# deger COGU ZAMAN BOS doner.
+# ASENKRON bir round-trip ile bildiriyor, script'in ILK CALISTIGI ANDA bu
+# deger COGU ZAMAN BOS doner. time.sleep() ve zorla st.rerun() (tek
+# seferlik ya da dongulu) denendi, ikisi de FONKSIYONEL OLARAK daha kotu
+# sonuc verdi -- zorla rerun, bilesenin kendi DOGAL cozunme donguSunu
+# tamamlanmadan kesintiye ugratip cerezi hic okutmuyordu.
 #
-# DENENEN VE ISE YARAMAYAN YAKLASIMLAR:
-#   1) Sadece time.sleep(): ise yaramadi -- ayni script calistirmasi
-#      icinde beklemek bilesenin degerini gunceletmiyor (bilesenin GERCEK
-#      degeri Streamlit'e SADECE BIR RERUN SIRASINDA ulasabiliyor).
-#   2-4) time.sleep() + zorla st.rerun() (tek seferlik ya da 3 denemelik
-#      dongu): TESHIS VERISIYLE DOGRULANDI KI DAHA DA KOTU -- zorla rerun,
-#      bilesenin kendi DOGAL (yavas ama calisan) cozunme dongusunu hic
-#      tamamlanmadan sürekli kesintiye ugratiyor, ust uste denesek bile
-#      hicbir zaman gercek veriye ulasamiyor.
+# BESINCI DUZELTME (sadece ILK calistirmada "Yukleniyor" goster, sonra
+# dogrudan gercek login/restore mantigina gec) FONKSIYONEL OLARAK
+# CALISTI (sifre tekrar istemiyor) ama GORSEL OLARAK hala birden fazla
+# ekran art arda flasliyordu -- cunku bilesenin gercek veriyi bildirmesi
+# genelde 1 DEGIL, BIRKAC dogal yeniden-calistirma surebiliyor; ilk
+# calistirmadan sonrakilerde kod dogrudan (henuz cozulmemis olabilecek)
+# gercek login formunu render ediyordu.
 #
-# SONUC: Streamlit'in KENDI otomatik component-rerun mekanizmasina
-# MUDAHALE ETMEMEK gerekiyor. Ilk denemede cerez bos gelirse, LOGIN
-# EKRANINI GOSTERMEK YERINE bir yukleniyor mesaji gosterip script'i
-# NORMAL SEKILDE BITIRIYORUZ (st.rerun() YOK, st.stop() YOK) -- bilesen
-# tarayicidan gercek veriyi aldiginda Streamlit KENDISI otomatik olarak
-# script'i yeniden calistiriyor, o çalıştırmada cerez gercekten
-# okunabiliyor. Bu, kisa bir "yukleniyor" anı disinda LOGIN FORMUNUN HIC
-# GORUNMEMESINI saglar (onceki halde oldugu gibi formun kendisi
-# flaslamiyor, sadece bir yukleniyor mesaji flaslıyor).
-if "cerez_ilk_kontrol" not in st.session_state:
-    st.session_state.cerez_ilk_kontrol = True
-else:
-    st.session_state.cerez_ilk_kontrol = False
+# ALTINCI DUZELTME: kendi st.rerun()'umuzu YINE eklemeden (bu hala
+# yasak -- dogal donguyu bozuyor), "Yukleniyor" gosterme suresini TEK
+# calistirmadan SINIRLI SAYIDA (5) dogal calistirmaya genisletiyoruz --
+# yani pes etmeden once bilesene birden fazla dogal firsat taniyoruz,
+# ama HICBIRINI kendimiz zorlamiyoruz, sadece HAZIR OLANA KADAR gercek
+# formu render etmeyi erteliyoruz.
+CEREZ_BEKLE_TUR = 5
+
+if "cerez_bekleme_turu" not in st.session_state:
+    st.session_state.cerez_bekleme_turu = 0
+if "cerez_son_care_denendi" not in st.session_state:
+    st.session_state.cerez_son_care_denendi = False
 
 _tum_cerezler = cerezler.get_all() if st.session_state.oturum is None else {}
 
-if st.session_state.oturum is None and st.session_state.cerez_ilk_kontrol and not _tum_cerezler:
-    st.info("Yükleniyor...")
-    st.stop()
+if st.session_state.oturum is None and not _tum_cerezler:
+    if st.session_state.cerez_bekleme_turu < CEREZ_BEKLE_TUR:
+        st.session_state.cerez_bekleme_turu += 1
+        st.info("Yükleniyor...")
+        st.stop()
+    elif not st.session_state.cerez_son_care_denendi:
+        # GUVENLIK AGI: 5 dogal tur da bos gelirse (ör. gercekten hic
+        # cerezi olmayan yeni bir kullanici -- bilesenin "kesin bos"
+        # raporu Streamlit'i yeniden calistirmaya yetmeyebilir, sonsuza
+        # kadar "Yukleniyor" ekraninda kalinabilirdi). SADECE BURADA,
+        # SADECE BIR KEZ, UZUN bir bekleme (2sn -- onceki basarisiz
+        # denemelerdeki 0.5sn'den cok daha fazla) sonrasi zorla kontrol
+        # ediyoruz.
+        st.session_state.cerez_son_care_denendi = True
+        st.info("Yükleniyor...")
+        time.sleep(2)
+        st.rerun()
 
 if st.session_state.oturum is None:
     saklanan_sifreli = cerezler.get("refresh_token")
     saklanan_refresh = _coz(saklanan_sifreli) if saklanan_sifreli else None
-    _teshis_hata = None
     if saklanan_refresh:
         try:
             yenilenen = supabase.auth.refresh_session(saklanan_refresh)
@@ -166,25 +179,10 @@ if st.session_state.oturum is None:
                 expires_at=datetime.now(timezone.utc) + timedelta(days=BENI_HATIRLA_GUN),
                 key="refresh_token_yenile",
             )
-        except Exception as e:
+        except Exception:
             # refresh token geçersiz/süresi dolmuş -- sessizce temizleyip
             # normal giriş ekranına düş
-            _teshis_hata = repr(e)
             cerezler.delete("refresh_token", key="refresh_token_sil_gecersiz")
-
-    # ------------------------------------------------------------------
-    # GECICI TESHIS BLOGU (6 Agustos 2026) -- "beni hatirla" sorunu icin.
-    # Onceki denemeler isi cozmedi -- tahmin etmek yerine gercek veriye
-    # bakmamiz lazim. Sorun cozulunce bu blok kaldirilacak.
-    # ------------------------------------------------------------------
-    if st.session_state.oturum is None:
-        with st.expander("Teşhis bilgisi (geçici)", expanded=True):
-            st.write("cerez_ilk_kontrol (bu calistirmada ilk mi):", st.session_state.get("cerez_ilk_kontrol"))
-            st.write("tum cerezler (get_all):", _tum_cerezler)
-            st.write("refresh_token cerezi bulundu mu:", saklanan_sifreli is not None)
-            st.write("cozulmus refresh token bulundu mu:", saklanan_refresh is not None)
-            if _teshis_hata:
-                st.write("refresh_session hatasi:", _teshis_hata)
 
 if st.session_state.oturum is None:
     sidebar_logo_goster(animasyonlu=False)
