@@ -334,19 +334,12 @@ def kontrol_paneli_sayfasi():
             unsafe_allow_html=True,
         )
 
-    baslik_sutun, cikis_sutun = st.columns([5, 1])
-    with baslik_sutun:
-        st.title("Menü Mühendisi'ne Hoş Geldin")
-    with cikis_sutun:
-        if st.button("Çıkış yap"):
-            supabase.auth.sign_out()
-            st.session_state.oturum = None
-            cerezler.delete("refresh_token", key="refresh_token_cikis_sidebar")
-            st.rerun()
+    st.title("Menü Mühendisi'ne Hoş Geldin")
     st.write(
         "Bu sayfa, uygulamanın tüm bölümlerini kısaca tanıtır. İstediğin "
         "an üst menüden doğrudan çalışmaya başlayabilirsin — aşağısı "
-        "sadece neyin nerede olduğunu görmen için."
+        "sadece neyin nerede olduğunu görmen için. Çıkış yapmak için "
+        "üst menüdeki **Abonelik** sayfasına bak."
     )
 
     _video_varsa_goster("tanitim_video.mp4")
@@ -611,11 +604,12 @@ boston_sayfasi = st.Page("pages/3_Boston_Matrisi.py", title="Boston Matrisi")
 tarif_kutuphanesi_sayfasi = st.Page(
     "pages/5_Tarif_Kutuphanesi.py", title="Tarif Kütüphanesi", url_path="tarif-kutuphanesi",
 )
+abonelik_sayfasi = st.Page("pages/6_Abonelik.py", title="Abonelik")
 
 pg = st.navigation(
     [
         kontrol_sayfasi, yillik_menu_sayfasi, recete_uretimi_sayfasi,
-        menu_sayfasi, boston_sayfasi, tarif_kutuphanesi_sayfasi,
+        menu_sayfasi, boston_sayfasi, tarif_kutuphanesi_sayfasi, abonelik_sayfasi,
     ],
     position="top",
 )

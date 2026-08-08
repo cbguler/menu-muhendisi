@@ -9,7 +9,7 @@
 
 import streamlit as st
 
-from sidebar_logo import sidebar_logo_goster, cikis_butonu_goster
+from sidebar_logo import sidebar_logo_goster
 
 from db import get_supabase, oturumu_uygula
 from uretim_hesap import kritik_yolu_hesapla
@@ -19,7 +19,6 @@ sidebar_logo_goster(animasyonlu=False)
 
 supabase = get_supabase()
 oturumu_uygula(supabase)
-cikis_butonu_goster(supabase)
 
 isletme_id = st.session_state.isletme_id
 recete_limiti = st.session_state.get("recete_limiti")  # None = sınırsız
