@@ -55,9 +55,30 @@ with st.form("isletme_bilgi_formu"):
         if not yeni_ad.strip():
             st.error("İşletme adı boş olamaz.")
         else:
-            supabase.table("isletmeler").update({"ad": yeni_ad.strip()}).eq("id", isletme_id).execute()
-            st.success("Kaydedildi.")
-            st.rerun()
+            sonuc = (
+                supabase.table("isletmeler")
+                .update({"ad": yeni_ad.strip()})
+                .eq("id", isletme_id)
+                .execute()
+            )
+            # NOT (6 Agustos 2026): Daha once burada sonucu kontrol etmeden
+            # "Kaydedildi" gosteriliyordu -- ama kullanici gercekte
+            # kaydedilmedigini (bir sonraki ziyarette eski deger -- e-posta
+            # -- geri geldigini) fark etti. Supabase, RLS politikasi
+            # guncellemeyi SESSIZCE reddederse (hata FIRLATMAZ, sadece
+            # bos bir sonuc doner) -- bu yuzden sonuc.data'nin GERCEKTEN
+            # dolu olup olmadigini kontrol ediyoruz.
+            if sonuc.data:
+                st.success("Kaydedildi.")
+                st.rerun()
+            else:
+                st.error(
+                    "Kaydetme işlemi veritabanı tarafından reddedildi (muhtemelen "
+                    "bir RLS/izin politikası engelliyor) -- hiçbir hata mesajı "
+                    "dönmedi ama satır güncellenmedi. Supabase'de "
+                    "\"isletmeler\" tablosunun RLS politikalarını kontrol etmek "
+                    "gerekiyor."
+                )
 
 st.divider()
 
