@@ -28,12 +28,12 @@ from db import get_supabase, supabase_ile_dene
 st.set_page_config(
     page_title="Menü Mühendisliği", page_icon="assets/favicon.png", layout="wide"
 )
-# NOT: sidebar_logo_goster() burada DEGIL, kontrol_paneli_sayfasi()
-# fonksiyonunun icinde cagriliyor. st.navigation() kullandigimizdan beri
-# HER sayfa gecisinde app.py'nin TAMAMI yeniden calisiyor -- burada
-# cagrilsaydi, diger sayfalarin (Tarif Kutuphanesi, Yillik Menu vb.)
-# kendi ustlerindeki sidebar_logo_goster() cagrisiyla birlikte logo IKI
-# KEZ render oluyordu.
+# NOT (12 Agustos 2026 guncellendi): logo artik burada da,
+# kontrol_paneli_sayfasi() icinde de AYRICA cagrilmiyor -- ozel menu
+# satirinin icine tasindi (asagida, sayfa gezinmesi bolumu), ve o satir
+# HER sayfa gecisinde app.py'nin basinda (pg.run()'dan once) zaten bir
+# kez calisiyor. sidebar_logo_goster() artik SADECE nav satirinin henuz
+# olmadigi bagimsiz ekranlarda (giris, abonelik suresi dolmus) kullaniliyor.
 
 supabase = get_supabase()
 
@@ -364,7 +364,8 @@ st.session_state.recete_limiti = abonelik_verisi["recete_limiti"]
 st.session_state.sube_limiti = abonelik_verisi["sube_limiti"]
 
 def kontrol_paneli_sayfasi():
-    sidebar_logo_goster(animasyonlu=False)
+    # NOT (12 Agustos 2026, Oturum 11): logo artik burada cagrilmiyor --
+    # ozel menu satirinin icine tasindi (asagida, sayfa gezinmesi bolumu).
 
     # -------------------------------------------------------------
     # Bu fonksiyon artik bir "kontrol paneli" degil, gercekte bir
@@ -673,34 +674,40 @@ if st.session_state.admin_mi:
 # SEKIZINCI DUZELTME (12 Agustos 2026 -- Oturum 11, kullanici geri
 # bildirimi): mobilde sayfa asagi kaydirildiginda "Menü" butonu (normal
 # akista render edildigi icin) sayfayla birlikte yukari kayip ekran
-# disina cikiyordu -- bir sonraki sayfaya gecmek icin tekrar en yukari
-# kaydirmak gerekiyordu. Masaustunde de ayni sikayet var (kullanici
-# menu satirinin logo ile ayni satirda olmasini, boylece kaydirinca da
-# gorunur kalmasini istedi).
+# disina cikiyordu. Cozum: menu satiri basligin HEMEN ALTINA
+# `position: fixed` ile sabitlendi (asagida).
 #
-# Streamlit'in kendi basligi ([data-testid='stHeader'], logo'nun
-# oturdugu yer) zaten `position: fixed` -- kaydirsan da hep ekranda
-# kalir (logo'nun hep gorunur olmasinin nedeni budur). Ama Streamlit
-# kendi basligina DISARIDAN widget eklemeye izin vermiyor -- bu
-# bilesen bizim render agacimizin DISINDA, dogrudan icine bir sey
-# enjekte etmek CSS/DOM hack'i gerektirir ve Streamlit surum
-# guncellemelerinde kirilma riski yuksektir (toplulukta bircok kez
-# bu tur hack'lerin bir surum sonrasi bozuldugu bildirilmis).
+# ON BIRINCI DUZELTME (12 Agustos 2026, ayni oturum -- kullanicinin acik
+# talebi): logo artik Streamlit'in kendi basligina (st.logo()) DEGIL,
+# DOGRUDAN bu ozel menu satirinin icine, en basa yerlestiriliyor -- ve
+# st.logo() TAMAMEN KALDIRILDI (bkz. sidebar_logo.py, artik sadece nav
+# satirinin olmadigi bagimsiz ekranlarda -- giris/abonelik suresi dolmus --
+# kullaniliyor). Bunun sonucu olarak Streamlit'in native basligi artik
+# HICBIR OZEL CSS ile buyutulmuyor/degistirilmiyor -- sadece kendi
+# varsayilan (kucuk, Streamlit Cloud'un Share/Fork/GitHub simgelerini
+# tasiyan) haliyle kaliyor, "top" ofseti buna gore asagida guncellendi.
 #
-# Daha DUSUK RISKLI ama pratikte AYNI SONUCU (kaydirinca hep gorunur
-# kalma) veren yontem secildi: menu satirinin KENDISI de basligin
-# HEMEN ALTINA `position: fixed` ile sabitleniyor -- ayni satirda
-# degil ama dogrudan altinda, hep gorunur -- hem masaustunde hem
-# mobilde ayni mantikla calisir. Sabitlenen menu normal akistan
-# ciktigi icin altindaki icerik yukari kayar; bunu telafi etmek icin
-# menu yuksekligi kadar bir bosluk (spacer) ekleniyor ki sayfanin ilk
-# basligi menunun altinda kalip gizlenmesin.
+# Ayrica kullanicinin ikinci talebi: her sayfa "butonu" ayni genislikte
+# olsun (en uzun isim -- "Özel Menü Üretimi"/"Tarif Kütüphanesi" -- neyse
+# ona gore) ve pastel renkli, gercek bir buton gibi gorunsun. Esit oranli
+# st.columns() zaten butun butonlari OTOMATIK OLARAK ayni genislikte
+# yapiyor (matematiksel garanti, tahmin degil); pastel stil icin HER
+# page_link kendi st.container(key=...) icine sarildi -- bu, projenin
+# daha once dogruladigi TEK guvenilir CSS kancasi (.st-key-{key}), page_
+# link'in kendi ic DOM yapisini tahmin etmek yerine. Renk paleti (#E1F5EE
+# dolgu / #0F6E56 cerceve / #085041 metin) Kontrol Paneli'ndeki mevcut
+# pastel kutularla (Kalori/Protein/... SVG'si) BIREBIR AYNI, tutarlilik
+# icin.
 #
-# NOT: asagidaki 90px/60px degerleri sidebar_logo.py'deki baslik
-# yuksekligi CSS'inden (masaustu min-height:90px) ve Streamlit'in
-# varsayilan mobil baslik yuksekliginden TAHMIN EDILDI, kesin olcum
-# DEGIL -- gercek cihazda menu ile logo arasinda bosluk/cakisma
-# gorursen bu degerlerin ince ayara ihtiyaci olabilir.
+# NOT (DEZAVANTAJ, DURUSTCE BELIRTILMELI): asagidaki oran degerleri
+# (LOGO_ORANI/BUTON_ORANI/BOSLUK_ORANI) ve "top"/spacer piksel degerleri
+# TAHMINI -- gercek tarayicida (ozellikle 768px'e yakin dar masaustu/
+# tablet genisliklerinde) butonlar sikisip satir kayabilir, bu durumda
+# oranlarin ince ayara ihtiyaci olur.
+LOGO_ORANI = 1.3
+BUTON_ORANI = 2.8
+BOSLUK_ORANI = 3.0
+
 st.markdown(
     "<style>"
     "@media (min-width: 768px) { .st-key-mobil_nav { display: none !important; } }"
@@ -712,15 +719,22 @@ st.markdown(
     "  box-shadow: 0 2px 6px rgba(0,0,0,0.15);"
     "  border-bottom: 1px solid rgba(0,0,0,0.08);"
     "}"
-    # ONUNCU DUZELTME (12 Agustos 2026): kullanici masaustunde sutunlar
-    # arasi bosluk fazla dedi -- st.columns()'un varsayilan
-    # gap'i "small" = 1rem (Streamlit'in kendi dokumantasyonunda dogrulandi).
-    # ~%30 azaltilmis hali: 0.7rem. Bu SADECE bizim menu satirimizi hedefliyor,
-    # sayfanin geri kalanindaki diger st.columns() kullanimlarini etkilemiyor.
     ".st-key-masaustu_nav div[data-testid='stHorizontalBlock'] { gap: 0.7rem !important; }"
-    "@media (min-width: 768px) { .st-key-masaustu_nav { top: 90px; } }"
+    # Pastel "buton" gorunumu -- Kontrol Paneli'ndeki mevcut renk paletiyle
+    # birebir ayni (bkz. yukaridaki SVG: fill #E1F5EE, stroke #0F6E56,
+    # metin #085041).
+    "[class*='st-key-nav_buton_'] {"
+    "  background-color: #E1F5EE; border: 1px solid #0F6E56;"
+    "  border-radius: 8px; padding: 0.25rem 0.3rem; text-align: center;"
+    "}"
+    "[class*='st-key-nav_buton_'] a {"
+    "  color: #085041 !important; text-decoration: none !important;"
+    "  font-weight: 500; justify-content: center !important;"
+    "}"
+    "@media (min-width: 768px) { .st-key-masaustu_nav { top: 60px; } }"
     "@media (max-width: 767px) { .st-key-mobil_nav { top: 60px; } }"
-    ".ust_menu_bosluk_masaustu, .ust_menu_bosluk_mobil { height: 56px; }"
+    ".ust_menu_bosluk_masaustu { height: 112px; }"
+    ".ust_menu_bosluk_mobil { height: 68px; }"
     "@media (min-width: 768px) { .ust_menu_bosluk_mobil { display: none !important; } }"
     "@media (max-width: 767px) { .ust_menu_bosluk_masaustu { display: none !important; } }"
     "</style>",
@@ -728,15 +742,24 @@ st.markdown(
 )
 
 with st.container(key="masaustu_nav"):
-    _kolonlar = st.columns(len(sayfa_listesi))
-    for _kolon, _sayfa in zip(_kolonlar, sayfa_listesi):
+    _tum_kolonlar = st.columns(
+        [LOGO_ORANI] + [BUTON_ORANI] * len(sayfa_listesi) + [BOSLUK_ORANI]
+    )
+    with _tum_kolonlar[0]:
+        st.image("assets/logo.png", width=48)
+    for _i, (_kolon, _sayfa) in enumerate(zip(_tum_kolonlar[1:-1], sayfa_listesi)):
         with _kolon:
-            st.page_link(_sayfa, use_container_width=True)
+            with st.container(key=f"nav_buton_masaustu_{_i}"):
+                st.page_link(_sayfa, use_container_width=True)
 
 with st.container(key="mobil_nav"):
-    with st.popover("Menü"):
-        for _sayfa in sayfa_listesi:
-            st.page_link(_sayfa, use_container_width=True)
+    _logo_kolonu, _menu_kolonu = st.columns([1, 3])
+    with _logo_kolonu:
+        st.image("assets/logo.png", width=36)
+    with _menu_kolonu:
+        with st.popover("Menü"):
+            for _sayfa in sayfa_listesi:
+                st.page_link(_sayfa, use_container_width=True)
 
 # Menu satiri artik `position: fixed` oldugu icin normal akistan cikti --
 # altindaki sayfa icerigi menu tarafindan ortulmesin diye bosluk birakiyoruz.

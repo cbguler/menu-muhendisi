@@ -10,12 +10,11 @@
 
 import streamlit as st
 
-from sidebar_logo import sidebar_logo_goster
+# NOT (12 Agustos 2026, Oturum 11): logo artik burada AYRICA gosterilmiyor -- app.py'deki ozel menu satirinin icine tasindi, orada zaten her sayfa gecisinde render ediliyor. Burada tekrar cagirmak cift logoya yol acardi.
 
 from db import get_supabase, oturumu_uygula
 
 st.set_page_config(page_title="Admin", page_icon="assets/favicon.png", layout="wide")
-sidebar_logo_goster(animasyonlu=False)
 
 supabase = get_supabase()
 oturumu_uygula(supabase)

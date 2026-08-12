@@ -1509,3 +1509,51 @@ görüntüleriyle):**
   API'lerle sağlıyor.
 
 **Dosya durumu:** app.py.
+
+### 12 Ağustos 2026 — XI. Oturum (devam): Logo Menü Satırına Taşındı, Sayfa Butonları Eşit Genişlik + Pastel Stil
+
+**Kullanıcı talebi (gerçek ekran görüntüsüyle, önceki gap-azaltma
+düzeltmesinin görsel etkisi olmadığı bildirildi):**
+1. Menüdeki tüm sayfa isimlerinin kapladığı alan, en uzun isim ("Özel
+   Menü Üretimi" / "Tarif Kütüphanesi") neyse o genişlikte, hepsi EŞİT
+   olsun — buton gibi görünsün, pastel renkli olsun.
+2. Logoyu menü satırının başına, mevcut büyüklüğüyle yerleştirip
+   üstteki ayrı logo satırını (st.logo()) tamamen kaldıralım.
+
+**Önceki "sütun arası boşluk %30 azaltıldı" düzeltmesinin neden işe
+yaramadığı (öğrenilen ders):** Gerçek sorun sütunlar ARASI boşluk
+değildi — her sütun zaten tam sayfa genişliğini 7'ye eşit bölüyordu,
+kısa etiketler bu geniş sütunların içinde sola yaslı durduğu için BOŞ
+ALAN sütun İÇİNDE kalıyordu, `gap` CSS'i o boşluğu etkilemiyordu. Bu
+oturumda tamamen farklı bir yaklaşıma geçildi (aşağıya bak).
+
+**Uygulanan çözüm (ON BİRİNCİ DÜZELTME, TEST EDİLMEDİ):**
+- `st.logo()` ve ona bağlı başlık büyütme CSS'i (`sidebar_logo.py`)
+  TAMAMEN kaldırıldı. `sidebar_logo_goster()` artık sadece nav satırının
+  olmadığı bağımsız ekranlarda (giriş, abonelik süresi dolmuş)
+  kullanılıyor — kimlik doğrulanmış TÜM sayfalardaki (6 sayfa dosyası +
+  `kontrol_paneli_sayfasi`) tekrar eden çağrılar kaldırıldı (çift logo
+  önlendi).
+- Logo artık DOĞRUDAN özel menü satırının (`masaustu_nav`/`mobil_nav`)
+  İÇİNDE, en solda `st.image()` ile render ediliyor — hem masaüstünde
+  hem mobilde.
+- Her sayfa "butonu" artık EŞİT ORANLI `st.columns()` içinde (matematiksel
+  garanti, tahmin değil) + kendi `st.container(key=f"nav_buton_masaustu_{i}")`
+  içine sarılı — bu, projenin daha önce doğruladığı TEK güvenilir CSS
+  kancası (`.st-key-{key}`), `st.page_link`'in iç DOM yapısını tahmin
+  etmek yerine.
+- Pastel renk paleti: Kontrol Paneli'ndeki MEVCUT pastel kutularla
+  (Kalori/Protein/... SVG'si) birebir aynı — `#E1F5EE` dolgu, `#0F6E56`
+  çerçeve, `#085041` metin — tutarlılık için kasıtlı olarak seçildi,
+  uydurulmadı.
+- **Dürüstçe belirtilmesi gereken risk:** buton genişliğini belirleyen
+  oran değerleri (`LOGO_ORANI`/`BUTON_ORANI`/`BOSLUK_ORANI`) ve "top"/
+  spacer piksel değerleri TAHMİNİ — gerçek tarayıcıda, özellikle 768px'e
+  yakın dar masaüstü/tablet genişliklerinde, butonlar sıkışıp satır
+  kayabilir. Ayrıca page_link'in iç metin rengini/hizasını zorlayan CSS
+  (`a { color: ...; justify-content: center; }`) DevTools ile
+  doğrulanmadı, tutmayabilir.
+
+**Dosya durumu:** app.py, sidebar_logo.py, pages/0_Yillik_Menu.py,
+pages/1_Recete_Uretimi.py, pages/2_Menu.py, pages/5_Tarif_Kutuphanesi.py,
+pages/6_Abonelik.py, pages/7_Admin.py.
