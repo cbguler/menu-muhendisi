@@ -1621,3 +1621,26 @@ satırda) orantılı olarak çok daha geniş bir pay alması.
   flex-direction → tuttu, şimdi logo boyutu → sonuç bilinmiyor).
 
 **Dosya durumu:** app.py.
+
+### 12 Ağustos 2026 — XI. Oturum (devam): Logo 1.5x Büyütüldü + Alt Hizalama (resmi API ile)
+
+**Masaüstü logo DOĞRULANDI — bir önceki (ON DÖRDÜNCÜ) düzeltme tuttu.**
+Kullanıcı ekran görüntüsüyle onayladı, sadece "biraz daha büyük olsun"
+dedi.
+
+**Yapılan (ON BEŞİNCİ DÜZELTME):**
+- Logo 1.5x daha büyütüldü: 96px→144px (masaüstü). `LOGO_ORANI` da
+  buna orantılı arttırıldı (2.6→4.0) ki sütun payı yine dar kalıp
+  resmi kırpmasın.
+- Menü öğelerinin logo ile ALT HİZALI (bottom-aligned) durması istendi.
+  **ÖNEMLİ SELF-CORRECTION:** ilk denemede hem tahmini bir CSS kuralı
+  (`align-items: flex-end`) HEM DE Streamlit'in resmi
+  `vertical_alignment` parametresi aynı anda, birbiriyle ÇELİŞEN
+  değerlerle (CSS flex-end / Python "center") eklenmiş bulundu — bu
+  ikisi çakışıyordu. Temizlendi: SADECE resmi API kullanılıyor artık
+  (`st.columns(..., vertical_alignment="bottom")` — dokümantasyonda
+  doğrulandı, "top"/"center"/"bottom" resmi olarak destekleniyor).
+  Tahmini CSS kuralı tamamen kaldırıldı.
+- Büyüyen logoya göre alt boşluk (spacer) 156px→180px yapıldı.
+
+**Dosya durumu:** app.py.

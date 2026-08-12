@@ -717,7 +717,7 @@ if st.session_state.admin_mi:
 # belirgin sekilde arttirildi, (2) resmin kendisine dogrudan genislik
 # zorlayan bir CSS kurali eklendi (asagida) -- sutun payindan bagimsiz
 # bir guvenlik agi olarak.
-LOGO_ORANI = 2.6
+LOGO_ORANI = 4.0
 BUTON_ORANI = 2.8
 BOSLUK_ORANI = 2.2
 
@@ -749,7 +749,7 @@ st.markdown(
     # Guvenlik agi: resmin kendi genisligini sutun payindan BAGIMSIZ
     # olarak zorluyoruz -- yukaridaki LOGO_ORANI artisiyla birlikte
     # calisir, tek basina LOGO_ORANI yetmezse bu devreye girer.
-    ".st-key-masaustu_nav [data-testid='stImage'] img { width: 96px !important; height: auto !important; }"
+    ".st-key-masaustu_nav [data-testid='stImage'] img { width: 144px !important; height: auto !important; }"
     ".st-key-mobil_nav [data-testid='stImage'] img { width: 72px !important; height: auto !important; }"
     # Pastel "buton" gorunumu -- Kontrol Paneli'ndeki mevcut renk paletiyle
     # birebir ayni (bkz. yukaridaki SVG: fill #E1F5EE, stroke #0F6E56,
@@ -764,9 +764,9 @@ st.markdown(
     "}"
     "@media (min-width: 768px) { .st-key-masaustu_nav { top: 60px; } }"
     "@media (max-width: 767px) { .st-key-mobil_nav { top: 60px; } }"
-    # Logo 2x buyudugu icin (48->96 masaustu, 36->72 mobil) altindaki
+    # Logo buyudugu icin (simdi 144px masaustu, 72px mobil) altindaki
     # icerigin ortulmemesi icin bosluklar da buyutuldu.
-    ".ust_menu_bosluk_masaustu { height: 156px; }"
+    ".ust_menu_bosluk_masaustu { height: 180px; }"
     ".ust_menu_bosluk_mobil { height: 96px; }"
     "@media (min-width: 768px) { .ust_menu_bosluk_mobil { display: none !important; } }"
     "@media (max-width: 767px) { .ust_menu_bosluk_masaustu { display: none !important; } }"
@@ -789,18 +789,25 @@ st.markdown(
 )
 
 with st.container(key="masaustu_nav"):
+    # ON BESINCI DUZELTME (12 Agustos 2026): logo 1.5x daha buyutuldu
+    # (96px->144px). Kullanici ayrica menu ogelerinin logo ile ALT
+    # HIZALI (bottom-aligned) durmasini istedi. Bunun icin CSS hack'i
+    # DEGIL, Streamlit'in resmi `vertical_alignment="bottom"` parametresi
+    # kullanildi (dokumante edilmis API -- "top" varsayilan, "center"/
+    # "bottom" da destekleniyor, dogrulandi).
     _tum_kolonlar = st.columns(
-        [LOGO_ORANI] + [BUTON_ORANI] * len(sayfa_listesi) + [BOSLUK_ORANI]
+        [LOGO_ORANI] + [BUTON_ORANI] * len(sayfa_listesi) + [BOSLUK_ORANI],
+        vertical_alignment="bottom",
     )
     with _tum_kolonlar[0]:
-        st.image("assets/logo.png", width=96)
+        st.image("assets/logo.png", width=144)
     for _i, (_kolon, _sayfa) in enumerate(zip(_tum_kolonlar[1:-1], sayfa_listesi)):
         with _kolon:
             with st.container(key=f"nav_buton_masaustu_{_i}"):
                 st.page_link(_sayfa, use_container_width=True)
 
 with st.container(key="mobil_nav"):
-    _logo_kolonu, _menu_kolonu = st.columns([1, 3])
+    _logo_kolonu, _menu_kolonu = st.columns([1, 3], vertical_alignment="center")
     with _logo_kolonu:
         st.image("assets/logo.png", width=72)
     with _menu_kolonu:
