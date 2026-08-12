@@ -235,6 +235,20 @@ if st.session_state.oturum is None:
                             expires_at=datetime.now(timezone.utc) + timedelta(days=BENI_HATIRLA_GUN),
                             key="refresh_token_yeni_giris",
                         )
+                        # DOKUZUNCU DUZELTME (12 Agustos 2026 -- Oturum 11,
+                        # kullanici hem masaustunde hem mobilde "beni hatirla"
+                        # hala calismiyor dedi -- bu ONCEKI (okuma tarafi)
+                        # duzeltmemin ISE YARAMADIGINI gosteriyor, yani sorun
+                        # muhtemelen okumada degil, cerezin HIC YAZILMAMASINDA.
+                        # .set() cagrisindan hemen sonra KENDI st.rerun()'umuzu
+                        # tetiklemek, tipki okuma tarafinda daha once ogrendigimiz
+                        # gibi, bilesenin cerezi tarayicida GERCEKTEN yazma isini
+                        # bitirmeden kesintiye ugratabilir -- yani cerez hic
+                        # yazilmamis olabilir. Zorla rerun'dan once kisa bir
+                        # bekleme ekleyip bilesene bu isi bitirmesi icin firsat
+                        # taniyoruz (henuz TEST EDILMEDI, bir sonraki adim gercek
+                        # tarayicida dogrulama).
+                        time.sleep(1.5)
                     st.rerun()
                 except Exception:
                     st.error("Giriş başarısız: e-posta veya şifre hatalı.")
@@ -694,8 +708,16 @@ st.markdown(
     ".st-key-masaustu_nav, .st-key-mobil_nav {"
     "  position: fixed; left: 0; right: 0; z-index: 999999;"
     "  background-color: var(--background-color, #ffffff);"
-    "  padding: 0.4rem 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08);"
+    "  padding: 0.4rem 1rem;"
+    "  box-shadow: 0 2px 6px rgba(0,0,0,0.15);"
+    "  border-bottom: 1px solid rgba(0,0,0,0.08);"
     "}"
+    # ONUNCU DUZELTME (12 Agustos 2026): kullanici masaustunde sutunlar
+    # arasi bosluk fazla dedi -- st.columns()'un varsayilan
+    # gap'i "small" = 1rem (Streamlit'in kendi dokumantasyonunda dogrulandi).
+    # ~%30 azaltilmis hali: 0.7rem. Bu SADECE bizim menu satirimizi hedefliyor,
+    # sayfanin geri kalanindaki diger st.columns() kullanimlarini etkilemiyor.
+    ".st-key-masaustu_nav div[data-testid='stHorizontalBlock'] { gap: 0.7rem !important; }"
     "@media (min-width: 768px) { .st-key-masaustu_nav { top: 90px; } }"
     "@media (max-width: 767px) { .st-key-mobil_nav { top: 60px; } }"
     ".ust_menu_bosluk_masaustu, .ust_menu_bosluk_mobil { height: 56px; }"

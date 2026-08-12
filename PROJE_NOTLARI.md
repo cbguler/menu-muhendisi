@@ -1463,3 +1463,49 @@ CSS/DOM hack'i gerektirir (toplulukta sıkça bildirilen bir sorun).
   alınabilir.
 
 **Dosya durumu:** app.py.
+
+### 12 Ağustos 2026 — XI. Oturum (devam): "Beni Hatırla" — Yazma Tarafında Muhtemel Kök Neden + Menü İnce Ayarları
+
+**Kritik gelişme:** Kullanıcı bir önceki düzeltmeyi (süre-tabanlı bekleme,
+okuma tarafı) gerçekten deploy edip push ettiğini ekran görüntüsüyle
+doğruladı (commit e20b496) — ama sorun HEM masaüstünde HEM mobilde devam
+ediyor. Bu, önceki teşhisin (okuma tarafında bekleme yetersizliği) yanlış
+ya da eksik olduğunu gösteriyor.
+
+**Yeni teori (DOKUZUNCU DÜZELTME, TEST EDİLMEDİ):** Sorun okumada değil,
+çerezin HİÇ YAZILMAMASINDA olabilir. Giriş butonunun kod akışında
+`cerezler.set("refresh_token", ...)` çağrısından HEMEN sonra `st.rerun()`
+çağrılıyordu (satır ~233-238). Bu, projenin daha önce okuma tarafında
+öğrendiği dersle birebir aynı hastalık — zorla rerun, bileşenin cerezi
+tarayıcıda gerçekten yazma işini bitirmeden kesintiye uğratabiliyor.
+extra_streamlit_components kütüphanesinin GitHub deposunda da tam bu
+türden "set() çağrısından hemen sonra bir şey yapılırsa cerez düzgün
+işlenmiyor" şikayetleri bulundu (bkz. Mohamed-512/Extra-Streamlit-Components
+issue #9 ve #58).
+- Düzeltme: `.set()` ile `st.rerun()` arasına `time.sleep(1.5)` eklendi —
+  bileşene cerezi gerçekten yazması için kısa bir fırsat tanınıyor.
+- **Bu bir hipotez + düzeltmedir, gerçek tarayıcıda DOĞRULANMADI.** Eğer
+  bu da işe yaramazsa bir sonraki şüpheli: çerezin encode/decode
+  (Fernet) tarafı, ya da SameSite/Secure cookie attribute'ları.
+- Kullanıcıya nasıl test ettiğini (tam tarayıcı kapatıp açma mı, yoksa
+  sayfa yenileme mi) sormak hâlâ faydalı olurdu — bu bilgi teşhisi
+  daraltır, henüz netleşmedi.
+
+**Menü satırı ince ayarları (kullanıcı geri bildirimi, gerçek ekran
+görüntüleriyle):**
+- Sütunlar arası boşluk fazla bulundu — `st.columns()`'un varsayılan
+  `gap="small"` değeri (1rem, Streamlit dokümantasyonunda doğrulandı)
+  SADECE menü satırını hedefleyen bir CSS kuralıyla ~%30 azaltılıp
+  0.7rem yapıldı.
+- Mobilde kaydırınca menünün göründüğü DOĞRULANDI (bir önceki `position:
+  fixed` düzeltmesi çalışıyor) — sadece daha belirgin olması istendi,
+  gölge güçlendirildi + alt çizgi (border-bottom) eklendi.
+- Kullanıcı "menüyü logo ile aynı satıra alalım" fikrini tekrarladı —
+  bunun neden zor olduğu (Streamlit'in başlığı resmi API ile SADECE
+  st.logo() kabul ediyor, başka widget eklemeye izin vermiyor; zorlamak
+  sürüm-kırılgan bir DOM hack'i gerektirir) kendisine izah edildi, kod
+  tarafında bilinçli olarak yapılmadı — mevcut "başlığın hemen altına
+  sabitleme" çözümü aynı pratik faydayı (kaydırınca kaybolmama) resmi
+  API'lerle sağlıyor.
+
+**Dosya durumu:** app.py.
