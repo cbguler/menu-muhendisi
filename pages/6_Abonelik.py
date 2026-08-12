@@ -6,6 +6,14 @@
 # icin bu hep kirilgan/guvenilmez cikti. Kullanicinin onerdigi cok daha
 # temiz cozum: abonelik/hesap bilgisinin (ve Cikis yap'in) kendi DOGAL
 # sayfasi olsun -- CSS hilesi degil, gercek bir sayfa.
+#
+# 12 Agustos 2026 (Oturum 11, kullanicinin acik talebi): sayfa "daha
+# fazla bilgi toplayan bir tablo duzeni"ne genisletildi -- isletme
+# adresi + fatura adresi (bkz. 47_isletme_adres_fatura_ekle.sql) ve
+# hesap e-posta/sifre degistirme bolumu eklendi. Vergi no/vergi dairesi/
+# yetkili kisi/telefon gibi diger "kurumsal abonelik" alanlari BILEREK
+# eklenmedi -- kullanicidan hangi spesifik alanlari istedigi netlesince
+# eklenecek.
 
 import streamlit as st
 
@@ -41,11 +49,8 @@ st.caption(
 st.divider()
 
 # ---------------------------------------------------------------------
-# Isletme bilgileri (6 Agustos 2026 eklendi). NOT: isletmeler tablosunda
-# kesin olarak bildigim tek alan "ad" (Yillik Menu'deki "kendi menum"
-# butonunun etiketini buradan okuyor). Baska alanlar (adres/telefon/
-# vergi no vb.) olup olmadigini bilmiyorum -- kullanici isterse
-# soyleyip ekletebilir.
+# Isletme bilgileri (6 Agustos 2026 eklendi, 12 Agustos 2026 genisletildi:
+# adres + fatura adresi -- bkz. 47_isletme_adres_fatura_ekle.sql).
 # ---------------------------------------------------------------------
 st.subheader("İşletme Bilgileri")
 
@@ -60,13 +65,26 @@ with st.form("isletme_bilgi_formu"):
         "Bu ad, Yıllık Menü sayfasındaki işletmenin kendi özel menüsünü "
         "dahil etme butonunun üzerinde görünür."
     )
+    yeni_adres = st.text_area(
+        "İşletme adresi", value=isletme_bilgi.get("adres", ""), height=80,
+    )
+    yeni_fatura_adresi = st.text_area(
+        "Fatura adresi",
+        value=isletme_bilgi.get("fatura_adresi", ""),
+        height=80,
+        help="İşletme adresinden farklıysa buraya ayrı gir; aynıysa boş bırakabilirsin.",
+    )
     if st.form_submit_button("Kaydet"):
         if not yeni_ad.strip():
             st.error("İşletme adı boş olamaz.")
         else:
             sonuc = (
                 supabase.table("isletmeler")
-                .update({"ad": yeni_ad.strip()})
+                .update({
+                    "ad": yeni_ad.strip(),
+                    "adres": yeni_adres.strip() or None,
+                    "fatura_adresi": yeni_fatura_adresi.strip() or None,
+                })
                 .eq("id", isletme_id)
                 .execute()
             )
@@ -88,6 +106,53 @@ with st.form("isletme_bilgi_formu"):
                     "\"isletmeler\" tablosunun RLS politikalarını kontrol etmek "
                     "gerekiyor."
                 )
+
+st.divider()
+
+# ---------------------------------------------------------------------
+# Hesap bilgileri: e-posta / sifre degistirme (12 Agustos 2026 eklendi).
+# supabase.auth.update_user() -- Supabase'in resmi, dokumante edilmis
+# yontemi, gecerli oturumun kendi e-posta/sifresini degistirir.
+# E-POSTA DEGISIKLIGI ICIN ONEMLI NOT: Supabase varsayilan olarak YENI
+# adrese bir dogrulama baglantisi gonderir -- degisiklik o baglantiya
+# tiklanana kadar TAMAMLANMAZ. Bu, kodun bir eksigi degil, Supabase'in
+# kendi guvenlik davranisi -- kullaniciya arayuzde acikca belirtiliyor.
+# ---------------------------------------------------------------------
+st.subheader("Hesap Bilgileri")
+
+with st.form("eposta_degistir_formu"):
+    st.caption(
+        "E-posta değiştirmek, yeni adrese bir doğrulama bağlantısı gönderir "
+        "-- değişiklik o bağlantıya tıklanana kadar tamamlanmaz."
+    )
+    yeni_eposta = st.text_input("Yeni e-posta")
+    if st.form_submit_button("E-postayı değiştir"):
+        if not yeni_eposta.strip():
+            st.error("E-posta boş olamaz.")
+        else:
+            try:
+                supabase.auth.update_user({"email": yeni_eposta.strip()})
+                st.success(
+                    f"Doğrulama bağlantısı {yeni_eposta.strip()} adresine gönderildi. "
+                    "Bağlantıya tıklayana kadar giriş e-postan değişmez."
+                )
+            except Exception as e:
+                st.error(f"E-posta değiştirilemedi: {e}")
+
+with st.form("sifre_degistir_formu"):
+    yeni_sifre = st.text_input("Yeni şifre (en az 8 karakter)", type="password")
+    yeni_sifre_tekrar = st.text_input("Yeni şifre (tekrar)", type="password")
+    if st.form_submit_button("Şifreyi değiştir"):
+        if not yeni_sifre or len(yeni_sifre) < 8:
+            st.error("Şifre en az 8 karakter olmalı.")
+        elif yeni_sifre != yeni_sifre_tekrar:
+            st.error("Şifreler eşleşmiyor.")
+        else:
+            try:
+                supabase.auth.update_user({"password": yeni_sifre})
+                st.success("Şifren değiştirildi.")
+            except Exception as e:
+                st.error(f"Şifre değiştirilemedi: {e}")
 
 st.divider()
 

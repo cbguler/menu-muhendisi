@@ -1692,3 +1692,41 @@ değil — bir hesabı manuel olarak Supabase SQL Editor'de
 GÖSTERDİĞİNİ ve "Onayla"nın GERÇEKTEN çalıştığını doğrulamak gerekiyor.
 
 **Dosya durumu:** sql/46_admin_abonelik_rls.sql (yeni), pages/7_Admin.py.
+
+### 12 Ağustos 2026 — XI. Oturum (devam): Admin İptal Yetkisi + Abonelik Sayfası Genişletildi
+
+**Kullanıcı geri bildirimi (ekran görüntüleriyle):** Admin sayfası
+"Onay bekleyen abonelik yok" gösteriyordu — bu BEKLENEN bir sonuç
+(henüz test hesabı oluşturulmadı, 46 no'lu migration'ın gerçek testi
+hâlâ bekleniyor), hata değil. Kullanıcı iki yeni talep iletti:
+1. Admin'in sadece onaylama değil, **abonelikten çıkartma (iptal etme)**
+   yetkisi de olmalı.
+2. Abonelik sayfası daha kapsamlı bilgi toplayan bir düzene kavuşmalı:
+   işletme adı+adresi, fatura adresi, e-posta/şifre girişleri, "kurumsal
+   abonelikle ilgili her şey".
+
+**Yapılanlar:**
+- **47_isletme_adres_fatura_ekle.sql (yeni):** `isletmeler` tablosuna
+  `adres` ve `fatura_adresi` (ikisi ayrı, nullable) sütunları eklendi.
+- **pages/7_Admin.py yeniden düzenlendi:** artık iki bölüm var —
+  "Bekleyen Onaylar" (eskisi) ve YENİ "Aktif Abonelikler" (durum='aktif'
+  olanları listeler, admin'in KENDİ hesabı hariç tutulur). Her aktif
+  abonelik için iki adımlı onaylı bir "İptal Et" akışı eklendi (tek
+  tıkla değil — "Emin misin?" + Evet/Vazgeç — çünkü iptal, onaylamadan
+  farklı olarak müşterinin erişimini kesen, daha ağır bir işlem).
+  46 no'lu migration'daki admin SELECT/UPDATE politikaları zaten bu
+  geniş erişimi (sadece 'odeme_alindi_onay_bekliyor' değil, TÜM
+  durumlar için) kapsıyordu, ek bir RLS değişikliği gerekmedi.
+- **pages/6_Abonelik.py genişletildi:** İşletme Bilgileri formuna adres
+  + fatura adresi eklendi; yeni "Hesap Bilgileri" bölümü ile e-posta
+  değiştirme (Supabase resmi `auth.update_user()` — yeni adrese
+  doğrulama bağlantısı gönderir, kullanıcıya arayüzde açıkça belirtildi)
+  ve şifre değiştirme formu eklendi.
+- **BİLİNÇLİ OLARAK YAPILMAYAN:** vergi no/vergi dairesi/yetkili kişi/
+  telefon gibi diğer "kurumsal abonelik" alanları EKLENMEDİ — "her şey"
+  çok belirsiz bir kapsam, hangi spesifik alanların (özellikle Türk
+  e-fatura mevzuatına uygun alan adları/formatları) istendiği netleşmeden
+  tahmin edilmedi, kullanıcıya soruldu.
+
+**Dosya durumu:** sql/47_isletme_adres_fatura_ekle.sql (yeni),
+pages/7_Admin.py, pages/6_Abonelik.py.
