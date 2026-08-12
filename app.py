@@ -704,9 +704,22 @@ if st.session_state.admin_mi:
 # TAHMINI -- gercek tarayicida (ozellikle 768px'e yakin dar masaustu/
 # tablet genisliklerinde) butonlar sikisip satir kayabilir, bu durumda
 # oranlarin ince ayara ihtiyaci olur.
-LOGO_ORANI = 1.3
+#
+# ON DORDUNCU DUZELTME (12 Agustos 2026): kullanici masaustunde logonun
+# 2x buyutulmedigini bildirdi (mobilde buyudu, doğrulandı). Olasi neden:
+# LOGO_ORANI (1.3), 7 buton + bosluk sutunuyla (toplam ~23.9 birim)
+# kiyaslandiginda COK DAR bir sutun payi veriyordu (~%5.4) -- istenen
+# 96px genislik, sutunun kendisi o kadar genis olmadigi icin Streamlit'in
+# varsayilan "resim kendi kabini tasmasin" davranisiyla kirpiliyor/
+# kucultuluyor olabilir. Mobilde sorun yasanmamasinin nedeni, oradaki
+# logo sutununun (toplam sadece 2 elemanli bir satirda) orantili olarak
+# COK DAHA GENIS bir pay almasi. Iki onlem birden alindi: (1) LOGO_ORANI
+# belirgin sekilde arttirildi, (2) resmin kendisine dogrudan genislik
+# zorlayan bir CSS kurali eklendi (asagida) -- sutun payindan bagimsiz
+# bir guvenlik agi olarak.
+LOGO_ORANI = 2.6
 BUTON_ORANI = 2.8
-BOSLUK_ORANI = 3.0
+BOSLUK_ORANI = 2.2
 
 st.markdown(
     "<style>"
@@ -733,6 +746,11 @@ st.markdown(
     "  align-items: center !important; gap: 0.5rem !important;"
     "}"
     ".st-key-mobil_nav div[data-testid='stColumn'] { width: auto !important; min-width: 0 !important; }"
+    # Guvenlik agi: resmin kendi genisligini sutun payindan BAGIMSIZ
+    # olarak zorluyoruz -- yukaridaki LOGO_ORANI artisiyla birlikte
+    # calisir, tek basina LOGO_ORANI yetmezse bu devreye girer.
+    ".st-key-masaustu_nav [data-testid='stImage'] img { width: 96px !important; height: auto !important; }"
+    ".st-key-mobil_nav [data-testid='stImage'] img { width: 72px !important; height: auto !important; }"
     # Pastel "buton" gorunumu -- Kontrol Paneli'ndeki mevcut renk paletiyle
     # birebir ayni (bkz. yukaridaki SVG: fill #E1F5EE, stroke #0F6E56,
     # metin #085041).

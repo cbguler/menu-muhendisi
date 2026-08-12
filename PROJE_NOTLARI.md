@@ -1598,3 +1598,26 @@ doğrulandı, masaüstünde tam istenen gibi görünüyor.
    korunup sadece görsel olarak kontroller CSS ile gizlendi.
 
 **Dosya durumu:** app.py.
+
+### 12 Ağustos 2026 — XI. Oturum (devam): Video Kontrolleri ÇÖZÜLDÜ, Masaüstü Logo Hâlâ Büyümedi (ON DÖRDÜNCÜ DÜZELTME)
+
+**Video kontrolleri DOĞRULANDI — çözüldü.** Ekran görüntüsünde kontrol
+çubuğu artık görünmüyor.
+
+**Mobil logo + yan yana satır DOĞRULANDI (ekran görüntüsünden görsel
+olarak teyit edildi, kullanıcı ayrıca belirtmedi ama görünüyor).**
+
+**Masaüstü logo BÜYÜMEDİ — yeni teşhis:** LOGO_ORANI (1.3), 7 buton +
+boşluk sütunuyla (toplam ~23.9 birim) kıyaslandığında çok dar bir sütun
+payı veriyordu (~%5.4) — istenen 96px genişlik, sütunun kendisi o kadar
+geniş olmadığı için kırpılıyor/küçültülüyor olabilir. Mobilde sorun
+yaşanmamasının nedeni, oradaki logo sütununun (sadece 2 elemanlı bir
+satırda) orantılı olarak çok daha geniş bir pay alması.
+- İki önlem birden alındı: (1) `LOGO_ORANI` 1.3'ten 2.6'ya çıkarıldı,
+  (2) resmin kendisine doğrudan genişlik zorlayan bir CSS kuralı
+  eklendi (`[data-testid='stImage'] img { width: ... !important; }`) —
+  sütun payından bağımsız bir güvenlik ağı olarak.
+- **TEST EDİLMEDİ** — bu üçüncü deneme (gap azaltma → tutmadı, mobil
+  flex-direction → tuttu, şimdi logo boyutu → sonuç bilinmiyor).
+
+**Dosya durumu:** app.py.
