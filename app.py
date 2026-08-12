@@ -141,27 +141,51 @@ if "oturum" not in st.session_state:
 # yeterli zaman/dogal rerun sayisi olmamasi. Deneme sayisi ve son care
 # bekleme suresi arttirildi (masaustunde zaten calisan mekanizmayi
 # bozmadan, sadece daha CIMRI davranmayi biraktik).
-CEREZ_BEKLE_TUR = 8
+#
+# YEDINCI DUZELTME (12 Agustos 2026 -- Oturum 11, hala TEST EDILMEDI):
+# Onceki surumde butce "8 DOGAL RERUN" olarak sayiliyordu -- sure olarak
+# degil. Mobilde Streamlit'in websocket baglantisi ekran kilitlenmesi/
+# uygulama arka plana atilmasi/ag degisimi gibi nedenlerle sik sik kopup
+# yeniden baglanabiliyor, ve bu yeniden baglanmalar da genelde bir rerun
+# tetikliyor -- ama bu rerun'lar cerez bileseninin GERCEK VERI tasidigi
+# rerun'lar DEGIL, sadece baglanti olaylari. Sonuc: mobilde 8'lik rerun
+# butcesi, hicbiri gercek veri getirmeyen "bosa" rerun'larla erkenden
+# tukenebiliyor, kod erkenden son careye dusuyor, orada da SADECE BIR
+# KEZ 4 saniye bekleyip zorla rerun deniyor -- bu da yetmezse (mobil agda
+# round-trip 4 saniyeden uzun surerse) hicbir yedek kalmiyor ve kod
+# cerezi "yok" sayip giris ekranini gosteriyor ("her seferinde login
+# soruyor" belirtisiyle ortusuyor).
+#
+# Duzeltme: rerun SAYISI yerine GECEN GERCEK SURE'ye dayali bir butce --
+# spurious/baglanti-kaynakli rerun'lar sureyi tuketmiyor, sadece gercek
+# zaman tuketiyor, bu yuzden mobildeki fazladan rerun'lardan etkilenmiyor.
+# Ayrica son care tek seferden IKI DENEMEYE cikarildi.
+CEREZ_BEKLEME_ESIK_SANIYE = 6  # dogal cozunme icin gercek zaman butcesi
+CEREZ_SON_CARE_MAX_DENEME = 2  # tek seferlik son care mobilde yetersiz kalabiliyordu
 
-if "cerez_bekleme_turu" not in st.session_state:
-    st.session_state.cerez_bekleme_turu = 0
-if "cerez_son_care_denendi" not in st.session_state:
-    st.session_state.cerez_son_care_denendi = False
+if "cerez_ilk_deneme_zamani" not in st.session_state:
+    st.session_state.cerez_ilk_deneme_zamani = None
+if "cerez_son_care_sayisi" not in st.session_state:
+    st.session_state.cerez_son_care_sayisi = 0
 
 _tum_cerezler = cerezler.get_all() if st.session_state.oturum is None else {}
 
 if st.session_state.oturum is None and not _tum_cerezler:
-    if st.session_state.cerez_bekleme_turu < CEREZ_BEKLE_TUR:
-        st.session_state.cerez_bekleme_turu += 1
+    if st.session_state.cerez_ilk_deneme_zamani is None:
+        st.session_state.cerez_ilk_deneme_zamani = time.time()
+
+    _gecen_sure = time.time() - st.session_state.cerez_ilk_deneme_zamani
+
+    if _gecen_sure < CEREZ_BEKLEME_ESIK_SANIYE:
         st.info("Yükleniyor...")
         st.stop()
-    elif not st.session_state.cerez_son_care_denendi:
-        # GUVENLIK AGI: N dogal tur da bos gelirse (ör. gercekten hic
-        # cerezi olmayan yeni bir kullanici -- bilesenin "kesin bos"
-        # raporu Streamlit'i yeniden calistirmaya yetmeyebilir, sonsuza
-        # kadar "Yukleniyor" ekraninda kalinabilirdi). SADECE BURADA,
-        # SADECE BIR KEZ, UZUN bir bekleme sonrasi zorla kontrol ediyoruz.
-        st.session_state.cerez_son_care_denendi = True
+    elif st.session_state.cerez_son_care_sayisi < CEREZ_SON_CARE_MAX_DENEME:
+        # GUVENLIK AGI: esik sure gecmesine ragmen cerez hala gelmediyse
+        # (ör. gercekten hic cerezi olmayan yeni bir kullanici -- ya da
+        # mobilde yavas bir round-trip) UZUN bir bekleme sonrasi zorla
+        # kontrol ediyoruz. Mobilde tek deneme yetmeyebildigi icin bu
+        # artik EN FAZLA IKI KEZ deneniyor.
+        st.session_state.cerez_son_care_sayisi += 1
         st.info("Yükleniyor...")
         time.sleep(4)
         st.rerun()
@@ -221,7 +245,7 @@ if st.session_state.oturum is None:
                 "Şifre (en az 8 karakter)", type="password", key="kayit_sifre"
             )
             isletme_adi = st.text_input("İşletme adı", key="kayit_isletme")
-            if st.button("14 günlük denemeyi başlat", type="primary"):
+            if st.button("Hesap oluştur", type="primary"):
                 if not (yeni_email and yeni_sifre and isletme_adi):
                     st.warning("Lütfen tüm alanları doldur.")
                 else:

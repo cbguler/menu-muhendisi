@@ -1393,3 +1393,34 @@ bu bilinçli bir erteleme, unutulmuş bir iş değil. Gelecekteki bir
 oturumda bu adıma gelindiğinde: `app.py`'deki `st.Page(...)` sayfa
 tanımlarına, `st.session_state.plan_kodu != "premium"` kontrolüyle
 içerik yerine yükseltme daveti gösteren bir sarmalayıcı eklenecek.
+
+### 12 Ağustos 2026 — XI. Oturum: "Beni Hatırla" Mobil Kök Neden Analizi + Kayıt Ekranı Kalıntı Metin
+
+**"Beni hatırla" mobil sorunu için olası kök neden bulundu ve düzeltildi
+(YEDİNCİ DÜZELTME, henüz TEST EDİLMEDİ):** Önceki sürümde bekleme
+bütçesi "8 doğal rerun" olarak sayılıyordu — süre olarak değil. Mobil
+tarayıcılarda Streamlit'in websocket bağlantısı ekran kilitlenmesi/
+uygulama arka plana atılması/ağ değişimi gibi nedenlerle sık sık kopup
+yeniden bağlanabiliyor, ve bu yeniden bağlanmalar da genelde bir rerun
+tetikliyor — ama bu rerun'lar çerez bileşeninin gerçek veri taşıdığı
+rerun'lar değil, sadece bağlantı olayları. Sonuç: mobilde 8'lik rerun
+bütçesi, hiçbiri gerçek veri getirmeyen "boşa" rerun'larla erkenden
+tükenebiliyor, kod erkenden son çareye düşüyor, orada da sadece bir kez
+4 saniye bekleyip zorla rerun deniyor — bu da yetmezse hiçbir yedek
+kalmıyor ve kod çerezi "yok" sayıp giriş ekranını gösteriyor ("her
+seferinde login soruyor" belirtisiyle örtüşüyor).
+- Düzeltme: rerun SAYISI yerine GEÇEN GERÇEK SÜRE'ye dayalı bir bütçe
+  (`CEREZ_BEKLEME_ESIK_SANIYE = 6`) — spurious/bağlantı-kaynaklı
+  rerun'lar süreyi tüketmiyor, sadece gerçek zaman tüketiyor, bu yüzden
+  mobildeki fazladan rerun'lardan etkilenmiyor.
+- Son çare tek seferden İKİ DENEMEYE çıkarıldı (`CEREZ_SON_CARE_MAX_DENEME = 2`).
+- **Bu bir kod incelemesi + mantık düzeltmesidir, gerçek mobil cihazda
+  DOĞRULANMADI** — bir sonraki adım hâlâ gerçek telefonda test.
+
+**Kayıt ekranı kalıntı metni düzeltildi:** "Deneme" planı kavramı 6
+Ağustos'ta tamamen kaldırılmıştı ama kayıt butonu hâlâ "14 günlük
+denemeyi başlat" yazıyordu — üç kademeli modelde (Ücretsiz → Ödeme
+onayı bekliyor → Aktif) artık bir "deneme" yok. Buton metni "Hesap
+oluştur" olarak değiştirildi.
+
+**Dosya durumu:** app.py.
