@@ -49,8 +49,25 @@ for abonelik in bekleyenler:
             st.write(f"**{isletme_adi}** — {plan_adi} planı")
         with c2:
             if st.button("Onayla", key=f"onayla_{abonelik['id']}", type="primary"):
-                supabase.table("abonelikler").update({"durum": "aktif"}).eq(
-                    "id", abonelik["id"]
-                ).execute()
-                st.success(f"'{isletme_adi}' onaylandı.")
-                st.rerun()
+                # NOT (12 Agustos 2026, Oturum 11): sonuc.data kontrol
+                # EDILMEDEN "onaylandi" gosterilmesi, 44_isletmeler_
+                # update_politikasi.sql'de bulunanla AYNI sinif hataya
+                # acikti -- RLS UPDATE'i sessizce reddedebilir (hata
+                # firlatmaz, sadece 0 satir etkilenir). 46_admin_
+                # abonelik_rls.sql ile UPDATE politikasi eklendi ama
+                # yine de savunma amacli kontrol ediyoruz.
+                sonuc = (
+                    supabase.table("abonelikler")
+                    .update({"durum": "aktif"})
+                    .eq("id", abonelik["id"])
+                    .execute()
+                )
+                if sonuc.data:
+                    st.success(f"'{isletme_adi}' onaylandı.")
+                    st.rerun()
+                else:
+                    st.error(
+                        "Onaylama işlemi veritabanı tarafından reddedildi "
+                        "(muhtemelen bir RLS/izin politikası engelliyor) -- "
+                        "hiçbir hata mesajı dönmedi ama satır güncellenmedi."
+                    )

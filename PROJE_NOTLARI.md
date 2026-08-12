@@ -1644,3 +1644,51 @@ dedi.
 - Büyüyen logoya göre alt boşluk (spacer) 156px→180px yapıldı.
 
 **Dosya durumu:** app.py.
+
+### 12 Ağustos 2026 — XI. Oturum (devam): Açık İş #3 — Admin Onay Sayfası Kod İncelemesiyle Bozuk Bulundu (Canlı Testten ÖNCE)
+
+Kullanıcı "kaldığımız yerden devam" dedi — sıradaki açık iş üç kademeli
+abonelik/admin sisteminin uçtan uca testiydi. Canlı test yapılamayacağı
+için (kimlik/tarayıcı gerektiriyor) önce kod incelemesi yapıldı — tıpkı
+"beni hatırla" ve navigasyon maddelerinde olduğu gibi — ve CİDDİ, gerçek
+bir hata bulundu:
+
+**Bulunan hata:** `abonelikler` tablosunda SADECE `"kendi abonelini gor"`
+SELECT politikası vardı (02_abonelik_ve_odeme_altyapisi.sql) — UPDATE
+politikası HİÇ YOKTU. Orijinal tasarımda yazma işleminin sadece
+service_role/Edge Function ile yapılması planlanmıştı (yorumda açıkça
+yazıyor), ama `pages/7_Admin.py` normal oturumla doğrudan `.update()`
+çağırıyor. Sonuç: (1) Admin sayfasının sorgusu RLS tarafından admin'in
+KENDİ işletmesine filtreleniyor — admin'in kendi aboneliği zaten `aktif`
+olduğu için "bekleyenler" listesi HER ZAMAN BOŞ dönüyor, gerçek bekleyen
+müşteriler olsa bile. (2) "Onayla" butonu bir satıra erişebilse bile
+UPDATE politikası olmadığı için RLS SESSİZCE reddediyor (44 no'lu
+migration'da bulunanla AYNI sınıf hata) — sayfa sonucu kontrol etmediği
+için yine de "onaylandı" mesajı gösteriyordu.
+
+**Ek bulunan hata (aynı inceleme):** Admin sayfası, `isletmeler(ad)`
+gömülü (embedded) sorgusuyla işletme adını da çekiyor — PostgREST gömülü
+sorgularda da HEDEF tablonun kendi RLS'ini uyguluyor, `isletmeler`'in
+tek SELECT politikası da "kendi işletmeni gör" olduğu için admin işletme
+adını da göremeyecekti ("?" olarak kalırdı).
+
+**Düzeltme (46_admin_abonelik_rls.sql, TEST EDİLMEDİ):**
+- `abonelikler` tablosuna admin'e özel (hardcoded e-posta,
+  `app.py`'deki `ADMIN_EPOSTA` ile aynı mantık) bir SELECT + bir UPDATE
+  politikası eklendi. Mevcut "kendi abonelini gör" politikasına
+  dokunulmadı (Postgres'te aynı komut için birden fazla PERMISSIVE
+  politika OR ile birleşir).
+- `isletmeler` tablosuna da admin'e özel bir SELECT politikası eklendi
+  (gömülü sorgu için).
+- `pages/7_Admin.py`'deki "Onayla" butonu artık `isletmeler` sayfasındaki
+  gibi `sonuc.data`'yı kontrol ediyor — RLS sessizce reddederse artık
+  yanlış "onaylandı" mesajı GÖSTERMİYOR, gerçek bir hata mesajı
+  gösteriyor.
+
+**Test için:** gerçek ödeme akışı henüz kurulmadığı için (bkz.
+pages/6_Abonelik.py'deki dürüst uyarı) tam uçtan uca test şu an mümkün
+değil — bir hesabı manuel olarak Supabase SQL Editor'de
+`odeme_alindi_onay_bekliyor` durumuna çekip Admin sayfasının onu artık
+GÖSTERDİĞİNİ ve "Onayla"nın GERÇEKTEN çalıştığını doğrulamak gerekiyor.
+
+**Dosya durumu:** sql/46_admin_abonelik_rls.sql (yeni), pages/7_Admin.py.
