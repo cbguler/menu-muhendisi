@@ -656,10 +656,51 @@ if st.session_state.admin_mi:
 # genisligine gore) seciliyor. st.popover, Streamlit'in kendi native,
 # mobil-uyumlu bir bileseni oldugu icin position="top" menusunun
 # yasadigi turden hatalara girme riski cok daha dusuk.
+# SEKIZINCI DUZELTME (12 Agustos 2026 -- Oturum 11, kullanici geri
+# bildirimi): mobilde sayfa asagi kaydirildiginda "Menü" butonu (normal
+# akista render edildigi icin) sayfayla birlikte yukari kayip ekran
+# disina cikiyordu -- bir sonraki sayfaya gecmek icin tekrar en yukari
+# kaydirmak gerekiyordu. Masaustunde de ayni sikayet var (kullanici
+# menu satirinin logo ile ayni satirda olmasini, boylece kaydirinca da
+# gorunur kalmasini istedi).
+#
+# Streamlit'in kendi basligi ([data-testid='stHeader'], logo'nun
+# oturdugu yer) zaten `position: fixed` -- kaydirsan da hep ekranda
+# kalir (logo'nun hep gorunur olmasinin nedeni budur). Ama Streamlit
+# kendi basligina DISARIDAN widget eklemeye izin vermiyor -- bu
+# bilesen bizim render agacimizin DISINDA, dogrudan icine bir sey
+# enjekte etmek CSS/DOM hack'i gerektirir ve Streamlit surum
+# guncellemelerinde kirilma riski yuksektir (toplulukta bircok kez
+# bu tur hack'lerin bir surum sonrasi bozuldugu bildirilmis).
+#
+# Daha DUSUK RISKLI ama pratikte AYNI SONUCU (kaydirinca hep gorunur
+# kalma) veren yontem secildi: menu satirinin KENDISI de basligin
+# HEMEN ALTINA `position: fixed` ile sabitleniyor -- ayni satirda
+# degil ama dogrudan altinda, hep gorunur -- hem masaustunde hem
+# mobilde ayni mantikla calisir. Sabitlenen menu normal akistan
+# ciktigi icin altindaki icerik yukari kayar; bunu telafi etmek icin
+# menu yuksekligi kadar bir bosluk (spacer) ekleniyor ki sayfanin ilk
+# basligi menunun altinda kalip gizlenmesin.
+#
+# NOT: asagidaki 90px/60px degerleri sidebar_logo.py'deki baslik
+# yuksekligi CSS'inden (masaustu min-height:90px) ve Streamlit'in
+# varsayilan mobil baslik yuksekliginden TAHMIN EDILDI, kesin olcum
+# DEGIL -- gercek cihazda menu ile logo arasinda bosluk/cakisma
+# gorursen bu degerlerin ince ayara ihtiyaci olabilir.
 st.markdown(
     "<style>"
     "@media (min-width: 768px) { .st-key-mobil_nav { display: none !important; } }"
     "@media (max-width: 767px) { .st-key-masaustu_nav { display: none !important; } }"
+    ".st-key-masaustu_nav, .st-key-mobil_nav {"
+    "  position: fixed; left: 0; right: 0; z-index: 999999;"
+    "  background-color: var(--background-color, #ffffff);"
+    "  padding: 0.4rem 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08);"
+    "}"
+    "@media (min-width: 768px) { .st-key-masaustu_nav { top: 90px; } }"
+    "@media (max-width: 767px) { .st-key-mobil_nav { top: 60px; } }"
+    ".ust_menu_bosluk_masaustu, .ust_menu_bosluk_mobil { height: 56px; }"
+    "@media (min-width: 768px) { .ust_menu_bosluk_mobil { display: none !important; } }"
+    "@media (max-width: 767px) { .ust_menu_bosluk_masaustu { display: none !important; } }"
     "</style>",
     unsafe_allow_html=True,
 )
@@ -674,6 +715,14 @@ with st.container(key="mobil_nav"):
     with st.popover("Menü"):
         for _sayfa in sayfa_listesi:
             st.page_link(_sayfa, use_container_width=True)
+
+# Menu satiri artik `position: fixed` oldugu icin normal akistan cikti --
+# altindaki sayfa icerigi menu tarafindan ortulmesin diye bosluk birakiyoruz.
+st.markdown(
+    "<div class='ust_menu_bosluk_masaustu'></div>"
+    "<div class='ust_menu_bosluk_mobil'></div>",
+    unsafe_allow_html=True,
+)
 
 pg = st.navigation(sayfa_listesi, position="hidden")
 pg.run()

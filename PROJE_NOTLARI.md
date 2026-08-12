@@ -1424,3 +1424,42 @@ onayı bekliyor → Aktif) artık bir "deneme" yok. Buton metni "Hesap
 oluştur" olarak değiştirildi.
 
 **Dosya durumu:** app.py.
+
+### 12 Ağustos 2026 — XI. Oturum (devam): Menü Satırı Sabitlendi (Kaydırınca Kaybolma Sorunu)
+
+**Kullanıcı geri bildirimi (gerçek mobil test, ekran görüntüleriyle):**
+- Mobil özel navigasyon (masaüstü satır + mobil popover) GÖRSEL OLARAK
+  ÇALIŞTIĞI doğrulandı — "Menü" butonu açılıyor, tüm sayfalar (Admin
+  dahil) listede görünüyor.
+- YENİ SORUN: mobilde sayfa aşağı kaydırıldığında "Menü" butonu normal
+  akışta render edildiği için sayfayla birlikte yukarı kayıp ekran
+  dışına çıkıyor — başka sayfaya geçmek için tekrar en yukarı kaydırmak
+  gerekiyor.
+- Kullanıcı isteği: masaüstünde menü satırını logo ile aynı satıra
+  almak, böylece kaydırınca da görünür kalması; aynı yaklaşımın
+  mobildeki soruna da çözüm olup olamayacağı soruldu.
+
+**Kök neden ve çözüm (SEKİZİNCİ DÜZELTME, TEST EDİLMEDİ):**
+Streamlit'in kendi başlığı (`[data-testid='stHeader']`, logo'nun
+oturduğu yer) zaten `position: fixed` — bu yüzden logo kaydırınca da
+hep ekranda kalıyor. Ama Streamlit kendi başlığına dışarıdan widget
+eklemeye izin vermiyor; bu bileşen render ağacımızın dışında, içine
+enjeksiyon Streamlit sürüm güncellemelerinde kırılma riski yüksek bir
+CSS/DOM hack'i gerektirir (toplulukta sıkça bildirilen bir sorun).
+- Bunun yerine daha düşük riskli, pratikte aynı sonucu veren yöntem
+  seçildi: menü satırının kendisi de `position: fixed` ile başlığın
+  HEMEN ALTINA sabitlendi (masaüstünde top:90px, mobilde top:60px —
+  bu değerler TAHMİNİ, gerçek cihazda ince ayar gerekebilir). Aynı
+  satırda değil ama doğrudan altında, her zaman görünür — hem
+  masaüstünde hem mobilde aynı mantıkla çalışıyor.
+- Menü artık normal akıştan çıktığı (fixed) için altındaki içerik
+  yukarı kaymasın diye 56px'lik bir boşluk (spacer) eklendi.
+- **Bilinçli bir kapsam kararı:** menüyü LOGO İLE TAM AYNI SATIRA
+  (Streamlit'in kendi başlığının içine) yerleştirmek denenmedi —
+  bu, resmi olmayan bir DOM enjeksiyonu gerektirir ve sürüm
+  güncellemelerinde kırılma riski taşır. Görünürlük sorunu (asıl
+  şikayet) bu daha güvenli yöntemle çözüldü; kullanıcı yine de tam
+  birleşik tek satır isterse ayrı, daha riskli bir iş olarak ele
+  alınabilir.
+
+**Dosya durumu:** app.py.
