@@ -1730,3 +1730,21 @@ hâlâ bekleniyor), hata değil. Kullanıcı iki yeni talep iletti:
 
 **Dosya durumu:** sql/47_isletme_adres_fatura_ekle.sql (yeni),
 pages/7_Admin.py, pages/6_Abonelik.py.
+
+### 12 Ağustos 2026 — XI. Oturum (devam): Vergi Dairesi + Vergi Numarası Eklendi
+
+Kullanıcı talebi: fatura adresinin altına Vergi Dairesi ve Vergi
+Numarası da eklensin.
+
+- **48_isletme_vergi_bilgileri_ekle.sql (yeni):** `isletmeler`'e
+  `vergi_dairesi` ve `vergi_no` (ikisi text, nullable). Kasıtlı olarak
+  metin tipi kullanıldı (numeric DEĞİL) — vergi numaraları başında sıfır
+  olabilir, numeric tip bunu sessizce siler. Format/uzunluk kısıtlaması
+  da EKLENMEDİ — bireysel (TCKN, 11 hane) ile kurumsal (VKN, 10 hane)
+  farklı uzunlukta olabiliyor, netleşmeden kısıtlamak yanlış kayıtları
+  reddedebilirdi.
+- `pages/6_Abonelik.py`: form alanları fatura adresinin hemen altına
+  eklendi.
+
+**Dosya durumu:** sql/48_isletme_vergi_bilgileri_ekle.sql (yeni),
+pages/6_Abonelik.py.

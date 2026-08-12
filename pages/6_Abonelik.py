@@ -74,6 +74,12 @@ with st.form("isletme_bilgi_formu"):
         height=80,
         help="İşletme adresinden farklıysa buraya ayrı gir; aynıysa boş bırakabilirsin.",
     )
+    yeni_vergi_dairesi = st.text_input(
+        "Vergi dairesi", value=isletme_bilgi.get("vergi_dairesi", ""),
+    )
+    yeni_vergi_no = st.text_input(
+        "Vergi numarası", value=isletme_bilgi.get("vergi_no", ""),
+    )
     if st.form_submit_button("Kaydet"):
         if not yeni_ad.strip():
             st.error("İşletme adı boş olamaz.")
@@ -84,6 +90,8 @@ with st.form("isletme_bilgi_formu"):
                     "ad": yeni_ad.strip(),
                     "adres": yeni_adres.strip() or None,
                     "fatura_adresi": yeni_fatura_adresi.strip() or None,
+                    "vergi_dairesi": yeni_vergi_dairesi.strip() or None,
+                    "vergi_no": yeni_vergi_no.strip() or None,
                 })
                 .eq("id", isletme_id)
                 .execute()
