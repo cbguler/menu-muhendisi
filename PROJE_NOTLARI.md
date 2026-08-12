@@ -1557,3 +1557,44 @@ oturumda tamamen farklı bir yaklaşıma geçildi (aşağıya bak).
 **Dosya durumu:** app.py, sidebar_logo.py, pages/0_Yillik_Menu.py,
 pages/1_Recete_Uretimi.py, pages/2_Menu.py, pages/5_Tarif_Kutuphanesi.py,
 pages/6_Abonelik.py, pages/7_Admin.py.
+
+### 12 Ağustos 2026 — XI. Oturum (devam): "Beni Hatırla" DOĞRULANDI + Logo Büyütüldü, Mobil Satır Gerçekten Yan Yana, Video Kontrolleri Temizlendi
+
+**BÜYÜK HABER: "Beni hatırla" düzeltmesi DOĞRULANDI.** Kullanıcı gerçek
+testte "Uygulama bu sefer beni tanıdı" dedi — bir önceki oturumdaki
+DOKUZUNCU DÜZELTME teorisi (cerezin `.set()` sonrası hemen `st.rerun()`
+ile kesintiye uğrayıp hiç yazılamaması) doğru çıktı. `time.sleep(1.5)`
+eklenmesi sorunu çözdü. Bekleyen açık işler listesindeki "beni hatırla"
+maddesi ARTIK ÇÖZÜLDÜ olarak işaretlenebilir (yine de zaman içinde
+tekrar test edilmesi iyi olur, tek seferlik doğrulama).
+
+**Buton menü tasarımı BEĞENİLDİ** (bir önceki oturumun pastel buton +
+eşit genişlik + logo-satır-içi değişikliği) — ekran görüntüleriyle
+doğrulandı, masaüstünde tam istenen gibi görünüyor.
+
+**Üç küçük ayar daha yapıldı:**
+1. **Logo çok küçük kalmıştı, 2x büyütüldü** — masaüstü 48px→96px,
+   mobil 36px→72px. Buna bağlı olarak nav satırının altına eklenen
+   boşluk (spacer) yükseklikleri de büyütüldü (masaüstü 112px→156px,
+   mobil 68px→96px) ki büyüyen logo sayfa içeriğini örtmesin.
+2. **Mobilde "değişiklik olmamış gibi" — kök neden bulundu:** Streamlit
+   varsayılan olarak dar (mobil) ekranlarda `st.columns()`'u yataydan
+   dikeye (alt alta) OTOMATİK çeviriyor — bir önceki oturumda logo+Menü
+   butonunu "yan yana" koyma niyeti bu yüzden mobilde hiç gerçekleşmemiş,
+   ikisi yine alt alta kalmış. CSS ile bu otomatik alt-alta-çevirme
+   SADECE bizim mobil menü satırımız için zorla iptal edildi
+   (`flex-direction: row !important`). **DevTools ile doğrulanmadı,
+   Streamlit'in iç CSS yapısına bağlı bir tahmin.**
+3. **Kontrol Paneli'ndeki tanıtım videosunun native kontrol çubuğu
+   (oynat/durdur, süre, sessize al, tam ekran, "..." menüsü)
+   temizlendi.** `st.video()` bunu kaldırmak için resmi bir parametre
+   SUNMUYOR (araştırıldı, doğrulandı) — WebKit/Blink'in kendi iç video
+   kontrol elemanlarını (`::-webkit-media-controls` ailesi) CSS ile
+   gizleyen bir yöntem kullanıldı. **BİLİNÇLİ KISIT:** bu sadece Chrome/
+   Edge/Safari'de çalışır, Firefox'ta kontroller görünmeye devam eder.
+   **BİLİNÇLİ KARAR:** eski base64/data-URI video yöntemine KASITLI
+   OLARAK dönülmedi — o yöntem daha önce (6 Ağustos) mobilde videoyu
+   hiç çalıştıramamıştı, bu riski tekrar almamak için `st.video()`
+   korunup sadece görsel olarak kontroller CSS ile gizlendi.
+
+**Dosya durumu:** app.py.

@@ -720,6 +720,19 @@ st.markdown(
     "  border-bottom: 1px solid rgba(0,0,0,0.08);"
     "}"
     ".st-key-masaustu_nav div[data-testid='stHorizontalBlock'] { gap: 0.7rem !important; }"
+    # ON IKINCI DUZELTME (12 Agustos 2026): kullanici "mobilde degisiklik
+    # olmamis gibi" dedi -- hakliydi. Streamlit varsayilan olarak dar
+    # (mobil) ekranlarda st.columns()'u YATAYDAN DIKEYE (alt alta) otomatik
+    # ceviriyor -- benim logo+Menu butonunu "yan yana" koyma niyetim bu
+    # yuzden mobilde hic gerceklesmemis, eskisi gibi alt alta kalmislar.
+    # Asagidaki kural SADECE bizim mobil menu satirimizi hedefleyip bu
+    # otomatik alt-alta-cevirmeyi zorla iptal ediyor (DevTools ile
+    # dogrulanmadi, Streamlit'in ic CSS yapisina bagli bir tahmin).
+    ".st-key-mobil_nav div[data-testid='stHorizontalBlock'] {"
+    "  flex-direction: row !important; flex-wrap: nowrap !important;"
+    "  align-items: center !important; gap: 0.5rem !important;"
+    "}"
+    ".st-key-mobil_nav div[data-testid='stColumn'] { width: auto !important; min-width: 0 !important; }"
     # Pastel "buton" gorunumu -- Kontrol Paneli'ndeki mevcut renk paletiyle
     # birebir ayni (bkz. yukaridaki SVG: fill #E1F5EE, stroke #0F6E56,
     # metin #085041).
@@ -733,10 +746,26 @@ st.markdown(
     "}"
     "@media (min-width: 768px) { .st-key-masaustu_nav { top: 60px; } }"
     "@media (max-width: 767px) { .st-key-mobil_nav { top: 60px; } }"
-    ".ust_menu_bosluk_masaustu { height: 112px; }"
-    ".ust_menu_bosluk_mobil { height: 68px; }"
+    # Logo 2x buyudugu icin (48->96 masaustu, 36->72 mobil) altindaki
+    # icerigin ortulmemesi icin bosluklar da buyutuldu.
+    ".ust_menu_bosluk_masaustu { height: 156px; }"
+    ".ust_menu_bosluk_mobil { height: 96px; }"
     "@media (min-width: 768px) { .ust_menu_bosluk_mobil { display: none !important; } }"
     "@media (max-width: 767px) { .ust_menu_bosluk_masaustu { display: none !important; } }"
+    # ON UCUNCU DUZELTME (12 Agustos 2026): Kontrol Paneli'ndeki tanitim
+    # videosunun native tarayici kontrol cubugu (oynat/durdur, sure,
+    # sessize al, tam ekran, "..." menusu) temizlensin istendi. st.video()
+    # bunu kaldirmak icin resmi bir parametre SUNMUYOR (dogrulandi) --
+    # tek yol tarayicinin kendi ic (WebKit/Blink) video kontrol
+    # elemanlarini CSS ile gizlemek. BILINCLI KISIT: bu SADECE Chrome/
+    # Edge/Safari (WebKit/Blink tabanli) tarayicilarda calisir, Firefox
+    # bu ozel secicileri desteklemiyor -- orada kontroller GORUNMEYE DEVAM
+    # EDER. Eski base64/data-URI video hilesine KASITLI OLARAK donulmedi
+    # -- o yontem mobilde videoyu tamamen calistiramiyordu (bkz. yukaridaki
+    # IKINCI DUZELTME notu), bu riski tekrar almiyoruz.
+    "video::-webkit-media-controls { display: none !important; }"
+    "video::-webkit-media-controls-enclosure { display: none !important; }"
+    "video::-webkit-media-controls-panel { display: none !important; }"
     "</style>",
     unsafe_allow_html=True,
 )
@@ -746,7 +775,7 @@ with st.container(key="masaustu_nav"):
         [LOGO_ORANI] + [BUTON_ORANI] * len(sayfa_listesi) + [BOSLUK_ORANI]
     )
     with _tum_kolonlar[0]:
-        st.image("assets/logo.png", width=48)
+        st.image("assets/logo.png", width=96)
     for _i, (_kolon, _sayfa) in enumerate(zip(_tum_kolonlar[1:-1], sayfa_listesi)):
         with _kolon:
             with st.container(key=f"nav_buton_masaustu_{_i}"):
@@ -755,7 +784,7 @@ with st.container(key="masaustu_nav"):
 with st.container(key="mobil_nav"):
     _logo_kolonu, _menu_kolonu = st.columns([1, 3])
     with _logo_kolonu:
-        st.image("assets/logo.png", width=36)
+        st.image("assets/logo.png", width=72)
     with _menu_kolonu:
         with st.popover("Menü"):
             for _sayfa in sayfa_listesi:
