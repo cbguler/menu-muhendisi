@@ -1748,3 +1748,35 @@ Numarası da eklensin.
 
 **Dosya durumu:** sql/48_isletme_vergi_bilgileri_ekle.sql (yeni),
 pages/6_Abonelik.py.
+
+### 12 Ağustos 2026 — XI. Oturum (devam): KAYIT TETİKLEYİCİSİ GERÇEKTEN TEST EDİLDİ — "Database error saving new user" (Açık İş #6, sonunda gerçek sonuç)
+
+Kullanıcı oğlu Emre için gerçek bir hesap açmaya çalıştı — bekleyen açık
+işler listesindeki "kayıt tetikleyicisinin testi" maddesinin İLK GERÇEK
+denemesiydi, ve BAŞARISIZ oldu: "Kayıt başarısız: Database error saving
+new user".
+
+**Kök neden bulundu:** `abonelikler` tablosunun orijinal şemasındaki
+`durum` sütunu CHECK kısıtı sadece ('deneme','aktif','odeme_gecikti',
+'iptal_edildi','suresi_doldu') değerlerine izin veriyordu. 41/42 no'lu
+migration'lar üç kademeli modele geçerken yeni tetikleyici artık
+`durum='odeme_bekleniyor'` ile satır ekliyor — ama bu ESKİ CHECK KISITI
+HİÇ GÜNCELLENMEMİŞTİ. Tetikleyicinin INSERT'i kısıtı ihlal edip
+exception fırlatıyordu — bu da `auth.users` satırının OLUŞTURULMASINI
+BİLE engelliyordu (AFTER INSERT tetikleyicisindeki hata tüm transaction'ı
+geri alıyor). Bu şekilde daha önce fark edilmedi çünkü 41/42'den beri
+GERÇEK bir kayıt denemesi hiç yapılmamıştı.
+
+**Düzeltme (49_abonelik_durum_kisit_duzelt.sql, TEST EDİLMEDİ):** kısıt
+dinamik olarak (isim tahmin edilmeden, pg_constraint'ten sorgulanarak)
+bulunup kaldırıldı, yeni kısıt ESKİ TÜM değerleri + İKİ YENİ değeri
+('odeme_bekleniyor', 'odeme_alindi_onay_bekliyor') içerecek şekilde
+eklendi.
+
+**Eğer bu yetmezse ikinci şüpheli:** `plan_id` sütunu — 42 no'lu
+migration'da "not null" kaldırılmıştı ama gerçekten Supabase'de
+çalıştırıldığı doğrulanmalı (migration dosyasının varlığı, çalıştırıldığı
+anlamına gelmiyor). 49 no'lu migration'ın sonundaki doğrulama sorgusu
+bunu da kontrol ediyor.
+
+**Dosya durumu:** sql/49_abonelik_durum_kisit_duzelt.sql (yeni).
