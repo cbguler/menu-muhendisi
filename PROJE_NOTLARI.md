@@ -1780,3 +1780,35 @@ anlamına gelmiyor). 49 no'lu migration'ın sonundaki doğrulama sorgusu
 bunu da kontrol ediyor.
 
 **Dosya durumu:** sql/49_abonelik_durum_kisit_duzelt.sql (yeni).
+
+### 12 Ağustos 2026 — XI. Oturum (devam): Bahri'nin Kendi Hesabı Giriş Yapamadı — Hata Mesajı Gerçek Nedeni Gizliyordu
+
+Kullanıcı kendi hesabıyla (bahriguler@gmail.com) giriş yapmaya çalıştı,
+"Giriş başarısız: e-posta veya şifre hatalı" hatası aldı. Ekran
+görüntüsünde ayrıca beklenmedik bir şey daha vardı: sayfa Streamlit'in
+KENDİ varsayılan pages/ klasörü kenar çubuğuyla (sidebar) render
+edilmişti -- özel menü satırımız değil.
+
+**Acil olan (giriş hatası) için yapılan:** giriş butonunun `except
+Exception:` bloğu HER TÜRLÜ hatayı (yanlış şifre, ağ hatası, Supabase
+API hatası, rate limit, vb.) AYNI "e-posta veya şifre hatalı" mesajıyla
+gösteriyordu -- gerçek nedeni gizliyordu. Artık gerçek exception detayı
+da bir expander içinde gösteriliyor ("Teknik detay (destek için)").
+Kullanıcıya tekrar denemesi ve gerçek hatayı paylaşması istendi --
+KÖK NEDEN HENÜZ BİLİNMİYOR, tahmin yürütülmedi.
+
+**İkincil, muhtemelen ayrı ve önceden var olan bir sorun (HENÜZ
+ÇÖZÜLMEDİ):** giriş ekranı, `st.navigation()` sadece kimlik doğrulanmış
+kullanıcılar için (script'in ilerisinde) çağrıldığından, giriş ekranı
+render edilirken `st.navigation()` o çalıştırmada HİÇ tetiklenmiyor --
+bu yüzden Streamlit kendi varsayılan pages/ klasörü kenar çubuğuna
+düşüyor olabilir. Bu muhtemelen 6 Ağustos'taki navigasyon değişikliğinden
+beri hep böyleydi ama kimse fark etmemişti (Bahri neredeyse hep zaten
+giriş yapmış durumda oluyor, giriş ekranını nadiren görüyor). Düzeltmesi
+muhtemelen giriş ekranını da bir `st.Page`'e sarıp `st.navigation()`'ı
+HER ZAMAN (auth durumundan bağımsız) tam olarak bir kez çağırmak --
+ama bu, yakın zamanda stabilize edilen kırılgan "beni hatırla" bekleme
+mantığına dokunma riski taşıdığı için, ACİL giriş hatası netleşmeden
+ERTELENDİ (kasıtlı bir sıralama kararı, unutulmadı).
+
+**Dosya durumu:** app.py.

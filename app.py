@@ -250,8 +250,17 @@ if st.session_state.oturum is None:
                         # tarayicida dogrulama).
                         time.sleep(1.5)
                     st.rerun()
-                except Exception:
+                except Exception as e:
+                    # ON ALTINCI DUZELTME (12 Agustos 2026, Oturum 11):
+                    # bu blok her turlu exception'i (yanlis sifre, ag
+                    # hatasi, Supabase API hatasi, RATE LIMIT, vb.) AYNI
+                    # "e-posta veya sifre hatali" mesajiyla gosteriyordu --
+                    # bu, Bahri'nin KENDI hesabinda basarisiz giris
+                    # denemesinde GERCEK nedeni gizleyebilir. Simdi asagida
+                    # gercek exception detayi da gosteriliyor (destek icin).
                     st.error("Giriş başarısız: e-posta veya şifre hatalı.")
+                    with st.expander("Teknik detay (destek için)"):
+                        st.code(f"{type(e).__name__}: {e}")
 
         with sekme_kayit:
             yeni_email = st.text_input("E-posta", key="kayit_email")
