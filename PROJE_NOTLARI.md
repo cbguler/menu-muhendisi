@@ -1812,3 +1812,45 @@ mantığına dokunma riski taşıdığı için, ACİL giriş hatası netleşmede
 ERTELENDİ (kasıtlı bir sıralama kararı, unutulmadı).
 
 **Dosya durumu:** app.py.
+
+### 13 Ağustos 2026 — XI. Oturum (devam, ACİL): "Şifremi Unuttum" Akışı Eklendi
+
+Bahri kendi hesabında kilitlenince ("Send password recovery" e-postası
+localhost'a kırık bir link içeriyordu) uygulamada hiçbir kendi kendine
+şifre sıfırlama yolu OLMADIĞI ortaya çıktı. Acil olarak eklendi.
+
+**Neden Supabase'in standart "bağlantıya tıkla" akışı DEĞİL de KOD
+girişi seçildi (ON YEDİNCİ DÜZELTME):** İki bağımsız kırılganlık
+tespit edildi: (1) Supabase Auth ayarlarındaki "Site URL" şu an
+localhost'ta duruyor -- düzeltilmeden link her zaman kırık çıkar.
+(2) Bunu düzeltsek bile, Supabase linke tıklanınca token'ı URL'nin
+FRAGMENT kısmına (#access_token=...) koyuyor -- bu kısım tarayıcıdan
+SUNUCUYA HİÇ gönderilmiyor, yani Streamlit (sunucu tarafında çalışan
+bir uygulama) bunu okuyamıyor bile, özel bir JS köprüsü gerektirir.
+Bunun yerine Supabase'in AYNI e-postada gönderdiği 6 haneli KODU
+(`{{ .Token }}`) kullanıcıya elle girdirip `supabase.auth.verify_otp
+(type="recovery")` ile doğruluyoruz -- resmi, dokümante edilmiş bir
+akış, link/redirect/fragment sorunlarının hiçbirine takılmıyor, Site
+URL düzeltilmemiş olsa BİLE çalışır.
+
+**Eklenen:** Giriş ekranına üçüncü bir sekme -- "Şifremi unuttum".
+İki adım: (1) e-posta gir → kod gönderilir (Supabase'in "hangi
+e-postalar kayıtlı" bilgisini sızdırmama prensibi korunuyor -- hata
+olsa bile aynı genel mesaj gösteriliyor). (2) kodu + yeni şifreyi gir →
+`verify_otp` + `update_user` + `sign_out` (temiz bir devir için, normal
+girişe yönlendiriliyor).
+
+**Kullanıcıdan (Bahri'den) istenen iki manuel adım (ben yapamıyorum,
+Supabase Dashboard erişimi gerekiyor):**
+1. Authentication → URL Configuration → Site URL'i localhost'tan gerçek
+   adrese (`https://menu-muhendisi.streamlit.app`) güncellemesi --
+   genel olarak iyi pratik, bu yeni akış için ZORUNLU değil ama diğer
+   e-posta linkleri (kayıt doğrulama vb.) için hâlâ gerekli.
+2. Authentication → Emails → "Reset Password" şablonunu, Menü
+   Mühendisi'nden geldiğini belli eden ve `{{ .Token }}`'ı öne çıkaran
+   bir metinle değiştirmesi -- şablon metni ayrıca verildi.
+
+**TEST EDİLMEDİ** -- bir sonraki adım gerçek bir hesapla uçtan uca
+doğrulama.
+
+**Dosya durumu:** app.py.

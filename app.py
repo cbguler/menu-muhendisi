@@ -219,7 +219,9 @@ if st.session_state.oturum is None:
         st.title("Menü Mühendisliği")
         st.caption("Reçete maliyeti ve kâr marjını tek yerden yönet.")
 
-        sekme_giris, sekme_kayit = st.tabs(["Giriş yap", "Hesap oluştur"])
+        sekme_giris, sekme_kayit, sekme_sifre_sifirla = st.tabs(
+            ["Giriş yap", "Hesap oluştur", "Şifremi unuttum"]
+        )
 
         with sekme_giris:
             email = st.text_input("E-posta", key="giris_email")
@@ -279,6 +281,96 @@ if st.session_state.oturum is None:
                         )
                     except Exception as e:
                         st.error(f"Kayıt başarısız: {e}")
+
+        # ON YEDINCI DUZELTME (13 Agustos 2026, Oturum 11 -- Bahri'nin
+        # kendi hesabinda yasadigi kilitlenme sonrasi acilen eklendi):
+        # "Sifremi unuttum" akisi HIC YOKTU -- tek cikis yolu Supabase
+        # Dashboard'a girip SQL ile sifreyi elle degistirmekti. Ayrica
+        # Supabase'in varsayilan "sifirlama BAGLANTISI" akisi bu proje
+        # icin İKİ SEBEPTEN kirilgan: (1) Site URL ayari su an localhost'a
+        # ayarli, baglanti kirik cikar (Bahri'nin yasadigi durum); (2)
+        # baglanti tarayicida acildiginda Supabase, token'i URL'nin
+        # FRAGMENT kismina (#access_token=...) koyar -- bu kisim
+        # TARAYICIDAN SUNUCUYA HIC GONDERILMEZ, yani Streamlit (sunucu
+        # tarafinda calisan bir uygulama) bunu OKUYAMAZ bile, ozel bir
+        # JS koprusu gerekir.
+        #
+        # Bunun yerine, Supabase'in AYNI E-POSTADA gonderdigi 6 haneli
+        # KODU (email sablonundaki {{ .Token }}) kullaniciya elle
+        # girdirip dogrudan supabase.auth.verify_otp(type="recovery")
+        # ile dogruluyoruz -- bu, link/redirect/fragment sorunlarinin
+        # HICBIRINE takilmiyor (resmi, dokumante edilmis bir Supabase
+        # akisi -- bkz. supabase.com/docs/guides/auth/auth-email-passwordless
+        # ve Python referansindaki verify_otp). Site URL duzeltilmemis
+        # olsa BILE bu akis calisir.
+        with sekme_sifre_sifirla:
+            if not st.session_state.get("sifirlama_asama"):
+                st.session_state.sifirlama_asama = "eposta_gir"
+
+            if st.session_state.sifirlama_asama == "eposta_gir":
+                st.caption(
+                    "E-postana 6 haneli bir kod göndereceğiz -- o kodu bir "
+                    "sonraki adımda gireceksin."
+                )
+                sifirlama_eposta = st.text_input("E-posta", key="sifirlama_eposta_girisi")
+                if st.button("Kod gönder"):
+                    if not sifirlama_eposta.strip():
+                        st.warning("E-posta gir.")
+                    else:
+                        try:
+                            supabase.auth.reset_password_for_email(sifirlama_eposta.strip())
+                        except Exception:
+                            # NOT: hata olsa bile ayni genel mesaji gosteriyoruz --
+                            # Supabase'in kendisi de "bu e-posta kayitli mi"
+                            # bilgisini disari sizdirmiyor (user enumeration
+                            # koruması), biz de ayni prensibi koruyoruz.
+                            pass
+                        st.session_state.sifirlama_eposta = sifirlama_eposta.strip()
+                        st.session_state.sifirlama_asama = "kod_gir"
+                        st.rerun()
+
+            elif st.session_state.sifirlama_asama == "kod_gir":
+                st.success(
+                    f"{st.session_state.sifirlama_eposta} adresine bir kod "
+                    "gönderildi (gelen kutunu ve spam klasörünü kontrol et)."
+                )
+                kod = st.text_input("6 haneli kod", key="sifirlama_kod")
+                sifirlama_yeni_sifre = st.text_input(
+                    "Yeni şifre (en az 8 karakter)", type="password", key="sifirlama_yeni_sifre"
+                )
+                sifirlama_yeni_sifre_tekrar = st.text_input(
+                    "Yeni şifre (tekrar)", type="password", key="sifirlama_yeni_sifre_tekrar"
+                )
+                c1, c2 = st.columns(2)
+                with c1:
+                    if st.button("Şifreyi sıfırla", type="primary"):
+                        if not kod.strip():
+                            st.warning("Kodu gir.")
+                        elif len(sifirlama_yeni_sifre) < 8:
+                            st.warning("Şifre en az 8 karakter olmalı.")
+                        elif sifirlama_yeni_sifre != sifirlama_yeni_sifre_tekrar:
+                            st.warning("Şifreler eşleşmiyor.")
+                        else:
+                            try:
+                                supabase.auth.verify_otp({
+                                    "email": st.session_state.sifirlama_eposta,
+                                    "token": kod.strip(),
+                                    "type": "recovery",
+                                })
+                                supabase.auth.update_user({"password": sifirlama_yeni_sifre})
+                                supabase.auth.sign_out()
+                                st.session_state.sifirlama_asama = None
+                                st.session_state.sifirlama_eposta = None
+                                st.success(
+                                    "Şifren değiştirildi. Şimdi \"Giriş yap\" "
+                                    "sekmesinden yeni şifrenle giriş yapabilirsin."
+                                )
+                            except Exception as e:
+                                st.error(f"Kod doğrulanamadı: {e}")
+                with c2:
+                    if st.button("Farklı e-posta ile tekrar dene"):
+                        st.session_state.sifirlama_asama = "eposta_gir"
+                        st.rerun()
 
     st.stop()
 
