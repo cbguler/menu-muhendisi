@@ -606,27 +606,61 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
                 t = _ogun_toplami(tarif_adlari, detay)
                 info_key = f"info-box-{ay_adi}-{hafta_no}-{gun['gun']}-{ogun_adi}"
                 with st.container(height=BILGI_KUTU_YUKSEKLIK, border=False, key=info_key):
+                    # ON SEKIZINCI DUZELTME (13 Agustos 2026, Oturum 11):
+                    # kullanici besin/maliyet satirlarinin PASTEL degil
+                    # BELIRGIN renklerle gosterilmesini istedi. Onceki hali
+                    # st.caption(":blue[...]") kullaniyordu -- st.caption()
+                    # Streamlit temasinda kucuk+SOLUK render edilen bir
+                    # bilesen, ustune renk direktifi eklense bile hafif/
+                    # pastel kaliyor. Simdi st.markdown + dogrudan HTML/CSS
+                    # ile daha DOYGUN renkler ve YARI KALIN font kullanildi.
+                    # Font-size bilerek caption'in yaklasik boyutuyla (0.8rem)
+                    # AYNI tutuldu ve margin:0 verildi -- yoksa normal
+                    # markdown paragraf boslugu, sabit 120px'lik kutuyu
+                    # (BILGI_KUTU_YUKSEKLIK) tasirip ic kaydirma cubugu
+                    # cikarabilirdi.
                     gi_metin = f"{round(t['gi'])}" if t["gi"] is not None else "-"
-                    st.caption(
-                        f":blue[{round(t['kalori'])} kcal · P{round(t['protein'])}g · "
-                        f"Y{round(t['yag'])}g · K{round(t['karbonhidrat'])}g · Gİ{gi_metin}]"
+                    st.markdown(
+                        "<div style='font-size:0.8rem; font-weight:600; "
+                        "color:#0B5ED7; margin:0; line-height:1.35;'>"
+                        f"{round(t['kalori'])} kcal · P{round(t['protein'])}g · "
+                        f"Y{round(t['yag'])}g · K{round(t['karbonhidrat'])}g · "
+                        f"Gİ{gi_metin}</div>",
+                        unsafe_allow_html=True,
                     )
                     alerjen_metin = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
-                    st.caption(f":blue[Alerjen: {alerjen_metin}]")
+                    st.markdown(
+                        "<div style='font-size:0.8rem; font-weight:600; "
+                        f"color:#0B5ED7; margin:0; line-height:1.35;'>Alerjen: {alerjen_metin}</div>",
+                        unsafe_allow_html=True,
+                    )
 
                     if not fiyat_verisi_var:
-                        st.caption(":green[Maliyet: -]")
+                        _maliyet_metin = "Maliyet: -"
                     elif t["tam_fiyatli"]:
-                        st.caption(f":green[Maliyet: {t['maliyet_eur']:.2f} €]")
+                        _maliyet_metin = f"Maliyet: {t['maliyet_eur']:.2f} €"
                     else:
                         eksik_liste = ", ".join(sorted(t["eksik_malzemeler"]))
-                        st.caption(f":green[Maliyet: ≈{t['maliyet_eur']:.2f} € (eksik fiyat: {eksik_liste})]")
+                        _maliyet_metin = f"Maliyet: ≈{t['maliyet_eur']:.2f} € (eksik fiyat: {eksik_liste})"
+                    st.markdown(
+                        "<div style='font-size:0.8rem; font-weight:600; "
+                        f"color:#1B7A3D; margin:0; line-height:1.35;'>{_maliyet_metin}</div>",
+                        unsafe_allow_html=True,
+                    )
 
                     hedefte = _hedefte_mi(ogun_adi, t, hedefler)
                     if hedefte is True:
-                        st.caption(":green[Hedefte]")
+                        st.markdown(
+                            "<div style='font-size:0.8rem; font-weight:600; "
+                            "color:#1B7A3D; margin:0; line-height:1.35;'>Hedefte</div>",
+                            unsafe_allow_html=True,
+                        )
                     elif hedefte is False:
-                        st.caption(":orange[Hedef dışı]")
+                        st.markdown(
+                            "<div style='font-size:0.8rem; font-weight:600; "
+                            "color:#D9720B; margin:0; line-height:1.35;'>Hedef dışı</div>",
+                            unsafe_allow_html=True,
+                        )
 
 
 def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):

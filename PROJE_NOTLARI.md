@@ -1854,3 +1854,30 @@ Supabase Dashboard erişimi gerekiyor):**
 doğrulama.
 
 **Dosya durumu:** app.py.
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Yıllık Menü — Besin/Maliyet Satırları Pastelden Belirgin Renklere
+
+Kullanıcı geri bildirimi (ekran görüntüsüyle): Yıllık Menü'deki her
+öğün kartının altındaki besin değerleri/alerjen/maliyet satırları
+(`kcal · P/Y/K/Gİ`, `Alerjen: ...`, `Maliyet: ... €`) çok pastel/soluk
+duruyordu, daha belirgin olması istendi.
+
+**Kök neden:** Bu satırlar `st.caption(":blue[...]")` /
+`":green[...]"` ile render ediliyordu — `st.caption()` Streamlit
+temasında zaten küçük+soluk bir bileşen, üzerine renk direktifi
+eklense de pastel kalıyor.
+
+**Yapılan (ON SEKİZİNCİ DÜZELTME):** `st.caption` yerine `st.markdown`
++ doğrudan HTML/CSS ile doygun renkler (`#0B5ED7` mavi -- besin+alerjen,
+`#1B7A3D` yeşil -- maliyet+hedefte, `#D9720B` turuncu -- hedef dışı) ve
+yarı kalın font (`font-weight:600`) kullanıldı. Font boyutu BİLEREK
+caption'ınkiyle aynı (`0.8rem`) tutuldu ve `margin:0` verildi -- yoksa
+normal markdown paragraf boşluğu, sabit 120px'lik bilgi kutusunu
+(`BILGI_KUTU_YUKSEKLIK`) taşırıp içeride kaydırma çubuğu çıkarabilirdi.
+
+**Bilerek dokunulmayan:** aynı dosyadaki Excel dışa aktarma fonksiyonu
+(`_aylik_menu_excel_olustur`) -- openpyxl ile ayrı, tamamen farklı bir
+renklendirme mekanizması kullanıyor, ekran görüntüsündeki şikayet ekran
+(UI) ile ilgiliydi, Excel çıktısıyla değil.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py.
