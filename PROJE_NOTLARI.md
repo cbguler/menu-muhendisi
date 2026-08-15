@@ -2044,3 +2044,29 @@ mı? TAŞINMADI, kullanıcının açık onayı bekleniyor.
 
 **Dosya durumu:** kaynak_duzeltilmis_v5.xlsx (yeni),
 sql/52_kategori_yeniden_numaralandirma.sql (yeni).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Geleneksel/Özel Beslenme Malzemeleri Doğru Kategoriye Taşındı
+
+Kullanıcı iki açık soruyu da onayladı: (1) GIDALAR yazım düzeltmesi
+doğruydu. (2) TürKomp kökenli 23 "Geleneksel gıdalar" malzemesi
+(Boza, Çökelek, Kazandibi, Mantı, Simit, Lokum vb.) ve 4 "Özel
+beslenme amaçlı gıdalar" malzemesi (İzotonik Sporcu İçeceği, Müsli,
+Tam Tahıllı Gevrek, Tatlandırıcı) sırasıyla yeni 18 ve 19 numaralı
+kategorilere taşındı.
+
+**Excel:** `kaynak_duzeltilmis_v6.xlsx` (yeni, v5'in yerini alıyor) --
+486 malzeme korunarak (veri/renk kaybı yok, doğrulandı) 27 malzeme
+doğru kategorilere taşındı. Artık "18. GELENEKSEL GIDALAR" (23) ve
+"19. ÖZEL BESLENME AMAÇLI GIDALAR" (4) gerçek içerikle dolu, geçici
+"(henüz malzeme eklenmedi)" yer tutucuları kaldırıldı.
+
+**Veritabanı:** `sql/53_geleneksel_ve_ozel_beslenme_tasima.sql` (yeni)
+-- basit UPDATE'ler, FK/çakışma riski yok (hedef kategoriler zaten
+52 no'lu migration'da kuruldu).
+
+**Kategori yeniden yapılandırması tamamlandı** (bu konudaki açık iş
+kapandı) -- güncel durum: 20 kategori, 486 malzeme, hepsi doğru
+kategorilerinde.
+
+**Dosya durumu:** kaynak_duzeltilmis_v6.xlsx (yeni),
+sql/53_geleneksel_ve_ozel_beslenme_tasima.sql (yeni).
