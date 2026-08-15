@@ -2000,3 +2000,47 @@ gelmedi.
 
 **Dosya durumu:** kaynak_duzeltilmis_v4.xlsx (yeni),
 sql/51_turkomp_kategori_uyumu_asama2.sql (yeni).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Kategori Sistemi Tam Yeniden Numaralandırıldı (18→20 kategori)
+
+**Süreç sorunu bulundu ve düzeltildi:** Kullanıcı, 50 no'lu migration
+dosyasını daha önce hiç alamadığını fark etti — geçmişe bakınca o
+dosyayı gerçekten oluşturup göstermiştim (present_files ile) ama o
+mesajda git komutlarını vermeyi UNUTMUŞUM — bu projede her teslimat
+sonunda standart olan adımı o seferinde atlamışım. 50 ve 51 dosyaları
+tekrar, birlikte, doğru git komutlarıyla verildi.
+
+**Kategori sırası tamamen yeniden düzenlendi:** Kullanıcı kendi
+kafasındaki sıraya göre bir Excel dosyası hazırlayıp gönderdi — 18
+kategoriden 20 kategoriye çıkan, çoğu numarası değişen, bazıları
+birleşen tam bir yeniden numaralandırma:
+- BALIK VE SU ÜRÜNLERİ artık 18 değil, 2 (ET'in hemen ardından).
+- 9 (KURU BAKLAGİLLER) ile eski 14'teki 3 yağlı tohum (AYÇİÇEĞİ/KETEN/
+  KOLZA TOHUMU) BİRLEŞİP yeni "8. YAĞLI TOHUMLAR VE KURU BAKLAGİLLER"
+  oldu (TürKomp'un kendi birleşik kategorisiyle uyumlu).
+- İKİ YENİ, ŞU AN BOŞ kategori eklendi: "18. GELENEKSEL GIDALAR" (dosyada
+  yazım hatası vardı, "GİDALAR" → "GIDALAR" olarak düzeltildi, kullanıcıya
+  bildirildi) ve "19. ÖZEL BESLENME AMAÇLI GIDALAR".
+- "13. SU VE TEMEL SIVI" → "20" oldu (listenin sonuna taşındı).
+
+**Excel:** `kaynak_duzeltilmis_v5.xlsx` (yeni, v4'ün yerini alıyor) —
+aynı güvenli "belleğe oku, yeniden inşa et" yöntemiyle yapıldı,
+doğrulandı (486 gerçek malzeme + 2 boş kategori için "(henüz malzeme
+eklenmedi)" açık placeholder metni, veri/renk kaybı yok).
+
+**Veritabanı:** `sql/52_kategori_yeniden_numaralandirma.sql` (yeni) —
+`kategori_id` foreign key'i geçici olarak kaldırılıp (çakışmaları
+önlemek için +1000 ofsetli geçici ID'lerden geçirilerek) tüm malzemeler
+yeni numaralara taşındı, `malzeme_kategorileri` tablosu sıfırdan
+kuruldu, FK sonda geri eklendi.
+
+**AÇIK SORU (kullanıcıya soruldu, henüz yanıt yok):** 51 no'lu
+migration'da eklenen "Geleneksel gıdalar" kökenli ~23 malzeme
+(KAZANDİBİ, MANTI, SİMİT, LOKUM, BOZA, PESTİL vb. — TürKomp'ta zaten
+"Geleneksel gıdalar" kategorisinden geliyorlardı ama o zaman böyle bir
+kategorimiz olmadığı için kullanıcı onları başka kategorilere -- 8, 16,
+17 vb. -- işaretlemişti) şimdi YENİ 18 numaralı kategoriye taşınmalı
+mı? TAŞINMADI, kullanıcının açık onayı bekleniyor.
+
+**Dosya durumu:** kaynak_duzeltilmis_v5.xlsx (yeni),
+sql/52_kategori_yeniden_numaralandirma.sql (yeni).
