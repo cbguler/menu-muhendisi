@@ -1881,3 +1881,122 @@ renklendirme mekanizması kullanıyor, ekran görüntüsündeki şikayet ekran
 (UI) ile ilgiliydi, Excel çıktısıyla değil.
 
 **Dosya durumu:** pages/0_Yillik_Menu.py.
+
+### 13 Ağustos 2026 — XI. Oturum (devam): TürKomp Kategori Uyumu — Karar Bekleniyor (HİÇBİR ŞEY UYGULANMADI)
+
+Kullanıcı, kalan malzemelerin TürKomp'ta aranmasına geçmeden önce
+kendi kategori sistemimizin (17 kategori, hem `kaynak_duzeltilmis_v2.xlsx`
+hem veritabanındaki `malzeme_kategorileri` tablosu) TürKomp'un kendi
+kategori sistemiyle uyumlu hale getirilmesini istedi.
+
+**TürKomp'un GERÇEK 14 kategorisi bulundu** (tahmin değil -- sitenin
+kendi `?type=foods&group=N` link verisinden, bash üzerinden doğrudan
+erişilerek çıkarıldı, web_fetch aracı robots.txt tarafından
+engellendiği için bash+curl kullanıldı):
+1 Süt ve süt ürünleri, 2 Yumurta ve yumurta ürünleri, 3 Et ve et
+ürünleri, 4 Balık ve su ürünleri, 5 Sıvı ve katı yağlar, 6 Tahıl ve
+tahıl ürünleri, 7 Yağlı tohumlar ve kuru baklagiller, 8 Sebze ve sebze
+ürünleri, 9 Meyve ve meyve ürünleri, 10 Şeker ve şekerli ürünler,
+11 İçecekler, 12 Muhtelif gıda, 13 Geleneksel gıdalar, 14 Özel
+beslenme amaçlı gıdalar.
+
+**Bulunan uyuşmazlık:** Bizim 17 kategorimizin bir kısmı (Sebzeler,
+Meyveler, Süt, Yumurta, Un ve Tahıllar, İçecek Hammaddeleri) doğrudan
+eşleşiyor. Ama yedi kategorimizin (Baharatlar ve Tatlandırıcılar,
+Soslar/Pastalar/Fondlar, Konserveler, Maya ve Pişirme Malzemeleri, Su
+ve Temel Sıvı, Çikolata ve Kakao, Tatlı ve Pasta Malzemeleri) TürKomp'ta
+DOĞRUDAN KARŞILIĞI YOK -- hepsi TürKomp'un "Muhtelif gıda" çöp-torbası
+kategorisine sıkıştırılabilir (arama/filtreleme değerini düşürür) ya da
+kendi alt-ayrımımızı koruyup sadece ortak olanları TürKomp isimleriyle
+eşleştirebiliriz. Ayrıca bizim "Et ve Protein Kaynakları" tek
+kategorimiz, TürKomp'ta Et (3) ve Balık (4) diye ikiye ayrılıyor --
+bu da malzeme malzeme gözden geçirme gerektirir.
+
+**Kullanıcı kararı:** "Şimdilik bir şey yapma" -- soru soruldu, cevap
+gelmedi, hiçbir kod/veri değişikliği YAPILMADI. Bir sonraki oturumda
+kaldığı yerden devam: kullanıcının belirsiz 7 kategori için tercihini
+öğrenip (Muhtelif'e mi toplansın, yoksa kendi alt-ayrımımız mı korunsun)
+ondan sonra hem Excel hem `malzeme_kategorileri` tablosu güncellenecek.
+
+**Dosya durumu:** değişiklik yok (sadece araştırma + PROJE_NOTLARI kaydı).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): TürKomp Kategori Uyumu UYGULANDI + 644 Maddeyle Karşılaştırma (kısmi, karar bekleniyor)
+
+**Kullanıcı kararı uygulandı:**
+1. "1. ET VE PROTEİN KAYNAKLARI" (41 kalem) ikiye ayrıldı: "1. ET VE ET
+   ÜRÜNLERİ" (25 kalem, aynı id=1) ve YENİ "18. BALIK VE SU ÜRÜNLERİ"
+   (16 kalem, yeni id=18).
+2. "4. SIVI YAĞLAR" → "4. SIVI VE KATI YAĞLAR" olarak genişletildi
+   (aynı id=4). TEREYAĞI, Süt kategorisinden buraya taşındı. 4 YENİ
+   malzeme eklendi: KUYRUKYAĞI, DONYAĞI, SADEYAĞ, MARGARİN — **besin
+   değerleri BİLEREK BOŞ bırakıldı** (uydurulmadı), sonraki aşamada
+   TürKomp'tan doldurulacak.
+
+**Teknik not (öğrenilen ders):** Excel'de kategori isimleri
+BİRLEŞTİRİLMİŞ HÜCRELER (merged cells) olarak saklanıyor. İlk denemede
+`openpyxl.insert_rows()`/`delete_rows()` ile parça parça satır taşıma
+denendi — bu, hücre DEĞERLERİNİ doğru kaydırsa da birleştirilmiş hücre
+ARALIKLARINI otomatik güncellemiyor, birkaç kategori başlığı kayboldu.
+Düzeltme: tüm veri belleğe (Python listesi) okunup orijinal (bozulmamış)
+merge sınırlarından doğru kategorilere atandı, tamamen yeniden
+düzenlenip dosyaya SIFIRDAN yazıldı — satır satır taşıma yerine.
+Sonuç `kaynak_duzeltilmis_v3.xlsx` olarak kaydedildi (v2'nin yerini
+alıyor). 3 örnek malzemede (SOMON dahil, mavi renk kodu) besin
+değerleri ve renk kodlaması birebir doğrulandı, veri kaybı yok.
+
+**Veritabanı tarafı:** `sql/50_turkomp_kategori_uyumu_asama1.sql` —
+Excel ile aynı değişiklikleri `malzeme_kategorileri` ve `malzemeler`
+tablolarına uyguluyor (sadece `isletme_id is null` ortak katalog,
+işletmeye özel malzemelere dokunulmuyor).
+
+**644 madde karşılaştırması (KISMİ — kullanıcı kararı bekleniyor):**
+TürKomp'un tüm 644 maddesi (isim+kategori) `bash`+`curl` ile
+`turkomp.tarimorman.gov.tr`'nin `?type=foods&group=N` sayfalarından
+çekildi (web_fetch aracı robots.txt tarafından engellendiği için).
+Bizim 362 maddeyle bulanık (fuzzy) karşılaştırma yapıldı — ham sonuç
+197 "aday eksik" gösterdi ama gürültülüydü (TürKomp'un aynı kavramın
+onlarca bölgesel/laboratuvar varyantını ayrı satır olarak tutması —
+ör. "Çökelek, Çorum"/"Çökelek, Mersin" — ve isimlendirme farkları
+ör. "Dana eti, bonfile" vs bizim "DANA BONFİLE" — çoğu sahte pozitifti).
+Benzer varyantlar tek kavramda gruplanınca **124 benzersiz aday
+kavrama** indi. Bu liste kullanıcıya sunuldu, HANGİLERİNİN gerçekten
+eklenmesi gerektiğine (bazıları -- Kazandibi, Mantı, Yaprak Sarma gibi
+-- ham malzeme değil BİTMİŞ YEMEK/tarif, kataloğa uygun olmayabilir)
+dair KARAR HENÜZ VERİLMEDİ.
+
+**Dosya durumu:** kaynak_duzeltilmis_v3.xlsx (yeni, v2'nin yerini
+alıyor), sql/50_turkomp_kategori_uyumu_asama1.sql (yeni).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): 124 Yeni Malzeme Eklendi + NUTELLA→FINDIK KREMASI
+
+Kullanıcı, önceki oturumda sunulan 124 adaylık Excel dosyasını doldurup
+geri gönderdi — her satıra hangi kategorimize (1-18 arası numara)
+gireceğini işaretledi. Ayrıca NUTELLA'nın marka adı olduğunu, jenerik
+"FINDIK KREMASI" ile değiştirilmesi gerektiğini belirtti.
+
+**Uygulanan:**
+- `kaynak_duzeltilmis_v4.xlsx` (yeni, v3'ün yerini alıyor): 124 yeni
+  malzeme, kullanıcının işaretlediği kategorilere eklendi (isimler
+  Türkçe-duyarlı büyük harfe çevrildi — `str.upper()` DEĞİL, çünkü o
+  'i'yi 'İ' değil ASCII 'I'ya çeviriyor, özel bir dönüştürücü
+  yazıldı). NUTELLA → FINDIK KREMASI. Toplam malzeme: 362→486.
+  Aynı güvenli "belleğe oku, yeniden inşa et" yöntemiyle yapıldı (bkz.
+  bir önceki oturum notu), doğrulandı (SOMON'un mavi renk kodu dahil
+  hiçbir veri kaybı yok).
+- `sql/51_turkomp_kategori_uyumu_asama2.sql` (yeni): aynı 124 malzeme
+  + Nutella düzeltmesi veritabanına.
+- **BİLİNÇLİ OLARAK YAPILMAYAN:** 124 yeni malzemenin besin değerleri
+  (kalori/protein/vb.) DOLDURULMADI — kullanıcının kendi planı
+  ("önce kategori, sonra besin değerleri") gereği bu ayrı, sonraki bir
+  aşama. `not_aciklama` alanında açıkça belirtildi.
+
+**Kullanıcıya sorulan, henüz cevaplanmamış bir nokta:** Berlam, Kalkan,
+Kefal, Tirsi, Zargana — TürKomp'ta "Balık ve su ürünleri" kategorisinde
+olmalarına rağmen kullanıcı bunları "1" (ET VE ET ÜRÜNLERİ) olarak
+işaretledi, yeni oluşturulan "18" (BALIK VE SU ÜRÜNLERİ) değil.
+Kullanıcının yazdığı GİBİ uygulandı (onun kararına saygı) ama bunun
+kasıtlı mı yoksa gözden kaçma mı olduğu ayrıca soruldu, henüz yanıt
+gelmedi.
+
+**Dosya durumu:** kaynak_duzeltilmis_v4.xlsx (yeni),
+sql/51_turkomp_kategori_uyumu_asama2.sql (yeni).
