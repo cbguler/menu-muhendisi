@@ -85,6 +85,26 @@ def _cerez_yoneticisi():
 cerezler = _cerez_yoneticisi()
 
 
+def _navigasyon_sidebar_gizle():
+    # ON DOKUZUNCU DUZELTME (13 Agustos 2026, Oturum 11 -- kullanici
+    # giris ekraninda Streamlit'in cIplak varsayilan pages/ klasoru
+    # kenar cubugunu gordu, daha once bu bilinen ama ertelenmis bir
+    # sorundu): kimlik dogrulanmamis/engellenmis ekranlarda (cerez
+    # bekleme, giris formu, abonelik bloke) st.navigation() HIC
+    # cagrilmiyordu -- bu yuzden Streamlit kendi varsayilan sidebar'ina
+    # dusuyordu. Bu yardimci, bu ekranlarin HER BIRININ kendi
+    # st.stop()'undan hemen once cagrilarak sidebar'i bastiriyor --
+    # .run() cagirmiyoruz (zaten hemen ardindan st.stop() var), sadece
+    # "bu uygulama kendi navigasyonunu yonetiyor" sinyalini Streamlit'e
+    # veriyoruz.
+    # NOT: kimlik dogrulanmis (asil nav) yolunda BU FONKSIYON
+    # cagrilmiyor -- orada zaten kendi st.navigation() cagrisi var,
+    # ayni script calismasinda st.navigation()'i IKI KEZ cagirmanin
+    # guvenilir olup olmadigi resmi olarak test edilmedi, bu riski
+    # almamak icin path'ler birbirini DISLIYOR (mutually exclusive).
+    st.navigation([st.Page(lambda: None, title="Giriş")], position="hidden")
+
+
 def giris_yap(email: str, sifre: str):
     return supabase.auth.sign_in_with_password({"email": email, "password": sifre})
 
@@ -178,6 +198,7 @@ if st.session_state.oturum is None and not _tum_cerezler:
 
     if _gecen_sure < CEREZ_BEKLEME_ESIK_SANIYE:
         st.info("Yükleniyor...")
+        _navigasyon_sidebar_gizle()
         st.stop()
     elif st.session_state.cerez_son_care_sayisi < CEREZ_SON_CARE_MAX_DENEME:
         # GUVENLIK AGI: esik sure gecmesine ragmen cerez hala gelmediyse
@@ -372,6 +393,7 @@ if st.session_state.oturum is None:
                         st.session_state.sifirlama_asama = "eposta_gir"
                         st.rerun()
 
+    _navigasyon_sidebar_gizle()
     st.stop()
 
 # ---------------------------------------------------------------------
@@ -413,6 +435,7 @@ if abonelik_verisi is None or abonelik_verisi["durum"] in ("suresi_doldu", "ipta
         st.session_state.oturum = None
         cerezler.delete("refresh_token", key="refresh_token_cikis_abonelik")
         st.rerun()
+    _navigasyon_sidebar_gizle()
     st.stop()
 
 if abonelik_verisi["durum"] == "odeme_gecikti":

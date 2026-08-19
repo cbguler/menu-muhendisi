@@ -2070,3 +2070,43 @@ kategorilerinde.
 
 **Dosya durumu:** kaynak_duzeltilmis_v6.xlsx (yeni),
 sql/53_geleneksel_ve_ozel_beslenme_tasima.sql (yeni).
+
+### 13 Ağustos 2026 — XI. Oturum (devam, ACİL): Giriş Ekranındaki Çıplak Sidebar Düzeltildi + "Beni Hatırla" Yeniden Bildirildi
+
+Kullanıcı giriş ekranında Streamlit'in çıplak varsayılan `pages/`
+kenar çubuğunu tekrar gördü (daha önce bilinen ama "beni hatırla"
+mantığına dokunma riski yüzünden ERTELENMİŞ bir sorundu) ve aynı
+ziyarette "beni hatırla" da çalışmadı ("sistem beni tanımadı").
+
+**Logo sorunu değildi** — kullanıcı ikinci bir ekran görüntüsünde
+logonun aslında düzgün göründüğünü onayladı, ilk seferki muhtemelen
+bir yükleme anı/tarayıcı garipliğiydi.
+
+**Sidebar düzeltmesi (ON DOKUZUNCU DÜZELTME, TEST EDİLMEDİ):** Kod
+incelendi -- giriş ekranı, cerez bekleme ekranı ve abonelik-bloke
+ekranı `st.navigation()`'ı HİÇ çağırmadan doğrudan `st.stop()`'a
+gidiyordu, bu yüzden Streamlit kendi varsayılan sidebar'ına
+düşüyordu. Bu 3 çıkış noktasının HER BİRİNİN kendi `st.stop()`'undan
+hemen önce, minimal bir "boş" sayfa ile `st.navigation([...],
+position="hidden")` çağıran yeni bir yardımcı fonksiyon
+(`_navigasyon_sidebar_gizle()`) eklendi -- `.run()` çağrılmıyor
+(zaten hemen ardından durduruluyor), sadece sidebar'ı bastırmak için.
+**BİLİNÇLİ TASARIM KARARI:** kimlik doğrulanmış (asıl) navigasyon
+yolunda bu fonksiyon ÇAĞRILMIYOR -- aynı script çalışmasında
+`st.navigation()`'ı iki kez çağırmanın güvenilir olup olmadığı resmi
+olarak test edilmediği için, iki yol birbirini DIŞLAYACAK şekilde
+(mutually exclusive) tasarlandı, riske girilmedi.
+
+**"Beni hatırla" yeniden bildirildi -- KÖK NEDEN BULUNAMADI:** İlgili
+kod (cerez bekleme/okuma/yenileme mantığı) son "beni tanıdı"
+onayından beri HİÇ DEĞİŞMEDİ, bu oturumdaki diğer tüm çalışma
+(kategori/Excel işi) app.py'ye hiç dokunmadı. En olası açıklama:
+Supabase refresh token'ları TEK KULLANIMLIK (rotation) -- eğer token
+bir şekilde tüketilip (ör. iki sekme/cihaz, ya da bir yenileme
+denemesi) yeni token cereze başarıyla yazılamadıysa, eski cerez
+sessizce geçersiz kalır (satır ~230 civarı, hata YUTULUYOR, kullanıcıya
+hiçbir şey gösterilmiyor -- by design). Bu KESİN teşhis DEĞİL,
+kullanıcıya soruldu (birden fazla sekme/cihaz kullanımı oldu mu, vb.),
+henüz yanıt yok.
+
+**Dosya durumu:** app.py.
