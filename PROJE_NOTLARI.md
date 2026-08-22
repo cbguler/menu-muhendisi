@@ -2558,3 +2558,66 @@ araştırmasını gerektiriyor, TSE/TÜRKPATENT kadar hızlı bulunamıyorlar.
 
 **Dosya durumu:** kaynak_duzeltilmis_v19.xlsx (yeni). SQL migration
 henüz oluşturulmadı.
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Kenger İçin Bilgir 1982 Kaynağı Bulunamadı
+
+Kullanıcının yüklediği makale (Onur, Yılmaz, Zıvalı 2025, Turkish J.
+Agriculture-Food Science and Technology) esas olarak Kenger'in
+MUTFAK KULLANIMI üzerine bir etnobotanik çalışma (besin değeri
+verisi içermiyor) -- ama gövde metninde Bilgir (1982) kaynağından
+alıntılanan gerçek sayılar vardı: kuru madde %8.93, kül %14.26
+(kuru madde üzerinden), protein %16.74 (kuru madde üzerinden),
+demir 109.00 mg/100g, fosfor 18 mg/100g.
+
+**Orijinal 1982 kaynağı ARANDI, BULUNAMADI:** Ege Üniversitesi Ziraat
+Fakültesi Dergisi'nin resmi dijital arşivi (dergipark.org.tr/tr/pub/
+zfdergi/archive) doğrudan kontrol edildi -- dijitalleştirme sadece
+2001'e (Cilt 38) kadar gidiyor, 1982 (Cilt 19) hiç taranmamış. Tarım
+ve Orman Bakanlığı kütüphane sistemi de dahil başka kaynaklar
+denendi, sonuç yok.
+
+**Uygulanan (kullanıcının "emin olduklarını yaz" talimatına göre):**
+- Kül: bizim şemamızda "kül" diye genel bir sütun YOK (sadece bireysel
+  mineraller var: Ca, Fe, Mg, K, Zn, P, Cu, Mn, Se, I) -- bu veri
+  hiçbir sütuna yazılamadı.
+- Protein: KENGER'in zaten TürKomp kaynaklı gerçek protein verisi
+  vardı (1.15g/100g) -- Bilgir 1982'den hesaplanan değer (~1.5g/100g)
+  YAZILMADI, mevcut veriye dokunulmadı.
+- Demir, Fosfor: kuru madde/taze madde bazı belirsizliği devam
+  ediyor, orijinal kaynak bulunamadığı için YAZILMADI -- ileride
+  başka bir kaynak bulunursa tamamlanacak.
+
+**Sonuç: Bu kaynaktan KENGER için yeni bir veri yazılamadı** -- tüm
+potansiyel katkılar ya zaten doluydu ya da şema uyumsuzluğu/kaynak
+belirsizliği nedeniyle uygulanamadı.
+
+### 13 Ağustos 2026 — XI. Oturum (devam): MADIMAK Tamamlandı (Demir 2006)
+
+Kullanıcının talimatı: "emin olduklarını yaz, bulamadıklarını daha
+sonra araştırmak üzere boş bırak ve devam et."
+
+**MADIMAK -- TAMAMLANDI:** Demir H (2006), Bahçe dergisi, 35(1-2):
+55-60 -- Erzurum'da toplanan Polygonum cognatum Maissn. (madımak)
+üzerine gerçek, kapsamlı bir kimyasal analiz (Atomik Absorbsiyon
+Spektrofotometresi). MADIMAK'ın zaten TürKomp'tan Na/K/Ca/Mg/P/Fe/
+Zn/VitC verisi vardı -- sadece BAKIR (0.21 mg/100g) ve MANGANEZ
+(0.86 mg/100g) boştu, ikisi de bu kaynaktan dolduruldu. Makalenin
+kendi kültür-bitkisi karşılaştırması (Na değerinin ıspanaktan düşük
+çıkması gibi) verinin fresh-bazlı olduğunu doğruluyor.
+
+**KENGER için Bilgir 1982 kaynağı aranmaya devam edildi, hâlâ
+bulunamadı** -- Ege Üniv. Ziraat Fak. Derg. dijital arşivi 2001
+öncesine gitmiyor. Kullanıcının talimatına göre bu kaynaktan HİÇBİR
+ŞEY yazılmadı (zaten yazılabilecek bir şey de yoktu -- kül sütunumuz
+yok, protein doluydu, demir/fosfor belirsiz kaldı).
+
+**Excel:** `kaynak_duzeltilmis_v20.xlsx` (yeni, v19'un yerini alıyor).
+**Veritabanı:** `sql/62_kenger_ve_madimak_akademik_veri.sql` (yeni).
+
+**Kalan iş:** ~10-11 yabani ot (EBEGÜMECİ, KARAMUK, ÇOBAN ÇANTASI,
+KARAYEMİŞ, KUZUKEMİRDİ, ÇİRİŞ, ÇÖVEN, DOLAMBAÇ, ECİBÜCÜ, GELEBORU,
+HELEVAN, KALDIRIK, KAYA KORUĞU, KAYMACIK, KEÇİ AYAĞI, ZİNGİT) hâlâ
+araştırılmadı -- her biri kendi kaynak taramasını gerektiriyor.
+
+**Dosya durumu:** kaynak_duzeltilmis_v20.xlsx (yeni),
+sql/62_kenger_ve_madimak_akademik_veri.sql (yeni).
