@@ -2175,3 +2175,49 @@ değerlerinin TürKomp'tan çekilip doldurulması.
 
 **Dosya durumu:** kaynak_duzeltilmis_v8.xlsx (yeni),
 sql/55_et_kesim_hiyerarsisi_tamamlama.sql (yeni).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): 197 Malzemenin Besin Değerleri TürKomp'tan Dolduruldu
+
+Kullanıcı "hazırım" dedi, TürKomp karşılaştırmasında bu oturumda
+eklenen 199 yeni malzemenin (128 aday + 63 bölgesel varyant + 8 et
+kesimi) besin değerlerini doldurma aşaması başladı.
+
+**Eşleştirme:** 199 malzemenin 197'si TürKomp'un kendi 644 maddelik
+veri tabanındaki gerçek kaynağına isim-dönüşüm kurallarıyla (ör.
+"AYRAN (TAM YAĞLI)" -> "ayran, tam yağlı") eşleştirildi, üç aşamada
+(doğrudan eşleşme → tek-aday kök-kelime eşleşmesi → et kesimleri/
+özel durumlar için elle düzeltme). **2 malzeme (DONYAĞI, SADEYAĞ)
+TürKomp'ta HİÇ YOK** -- bunlar hâlâ boş, başka bir kaynak gerekiyor,
+uydurulmadı.
+
+**Veri çekme:** 197 sayfa `turkomp.tarimorman.gov.tr`'den Python
+`requests` ile çekildi (bash `while read` döngüsü Türkçe karakterlerle
+bozulduğu için Python'a geçildi). Her sayfadan 8-82 satırlık (ortalama
+43) tam bileşen tablosu (enerji, makrolar, vitaminler, mineraller,
+amino asitler, yağ asitleri) ayrıştırıldı.
+
+**Eşleme kararları (bizim 27 sütunumuz <- TürKomp bileşeni):**
+- ŞEKER <- Fruktoz+Glukoz+Sakaroz+Laktoz+Maltoz TOPLAMI (TürKomp tek
+  bir "toplam şeker" vermiyor, doğal şekerleri ayrı listeliyor -- şeker
+  alkolleri/yapay tatlandırıcılar HARİÇ tutuldu).
+- VİTAMİN K <- K-1 + K-2 toplamı (ikisi de varsa).
+- VİTAMİN A <- "A vitamini" (RE birimi, mcg RAE'ye en yakın karşılık,
+  birebir özdeş değil).
+- **4 alan (VİTAMİN B5, VİTAMİN B7, BAKIR, MANGANEZ) TürKomp'ta
+  BULUNMUYOR** -- 197 malzemenin HİÇBİRİNDE yok, sistemik bir kaynak
+  eksikliği, tek tek malzeme sorunu değil. Bu 4 sütun boş kaldı.
+
+**Yapılan:** `kaynak_duzeltilmis_v9.xlsx` (yeni, v8'in yerini alıyor)
+-- 197 malzemenin 27 sütunu dolduruldu, TürKomp kaynağını belirten
+YEŞİL renk koduyla (`FF008000` -- mevcut PASTIRMA/KAVURMA gibi eski
+TürKomp-kaynaklı hücrelerle AYNI, doğrulanmış renk). Doğrulandı --
+önceden var olan SOMON gibi verilere dokunulmadı.
+
+**Veritabanı:** `sql/56_turkomp_besin_degerleri_doldur.sql` (yeni) --
+197 UPDATE ifadesi. **Önemli düzeltme:** ilk taslakta sütun isimlerini
+(ör. `sodyum`) yanlış varsaymıştım -- gerçek şema (45 no'lu migration)
+birim ekli isimler kullanıyor (`sodyum_mg`, `vitamin_a_mcg` vb.),
+çalıştırmadan önce fark edilip düzeltildi.
+
+**Dosya durumu:** kaynak_duzeltilmis_v9.xlsx (yeni),
+sql/56_turkomp_besin_degerleri_doldur.sql (yeni).
