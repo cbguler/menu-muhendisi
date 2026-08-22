@@ -2271,3 +2271,162 @@ varsayımları için kullanıcı onayı bekleniyor, henüz uygulanmadı.
 
 **Dosya durumu:** kaynak_duzeltilmis_v10.xlsx (yeni),
 sql/57_usda_capraz_kontrol_b5_b7_bakir_manganez.sql (yeni).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Ayran TSE Standardından Hesaplandı (ÖNEMLİ HATA DÜZELTMESİ)
+
+**Kullanıcı talebi:** Ayran'ın yoğurt/su/tuz oranını TSE standardından
+araştırıp bulmam istendi ("tahmin etme, araştır"). Ayrıca diğer Türk'e
+özgü malzemeler için de TSE'ye bakılması istendi.
+
+**TSE/Türk Gıda Kodeksi araştırması (megep.meb.gov.tr üzerinden TSE TS
+3810 + Türk Gıda Kodeksi Fermente Sütler Tebliği referans alınarak):**
+- Ayran yağ sınıfları: Tam yağlı ≥%1.5, Yarım yağlı ≥%0.8, Yağsız ≤%0.15
+- Yağsız kurumadde: en az %6 (Türk Gıda Kodeksi)
+- Tuz: TSE üst sınırı %1, ama araştırmalarda tüketici beğenisine en
+  uygun bulunan oran %0.5
+
+**Hesaplama:** Bizim YOĞURT (TAM)'ımızın gerçek verisinden (protein 3g
++ karbonhidrat 4.9g ≈ 7.9g yağsız kurumadde, yağ 3.4g /100g) iki
+kısıtı da çözünce: yağsız kurumadde şartı (6/7.9=%76) yağ şartından
+(1.5/3.4=%44) daha kısıtlayıcı çıktı → **%76 yoğurt + %0.5 tuz + %23.5
+su** — ilk tahmin ettiğim %50-50'den çok daha yoğurt ağırlıklı.
+
+**KRİTİK HATA BULUNUP DÜZELTİLDİ:** İlk uygulamada bu hesaplanan
+profili 5 Ayran çeşidinin TÜM sütunlarına yazmıştım -- ama bu 5
+çeşidin HER BİRİNİN ZATEN kendi gerçek TürKomp verisi vardı (farklı
+bölgesel laboratuvar örnekleri, farklı gerçek değerler)! Kalori gibi
+DOLU alanları hesaplanan tahminle EZMİŞTİM. Fark edilip DÜZELTİLDİ --
+sadece GERÇEKTEN BOŞ olan alanlar (Lif, çoğu vitamin, Bakır, Manganez,
+İyot -- kolon bazında değişiyor, her çeşidin kendi boşluğu farklı)
+dolduruldu, mevcut TürKomp verilerine DOKUNULMADI.
+
+**Yeni renk kodu eklendi:** Turuncu (`FFFF8C00`) -- "standart+bileşen
+bazlı hesaplama" kaynağını gösteriyor, yeşil (TürKomp) ve mavi (USDA)
+'dan ayrı.
+
+**Excel:** `kaynak_duzeltilmis_v11.xlsx` (yeni, v10'un yerini alıyor).
+
+**Sırada:** kalan ~44 Türk'e özgü malzeme için TSE araştırması --
+TSE'nin "Türk Baklavası" için tam tarif+yüzde standardı olduğu
+görüldü (2015, 2024 güncellendi), bu umut verici bir emsal ama her
+malzeme kendi araştırmasını gerektiriyor, hepsi baklava gibi net bir
+TSE standardına sahip olmayabilir. Kullanıcıya nasıl devam edileceği
+soruldu (tek tek mi, yoksa bulunabilenler toplu mu sunulsun).
+
+**Dosya durumu:** kaynak_duzeltilmis_v11.xlsx (yeni).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): TSE Standardı Araştırması — Lokum ve Pişmaniye Tamamlandı
+
+Kullanıcı 85 malzemenin tek tek TSE araştırmasıyla ilerlenmesini istedi.
+
+**LOKUM — TSE TS 8444 (2025 taslak) bulundu, tam standart:**
+- Rutubet ≤%16, toplam şeker (kuru maddede) ≥%75, kaymaklı lokum kaymak
+  oranı ≥%8 (Afyon kaymaklı ≥%10), meyveli/fıstıklı lokum meyve oranı ≥%12.
+- 3 çeşit hesaplandı: SADE (İSTANBUL) = %63.75 ŞEKER + %21.25 MISIR
+  NİŞASTASI + %15 su; KAYMAKLI (AFYON) = %10 KAYMAK + %90 sade taban;
+  SAFRANLI/FISTIKLI (SAFRANBOLU) = %12 ANTEP FISTIĞI + %88 sade taban
+  (safran eser miktarda, ihmal edildi). Kendi ŞEKER/MISIR NİŞASTASI/
+  KAYMAK/ANTEP FISTIĞI verilerimizden türetildi, sadece BOŞ kolonlar
+  dolduruldu (49 kolon toplam).
+
+**PİŞMANİYE — TSE'de ayrı standart bulunamadı, gerçek üretici etiketi
+kullanıldı:** Alko Şekerleme (Afyonkarahisar) ürününün yasal gıda
+etiketinden (kalori 415.79, protein 4.26g, yağ 6.55g, karbonhidrat
+82.97g, şeker 46.45g, lif 3.96g, doymuş yağ 3.47g) — pişmaniye
+tarifi şehre göre (Ayran/Pestil'in aksine) anlamlı değişmediği için
+İZMİT PİŞMANİYESİ'ne uygulandı. Sadece 2 kolon (lif, doymuş yağ)
+gerçekten boştu, dolduruldu; kalori/protein/yağ/karbonhidrat zaten
+TürKomp'tan doluydu, dokunulmadı. Vitamin/mineral değerleri hâlâ boş
+(etiket sadece makro veriyor).
+
+**Excel:** `kaynak_duzeltilmis_v12.xlsx` (yeni, v11'in yerini alıyor).
+
+**İlerleme durumu:** 85 malzemeden 9'u işlendi (5 Ayran + 3 Lokum + 1
+Pişmaniye kısmi). Kalan ~76 malzeme için araştırma devam edecek --
+kullanıcıya bu oranda ilerlemenin çok sayıda ayrı araştırma turu
+gerektireceği bildirildi.
+
+**Dosya durumu:** kaynak_duzeltilmis_v12.xlsx (yeni).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): TÜRKPATENT Coğrafi İşaret Kaynağı Keşfedildi
+
+Kullanıcı, TÜRKPATENT'in coğrafi işaret tescil sistemini (ci.turkpatent.gov.tr)
+araştırılmasını istedi -- yöresel Türk ürünlerinin resmi teknik
+şartnameleri bu sistemde tutuluyor.
+
+**DEĞERLİ BİR KAYNAK DOĞRULANDI:** TÜRKPATENT'in her tescilli coğrafi
+işaret için YAYINLANMIŞ, DETAYLI teknik şartname belgesi var (ör.
+Maraş Dondurması -- Tescil No: 344 -- ci.turkpatent.gov.tr/Files/
+GeographicalSigns/344.pdf) -- bileşen YÜZDELERİNİ, kuru madde/yağ
+oranlarını, üretim akış şemasını içeriyor. Bu, TSE standartlarına
+(Lokum, Baklava) çok benzer kalitede, TARIM/GIDA odaklı ek bir resmi
+kaynak.
+
+**Maraş Dondurması için bulunanlar (Tescil No 344):** Sadece 3
+bileşen -- keçi sütü, salep, şeker. Şeker oranı %15-22, salep oranı
+%0.7-8, toplam kuru madde ≥%33, süt yağı ≥%4.
+
+**UYGULAMADA TIKANIKLIK (dürüstçe bildiriliyor):** Bu veriyi
+kullanmak için (1) KEÇİ SÜTÜ'nün kendi kataloğumuzda HİÇ olmadığı
+görüldü, (2) SALEP kendisi de bu oturumda hâlâ veri bekleyen bir
+malzeme -- web'de bulunan "kaç kalori" siteleri SALEP için birbirinden
+**6 KAT FARKLI** (65 - 383 kcal/100g aralığında) çelişkili rakamlar
+veriyor, hiçbiri güvenilir bir metodoloji göstermiyor -- kullanılmadı.
+Maraş Dondurması bu yüzden TAMAMLANAMADI, ertelendi.
+
+**BU OTURUMDAKİ TOPLAM İLERLEME (85 hedef malzemeden):**
+- 5 Ayran çeşidi: TAMAMLANDI (TSE TS 3810 + Türk Gıda Kodeksi'nden
+  hesaplanan %76 yoğurt oranıyla).
+- 3 Lokum çeşidi: TAMAMLANDI (TSE TS 8444'ten).
+- 1 Pişmaniye (İzmit): KISMİ TAMAMLANDI (gerçek üretici etiketinden,
+  sadece makrolar, vitamin/mineral hâlâ boş).
+- Maraş Dondurması: ERTELENDİ (bağımlılık zinciri: Keçi Sütü yok,
+  Salep kaynaksız).
+- Kalan ~75 malzeme: HENÜZ ARAŞTIRILMADI.
+
+**Dosya durumu:** kaynak_duzeltilmis_v12.xlsx (değişmedi, bu turda
+yeni veri yazılmadı).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Keçi Sütü + Manda Sütü Eklendi, Salep ve Maraş Dondurması Tamamlandı
+
+Kullanıcı KEÇİ SÜTÜ ve MANDA SÜTÜ'nün kataloğa mutlaka eklenmesini,
+SALEP ve MARAŞ DONDURMASI'nın derinlemesine araştırılmasını istedi.
+
+**KEÇİ SÜTÜ, MANDA SÜTÜ (YENİ malzemeler, 557→559):** USDA'dan (Milk,
+goat, fluid / Milk, indian buffalo, fluid) tam profil eklendi, 5. SÜT
+VE SÜT ÜRÜNLERİ kategorisine, güvenli yeniden-inşa yöntemiyle.
+
+**ÖNEMLİ HATA YAKALANDI VE DÜZELTİLDİ:** Vitamin D alanını çekerken
+ilk denemede USDA'nın IU birimindeki değerini (KEÇİ SÜTÜ için 51 IU)
+yanlışlıkla mcg sanıp öyle yazmışım (gerçek değer 1.3 mcg). Çalıştırma
+öncesi fark edilip düzeltildi; DONYAĞI'nın daha önceki (56 no'lu
+migration) verisi kontrol edildi, o rastlantısal olarak doğru
+çıkmıştı, başka bir düzeltme gerekmedi.
+
+**SALEP:** Zaten TürKomp kaynaklı gerçek verisi vardı (kalori/protein/
+karbonhidrat/lif/şeker) -- sadece YAĞ alanı boştu. Akademik kaynaklar
+(Sezik 1967; Tekinşen&Güner 2010, İYTE tez çalışmasında aktarılan)
+glukomannan %45-55, nişasta %5-38, protein %3-5, kül %1-2, su %9-11
+aralıklarını doğruladı ama yağ hiç belirtilmemiş -- 0 kabul edilip
+sadece o alan dolduruldu.
+
+**MARAŞ DONDURMASI:** TÜRKPATENT coğrafi işaret tescil belgesi (No
+344) bulundu -- şeker %15-22, salep %0.7-8, süt yağı ≥%4, toplam kuru
+madde ≥%33. Ana makrolar zaten TürKomp'tan doluydu, dokunulmadı;
+KEÇİ SÜTÜ (süt yağı %4 hedefine göre ölçeklenmiş, "%96.6 ham süt
+eşdeğeri") + ŞEKER (%20.5, kuru madde hedefini tutturmak için üst-orta
+nokta) + SALEP (%2.7) karışımından hesaplanan mikrobesin (vitamin/
+mineral) değerleri, sadece boş alanlara yazıldı.
+
+**Excel:** `kaynak_duzeltilmis_v15.xlsx` (yeni, v12'nin yerini alıyor
+-- v13/v14 ara adımlardı).
+
+**Veritabanı:** `sql/58_keci_sutu_manda_sutu_ve_maras_dondurmasi.sql`
+(yeni).
+
+**Genel ilerleme (85 hedeften):** 5 Ayran + 3 Lokum + 1 Pişmaniye
+(kısmi) + Salep + Maraş Dondurması = 11 tamamlandı, artı 2 YENİ
+malzeme (Keçi Sütü, Manda Sütü) eklendi. ~74 malzeme kaldı.
+
+**Dosya durumu:** kaynak_duzeltilmis_v15.xlsx (yeni),
+sql/58_keci_sutu_manda_sutu_ve_maras_dondurmasi.sql (yeni).
