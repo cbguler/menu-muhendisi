@@ -2221,3 +2221,53 @@ birim ekli isimler kullanıyor (`sodyum_mg`, `vitamin_a_mcg` vb.),
 
 **Dosya durumu:** kaynak_duzeltilmis_v9.xlsx (yeni),
 sql/56_turkomp_besin_degerleri_doldur.sql (yeni).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): B5/B7/Bakır/Manganez USDA'dan Dolduruldu, Donyağı/Sadeyağ Bulundu
+
+Kullanıcı, Türk kaynaklarından bulunamayan değerler için USDA kullanılmasını
+onayladı, ve Ayran gibi bileşik malzemeler için "ana bileşenlerden yola
+çıkma" yöntemini önerdi (bu yöntem henüz uygulanmadı, sıradaki adım).
+Kullanıcı kendi ücretsiz USDA API anahtarını çıkarıp paylaştı.
+
+**USDA API anahtarı sorunu:** DEMO_KEY paylaşımlı olduğu için sürekli
+rate-limit'e takılıyordu, gerçek bir anahtar gerekiyordu. Kullanıcıya
+`fdc.nal.usda.gov/api-key-signup.html` adımları verildi, anahtarı
+çıkarıp gönderdi.
+
+**B5/B7/Bakır/Manganez için 111 malzeme USDA'da arandı:**
+- 197 malzemenin ~49'unun tamamen Türk'e özgü (Ayran, Pestil, Kazandibi
+  vb.) olduğu, USDA'da (ABD veritabanı) hiç karşılığı olmadığı
+  belirlendi.
+- Geri kalan ~148'i için İngilizce arama terimleri hazırlandı, USDA'da
+  arandı. **İLK OTOMATIK ESLEŞMEDE CİDDİ HATALAR bulundu** (SIĞIR
+  PİRZOLA→domuz eti, HİNDİ ETİ→tavuk, KUZU ETİ→kurbağa bacağı, KAZ
+  ETİ→kaz CİĞERİ, BERLAM/ZARGANA→"Abiyuch" adlı tropik meyve!) — bunlar
+  kör kabul edilmedi, anahtar-kelime doğrulamasıyla (sonuçta beklenen
+  kelime GEÇMELİ, yasaklı kelime GEÇMEMELİ) tek tek bulunup düzeltildi.
+  Sonuçta 111 malzeme güvenilir şekilde eşleşti, 1'i (BUĞDAY NİŞASTASI)
+  hiç doğru eşleşmedi, boş bırakıldı.
+- 111 malzemenin B5/B7/Bakır/Manganez değerleri çekildi. **B7 (Biyotin)
+  USDA'da da nadiren ölçülüyor** (111'in sadece 3'ünde var) -- bu,
+  kaynakların kendi sistemik eksikliği.
+
+**DONYAĞI ve SADEYAĞ:** Türk kaynaklarında (TürKomp dahil, kapsamlı
+arama) bulunamadığı için kullanıcının onayıyla USDA'nın en yakın
+eşdeğerlerinden ("Fat, beef tallow" / "Clarified butter (ghee)") TAM
+PROFİL alındı. SADEYAĞ için USDA kaydı oldukça sınırlı (eski SR Legacy
+kaydı) -- çoğu vitamin/mineral orada da yok, dürüstçe boş bırakıldı.
+
+**Excel:** `kaynak_duzeltilmis_v10.xlsx` (yeni, v9'un yerini alıyor) --
+USDA kaynaklı değerler MAVI renk kodu ile (mevcut SOMON gibi eski
+USDA-kaynaklı hücrelerle AYNI renk), TürKomp kaynaklı değerlerden
+(yeşil) ayrı işaretlendi. Aynı satırda hem yeşil (TürKomp makrolar)
+hem mavi (USDA iz mineraller) hücreler bir arada olabiliyor, doğrulandı.
+
+**Veritabanı:** `sql/57_usda_capraz_kontrol_b5_b7_bakir_manganez.sql`
+(yeni) -- 110 UPDATE ifadesi.
+
+**Sırada:** ~49 Türk'e özgü malzeme için kullanıcının önerdiği "ana
+bileşenlerden yola çıkma" yöntemi (ör. Ayran = yoğurt+su) -- oran
+varsayımları için kullanıcı onayı bekleniyor, henüz uygulanmadı.
+
+**Dosya durumu:** kaynak_duzeltilmis_v10.xlsx (yeni),
+sql/57_usda_capraz_kontrol_b5_b7_bakir_manganez.sql (yeni).
