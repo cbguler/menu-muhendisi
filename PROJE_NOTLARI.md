@@ -2521,3 +2521,40 @@ formlarını doğru eşleştirmek malzeme başına ciddi zaman alıyor.
 
 **Dosya durumu:** kaynak_duzeltilmis_v18.xlsx (yeni). SQL migration
 henüz oluşturulmadı.
+
+### 13 Ağustos 2026 — XI. Oturum (devam): "Uydurma Yok" Kuralı Netleştirildi, Şevketi Bostan + Kenger İşlendi
+
+Kullanıcı kesin bir kural koydu: "Hiçbir veriyi uydurma, tahmini
+değerler yaratma, mutlaka ilgili kaynakları araştır ve gerçek verileri
+kullan." Netleştirme istendi -- kullanıcı TSE/TÜRKPATENT gibi resmi
+kaynakların verdiği ARALIKLARIN orta noktasını kabul edilebilir buldu
+(bu "uydurma" değil, resmi bir aralığın içinde makul bir nokta seçimi).
+Yasak olan: kaynağı olmayan dönüştürme faktörleri, "tipik" varsayımlar,
+form-dönüştürme (kurutulmuş->taze gibi) tahminleri.
+
+**ŞEVKETİ BOSTAN KÖK UNU (YENİ malzeme, 559→560):** Dülger Altıner &
+Şahan (2021), Iğdır Üniv. Fen Bil. Derg. makalesinden GERÇEK ölçülmüş
+değerler (nem %8.53, kül/protein/yağ kuru madde üzerinden) -- kurutulmuş
+kök unu için. Orijinal "ŞEVKETİ BOSTAN" (taze sebze) İÇİN bu veri
+KULLANILMADI (form uyumsuzluğu, dönüştürme yapılmadı) -- ayrı, yeni
+bir malzeme olarak eklendi. Kalori standart Atwater faktörleriyle
+hesaplandı (bu evrensel bir dönüşüm, tahmin değil).
+
+**KENGER:** Karaaslan/Çöteli/Karataş (2014, Fırat Üniv.) makalesinden
+-- HPLC ile TAZE (kurutulmamış, homojenize) bitki örneğinden ölçülmüş
+gerçek veri. Vitamin A (98 mcg/100g) ve C (1.972 mg/100g) yazıldı.
+**Vitamin E YAZILMADI** -- bu kaynak (0.035 mg/100g) ile başka bir
+akademik kaynak (Matthäus&Özcan 2011, 48.9 mg/100g, farklı bitki
+kısmı -- çiçek tomurcuğu/yağ) arasında ~1400 kat fark bulundu,
+kullanıcıya hangisinin kullanılacağı soruldu, henüz yanıt yok.
+
+**Excel:** `kaynak_duzeltilmis_v19.xlsx` (yeni, v18'in yerini alıyor).
+
+**Genel ilerleme özeti (85 hedeften):** ~40 malzeme tamamlandı veya
+kısmen tamamlandı, 2 yeni malzeme (Keçi/Manda Sütü) + 1 yeni malzeme
+(Şevketi Bostan Kök Unu) eklendi. Kalan ~45 malzeme (çoğunluğu yabani
+ot) için akademik kaynak taraması devam edecek -- her biri kendi
+araştırmasını gerektiriyor, TSE/TÜRKPATENT kadar hızlı bulunamıyorlar.
+
+**Dosya durumu:** kaynak_duzeltilmis_v19.xlsx (yeni). SQL migration
+henüz oluşturulmadı.
