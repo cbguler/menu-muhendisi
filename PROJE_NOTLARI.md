@@ -2472,3 +2472,52 @@ muhtemelen sanayi/akademik standardı olmayan, güç bulunacak bir grup.
 
 **Dosya durumu:** kaynak_duzeltilmis_v17.xlsx (yeni). SQL migration'ı
 henüz oluşturulmadı -- sıradaki adım.
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Yabani Otlar İçin Akademik Kaynak Taraması
+
+Kullanıcı "kesinlikle bulacağından eminim" diyerek yabani ot grubuna
+devam edilmesini istedi. Haklı çıktı -- akademik kaynaklar gerçekten
+var, ama çıkarımı her biri için ayrı, zaman alıcı bir iş.
+
+**USDA'dan 2 tane daha çözüldü:** TEKESAKALI -> "Salsify, (vegetable
+oyster), raw" (TAM İSABET, tekesakalı zaten salsify'nin Türkçesi).
+DENİZ BÖRÜLCESİ -> "Purslane, raw" (yakın familya, tam özdeş değil
+ama makul).
+
+**Geri kalan ~12 tanesi (EBEGÜMECİ, KARAMUK, KAYA KORUĞU, ÇOBAN
+ÇANTASI, KARAYEMİŞ, BERGAMOT, MADIMAK, KENGER, ŞEVKETİ BOSTAN,
+KUZUKEMİRDİ, ÇİRİŞ, ÇÖVEN) USDA'da YANLIŞ eşleşti** -- hepsi USDA'nın
+"bulamadım" yedek sonucu olan aynı egzotik meyveye (Abiyuch) veya
+tamamen alakasız kategorilere (Asparagus, Apples, Cherries) düştü,
+KULLANILMADI.
+
+**Türk akademik literatüründe GERÇEKTEN kaynaklar bulundu:**
+- ŞEVKETİ BOSTAN (Scolymus hispanicus): Uludağ Üniversitesi doktora
+  tezinden (Dülger, 2015) üretilmiş, hakemli bir makalede (Dülger
+  Altıner & Şahan, 2021, Iğdır Üniv. Fen Bil. Derg.) TAM kimyasal
+  bileşim tablosu var -- AMA bu veri KURUTULMUŞ KÖK UNU için (nem
+  %8.53, kül %4.74, protein %11.07, yağ %0.46, kuru madde üzerinden).
+  Bizim kataloğumuzdaki diğer yabani otlar TAZE/ÇİĞ hâlde -- bu veriyi
+  doğrudan uygulamak besin yoğunluğunu abartır. **Kullanıcıya
+  soruldu:** ayrı bir "kök unu" malzemesi olarak mı eklensin, yoksa
+  tipik bir taze-sebze nem oranı varsayılıp geri mi hesaplansın?
+- KENGER (Gundelia tournefortii): Karaaslan ve ark. 2014, A/E/C
+  vitamin içeriği üzerine özel bir çalışma bulundu (tam metin henüz
+  çekilmedi).
+- MADIMAK/yemlik/kızamık: Demir 2006, Erzurum'da yetişen bu
+  bitkilerin kimyasal bileşimi üzerine bir çalışma bulundu (tam metin
+  henüz çekilmedi).
+- İĞDE (daha önce başka bağlamda bulunmuştu): Sahan ve ark. 2012,
+  TÜBİTAK projesi -- iğde meyvesinin kimyasal/besleyici özellikleri.
+
+**Ders:** Türk yabani bitkileri üzerine ciddi bir akademik literatür
+var (çoğunlukla gıda mühendisliği tezleri/makaleleri, un/bisküvi
+katkısı olarak kullanım odaklı) -- ama her birinin tam metnini bulup
+çekmek, tam kompozisyon tablosunu ayıklamak ve TAZE/KURUTULMUŞ
+formlarını doğru eşleştirmek malzeme başına ciddi zaman alıyor.
+
+**Excel:** `kaynak_duzeltilmis_v18.xlsx` (yeni, v17'nin yerini alıyor)
+-- sadece TEKESAKALI ve DENİZ BÖRÜLCESİ dolduruldu.
+
+**Dosya durumu:** kaynak_duzeltilmis_v18.xlsx (yeni). SQL migration
+henüz oluşturulmadı.
