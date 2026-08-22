@@ -2430,3 +2430,45 @@ malzeme (Keçi Sütü, Manda Sütü) eklendi. ~74 malzeme kaldı.
 
 **Dosya durumu:** kaynak_duzeltilmis_v15.xlsx (yeni),
 sql/58_keci_sutu_manda_sutu_ve_maras_dondurmasi.sql (yeni).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): 24 Malzeme Daha Tamamlandı (USDA + TÜRKPATENT)
+
+Kullanıcı "devam edelim" dedi, kalan 79 malzemeye sistemli devam edildi.
+
+**USDA'dan tamamlanan (23 malzeme, ikinci parti):** MAYDANOZ, MAYDANOZ
+(KURU), ASMA YAPRAĞI, KEBERE, KEÇİBOYNUZU, YENİDÜNYA, KARNABAHAR,
+KUYRUKYAĞI, MİLFÖY HAMURU, KATMER, BÖREK (2 çeşit), GÜLLAÇ, HARDALİYE,
+IHLAMUR, TATLANDIRICI (sodyum siklamat/sakarin), 3 LEBLEBİ çeşidi,
+SİMİT, 2 MANTI çeşidi, BAHARAT KARIŞIMI, KAZANDİBİ (3 şehir), KEŞKÜL
+(3 şehir), TAVŞAN ETİ. **Yine ciddi yanlış eşleşmeler bulunup
+düzeltildi** (Boza→enerji içeceği, Simit→soğan halkası, Leblebi→nohut
+unu, Kolza tohumu→ekmek meyvesi tohumu, Kuyrukyağı→sığır yağı) --
+bazıları (BOZA, KOLZA TOHUMU, BUĞDAY NİŞASTASI) hiçbir doğru eşleşme
+bulunamadığı için USDA'dan İŞLENMEDİ, bırakıldı.
+
+**TÜRKPATENT'ten tamamlanan (MERSİN CEZERYESİ):** No 44 tescil belgesi
+bulundu -- son derece detaylı üretim oranları (150kg havuç + 20L su →
+85kg püre + 15kg şeker = 100kg hamur; kuruyemiş orta oran %15).
+Hesaplanan oran (~%72 havuç + %13 şeker + %15 ceviz) kendi HAVUÇ/
+ŞEKER/CEVİZ verilerimizden türetildi.
+
+**Bulunamayanlar (USDA'nın hiçbir veri setinde -- Foundation/SR
+Legacy/FNDDS/Branded -- yok):** YAZ HELVASI (halva), YAPRAK SARMA
+(dolma/sarma -- sadece çiğ/konserve yaprak var, dolgu yok), TATLANDIRICI
+(saf sorbitol tozu -- sadece şekerli/az kalorili şekerleme var).
+
+**Excel:** `kaynak_duzeltilmis_v17.xlsx` (yeni, v15'in yerini alıyor).
+Toplam malzeme sayısı 559'da sabit kaldı (bu turda yeni EKLEME yok,
+sadece mevcut boşluklar dolduruldu). Doğrulandı, SOMON gibi eski
+veriler dokunulmadı.
+
+**Genel ilerleme:** Bu oturumda toplam ~35 malzeme (Ayran×5, Lokum×3,
+Pişmaniye, Salep, Maraş Dondurması, Mersin Cezeryesi, +23 USDA
+partisi) tamamlandı veya kısmen tamamlandı, artı 2 yeni malzeme
+(Keçi/Manda Sütü) eklendi. **Kalan ~55 malzeme** -- büyük çoğunluğu
+(~25) yabani/mera otları (Madımak, Ebegümeci, Kenger vb.) ve birkaç
+meyve (Bergamot, Karayemiş, Zingit vb.) -- henüz hiç araştırılmadı,
+muhtemelen sanayi/akademik standardı olmayan, güç bulunacak bir grup.
+
+**Dosya durumu:** kaynak_duzeltilmis_v17.xlsx (yeni). SQL migration'ı
+henüz oluşturulmadı -- sıradaki adım.
