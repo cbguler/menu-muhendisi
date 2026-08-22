@@ -2142,3 +2142,36 @@ kodu dahil veri kaybı yok). Küçük bir kozmetik hata (KEFAL isminde
 
 **Dosya durumu:** kaynak_duzeltilmis_v7.xlsx (yeni),
 sql/54_bolgesel_varyant_ekleme.sql (yeni).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Et Kesim Hiyerarşisi Tamamlandı (Dana/Sığır/Piliç Ertelenen Karar)
+
+Kullanıcı gerçek kasaplık şemaları (Dana, Kuzu, Kümes hayvanı) göndererek
+54 no'lu migration'da ertelenen 3 soruyu netleştirdi:
+
+1. **Bonfile dahil edilmeli** ("bonfile ve kontrfile en lezzetli/değerli
+   parçalar") — ama `DANA BONFİLE`/`SIĞIR BONFİLE` ZATEN mevcut olduğu
+   için (orijinal 358 listesinden) aynı isimle ikinci bir kayıt
+   OLUŞTURULMADI, sadece eksik 4 kesim (but/kol/kontrfile/pirzola)
+   eklendi. Bu teknik çözüm kullanıcıya açıklandı.
+
+2. **Piliç, Tavuk'tan AYRI tutulmalı** — kullanıcı, Dana/Sığır ve
+   Kuzu/Koyun ayrımının (genç/yaşlı hayvan, yaş lezzeti değiştirir,
+   piyasada ayrı satılırlar) AYNI mantıkla Tavuk/Piliç için de geçerli
+   olduğunu açıkladı. Bu yüzden PİLİÇ ETİ KALDIRILMADI (ilk önerinin
+   tersine) — kendi kesimleriyle (but/göğüs derisiz/kanat) TAVUK'tan
+   bağımsız, ayrı bir kavram olarak tamamlandı.
+
+**Yapılan:** `kaynak_duzeltilmis_v8.xlsx` (yeni) — DANA ETİ/SIĞIR ETİ/
+PİLİÇ ETİ yer tutucuları ilk kesim adıyla yeniden adlandırıldı (DANA
+BUT, SIĞIR BUT, PİLİÇ BUT), 8 yeni kesim eklendi (DANA KOL/KONTRFİLE/
+PİRZOLA, SIĞIR KOL/KONTRFİLE/PİRZOLA, PİLİÇ GÖĞÜS DERİSİZ/KANAT).
+549→557 malzeme. Doğrulandı, veri kaybı yok.
+
+**Veritabanı:** `sql/55_et_kesim_hiyerarsisi_tamamlama.sql` (yeni).
+
+**TürKomp karşılaştırma çalışması artık tamamlandı** — sıradaki açık
+iş: 128+ yeni eklenen malzemenin (bu oturumda eklenenler) besin
+değerlerinin TürKomp'tan çekilip doldurulması.
+
+**Dosya durumu:** kaynak_duzeltilmis_v8.xlsx (yeni),
+sql/55_et_kesim_hiyerarsisi_tamamlama.sql (yeni).
