@@ -2110,3 +2110,35 @@ kullanıcıya soruldu (birden fazla sekme/cihaz kullanımı oldu mu, vb.),
 henüz yanıt yok.
 
 **Dosya durumu:** app.py.
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Bölgesel/Laboratuvar Varyantları Geri Açıldı (Kullanıcı Talebi)
+
+Kullanıcı 51 no'lu migration'daki deduplikasyon kararına haklı bir
+itirazda bulundu: TürKomp'un aynı kavramı (ör. Pestil) bölgesel
+varyantlar olarak ayrı tutmasının muhtemelen bir nedeni var (en azından
+FİYAT farkı), gıda değerleri/lezzeti benzese bile ayrı tutulmalılar.
+
+**Yapılan (30 kavram, 63 yeni satır):** Deduplike edilmiş 33 kavramdan
+30'u tam TürKomp granülerliğine geri açıldı -- mevcut tek malzeme
+GERÇEKTEN hangi TürKomp varyantından geldiyse o özel isimle yeniden
+adlandırıldı (ör. "AYRAN" → "AYRAN (TAM YAĞLI)"), kalan varyantlar
+YENİ ayrı malzemeler olarak eklendi (ör. "AYRAN (YAYIK, BURSA)",
+"AYRAN (YAYIK, DİYARBAKIR)" vb.). Besin değerleri yine bilerek boş --
+her varyant farklı bir TürKomp analizinden geliyor, aynı değeri
+kopyalamak yanlış olurdu.
+
+**3 kavram ERTELENDİ (kullanıcıya soruldu, henüz yanıt yok):** DANA
+ETİ, SIĞIR ETİ (5'er varyant -- "bonfile" varyantı mevcut DANA
+BONFİLE/SIĞIR BONFİLE ile birebir çakışıyor), PİLİÇ ETİ (3 varyant --
+mevcut TAVUK BUT/KANAT/GÖĞÜS ile kavramsal çakışma riski, piliç/tavuk
+aynı mı sayılmalı netleşmeden eklenmedi).
+
+**Excel:** `kaynak_duzeltilmis_v7.xlsx` (yeni, kullanıcının düzelttiği
+v6'nın yerini alıyor) -- 486→549 malzeme, doğrulandı (SOMON renk
+kodu dahil veri kaybı yok). Küçük bir kozmetik hata (KEFAL isminde
+çift boşluk) fark edilip düzeltildi.
+
+**Veritabanı:** `sql/54_bolgesel_varyant_ekleme.sql` (yeni).
+
+**Dosya durumu:** kaynak_duzeltilmis_v7.xlsx (yeni),
+sql/54_bolgesel_varyant_ekleme.sql (yeni).
