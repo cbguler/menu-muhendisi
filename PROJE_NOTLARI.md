@@ -2621,3 +2621,39 @@ araştırılmadı -- her biri kendi kaynak taramasını gerektiriyor.
 
 **Dosya durumu:** kaynak_duzeltilmis_v20.xlsx (yeni),
 sql/62_kenger_ve_madimak_akademik_veri.sql (yeni).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): EBEGÜMECİ Tamamlandı ("Ege Otları" Araması)
+
+Kullanıcı "Ege otları" olarak aramamı önerdi -- isabetli oldu. Kaya İ,
+İncekara N, Nemli Y (2004), YYÜ Zir. Fak. Derg. 14(1):1-6 -- Ege
+Bölgesi'nde (İzmir/Bornova) tüketilen 7 yabani sebzenin (kuşkonmaz,
+sirken, yabani hindiba, rezene, EBEGÜMECİ, gelincik, çoban değneği)
+kapsamlı element analizi.
+
+**EBEGÜMECİ tamamlandı:** Bakır (1.71 mg/100g) ve Manganez (5.46
+mg/100g) yazıldı -- Demir/Çinko zaten başka kaynaktan doluydu,
+dokunulmadı.
+
+**ÖNEMLİ VERİ KALİTESİ SORUNU TESPİT EDİLDİ:** Aynı makalenin
+tablosundaki (Çizelge 3) Na/K/Ca/Mg/P değerleri KULLANILMADI --
+makalenin kendi metniyle karşılaştırıldığında (ör. "ıspanakta K=230
+mg/100g" diyor ama kendi tablosu K=0.33 gösteriyor -- ~700 kat fark)
+kaynağın kendi içinde birim tutarsızlığı/hatası olduğu tespit edildi.
+Bu, kaynağın PDF'inde muhtemelen bir baskı/dönüştürme hatası --
+tahmin/düzeltme yapılmadı, sadece FE/CU/MN/ZN (metinde ayrıca
+doğrulanan, tutarlı) kullanıldı.
+
+**"Çoban değneği" (Polygonum aviculare) ile bizim "ÇOBAN ÇANTASI"
+FARKLI bitkiler** (Çoban Çantası = Capsella bursa-pastoris) --
+bu makaledeki "çoban değneği" verisi ÇOBAN ÇANTASI'na uygulanmadı.
+
+**Excel:** `kaynak_duzeltilmis_v21.xlsx` (yeni, v20'nin yerini alıyor).
+
+**Kalan yabani otlar (~9-10):** KARAMUK, ÇOBAN ÇANTASI, KARAYEMİŞ,
+KUZUKEMİRDİ, ÇİRİŞ, ÇÖVEN, DOLAMBAÇ, ECİBÜCÜ, GELEBORU, HELEVAN,
+KALDIRIK, KAYA KORUĞU, KAYMACIK, KEÇİ AYAĞI, ZİNGİT -- bu makalede
+kapsanan diğer bitkiler (kuşkonmaz, sirken, hindiba, rezene, gelincik)
+bizim listemizde zaten yok/farklı isimlerle var.
+
+**Dosya durumu:** kaynak_duzeltilmis_v21.xlsx (yeni). SQL migration
+henüz oluşturulmadı.
