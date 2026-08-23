@@ -29,6 +29,59 @@ AYLAR_SIRALI = [
     "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
 ]
 
+# ON DOKUZUNCU DUZELTME (13 Agustos 2026, Oturum 11): malzemeler tablosu
+# artik 27 ek besin ogesi iceriyor (45_genisletilmis_besin_degerleri.sql).
+# Kullanicinin istegi: bunlarin da kalori ornegindeki gibi SECILEBILIR ve
+# hedef araligiyla KISITLANABILIR olmasi -- ama hepsini otomatik gostermek
+# DEGIL (31 satir birden cok kalabalik olurdu). Bu yuzden asagida TUM
+# alanlarin (mevcut 5 + yeni 27) tek bir katalogu var; kullanici bunlardan
+# HANGILERINI hedeflemek istedigini bir multiselect ile seciyor, sadece
+# secilenler icin min/max girisi gosteriliyor (bkz. asagidaki
+# "besin_hedefi_kullan" bolumu).
+# Aralik/varsayilan degerleri kabaca "gunluk RDA'nin uc oguune bolunmus
+# hali" mantigiyla, TEK BIR OGUN icin makul bir baslangic noktasi olarak
+# secildi -- kesin bilimsel bir tavsiye degil, kullanici kendi mutfagina
+# gore ayarlayabilir.
+TUM_BESIN_ALANLARI = [
+    ("kalori", "Kalori (kcal)", 0, 3000, 900, 1200),
+    ("protein", "Protein (g)", 0, 150, 20, 60),
+    ("yag", "Yağ (g)", 0, 120, 10, 40),
+    ("karbonhidrat", "Karbonhidrat (g)", 0, 300, 40, 120),
+    ("gi", "Glisemik İndeks", 0, 100, 0, 70),
+    ("sodyum_mg", "Sodyum (mg)", 0, 3000, 200, 800),
+    ("lif_g", "Lif (g)", 0, 30, 3, 10),
+    ("seker_g", "Şeker (g)", 0, 80, 0, 25),
+    ("doymus_yag_g", "Doymuş Yağ (g)", 0, 50, 0, 15),
+    ("vitamin_a_mcg", "Vitamin A (mcg)", 0, 1000, 100, 300),
+    ("vitamin_b1_mg", "Vitamin B1 — Tiamin (mg)", 0, 3, 0.2, 0.6),
+    ("vitamin_b2_mg", "Vitamin B2 — Riboflavin (mg)", 0, 3, 0.2, 0.6),
+    ("vitamin_b3_mg", "Vitamin B3 — Niasin (mg)", 0, 25, 2, 8),
+    ("vitamin_b5_mg", "Vitamin B5 — Pantotenik Asit (mg)", 0, 12, 0.5, 3),
+    ("vitamin_b6_mg", "Vitamin B6 (mg)", 0, 4, 0.2, 0.6),
+    ("vitamin_b7_mcg", "Vitamin B7 — Biyotin (mcg)", 0, 60, 5, 15),
+    ("vitamin_b9_mcg", "Vitamin B9 — Folat (mcg)", 0, 600, 50, 150),
+    ("vitamin_b12_mcg", "Vitamin B12 (mcg)", 0, 12, 0.3, 1),
+    ("vitamin_c_mg", "Vitamin C (mg)", 0, 250, 15, 50),
+    ("vitamin_d_mcg", "Vitamin D (mcg)", 0, 50, 2, 6),
+    ("vitamin_e_mg", "Vitamin E (mg)", 0, 35, 2, 6),
+    ("vitamin_k_mcg", "Vitamin K (mcg)", 0, 250, 20, 60),
+    ("kalsiyum_mg", "Kalsiyum (mg)", 0, 1500, 150, 450),
+    ("demir_mg", "Demir (mg)", 0, 35, 2, 8),
+    ("magnezyum_mg", "Magnezyum (mg)", 0, 700, 50, 150),
+    ("potasyum_mg", "Potasyum (mg)", 0, 4500, 400, 1200),
+    ("cinko_mg", "Çinko (mg)", 0, 25, 1, 4),
+    ("fosfor_mg", "Fosfor (mg)", 0, 1200, 100, 300),
+    ("bakir_mg", "Bakır (mg)", 0, 4, 0.1, 0.4),
+    ("manganez_mg", "Manganez (mg)", 0, 6, 0.3, 1),
+    ("selenyum_mcg", "Selenyum (mcg)", 0, 180, 10, 30),
+    ("iyot_mcg", "İyot (mcg)", 0, 350, 20, 60),
+]
+_BESIN_ETIKET = {anahtar: etiket for anahtar, etiket, *_ in TUM_BESIN_ALANLARI}
+_BESIN_ARALIK = {anahtar: (minv, maxv, def_alt, def_ust) for anahtar, _, minv, maxv, def_alt, def_ust in TUM_BESIN_ALANLARI}
+# malzemeler tablosundaki kolon adlari (5 temel alan disindakiler icin
+# ayni isim, kolon adiyla anahtar birebir ayni secildi)
+_GENISLETILMIS_KOLONLAR = [a for a, *_ in TUM_BESIN_ALANLARI if a not in ("kalori", "protein", "yag", "karbonhidrat", "gi")]
+
 st.set_page_config(page_title="Yıllık Menü", page_icon="assets/favicon.png", layout="wide")
 
 supabase = get_supabase()
@@ -111,7 +164,8 @@ def _tarif_detaylarini_getir(isletme_id):
         supabase.table("recete_malzemeleri")
         .select(
             "recete_id, malzeme_id, miktar_gram, "
-            "malzemeler(ad, kalori, protein, yag, karbonhidrat, glisemik_indeks)"
+            "malzemeler(ad, kalori, protein, yag, karbonhidrat, glisemik_indeks, "
+            + ", ".join(_GENISLETILMIS_KOLONLAR) + ")"
         )
         .execute()
     ).data
@@ -144,7 +198,8 @@ def _tarif_detaylarini_getir(isletme_id):
         girdi = ham.setdefault(
             ad, {"kalori": 0.0, "protein": 0.0, "yag": 0.0, "karbonhidrat": 0.0,
                  "gi_agirlikli": 0.0, "gi_karb_toplam": 0.0, "maliyet_eur": 0.0,
-                 "tam_fiyatli": True, "eksik_malzemeler": set(), "alerjenler": set()}
+                 "tam_fiyatli": True, "eksik_malzemeler": set(), "alerjenler": set(),
+                 **{k: 0.0 for k in _GENISLETILMIS_KOLONLAR}}
         )
         girdi["kalori"] += (m.get("kalori") or 0) * oran
         girdi["protein"] += (m.get("protein") or 0) * oran
@@ -155,6 +210,8 @@ def _tarif_detaylarini_getir(isletme_id):
         if gi is not None and karb > 0:
             girdi["gi_agirlikli"] += gi * karb
             girdi["gi_karb_toplam"] += karb
+        for kolon in _GENISLETILMIS_KOLONLAR:
+            girdi[kolon] += (m.get(kolon) or 0) * oran
 
         malzeme_id = kalem["malzeme_id"]
         fiyat = fiyat_by_malzeme.get(malzeme_id)
@@ -175,12 +232,14 @@ def _tarif_detaylarini_getir(isletme_id):
             "yag": v["yag"], "karbonhidrat": v["karbonhidrat"], "gi": gi,
             "maliyet_eur": v["maliyet_eur"], "tam_fiyatli": v["tam_fiyatli"],
             "eksik_malzemeler": v["eksik_malzemeler"], "alerjenler": v["alerjenler"],
+            **{k: v[k] for k in _GENISLETILMIS_KOLONLAR},
         }
     return sonuc, fiyat_verisi_var
 
 
 def _ogun_toplami(tarif_adlari, detay):
-    toplam = {"kalori": 0.0, "protein": 0.0, "yag": 0.0, "karbonhidrat": 0.0, "maliyet_eur": 0.0}
+    toplam = {"kalori": 0.0, "protein": 0.0, "yag": 0.0, "karbonhidrat": 0.0, "maliyet_eur": 0.0,
+              **{k: 0.0 for k in _GENISLETILMIS_KOLONLAR}}
     gi_agirlikli = 0.0
     gi_karb_toplam = 0.0
     tam_fiyatli = True
@@ -201,6 +260,10 @@ def _ogun_toplami(tarif_adlari, detay):
         if b["gi"] is not None and b["karbonhidrat"] > 0:
             gi_agirlikli += b["gi"] * b["karbonhidrat"]
             gi_karb_toplam += b["karbonhidrat"]
+        for kolon in _GENISLETILMIS_KOLONLAR:
+            deger = b.get(kolon)
+            if deger is not None:
+                toplam[kolon] += deger
     toplam["gi"] = round(gi_agirlikli / gi_karb_toplam) if gi_karb_toplam > 0 else None
     toplam["tam_fiyatli"] = tam_fiyatli
     toplam["eksik_malzemeler"] = eksik_malzemeler
@@ -256,7 +319,8 @@ def _isletme_receteler_ve_detay_getir(isletme_id):
         supabase.table("recete_malzemeleri")
         .select(
             "recete_id, malzeme_id, miktar_gram, "
-            "malzemeler(ad, kalori, protein, yag, karbonhidrat, glisemik_indeks)"
+            "malzemeler(ad, kalori, protein, yag, karbonhidrat, glisemik_indeks, "
+            + ", ".join(_GENISLETILMIS_KOLONLAR) + ")"
         )
         .in_("recete_id", list(id_to_ad.keys()))
         .execute()
@@ -290,7 +354,8 @@ def _isletme_receteler_ve_detay_getir(isletme_id):
         girdi = ham.setdefault(
             recete_id, {"kalori": 0.0, "protein": 0.0, "yag": 0.0, "karbonhidrat": 0.0,
                         "gi_agirlikli": 0.0, "gi_karb_toplam": 0.0, "maliyet_eur": 0.0,
-                        "tam_fiyatli": True, "eksik_malzemeler": set(), "alerjenler": set()}
+                        "tam_fiyatli": True, "eksik_malzemeler": set(), "alerjenler": set(),
+                        **{k: 0.0 for k in _GENISLETILMIS_KOLONLAR}}
         )
         girdi["kalori"] += (m.get("kalori") or 0) * oran
         girdi["protein"] += (m.get("protein") or 0) * oran
@@ -301,6 +366,8 @@ def _isletme_receteler_ve_detay_getir(isletme_id):
         if gi is not None and karb > 0:
             girdi["gi_agirlikli"] += gi * karb
             girdi["gi_karb_toplam"] += karb
+        for kolon in _GENISLETILMIS_KOLONLAR:
+            girdi[kolon] += (m.get(kolon) or 0) * oran
 
         malzeme_id = kalem["malzeme_id"]
         fiyat = fiyat_by_malzeme.get(malzeme_id)
@@ -330,6 +397,7 @@ def _isletme_receteler_ve_detay_getir(isletme_id):
             detay[r["ad"]] = {
                 "kalori": 0.0, "protein": 0.0, "yag": 0.0, "karbonhidrat": 0.0, "gi": None,
                 "maliyet_eur": 0.0, "tam_fiyatli": True, "eksik_malzemeler": set(), "alerjenler": set(),
+                **{k: None for k in _GENISLETILMIS_KOLONLAR},
             }
             continue
         gi = (v["gi_agirlikli"] / v["gi_karb_toplam"]) if v["gi_karb_toplam"] > 0 else None
@@ -338,6 +406,7 @@ def _isletme_receteler_ve_detay_getir(isletme_id):
             "yag": v["yag"] / porsiyon, "karbonhidrat": v["karbonhidrat"] / porsiyon, "gi": gi,
             "maliyet_eur": v["maliyet_eur"] / porsiyon, "tam_fiyatli": v["tam_fiyatli"],
             "eksik_malzemeler": v["eksik_malzemeler"], "alerjenler": v["alerjenler"],
+            **{k: v[k] / porsiyon for k in _GENISLETILMIS_KOLONLAR},
         }
 
     return tarif_listesi, detay, fiyat_verisi_var
@@ -445,8 +514,11 @@ if not fiyat_verisi_var:
         "sütunu bu yüzden hesaplanamıyor (\"-\" gösterilecek)."
     )
 
-# Uretim algoritmasi besin hedefi kontrolu icin her tarife kalori/protein/
-# yag/karbonhidrat/gi ekliyoruz (detay'dan -- zaten hesaplanmisti).
+# Uretim algoritmasi besin hedefi kontrolu icin HER alani (kalori/protein/
+# yag/karbonhidrat/gi + 27 genisletilmis besin ogesi) tarife ekliyoruz
+# (detay'dan -- zaten hesaplanmisti). Hangilerinin GERCEKTEN hedeflenecegi
+# asagidaki multiselect ile secilir, ama _hedefte_mi kontrolunun her alana
+# erisebilmesi icin hepsi burada tasiniyor.
 tarifler_zengin = []
 for t in tarifler:
     b = detay.get(t["ad"], {})
@@ -456,6 +528,8 @@ for t in tarifler:
     t2["yag"] = b.get("yag")
     t2["karbonhidrat"] = b.get("karbonhidrat")
     t2["gi"] = b.get("gi")
+    for kolon in _GENISLETILMIS_KOLONLAR:
+        t2[kolon] = b.get(kolon)
     tarifler_zengin.append(t2)
 
 sol, sag, _bos = st.columns([1, 1, 3])
@@ -466,21 +540,29 @@ with sag:
 
 besin_hedefi_kullan = st.checkbox("Öğün başına besin hedefi uygula (opsiyonel)")
 
-BESIN_SATIRLARI = [
-    ("kalori", "Kalori (kcal)", 0, 3000, 900, 1200),
-    ("protein", "Protein (g)", 0, 150, 20, 60),
-    ("yag", "Yağ (g)", 0, 120, 10, 40),
-    ("karbonhidrat", "Karbonhidrat (g)", 0, 300, 40, 120),
-    ("gi", "Glisemik İndeks", 0, 100, 0, 70),
-]
-
 hedefler = None
 if besin_hedefi_kullan:
+    st.caption(
+        "Önce hangi besin değerlerini hedeflemek istediğini seç (kalori "
+        "gibi temel değerler varsayılan olarak seçili) — sadece seçtiklerin "
+        "için aşağıda min/maks aralığı gösterilecek."
+    )
+    secili_besin_anahtarlari = st.multiselect(
+        "Hedeflenecek besin değerleri",
+        options=[anahtar for anahtar, *_ in TUM_BESIN_ALANLARI],
+        default=["kalori", "protein", "yag", "karbonhidrat", "gi"],
+        format_func=lambda a: _BESIN_ETIKET[a],
+        key="yillik_menu_secili_besin_anahtarlari",
+    )
     hedefler = {}
     for ogun_adi in ("Öğle", "Akşam"):
         with st.expander(f"{ogun_adi} hedefleri", expanded=False):
             hedefler[ogun_adi] = {}
-            for anahtar, etiket, minv, maxv, def_alt, def_ust in BESIN_SATIRLARI:
+            if not secili_besin_anahtarlari:
+                st.caption("Yukarıdan en az bir besin değeri seçmelisin.")
+            for anahtar in secili_besin_anahtarlari:
+                etiket = _BESIN_ETIKET[anahtar]
+                minv, maxv, def_alt, def_ust = _BESIN_ARALIK[anahtar]
                 c1, c2 = st.columns(2)
                 with c1:
                     alt = st.number_input(
