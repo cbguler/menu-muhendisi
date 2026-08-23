@@ -3385,3 +3385,22 @@ oldugu ANLASILDI, korlemesine tekrar denemedik) cozumun dogru
 yonde oldugundan daha eminim.
 
 **Dosya durumu:** pages/0_Yillik_Menu.py guncellendi.
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Kendi Pop-up Denemesi Geri Alindi -- st.dialog'a Donuldu
+
+Kullanici kendi insa edilmis (position:fixed backdrop) pop-up
+denemesini BEGENMEDI, "bir onceki haline don" dedi.
+
+**Geri alindi:** `_gun_popup_dialog` tekrar `@st.dialog("Gün Detayı")`
+ile calisan basit haline dondu (backdrop/kapatma-butonu/sarmalayici
+kod TAMAMEN kaldirildi). `_hafta_kartlarini_goster` da ayni sekilde
+eski (st.dialog kullanan) haline dondu. Ilgili CSS kurallari
+(omgo-popup-ortu, popupsarmalayici_, kapat_) temizlendi.
+
+**Mevcut durum -- acikca hatirlatilan kisit:** st.dialog kullanildigi
+icin, "kartin TAMAMI (Streamlit'in kendi dialog cercevesi HARIC)
+donmesi" kisitli kaliyor -- sadece benim cizdigim ic kisim (baslik +
+govde) donuyor, Streamlit'in kendi "Gün Detayı" baslik cubugu ve X
+butonu sabit kaliyor. Kullanici bu duruma geri donmeyi tercih etti.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py guncellendi (1064 satir).
