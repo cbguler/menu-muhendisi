@@ -3325,3 +3325,26 @@ olasi ters/aynali gorsel hatalari onlemek icin, iyi pratik).
 Streamlit yok) -- bir sonraki denemede sonuc bildirilmeli.
 
 **Dosya durumu:** app.py, pages/0_Yillik_Menu.py guncellendi.
+
+### 13 Ağustos 2026 — XI. Oturum (devam): "Sadece Yazılar Dönüyor" Düzeltildi -- Tüm Kart Artık Birlikte Dönüyor
+
+Kullanıcı: sadece ic yazilar donuyor, kartin TAMAMI donmeli.
+
+**Kok neden:** Onceki yapida animasyon SADECE ic icerik blogu (yemek
+listesi VEYA besin tablosu) etrafina uygulanmisti -- kartin kendi
+zemin rengi/golge/koseleri ve baslik metni (gun adi + tarih) bu
+animasyonun DISINDAYDI, bu yuzden sabit kaliyorlardi ve sadece
+ic yazilar hareket ediyormus gibi gorunuyordu.
+
+**Duzeltme:** Baslik + on/arka yuz icerigi TEK BIR kapsayiciya
+alindi (_gun_popup_govdesini_ciz fonksiyonu yeniden yapilandirildi).
+Bu kapsayiciya kendi GORSEL KART stili verildi (sicak kirectasi zemin
++ golge + yuvarlatilmis kose ON YUZ icin, koyu patlican moru ARKA
+YUZ icin) -- ve donme animasyonu bu TUM kapsayiciya uygulaniyor.
+Boylece baslik dahil GORUNEN her sey (Streamlit'in kendi dialog X-
+butonu/disi cercevesi haric, o Streamlit'in kendi kontrolunde) birlikte
+donuyor.
+
+**Test durumu:** Yine canli ortamda test EDILEMEDI.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py guncellendi.

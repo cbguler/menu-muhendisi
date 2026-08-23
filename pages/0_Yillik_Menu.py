@@ -753,10 +753,10 @@ def _yillik_menu_tasarim_stilini_uygula():
     @keyframes omgoFlipArka { 0% { transform: rotateY(-90deg); } 100% { transform: rotateY(0deg); } }
     [data-testid="stDialog"] { perspective: 1200px; }
     .stApp { perspective: 1200px; }
-    div[class*="st-key-popupgovde_on_"] { animation: omgoFlipOn 0.65s cubic-bezier(0.3,0.1,0.2,1) both; transform-style: preserve-3d; backface-visibility: hidden; transform-origin: center center; }
-    div[class*="st-key-popupgovde_arka_"] { background: #3D2A3B; border-radius: 10px; padding: 12px 16px; animation: omgoFlipArka 0.65s cubic-bezier(0.3,0.1,0.2,1) both; transform-style: preserve-3d; backface-visibility: hidden; transform-origin: center center; }
-    div[class*="st-key-popupgovde_arka_"] * { color: #EDE6D6 !important; }
-    div[class*="st-key-popupgovde_arka_"] .omgo-veri-bolum { color: #C88A2E !important; }
+    div[class*="st-key-popupkart_on_"] { background: #EDE6D6; border-radius: 14px; padding: 18px 20px; box-shadow: 0 10px 30px rgba(43,35,32,0.20); animation: omgoFlipOn 0.65s cubic-bezier(0.3,0.1,0.2,1) both; transform-style: preserve-3d; backface-visibility: hidden; transform-origin: center center; }
+    div[class*="st-key-popupkart_arka_"] { background: #3D2A3B; border-radius: 14px; padding: 18px 20px; box-shadow: 0 10px 30px rgba(43,35,32,0.30); animation: omgoFlipArka 0.65s cubic-bezier(0.3,0.1,0.2,1) both; transform-style: preserve-3d; backface-visibility: hidden; transform-origin: center center; }
+    div[class*="st-key-popupkart_arka_"] * { color: #EDE6D6 !important; }
+    div[class*="st-key-popupkart_arka_"] .omgo-veri-bolum { color: #C88A2E !important; }
     </style>
     """
     # ONEMLI: Markdown, 4+ BOSLUKLA BASLAYAN HER SATIRI "kod blogu" sayip
@@ -772,21 +772,36 @@ def _yillik_menu_tasarim_stilini_uygula():
     css_temiz = "\n".join(satir.lstrip() for satir in css_govdesi.split("\n"))
     st.markdown(css_temiz, unsafe_allow_html=True)
 
-def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id):
-    """Pop-up icindeki ON YUZ (yemek listesi) / ARKA YUZ (besin verileri)
-    icerigini, mevcut cevirme durumuna gore cizer. Her cagrildiginda
-    (on yuz <-> arka yuz gecisinde) container key'i degistigi icin
-    (bkz. asagida "popupgovde_on_" / "popupgovde_arka_") tarayici bunu
-    HER SEFERINDE YENI bir eleman olarak görür ve CSS @keyframes
-    animasyonu (omgoFlipOn / omgoFlipArka) guvenilir sekilde HER
-    cevirmede yeniden calisir -- Streamlit'in script-yeniden-calistirma
-    modelinde surekli/kalici bir CSS transition yerine bu "montaj-anli
-    animasyon" yaklasimi tercih edildi (13 Agustos 2026)."""
+def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni):
+    """Pop-up icindeki TUM GORUNUR KARTI (baslik + on yuz YA DA arka
+    yuz icerigi BIRLIKTE, TEK bir kapsayici icinde) cizer. YIRMI
+    DORDUNCU DUZELTME (13 Agustos 2026): kullanici "sadece yazilar
+    donuyor, kartin TAMAMI donmeli" dedi -- onceki versiyon sadece IC
+    icerik bloguna animasyon uyguluyordu, baslik ve kartin kendi
+    zemin/golge/koseleri (Streamlit'in dialog cercevesi disinda, BENIM
+    cizdigim gorsel "kart" kismi) sabit kaliyordu. Simdi baslik + on/
+    arka yuz icerigi TEK bir kapsayicida birlesip, animasyon bu
+    kapsayicinin TAMAMINA uygulaniyor -- boylece gorunen "kart"in
+    (Streamlit'in kendi dialog X-butonu/cercevesi disindaki HER SEY)
+    butunu birlikte donuyor.
+
+    Container key'i (popupkart_on_/popupkart_arka_ + card_id) on/arka
+    yuz arasinda degistigi icin tarayici bunu HER SEFERINDE YENI bir
+    eleman olarak gorur ve CSS @keyframes animasyonu HER cevirmede
+    guvenilir sekilde yeniden calisir."""
     yuz_key = "yillik_menu_popup_yuz"
     st.session_state.setdefault(yuz_key, "on")
 
-    if st.session_state[yuz_key] == "on":
-        with st.container(key=f"popupgovde_on_{card_id}"):
+    kapsayici_key = f"popupkart_{'on' if st.session_state[yuz_key]=='on' else 'arka'}_{card_id}"
+    with st.container(key=kapsayici_key):
+        st.markdown(
+            f"<div style='font-family:Fraunces,serif; font-size:22px; font-weight:600; "
+            f"color:{'#2B2320' if st.session_state[yuz_key]=='on' else '#EDE6D6'}; "
+            f"white-space:pre-line; margin-bottom:8px;'>{baslik_metni}</div>",
+            unsafe_allow_html=True,
+        )
+
+        if st.session_state[yuz_key] == "on":
             for ogun_adi, tarif_adlari in gun["ogunler"].items():
                 etiket_sinif = "omgo-ogle" if ogun_adi == "Öğle" else "omgo-aksam"
                 st.markdown(
@@ -803,8 +818,7 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id):
                 if st.button("◤ Besin değerlerini gör", key=f"btn_cevir_{card_id}", use_container_width=True):
                     st.session_state[yuz_key] = "arka"
                     st.rerun()
-    else:
-        with st.container(key=f"popupgovde_arka_{card_id}"):
+        else:
             for ogun_adi, tarif_adlari in gun["ogunler"].items():
                 t = _ogun_toplami(tarif_adlari, detay)
                 gi_metin = f"{round(t['gi'])}" if t["gi"] is not None else "-"
@@ -848,12 +862,7 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id):
 
 @st.dialog("Gün Detayı")
 def _gun_popup_dialog(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni):
-    st.markdown(
-        f"<div style='font-family:Fraunces,serif; font-size:22px; font-weight:600; "
-        f"color:#2B2320; white-space:pre-line; margin-bottom:8px;'>{baslik_metni}</div>",
-        unsafe_allow_html=True,
-    )
-    _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id)
+    _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni)
 
 
 def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, hafta_no):
