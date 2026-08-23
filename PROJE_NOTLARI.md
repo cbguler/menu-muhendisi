@@ -3262,3 +3262,39 @@ st.markdown() çağrısının TEK bir pozisyonel argümanı var (1913 karakter,
 tek bir "</style>" içeren birleşik CSS string'i).
 
 **Dosya durumu:** app.py düzeltildi.
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Baslik Boyutu, Pop-up Boyutu ve Animasyon Ince Ayari
+
+Kullanici iki sorun bildirdi: (1) "Menü Mühendisi" yazisi "Yillik Menü
+Üretim Motoru" basligindan cok kucuk, ayni boyutta olmali. (2) Pop-up
+cok buyuk aciliyor, animasyonlu acilma/donme hic gorulmuyor.
+
+**1) Baslik boyutu esitlendi (app.py):** "Menü Mühendisi" font-size
+1.05rem/0.95rem (masaustu/mobil) -> 2.25rem/1.4rem yapildi (st.title()'in
+kendi varsayilan boyutuna -- yaklasik 2.25rem, font-weight 700 --
+uyacak sekilde). Buyuyen metne gore sabit nav-bosluk (spacer)
+degerleri de arttirildi (210->245px masaustu, 120->135px mobil).
+
+**2) Pop-up boyutu kuculttildu:** `@st.dialog("Gün Detayı", width="large")`
+-> `width` parametresi kaldirildi (Streamlit'in varsayilan/kucuk
+boyutuna donuldu).
+
+**3) Animasyon -- ince ayar yapildi ama DURUSTCE belirtilmesi gereken
+bir belirsizlik var:** Suphelenilen sebep: donme (rotateY) transform'u
+GERCEK 3 boyutlu derinlik gostermesi icin bir UST elemanda `perspective`
+tanimli olmasi gerekiyordu, bu hic yoktu -- eklendi ([data-testid=
+"stDialog"] VE yedek olarak .stApp uzerine). Ayrica hareket daha
+belirgin olsun diye suresi (0.45s->0.6s), donme acisi (90->100 derece)
+ve olcek (scale 0.85->1) eklendi.
+
+**DURUSTCE BELIRTILMESI GEREKEN KISIT:** Bu degisiklikler MANTIK
+YURUTMEYE dayanarak yapildi -- sandbox'ta Streamlit kurulu olmadigi
+ve canli tarayicida test edilemedigi icin, animasyonun bu degisiklikle
+GERCEKTEN calisip calismayacagi kesin degil. `[data-testid="stDialog"]`
+secicisinin Streamlit'in GUNCEL surumunde dogru test-id oldugu da
+DOGRULANMADI (tahmin). Bir sonraki canli testte hala calismazsa,
+daha derin bir arastirma (ornegin animasyonu tamamen farkli bir
+teknikle -- ör. JS tabanli class-toggle ile -- yeniden ele almak)
+gerekebilir.
+
+**Dosya durumu:** app.py, pages/0_Yillik_Menu.py guncellendi.

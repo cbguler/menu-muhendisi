@@ -892,8 +892,8 @@ st.markdown(
     # icerigin ortulmemesi icin bosluklar da buyutuldu. "Menü Mühendisi"
     # basligi eklendigi icin (13 Agustos 2026) bosluklar bir miktar daha
     # arttirildi (bu yeni satirin kapladigi yuksekligi de karsilasin diye).
-    ".ust_menu_bosluk_masaustu { height: 210px; }"
-    ".ust_menu_bosluk_mobil { height: 120px; }"
+    ".ust_menu_bosluk_masaustu { height: 245px; }"
+    ".ust_menu_bosluk_mobil { height: 135px; }"
     "@media (min-width: 768px) { .ust_menu_bosluk_mobil { display: none !important; } }"
     "@media (max-width: 767px) { .ust_menu_bosluk_masaustu { display: none !important; } }"
     # YIRMI BIRINCI DUZELTME (13 Agustos 2026, Oturum 11): kullanici
@@ -926,8 +926,9 @@ st.markdown(
 
 with st.container(key="masaustu_nav"):
     st.markdown(
-        "<div style='text-align:center; font-size:1.05rem; font-weight:600; "
-        "color:#0F6E56; letter-spacing:0.02em; margin-bottom:0.3rem;'>Menü Mühendisi</div>",
+        "<div style='text-align:center; font-size:2.25rem; font-weight:700; "
+        "color:#0F6E56; letter-spacing:-0.01em; margin-bottom:0.3rem; "
+        "font-family: \"Source Sans Pro\", sans-serif;'>Menü Mühendisi</div>",
         unsafe_allow_html=True,
     )
     # ON BESINCI DUZELTME (12 Agustos 2026): logo 1.5x daha buyutuldu
@@ -949,8 +950,8 @@ with st.container(key="masaustu_nav"):
 
 with st.container(key="mobil_nav"):
     st.markdown(
-        "<div style='text-align:center; font-size:0.95rem; font-weight:600; "
-        "color:#0F6E56; letter-spacing:0.02em; margin-bottom:0.2rem;'>Menü Mühendisi</div>",
+        "<div style='text-align:center; font-size:1.4rem; font-weight:700; "
+        "color:#0F6E56; letter-spacing:-0.01em; margin-bottom:0.2rem;'>Menü Mühendisi</div>",
         unsafe_allow_html=True,
     )
     _logo_kolonu, _menu_kolonu = st.columns([1, 3], vertical_alignment="center")
