@@ -2826,3 +2826,20 @@ istendiği sorulacak.
 
 **Dosya durumu:** kaynak_duzeltilmis_v27.xlsx (yeni),
 sql/67_kaldirik_taze_borage.sql (yeni).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): İki KALDIRIK Kaydı Ayrı Tutuldu
+
+Kullanıcı iki türü de ayrı tutmayı tercih etti. Karışıklığı önlemek
+için kurutulmuş (Trachystemon) kaydı tür adıyla yeniden adlandırıldı:
+"KALDIRIK (KURUTULMUŞ)" -> "KALDIRIK (KURUTULMUŞ, TRACHYSTEMON)".
+
+Artık iki net kayıt var:
+- KALDIRIK (taze, Borago officinalis/Borage, USDA kaynaklı)
+- KALDIRIK (KURUTULMUŞ, TRACHYSTEMON) (Trachystemon orientalis,
+  Özbakır Özer & Aksoy 2019 kaynaklı, popülasyon aralığının orta
+  noktası)
+
+**Excel:** kaynak_duzeltilmis_v28.xlsx (yeni, v27nin yerini alıyor).
+
+**Dosya durumu:** kaynak_duzeltilmis_v28.xlsx (yeni),
+sql/68_kaldirik_kurutulmus_yeniden_adlandirma.sql (yeni).
