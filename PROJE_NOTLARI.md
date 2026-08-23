@@ -2755,3 +2755,43 @@ eklemeleri v24'te zaten yapılmıştı).
 
 **Dosya durumu:** kaynak_duzeltilmis_v25.xlsx (yeni). SQL migration
 GİLABURU rename + 2 kurutulmuş malzeme için hazırlanacak.
+
+### 13 Ağustos 2026 — XI. Oturum (devam): KALDIRIK Tamamlandı (Tür Kimliği Netleştirilerek)
+
+Kullanıcı Kaldırık'ın alternatif isimlerini (hodan, ıspıt, sığırdili,
+zılbıt, galdirik, deli pancar) verdi, bunlarla araştırma yapıldı.
+
+**ÖNEMLİ BULGU -- halk isimlendirmesi karmaşası:** Bu isimler halk
+arasında BİRBİRİNİN YERİNE kullanılıyor ama farklı botanik türlere
+karşılık geliyor -- bazı kaynaklar Trachystemon orientalis, bazıları
+Borago officinalis (gerçek hodan), bazıları Anchusa officinalis
+(sığırdili) diyor. AKADEMİK LİTERATÜRDE "Kaldırık" adı ÖZELLİKLE
+Trachystemon orientalis'e bağlanıyor (Iğdır Üniv. makalesi başlığında
+doğrudan "...(Kaldırık)" geçiyor) -- bu kimlik tercih edildi.
+
+**KALDIRIK (KURUTULMUŞ) -- YENİ malzeme olarak eklendi:** Özbakır
+Özer & Aksoy (2019), Acta Sci. Pol. Hortorum Cultus 18(4):157-167 --
+Samsun/Ordu popülasyonlarından mineral analizi, doğal biyolojik
+varyasyon aralığının (kullanıcının onayıyla) orta noktası hesaplandı.
+Taze/kurutulmuş ayrımı tam metinden doğrulanamadı -- ama potasyum
+değeri (~4838mg/100g) mevcut taze yabani otlarımızdan (Madımak K=448,
+Kaymacık K=631) 8-10 kat yüksek olduğu için KURUTULMUŞ olduğu güçlü
+şekilde tahmin edildi. Bu yüzden "KALDIRIK" (taze) olarak DEĞİL, ayrı
+"KALDIRIK (KURUTULMUŞ)" malzemesi olarak eklendi.
+
+**Bu turun sonucu -- ÇÖVEN ve KALDIRIK araştırması artık tamamlandı:**
+- ÇÖVEN: gerçek bir "gıda" değil, saponin/köpürtücü işlem yardımcı
+  maddesi (helvaya doku vermek için) -- bilinçli olarak boş bırakıldı.
+- KALDIRIK (KURUTULMUŞ): yukarıda tamamlandı.
+
+**Excel:** `kaynak_duzeltilmis_v26.xlsx` (yeni, v25'in yerini alıyor)
+-- 562->563 malzeme.
+
+**GENEL DURUM -- yabani ot araştırması artık tamamlanmış sayılabilir**
+(orijinal ~25 kadar yabani ottan, çoğu TürKomp'ta zaten bulunmuş
+çıktı, geri kalanlar akademik kaynaklarla -- Kenger, Şevketi Bostan,
+Madımak, Ebegümeci, Çiriş, Karayemiş/Gilaburu, Kaldırık -- tamamlandı
+ya da bilinçli olarak boş bırakıldı -- Çöven, ve Kenger'in Vitamin E'si).
+
+**Dosya durumu:** kaynak_duzeltilmis_v26.xlsx (yeni),
+sql/66_kaldirik_kurutulmus.sql (yeni).
