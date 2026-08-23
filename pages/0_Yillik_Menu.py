@@ -853,14 +853,35 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
         "Ekim": "Eki", "Kasım": "Kas", "Aralık": "Ara",
     }
 
-    kolonlar = st.columns(len(hafta), gap="small")
-    for kolon, gun in zip(kolonlar, hafta):
+    # Her gunun session_state anahtarlarini ONCEDEN (kolonlar olusmadan
+    # once) hazirla -- boylece (a) hangi gunun acik oldugunu bilip
+    # SUTUN GENISLIK ORANINI ona gore ayarlayabiliriz (st.columns sabit
+    # esit genislik yerine bir ORAN LISTESI de kabul eder -- ör.
+    # [1,1,1,3,1,1,1], acik gune 3 kat yer verir; mockup'taki CSS Grid
+    # "span 3" davranisinin Streamlit karsiligi budur), (b) bir kart
+    # acilirken AYNI HAFTADAKI digerlerini kapatabiliriz (mockup'taki
+    # "tek seferde sadece bir kart acik" davranisi -- bu ONCEDEN
+    # yapilmazsa birden fazla kart ayni anda acik kalip dar sutunlara
+    # sikisir, "sekil bozuklugu" olarak gorunur)."""
+    card_idler = [f"{ay_adi}-{hafta_no}-{gun['gun']}" for gun in hafta]
+    acik_keyler = [f"yillik_menu_acik_{cid}" for cid in card_idler]
+    yuz_keyler = [f"yillik_menu_yuz_{cid}" for cid in card_idler]
+    for ak, yk in zip(acik_keyler, yuz_keyler):
+        st.session_state.setdefault(ak, False)
+        st.session_state.setdefault(yk, "on")
+
+    acik_index = next((i for i, ak in enumerate(acik_keyler) if st.session_state[ak]), None)
+    if acik_index is not None:
+        oranlar = [3 if i == acik_index else 1 for i in range(len(hafta))]
+    else:
+        oranlar = [1] * len(hafta)
+    kolonlar = st.columns(oranlar, gap="small")
+
+    for i, (kolon, gun) in enumerate(zip(kolonlar, hafta)):
         with kolon:
-            card_id = f"{ay_adi}-{hafta_no}-{gun['gun']}"
-            acik_key = f"yillik_menu_acik_{card_id}"
-            yuz_key = f"yillik_menu_yuz_{card_id}"  # "on" | "arka"
-            st.session_state.setdefault(acik_key, False)
-            st.session_state.setdefault(yuz_key, "on")
+            card_id = card_idler[i]
+            acik_key = acik_keyler[i]
+            yuz_key = yuz_keyler[i]
 
             tarih = gun.get("tarih")
             if tarih is not None:
@@ -883,8 +904,12 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
                 with st.container(key=f"{baslik_key_onek}{card_id}"):
                     if st.button(baslik_metni, key=f"btn_baslik_{card_id}", use_container_width=True):
                         if not st.session_state[acik_key]:
+                            # Bu hafta icindeki TUM digerlerini kapat --
+                            # tek seferde sadece bir kart acik olsun.
+                            for diger_ak, diger_yk in zip(acik_keyler, yuz_keyler):
+                                st.session_state[diger_ak] = False
+                                st.session_state[diger_yk] = "on"
                             st.session_state[acik_key] = True
-                            st.session_state[yuz_key] = "on"
                         else:
                             st.session_state[acik_key] = False
                         st.rerun()

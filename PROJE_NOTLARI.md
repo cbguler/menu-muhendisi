@@ -3038,3 +3038,42 @@ henüz görülmedi.
 
 **Dosya durumu:** pages/0_Yillik_Menu.py, uretim_algoritmasi.py
 (ikisi de büyük ölçüde güncellendi).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Kart Genişleme ve Çoklu-Açık-Kart Hatası Düzeltildi
+
+Kullanıcı "şekil bozukluğu var" dedi (ekran görüntüsü olmadan, sadece
+metin). Kodu tekrar inceleyerek iki gerçek mimari eksiklik bulundu:
+
+**1) Kart açılınca GENİŞLEMİYORDU:** Mockup'ta CSS Grid (`grid-column:
+span 3`) kartı büyütüp digerlerini küçültüyordu. Streamlit
+implementasyonunda `st.columns(len(hafta))` SABİT EŞİT genişlikte 7
+sütun oluşturuyordu -- açık bir kart hâlâ 1/7'lik dar sütuna sıkışıp
+içeriği (yemek listesi + besin tablosu) çarpık/sıkışık görünüyor
+olmalıydı. Düzeltme: session_state'ten hangi günün açık olduğu
+kolonlar OLUŞMADAN ÖNCE kontrol ediliyor, açık güne 3 kat, diğerlerine
+1 kat oran verilen bir liste ile `st.columns([1,1,1,3,1,1,1])` gibi
+DİNAMİK oranlı sütunlar oluşturuluyor -- mockup'taki "span 3"
+davranışının Streamlit karşılığı.
+
+**2) Birden fazla kart aynı anda açık kalabiliyordu:** Bir kartın
+başlığına tıklanınca sadece O kartın acik_key'i güncelleniyordu,
+aynı haftadaki DİĞER kartlar kapatılmıyordu -- kullanıcı farklı
+günlerin başlıklarına art arda tıklarsa birden fazla kart aynı anda
+açık kalıp hepsi dar sütunlara sıkışabiliyordu (özellikle 1.
+maddedeki sorunla birleşince ciddi bir görsel karmaşaya yol açardı).
+Düzeltme: bir kart açılırken (False->True geçişinde) aynı haftadaki
+TÜM diğer kartlar otomatik kapatılıyor (mockup'taki "tek seferde
+sadece bir kart açık" davranışı).
+
+**Bilinen, henüz çözülmemiş küçük bir nokta:** `_dish_kutu_yuksekligi_
+hesapla` (yemek listesi kutusunun sabit piksel yüksekliği) dar sütun
+varsayımıyla hesaplanıyor -- şimdi açık kart 3 kat geniş olduğu için
+bu yükseklik tahmini fazla cömert kalabilir (metin daha az satıra
+sığacağı için kutuda gereğinden fazla boşluk kalabilir). Sıkışma kadar
+ciddi değil, ayrı bir ince ayar maddesi olarak bırakıldı.
+
+**Test durumu:** Sözdizimi kontrol edildi. Görsel sonuç kullanıcının
+bir sonraki canlı denemesinde doğrulanacak -- ekran görüntüsü
+paylaşılırsa daha kesin teşhis mümkün olur.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py güncellendi.
