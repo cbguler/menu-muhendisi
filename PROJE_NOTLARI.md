@@ -3077,3 +3077,37 @@ bir sonraki canlı denemesinde doğrulanacak -- ekran görüntüsü
 paylaşılırsa daha kesin teşhis mümkün olur.
 
 **Dosya durumu:** pages/0_Yillik_Menu.py güncellendi.
+
+### 13 Ağustos 2026 — XI. Oturum (devam): CSS'in Düz Metin Olarak Görünmesi Hatası -- Kesin Sebep Bulundu ve Düzeltildi
+
+Kullanıcı ekran görüntüsü (MHTML) gönderdi: CSS kodunun kendisi sayfada
+DÜZ METİN olarak görünüyordu, stil olarak uygulanmıyordu.
+
+**Kesin sebep:** `_yillik_menu_tasarim_stilini_uygula()` fonksiyonundaki
+üçlü tırnaklı CSS string'i, Python kodunun kendi girinti seviyesine
+(8-12 boşluk) hizalanmış şekilde yazılmıştı. Markdown standardında,
+**4 veya daha fazla boşlukla başlayan HER satır "girintili kod bloğu"
+sayılır** ve olduğu gibi (kaçış karakterleriyle) düz metin olarak
+gösterilir -- `unsafe_allow_html=True` bunu GEÇERSİZ KILMAZ, çünkü bu
+karar HTML'e ulaşmadan ÖNCE, markdown ayrıştırma aşamasında veriliyor.
+Ekran görüntüsündeki metnin bu kadar düzgün/eksiksiz görünmesi de bunu
+doğruluyordu -- tam olarak bir kod bloğu gibi render edilmişti.
+
+**Düzeltme:** İlk denemede `textwrap.dedent()` kullanıldı ama bu SADECE
+satırların ORTAK asgari girintisini siliyor -- CSS kuralının kendi iç
+içe girintisi (süslü parantez içi özellikler) hâlâ 4+ boşluk
+bırakıyordu (83 satırın 45'i hâlâ girintiliydi). Kesin çözüm: tüm CSS
+kuralları TEK SATIRA indirildi (okunabilirlik için iç girinti zaten
+gereksizdi) VE ekstra güvenlik için her satır `.lstrip()` ile tek tek
+sıfırlandı -- artık 28 satırın TAMAMI sıfır girintiyle başlıyor,
+doğrulandı.
+
+**Ayrıca küçük bir iyileştirme:** "Besin değerlerini gör / Yemekleri
+gör" çevirme butonunun rengi (#6B6055 -> #A99B8A) hem açık (ön yüz)
+hem koyu (arka yüz) zeminde okunabilir olacak şekilde ayarlandı.
+
+**Bu oturumda önceki iki düzeltme de (kart genişleme + tek-kart-açık
+kısıtı) bu CSS-metin hatası çözülmeden test edilememişti** -- şimdi
+hepsi birlikte canlı ortamda denenebilir.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py güncellendi (1070 satır).

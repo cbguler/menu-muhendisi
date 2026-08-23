@@ -731,93 +731,46 @@ def _yillik_menu_tasarim_stilini_uygula():
     ORTAK bir on-ek (ör. "kart_") tasiyan TUM kartlari tek kuralla
     hedefliyoruz -- boylece her gun/hafta icin ayri CSS yazmaya gerek
     kalmiyor."""
-    st.markdown(
-        """
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-        <style>
-        [data-testid='stPageLink'] p { white-space: normal !important; word-break: break-word !important; }
-
-        div[class*="st-key-kart_"] {
-            background: #EDE6D6;
-            border-radius: 14px;
-            box-shadow: 0 8px 24px rgba(43,35,32,0.10), 0 1px 2px rgba(43,35,32,0.08);
-            padding: 0 0 14px;
-            margin-bottom: 4px;
-            overflow: hidden;
-        }
-        div[class*="st-key-kart_hs_"] { background: #F7EBD8; }
-        div[class*="st-key-kartarka_"] {
-            background: #3D2A3B;
-            border-radius: 14px;
-            box-shadow: 0 8px 24px rgba(43,35,32,0.18);
-            padding: 0 0 14px;
-            margin-bottom: 4px;
-            overflow: hidden;
-        }
-        div[class*="st-key-kartarka_"] * { color: #EDE6D6 !important; }
-
-        div[class*="st-key-baslik_"] button {
-            width: 100%;
-            background: transparent !important;
-            border: none !important;
-            border-bottom: 2px solid #C88A2E !important;
-            border-radius: 0 !important;
-            padding: 14px 16px 10px !important;
-            text-align: left !important;
-            box-shadow: none !important;
-        }
-        div[class*="st-key-baslik_"] button p {
-            font-family: 'Fraunces', serif !important;
-            font-size: 20px !important;
-            font-weight: 600 !important;
-            color: #2B2320 !important;
-        }
-        div[class*="st-key-baslikarka_"] button {
-            width: 100%;
-            background: transparent !important;
-            border: none !important;
-            border-bottom: 2px solid #C88A2E !important;
-            border-radius: 0 !important;
-            padding: 14px 16px 10px !important;
-            text-align: left !important;
-            box-shadow: none !important;
-        }
-        div[class*="st-key-baslikarka_"] button p {
-            font-family: 'Fraunces', serif !important;
-            font-size: 18px !important;
-            font-weight: 600 !important;
-            color: #EDE6D6 !important;
-        }
-        div[class*="st-key-cevir_"] button {
-            background: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-            color: #6B6055 !important;
-            font-size: 12px !important;
-            padding: 2px 16px !important;
-        }
-        div[class*="st-key-govde_"] { padding: 4px 16px 0; }
-        .omgo-ogun-etiket {
-            display: inline-block; font-size: 11px; font-weight: 600;
-            letter-spacing: 0.06em; text-transform: uppercase;
-            padding: 3px 10px; border-radius: 20px; margin: 6px 0 6px;
-        }
-        .omgo-ogle { background: #F7EBD8; color: #7A531C; }
-        .omgo-aksam { background: #E7ECF1; color: #2E4057; }
-        .omgo-veri-tablo { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; }
-        .omgo-veri-tablo td { padding: 3px 0; }
-        .omgo-veri-tablo td:last-child { text-align: right; font-weight: 500; }
-        .omgo-veri-bolum { font-family: Inter, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #C88A2E; margin: 10px 0 3px; }
-        .omgo-hedef-rozet { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px; margin-top: 6px; }
-        .omgo-hedefte { background: rgba(91,117,83,0.30); color: #C3DAB8 !important; }
-        .omgo-hedefdisi { background: rgba(166,71,47,0.30); color: #F0C4B5 !important; }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
+    css_govdesi = """
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+    [data-testid='stPageLink'] p { white-space: normal !important; word-break: break-word !important; }
+    div[class*="st-key-kart_"] { background: #EDE6D6; border-radius: 14px; box-shadow: 0 8px 24px rgba(43,35,32,0.10), 0 1px 2px rgba(43,35,32,0.08); padding: 0 0 14px; margin-bottom: 4px; overflow: hidden; }
+    div[class*="st-key-kart_hs_"] { background: #F7EBD8; }
+    div[class*="st-key-kartarka_"] { background: #3D2A3B; border-radius: 14px; box-shadow: 0 8px 24px rgba(43,35,32,0.18); padding: 0 0 14px; margin-bottom: 4px; overflow: hidden; }
+    div[class*="st-key-kartarka_"] * { color: #EDE6D6 !important; }
+    div[class*="st-key-baslik_"] button { width: 100%; background: transparent !important; border: none !important; border-bottom: 2px solid #C88A2E !important; border-radius: 0 !important; padding: 14px 16px 10px !important; text-align: left !important; box-shadow: none !important; }
+    div[class*="st-key-baslik_"] button p { font-family: 'Fraunces', serif !important; font-size: 20px !important; font-weight: 600 !important; color: #2B2320 !important; }
+    div[class*="st-key-baslikarka_"] button { width: 100%; background: transparent !important; border: none !important; border-bottom: 2px solid #C88A2E !important; border-radius: 0 !important; padding: 14px 16px 10px !important; text-align: left !important; box-shadow: none !important; }
+    div[class*="st-key-baslikarka_"] button p { font-family: 'Fraunces', serif !important; font-size: 18px !important; font-weight: 600 !important; color: #EDE6D6 !important; }
+    div[class*="st-key-cevir_"] button { background: transparent !important; border: none !important; box-shadow: none !important; color: #A99B8A !important; font-size: 12px !important; padding: 2px 16px !important; }
+    div[class*="st-key-govde_"] { padding: 4px 16px 0; }
+    .omgo-ogun-etiket { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; margin: 6px 0 6px; }
+    .omgo-ogle { background: #F7EBD8; color: #7A531C; }
+    .omgo-aksam { background: #E7ECF1; color: #2E4057; }
+    .omgo-veri-tablo { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; }
+    .omgo-veri-tablo td { padding: 3px 0; }
+    .omgo-veri-tablo td:last-child { text-align: right; font-weight: 500; }
+    .omgo-veri-bolum { font-family: Inter, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #C88A2E; margin: 10px 0 3px; }
+    .omgo-hedef-rozet { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px; margin-top: 6px; }
+    .omgo-hedefte { background: rgba(91,117,83,0.30); color: #C3DAB8 !important; }
+    .omgo-hedefdisi { background: rgba(166,71,47,0.30); color: #F0C4B5 !important; }
+    </style>
+    """
+    # ONEMLI: Markdown, 4+ BOSLUKLA BASLAYAN HER SATIRI "kod blogu" sayip
+    # oldugu gibi (kacis karakterleriyle) duz metin olarak gosterir --
+    # unsafe_allow_html=True bile bunu gecersiz kilmaz, cunku bu karar HTML'e
+    # ulasmadan ONCE, markdown asamasinda veriliyor. textwrap.dedent() SADECE
+    # TUM satirlarin ORTAK asgari girintisini siler -- CSS kuralinin kendi
+    # ic girintisi (ic ice suslu parantezler icin) hala 4+ bosluk birakabilir.
+    # Bu yuzden tek satirlik CSS kurallari kullanildi VE guvenlik icin her
+    # satir tek tek sifira indiriliyor (lstrip) -- boylece HICBIR satirda
+    # 4+ bosluk kalma riski olmuyor. (13 Agustos 2026: canli ortamda CSS'in
+    # duz metin olarak goruldugu hata bu sekilde duzeltildi.)
+    css_temiz = "\n".join(satir.lstrip() for satir in css_govdesi.split("\n"))
+    st.markdown(css_temiz, unsafe_allow_html=True)
 
 def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, hafta_no):
     """Haftayi GUN BASINA BIR KART olarak render eder -- kullanicinin
