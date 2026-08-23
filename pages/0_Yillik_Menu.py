@@ -757,6 +757,10 @@ def _yillik_menu_tasarim_stilini_uygula():
     div[class*="st-key-popupkart_arka_"] { background: #3D2A3B; border-radius: 14px; padding: 18px 20px; box-shadow: 0 10px 30px rgba(43,35,32,0.30); animation: omgoFlipArka 0.65s cubic-bezier(0.3,0.1,0.2,1) both; transform-style: preserve-3d; backface-visibility: hidden; transform-origin: center center; }
     div[class*="st-key-popupkart_arka_"] * { color: #EDE6D6 !important; }
     div[class*="st-key-popupkart_arka_"] .omgo-veri-bolum { color: #C88A2E !important; }
+    .omgo-popup-ortu { position: fixed; inset: 0; background: rgba(43,35,32,0.55); z-index: 1000000; }
+    div[class*="st-key-popupsarmalayici_"] { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); z-index: 1000001; width: min(520px, 92vw); max-height: 86vh; overflow-y: auto; }
+    div[class*="st-key-kapat_"] { position: absolute; top: 8px; right: 8px; z-index: 1000002; width: 36px; }
+    div[class*="st-key-kapat_"] button { background: rgba(0,0,0,0.15) !important; border: none !important; border-radius: 50% !important; color: #EDE6D6 !important; width: 32px !important; height: 32px !important; padding: 0 !important; box-shadow: none !important; }
     </style>
     """
     # ONEMLI: Markdown, 4+ BOSLUKLA BASLAYAN HER SATIRI "kod blogu" sayip
@@ -860,28 +864,52 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                     st.rerun()
 
 
-@st.dialog("Gün Detayı")
 def _gun_popup_dialog(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni):
-    _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni)
+    """YIRMI BESINCI DUZELTME (13 Agustos 2026): kullanici "sadece ic
+    icerik donuyor, kartin TAMAMI donmeli" seklinde IKINCI KEZ geri
+    bildirimde bulunuyor -- kok sebep bulundu: `st.dialog`'un kendi
+    beyaz kutusu, baslik cubugu ("Gün Detayı" metni) ve X butonu
+    Streamlit'in KENDI URETTIGI, benim STIL/ANIMASYON UYGULAYAMADIGIM
+    sabit bir cerceve -- ben sadece bu cercevenin ICINI kontrol
+    edebiliyordum, bu yuzden ne yapilirsa yapilsin "dis kutu sabit, ic
+    kisim donuyor" gorunumu devam ediyordu.
+
+    COZUM: `st.dialog` TAMAMEN birakildi. Bunun yerine, TUM gorunur
+    "pencere"yi (arka planda yari saydam bir ortu + ortadaki kart +
+    kapatma (X) butonu) KENDIMIZ, position:fixed bir kapsayici icinde
+    ciziyoruz -- boylece disaridan gorunen HER SEY (baslik dahil)
+    benim kontrolumde, animasyon TUM kutuya (ic icerik + baslik +
+    zemin/golge/kose) uygulanabiliyor. Sabit-konumlu bir kapsayicida
+    GERCEK Streamlit widget'lari (st.page_link, st.button) calisir --
+    bu proje zaten ust nav cubugunda (masaustu_nav) ayni deseni
+    kullaniyor, kanitlanmis bir yontem."""
+    st.markdown(
+        "<div class='omgo-popup-ortu'></div>",
+        unsafe_allow_html=True,
+    )
+    with st.container(key=f"popupsarmalayici_{card_id}"):
+        kapat_key = f"kapat_{card_id}"
+        with st.container(key=kapat_key):
+            if st.button("✕", key=f"btn_kapat_{card_id}"):
+                st.session_state["yillik_menu_popup_gun_id"] = None
+                st.rerun()
+        _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni)
 
 
 def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, hafta_no):
     """Haftayi GUN BASINA BIR KART olarak render eder -- kullanicinin
     onayladigi mockup tasarimina gore (bkz. tasarim_onizleme.html), ama
-    YIRMI UCUNCU DUZELTME (13 Agustos 2026) ile ARTIK POP-UP tabanli:
-    ızgaradaki kart HER ZAMAN kapali/sabit boyutta kalir (gun adi +
-    tarih + 2 nokta) -- baslik tiklaninca, Streamlit'in yerlesik
-    st.dialog() bileseniyle GERCEK bir pop-up penceresi acilir. Pop-up
-    icinde ON YUZ (yemek listeleri, GERCEK st.page_link ile) / ARKA
-    YUZ (besin/maliyet/hedef verileri) arasinda "cevirme" animasyonlu
-    gecis yapilabilir (bkz. _gun_popup_govdesini_ciz).
-
-    ONEMLI, KULLANICIYA ACIKCA BELIRTILEN KISIT: pop-up'in KAPANMASI
-    (X butonu / disina tiklama) Streamlit'in kendi standart kapanis
-    davranisini kullanir -- kartin ekrandaki izgara konumuna "kuculerek
-    geri donmesi" gibi ozel bir kapanis animasyonu st.dialog ile
-    YAPILAMAZ (Streamlit bu seviyede ozel pozisyon/animasyon kontrolu
-    sunmuyor), bu acikca boyle birakildi."""
+    YIRMI UCUNCU/BESINCI DUZELTME (13 Agustos 2026) ile ARTIK KENDI
+    INSA ETTIGIMIZ bir pop-up tabanli: ızgaradaki kart HER ZAMAN
+    kapali/sabit boyutta kalir (gun adi + tarih + 2 nokta) -- baslik
+    tiklaninca, position:fixed bir katman KENDI kodumuzla acilir
+    (Streamlit'in yerlesik st.dialog'u DEGIL -- o bilesenin kendi
+    cercevesi animasyon icin kontrol edilemiyordu, bkz.
+    _gun_popup_dialog docstring'i). Pop-up icinde ON YUZ (yemek
+    listeleri, GERCEK st.page_link ile) / ARKA YUZ (besin/maliyet/
+    hedef verileri) arasinda "cevirme" animasyonlu gecis yapilabilir
+    (bkz. _gun_popup_govdesini_ciz) -- bu sefer BASLIK DAHIL TUM KART
+    birlikte doner, cunku dis cerceveyi de biz ciziyoruz."""
     _yillik_menu_tasarim_stilini_uygula()
 
     GUN_ADLARI = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"]
@@ -920,13 +948,6 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
                     unsafe_allow_html=True,
                 )
 
-            # YIRMI UCUNCU DUZELTME: pop-up'in HER rerun'da (ör. icindeki
-            # "cevir" butonuna basildiginda) acik kalabilmesi icin, dialog
-            # fonksiyonunu SADECE ilk tiklamada degil, session_state
-            # kontrolu HER dongude yapilarak cagiriyoruz -- bu, Streamlit'in
-            # "dialog'u bir kez cagirinca kendiliginden hatirlar" davranisina
-            # korusuz guvenmek yerine, acikca/guvenilir bir sekilde ayni
-            # pop-up'i her seferinde yeniden tetikliyor.
             if st.session_state.get("yillik_menu_popup_gun_id") == card_id:
                 _gun_popup_dialog(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni)
 

@@ -3348,3 +3348,40 @@ donuyor.
 **Test durumu:** Yine canli ortamda test EDILEMEDI.
 
 **Dosya durumu:** pages/0_Yillik_Menu.py guncellendi.
+
+### 13 Ağustos 2026 — XI. Oturum (devam): st.dialog TAMAMEN Birakildi -- Kendi Pop-up Sistemimiz Kuruldu
+
+Kullanici IKINCI KEZ "yine ayni sey, ic donuyor kart donmuyor" dedi.
+
+**Kok sebep NIHAYET dogru teshis edildi:** Streamlit'in `st.dialog()`
+bileseni kendi SABIT cercevesini (beyaz kutu, "Gün Detayı" baslik
+cubugu, X kapatma butonu) URETIYOR -- bu cerceve TAMAMEN Streamlit'in
+kendi kontrolunde, benim CSS'im ona ULASAMIYOR/ANIMASYON
+UYGULAYAMIYOR. Ben sadece bu cercevenin ICINE koydugum icerigi
+kontrol edebiliyordum -- bu yuzden ne kadar CSS degistirilirse
+degistirilsin, "dis kutu sabit + ic icerik donuyor" sonucu
+KACINILMAZDI. Bu, onceki iki denemenin (govde-sarma, kart+baslik-
+birlestirme) neden ISE YARAMADIGINI aciklıyor.
+
+**GERCEK COZUM:** `st.dialog` TAMAMEN kaldirildi. Yerine KENDI
+insa ettigimiz bir pop-up sistemi kuruldu:
+- Yari saydam bir "ortu" (backdrop, position:fixed, tum ekranı kaplar).
+- Ortalanmis bir "sarmalayici" (position:fixed, tam ortada, z-index
+  cok yuksek -- ust nav cubugunu bile ustune alacak sekilde).
+- Icinde: KENDI cizdigimiz kapatma (X) butonu + flip-kart (baslik +
+  icerik BIRLIKTE, tek kapsayicida -- onceki duzeltme).
+- Bu yontem, projenin zaten kanitlanmis bir deseni: ust nav cubugu da
+  ayni sekilde (position:fixed + gercek Streamlit widget'lari icinde)
+  calisiyor.
+
+**Artik BASLIK DAHIL TUM GORUNEN KUTU benim kontrolumde** -- animasyon
+gercekten butune uygulanabiliyor, cunku disaridan gorunen HICBIR
+parca artik Streamlit'in kendi (kontrol edilemeyen) bir bileseninden
+gelmiyor.
+
+**Test durumu:** Yine canli ortamda test EDILEMEDI -- ama bu sefer
+kok sebep net oldugu icin (onceki iki denemenin neden basarisiz
+oldugu ANLASILDI, korlemesine tekrar denemedik) cozumun dogru
+yonde oldugundan daha eminim.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py guncellendi.
