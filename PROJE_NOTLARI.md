@@ -3298,3 +3298,30 @@ teknikle -- ör. JS tabanli class-toggle ile -- yeniden ele almak)
 gerekebilir.
 
 **Dosya durumu:** app.py, pages/0_Yillik_Menu.py guncellendi.
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Baslik Bir Tik Daha Buyutuldu, Flip Animasyonu Sadelestirildi
+
+Kullanici: "Menü Mühendisi" bir tik daha buyusun; animasyon oluyor ama
+istenen "kartin donme efekti" degil.
+
+**1) Baslik:** 2.25rem -> 2.75rem (masaustu), 1.4rem -> 1.65rem
+(mobil). Spacer yukseklikleri buna gore tekrar arttirildi (245->260px
+masaustu, 135->145px mobil).
+
+**2) Animasyon sadelestirildi:** Onceki versiyon rotateY + opacity
+fade + scale ucunu BIRLIKTE kullaniyordu -- bu, saf bir "donme" hissi
+yerine bulanik bir "belirme/buyume" hissi yaratmis olabilir (opacity
+fade, donme SIRASINDA icerigi gorunmez kildigi icin donusun kendisi
+algilanamiyor olabilirdi). Duzeltme: opacity ve scale TAMAMEN
+kaldirildi, SADECE rotateY (90 derece kenar-goruntusunden 0 dereceye)
+birakildi -- boylece "donme" tamamen perspective ile saglanan
+foreshortening (govde inceden kalina donusum) uzerinden algilanacak,
+gercek bir kagit/kart cevirme hareketine daha yakin. Ayrica
+`animation-fill-mode: both` eklendi (animasyon bitince eski haline
+donmesin diye) ve `backface-visibility: hidden` (donme sirasinda
+olasi ters/aynali gorsel hatalari onlemek icin, iyi pratik).
+
+**Test durumu:** Yine canli ortamda test EDILEMEDI (sandbox'ta
+Streamlit yok) -- bir sonraki denemede sonuc bildirilmeli.
+
+**Dosya durumu:** app.py, pages/0_Yillik_Menu.py guncellendi.

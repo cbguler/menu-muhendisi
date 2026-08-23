@@ -749,12 +749,12 @@ def _yillik_menu_tasarim_stilini_uygula():
     .omgo-hedef-rozet { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px; margin-top: 6px; }
     .omgo-hedefte { background: rgba(91,117,83,0.30); color: #1B4D1B !important; }
     .omgo-hedefdisi { background: rgba(166,71,47,0.30); color: #6B2314 !important; }
-    @keyframes omgoFlipOn { from { transform: rotateY(100deg) scale(0.85); opacity: 0; } to { transform: rotateY(0deg) scale(1); opacity: 1; } }
-    @keyframes omgoFlipArka { from { transform: rotateY(-100deg) scale(0.85); opacity: 0; } to { transform: rotateY(0deg) scale(1); opacity: 1; } }
+    @keyframes omgoFlipOn { 0% { transform: rotateY(90deg); } 100% { transform: rotateY(0deg); } }
+    @keyframes omgoFlipArka { 0% { transform: rotateY(-90deg); } 100% { transform: rotateY(0deg); } }
     [data-testid="stDialog"] { perspective: 1200px; }
     .stApp { perspective: 1200px; }
-    div[class*="st-key-popupgovde_on_"] { animation: omgoFlipOn 0.6s cubic-bezier(0.2,0.7,0.3,1); transform-style: preserve-3d; }
-    div[class*="st-key-popupgovde_arka_"] { background: #3D2A3B; border-radius: 10px; padding: 12px 16px; animation: omgoFlipArka 0.6s cubic-bezier(0.2,0.7,0.3,1); transform-style: preserve-3d; }
+    div[class*="st-key-popupgovde_on_"] { animation: omgoFlipOn 0.65s cubic-bezier(0.3,0.1,0.2,1) both; transform-style: preserve-3d; backface-visibility: hidden; transform-origin: center center; }
+    div[class*="st-key-popupgovde_arka_"] { background: #3D2A3B; border-radius: 10px; padding: 12px 16px; animation: omgoFlipArka 0.65s cubic-bezier(0.3,0.1,0.2,1) both; transform-style: preserve-3d; backface-visibility: hidden; transform-origin: center center; }
     div[class*="st-key-popupgovde_arka_"] * { color: #EDE6D6 !important; }
     div[class*="st-key-popupgovde_arka_"] .omgo-veri-bolum { color: #C88A2E !important; }
     </style>
