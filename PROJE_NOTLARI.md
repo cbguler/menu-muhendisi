@@ -2887,3 +2887,40 @@ denenmedi.
 
 **Dosya durumu:** pages/0_Yillik_Menu.py, uretim_algoritmasi.py
 (ikisi de güncellendi).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Yıllık Menü Besin Hedefi Çökme Hatası Düzeltildi
+
+Kullanıcı önceki dosya-yerleştirme sorununu çözdükten sonra uygulamayı
+test etti: tüm 32 besin değerini birden seçince uygulama çöktü.
+
+**Kök neden bulundu (kullanıcının gönderdiği hata ekran görüntüsünden):**
+streamlit.errors.StreamlitMixedNumericTypesError -- pages/0_Yillik_Menu.py
+satır 568, st.number_input çağrısında. TUM_BESIN_ALANLARI listesindeki
+7 satırda (Vitamin B1, B2, B5, B6, B12, Bakır, Manganez) min/maks tam
+sayı (0, 3 gibi) ama varsayılan değerler ondalıklı (0.2, 0.6 gibi)
+yazılmıştı -- Streamlit number_input'ta TÜM değerlerin (min/maks/
+varsayılan) aynı tipte olmasını zorunlu kılıyor. Tek tek seçildiğinde
+bu 7 alana denk gelinmediği için sorun fark edilmemişti, "hepsini seç"
+ile ortaya çıktı.
+
+**Düzeltme:**
+- TUM_BESIN_ALANLARI listesindeki TÜM 32 satırın min/maks/varsayılan
+  değerleri açıkça float yapıldı (örn. 0 -> 0.0, 3 -> 3.0).
+- Ek güvenlik: number_input çağrısının hemen öncesinde de
+  float(x) for x in _BESIN_ARALIK[anahtar] ile tekrar float'a
+  çevriliyor -- ileride listeye eklenecek yeni bir satırda aynı hata
+  tekrarlanırsa bile bu ikinci katman koruma sağlıyor.
+
+**Ayrıca ortaya çıkan süreç sorunu:** Kullanıcı önceki turda dosyayı
+indirip proje klasörüne TAM olarak yerleştirmekte zorlandı (tarayıcının
+indirdiği dosya Downloads klasörüne değil başka bir konuma gitmiş,
+kopyalama adımı atlanmış). dir komutuyla dosya tarihini kontrol ederek
+(14.08.2026 -- eski, değişmemiş) bu tespit edildi, kullanıcı dosyayı
+doğru konuma taşıyarak çözdü. Bu, ileride benzer bir "kod göndermeme
+rağmen değişiklik görünmüyor" durumunda ilk kontrol edilecek adım
+olarak not edildi: dosyanın gerçekten doğru klasöre, doğru adla
+yerleştirildiğini dir/Get-Content gibi bir komutla doğrulamak.
+
+**Excel/DB:** Bu turda ilgisiz, sadece Python kodu değişti.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py güncellendi (886 satır).

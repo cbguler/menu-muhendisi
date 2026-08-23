@@ -43,38 +43,43 @@ AYLAR_SIRALI = [
 # secildi -- kesin bilimsel bir tavsiye degil, kullanici kendi mutfagina
 # gore ayarlayabilir.
 TUM_BESIN_ALANLARI = [
-    ("kalori", "Kalori (kcal)", 0, 3000, 900, 1200),
-    ("protein", "Protein (g)", 0, 150, 20, 60),
-    ("yag", "Yağ (g)", 0, 120, 10, 40),
-    ("karbonhidrat", "Karbonhidrat (g)", 0, 300, 40, 120),
-    ("gi", "Glisemik İndeks", 0, 100, 0, 70),
-    ("sodyum_mg", "Sodyum (mg)", 0, 3000, 200, 800),
-    ("lif_g", "Lif (g)", 0, 30, 3, 10),
-    ("seker_g", "Şeker (g)", 0, 80, 0, 25),
-    ("doymus_yag_g", "Doymuş Yağ (g)", 0, 50, 0, 15),
-    ("vitamin_a_mcg", "Vitamin A (mcg)", 0, 1000, 100, 300),
-    ("vitamin_b1_mg", "Vitamin B1 — Tiamin (mg)", 0, 3, 0.2, 0.6),
-    ("vitamin_b2_mg", "Vitamin B2 — Riboflavin (mg)", 0, 3, 0.2, 0.6),
-    ("vitamin_b3_mg", "Vitamin B3 — Niasin (mg)", 0, 25, 2, 8),
-    ("vitamin_b5_mg", "Vitamin B5 — Pantotenik Asit (mg)", 0, 12, 0.5, 3),
-    ("vitamin_b6_mg", "Vitamin B6 (mg)", 0, 4, 0.2, 0.6),
-    ("vitamin_b7_mcg", "Vitamin B7 — Biyotin (mcg)", 0, 60, 5, 15),
-    ("vitamin_b9_mcg", "Vitamin B9 — Folat (mcg)", 0, 600, 50, 150),
-    ("vitamin_b12_mcg", "Vitamin B12 (mcg)", 0, 12, 0.3, 1),
-    ("vitamin_c_mg", "Vitamin C (mg)", 0, 250, 15, 50),
-    ("vitamin_d_mcg", "Vitamin D (mcg)", 0, 50, 2, 6),
-    ("vitamin_e_mg", "Vitamin E (mg)", 0, 35, 2, 6),
-    ("vitamin_k_mcg", "Vitamin K (mcg)", 0, 250, 20, 60),
-    ("kalsiyum_mg", "Kalsiyum (mg)", 0, 1500, 150, 450),
-    ("demir_mg", "Demir (mg)", 0, 35, 2, 8),
-    ("magnezyum_mg", "Magnezyum (mg)", 0, 700, 50, 150),
-    ("potasyum_mg", "Potasyum (mg)", 0, 4500, 400, 1200),
-    ("cinko_mg", "Çinko (mg)", 0, 25, 1, 4),
-    ("fosfor_mg", "Fosfor (mg)", 0, 1200, 100, 300),
-    ("bakir_mg", "Bakır (mg)", 0, 4, 0.1, 0.4),
-    ("manganez_mg", "Manganez (mg)", 0, 6, 0.3, 1),
-    ("selenyum_mcg", "Selenyum (mcg)", 0, 180, 10, 30),
-    ("iyot_mcg", "İyot (mcg)", 0, 350, 20, 60),
+    # NOT: Streamlit'in number_input'u min/maks/varsayilan degerlerin
+    # HEPSININ AYNI TIPTE (ya hep int ya hep float) olmasini zorunlu
+    # kilar -- aksi halde StreamlitMixedNumericTypesError firlatir.
+    # Bu yuzden HER satirda tum 4 deger (min, maks, def_alt, def_ust)
+    # BILINCLI OLARAK float yaziliyor, tam sayi gibi gorunse bile.
+    ("kalori", "Kalori (kcal)", 0.0, 3000.0, 900.0, 1200.0),
+    ("protein", "Protein (g)", 0.0, 150.0, 20.0, 60.0),
+    ("yag", "Yağ (g)", 0.0, 120.0, 10.0, 40.0),
+    ("karbonhidrat", "Karbonhidrat (g)", 0.0, 300.0, 40.0, 120.0),
+    ("gi", "Glisemik İndeks", 0.0, 100.0, 0.0, 70.0),
+    ("sodyum_mg", "Sodyum (mg)", 0.0, 3000.0, 200.0, 800.0),
+    ("lif_g", "Lif (g)", 0.0, 30.0, 3.0, 10.0),
+    ("seker_g", "Şeker (g)", 0.0, 80.0, 0.0, 25.0),
+    ("doymus_yag_g", "Doymuş Yağ (g)", 0.0, 50.0, 0.0, 15.0),
+    ("vitamin_a_mcg", "Vitamin A (mcg)", 0.0, 1000.0, 100.0, 300.0),
+    ("vitamin_b1_mg", "Vitamin B1 — Tiamin (mg)", 0.0, 3.0, 0.2, 0.6),
+    ("vitamin_b2_mg", "Vitamin B2 — Riboflavin (mg)", 0.0, 3.0, 0.2, 0.6),
+    ("vitamin_b3_mg", "Vitamin B3 — Niasin (mg)", 0.0, 25.0, 2.0, 8.0),
+    ("vitamin_b5_mg", "Vitamin B5 — Pantotenik Asit (mg)", 0.0, 12.0, 0.5, 3.0),
+    ("vitamin_b6_mg", "Vitamin B6 (mg)", 0.0, 4.0, 0.2, 0.6),
+    ("vitamin_b7_mcg", "Vitamin B7 — Biyotin (mcg)", 0.0, 60.0, 5.0, 15.0),
+    ("vitamin_b9_mcg", "Vitamin B9 — Folat (mcg)", 0.0, 600.0, 50.0, 150.0),
+    ("vitamin_b12_mcg", "Vitamin B12 (mcg)", 0.0, 12.0, 0.3, 1.0),
+    ("vitamin_c_mg", "Vitamin C (mg)", 0.0, 250.0, 15.0, 50.0),
+    ("vitamin_d_mcg", "Vitamin D (mcg)", 0.0, 50.0, 2.0, 6.0),
+    ("vitamin_e_mg", "Vitamin E (mg)", 0.0, 35.0, 2.0, 6.0),
+    ("vitamin_k_mcg", "Vitamin K (mcg)", 0.0, 250.0, 20.0, 60.0),
+    ("kalsiyum_mg", "Kalsiyum (mg)", 0.0, 1500.0, 150.0, 450.0),
+    ("demir_mg", "Demir (mg)", 0.0, 35.0, 2.0, 8.0),
+    ("magnezyum_mg", "Magnezyum (mg)", 0.0, 700.0, 50.0, 150.0),
+    ("potasyum_mg", "Potasyum (mg)", 0.0, 4500.0, 400.0, 1200.0),
+    ("cinko_mg", "Çinko (mg)", 0.0, 25.0, 1.0, 4.0),
+    ("fosfor_mg", "Fosfor (mg)", 0.0, 1200.0, 100.0, 300.0),
+    ("bakir_mg", "Bakır (mg)", 0.0, 4.0, 0.1, 0.4),
+    ("manganez_mg", "Manganez (mg)", 0.0, 6.0, 0.3, 1.0),
+    ("selenyum_mcg", "Selenyum (mcg)", 0.0, 180.0, 10.0, 30.0),
+    ("iyot_mcg", "İyot (mcg)", 0.0, 350.0, 20.0, 60.0),
 ]
 _BESIN_ETIKET = {anahtar: etiket for anahtar, etiket, *_ in TUM_BESIN_ALANLARI}
 _BESIN_ARALIK = {anahtar: (minv, maxv, def_alt, def_ust) for anahtar, _, minv, maxv, def_alt, def_ust in TUM_BESIN_ALANLARI}
@@ -562,7 +567,12 @@ if besin_hedefi_kullan:
                 st.caption("Yukarıdan en az bir besin değeri seçmelisin.")
             for anahtar in secili_besin_anahtarlari:
                 etiket = _BESIN_ETIKET[anahtar]
-                minv, maxv, def_alt, def_ust = _BESIN_ARALIK[anahtar]
+                # (float(...) burada bilinçli bir guvenlik agi: TUM_BESIN_ALANLARI'na
+                # ileride eklenecek bir satirda min/maks/varsayilan turleri
+                # yanlislikla karisik (int+float) yazilirsa bile, number_input
+                # yine de tek tip float alacak -- StreamlitMixedNumericTypesError
+                # bir daha tekrarlanmasin diye.)
+                minv, maxv, def_alt, def_ust = (float(x) for x in _BESIN_ARALIK[anahtar])
                 c1, c2 = st.columns(2)
                 with c1:
                     alt = st.number_input(
