@@ -3404,3 +3404,32 @@ govde) donuyor, Streamlit'in kendi "Gün Detayı" baslik cubugu ve X
 butonu sabit kaliyor. Kullanici bu duruma geri donmeyi tercih etti.
 
 **Dosya durumu:** pages/0_Yillik_Menu.py guncellendi (1064 satir).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Pop-up Arka Yüzüne Genişletilmiş Besin Değerleri Eklendi (Seçenek D)
+
+Kullanıcı, pop-up'ın arka yüzünde sadece 5 temel değerin (Kalori/
+Protein/Yağ/Karbonhidrat/GI) gorunmesinin yetersiz oldugunu belirtti
+-- 27 vitamin/mineral hic yansitilmiyordu. 4 secenek sunuldu, kullanici
+"D"yi (varsayilan: temel 5 + o an hedeflenen degerler; ayrica "tumunu
+gor" ile 32 ogenin tamami) sectii.
+
+**Uygulanan:**
+- Hedefler (kullanicinin "Ogun basina besin hedefi uygula" ile sectigi
+  besin ogeleri) varsa, temel 5'in ALTINA "Hedeflenen Degerler" olarak
+  otomatik ekleniyor.
+- Yeni bir "▸ Tum besin degerlerini gor" / "▾ ...gizle" butonu (per-
+  pop-up session_state ile acilir/kapanir) -- acildiginda kalan TUM
+  vitamin/mineral/diger-makro (sodyum/lif/seker/doymus yag) degerleri
+  "Diger / Vitaminler / Mineraller" olarak gruplanip gosteriliyor
+  (hedeflenenlerle CAKISANLAR tekrar gosterilmiyor).
+- Deger formatlama: 5'in altindaki degerler 2 ondalikli (ornek Vitamin
+  B7 0.35 gibi kucuk degerler icin), 5 ve uzeri tam sayiya yuvarlaniyor.
+  Deger yoksa (None) "-" gosteriliyor.
+- Birim ve kisa ad, mevcut _BESIN_ETIKET sozlugunden otomatik cikariliyor
+  (ayri bir sozluk gerekmedi).
+
+**Test durumu:** Yardimci fonksiyonlar (_deger_formatla, _birim_al,
+_kisa_ad) izole Python ile dogru sonuc verdigi test edildi. Tam
+Streamlit render'i canli ortamda henuz denenmedi.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py guncellendi.

@@ -739,6 +739,7 @@ def _yillik_menu_tasarim_stilini_uygula():
     div[class*="st-key-baslik_"] button { width: 100%; background: transparent !important; border: none !important; border-bottom: 2px solid #C88A2E !important; border-radius: 0 !important; padding: 14px 16px 10px !important; text-align: left !important; box-shadow: none !important; white-space: pre-line !important; line-height: 1.35 !important; }
     div[class*="st-key-baslik_"] button p { font-family: 'Fraunces', serif !important; font-size: 19px !important; font-weight: 600 !important; color: #2B2320 !important; white-space: pre-line !important; line-height: 1.35 !important; }
     div[class*="st-key-cevir_"] button { background: transparent !important; border: none !important; box-shadow: none !important; color: #A99B8A !important; font-size: 12px !important; padding: 2px 16px !important; }
+    div[class*="st-key-tumunugoster_"] button { background: transparent !important; border: none !important; box-shadow: none !important; color: #C88A2E !important; font-size: 12px !important; font-weight: 600 !important; padding: 2px 16px !important; }
     .omgo-ogun-etiket { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; margin: 6px 0 6px; }
     .omgo-ogle { background: #F7EBD8; color: #7A531C; }
     .omgo-aksam { background: #E7ECF1; color: #2E4057; }
@@ -791,6 +792,50 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
     guvenilir sekilde yeniden calisir."""
     yuz_key = "yillik_menu_popup_yuz"
     st.session_state.setdefault(yuz_key, "on")
+    tumunu_goster_key = "yillik_menu_popup_tumunu_goster"
+    st.session_state.setdefault(tumunu_goster_key, False)
+
+    # YIRMI ALTINCI DUZELTME (13 Agustos 2026, Oturum 11) -- kullanicinin
+    # secimi "D": arka yuzde varsayilan olarak temel 5 deger + (varsa)
+    # kullanicinin O AN hedefledigi ek besin ogeleri gosteriliyor;
+    # ayrica "tum besin degerlerini gor" ile 32 ogenin tamami (Vitamin/
+    # Mineral gruplarina ayrilmis) acilip kapatilabiliyor.
+    TEMEL_5 = {"kalori", "protein", "yag", "karbonhidrat", "gi"}
+    VITAMIN_ANAHTARLARI = [
+        "vitamin_a_mcg", "vitamin_b1_mg", "vitamin_b2_mg", "vitamin_b3_mg",
+        "vitamin_b5_mg", "vitamin_b6_mg", "vitamin_b7_mcg", "vitamin_b9_mcg",
+        "vitamin_b12_mcg", "vitamin_c_mg", "vitamin_d_mcg", "vitamin_e_mg", "vitamin_k_mcg",
+    ]
+    MINERAL_ANAHTARLARI = [
+        "kalsiyum_mg", "demir_mg", "magnezyum_mg", "potasyum_mg", "cinko_mg",
+        "fosfor_mg", "bakir_mg", "manganez_mg", "selenyum_mcg", "iyot_mcg",
+    ]
+    DIGER_MAKRO_ANAHTARLARI = ["sodyum_mg", "lif_g", "seker_g", "doymus_yag_g"]
+
+    def _deger_formatla(deger):
+        if deger is None:
+            return "-"
+        return f"{deger:.2f}" if deger < 5 else f"{round(deger)}"
+
+    def _birim_al(anahtar):
+        etiket = _BESIN_ETIKET.get(anahtar, "")
+        if "(" in etiket:
+            return etiket[etiket.rfind("(") + 1: etiket.rfind(")")]
+        return ""
+
+    def _kisa_ad(anahtar):
+        etiket = _BESIN_ETIKET.get(anahtar, anahtar)
+        return etiket.split(" (")[0].replace("Vitamin ", "")
+
+    def _tablo_satirlari_yaz(anahtarlar, t):
+        satirlar = []
+        for anahtar in anahtarlar:
+            deger = t.get(anahtar)
+            if deger is None:
+                continue
+            satirlar.append(f"<tr><td>{_kisa_ad(anahtar)}</td><td>{_deger_formatla(deger)} {_birim_al(anahtar)}</td></tr>")
+        if satirlar:
+            st.markdown("<table class='omgo-veri-tablo'>" + "".join(satirlar) + "</table>", unsafe_allow_html=True)
 
     kapsayici_key = f"popupkart_{'on' if st.session_state[yuz_key]=='on' else 'arka'}_{card_id}"
     with st.container(key=kapsayici_key):
@@ -819,6 +864,18 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                     st.session_state[yuz_key] = "arka"
                     st.rerun()
         else:
+            # O an hedeflenen (kullanicinin "Ogun basina besin hedefi
+            # uygula" ile sectigi) ek anahtarlar -- temel 5'in disinda
+            # kalanlar. Hangi ogun icin oldugu farketmeksizin, HER iki
+            # ogunde de ayni ek anahtarlar gosterilir (hedefler genelde
+            # her iki ogun icin de ayni besin ogelerini kapsar).
+            hedeflenen_ek_anahtarlar = []
+            if hedefler:
+                for ogun_hedefleri in hedefler.values():
+                    for anahtar in ogun_hedefleri:
+                        if anahtar not in TEMEL_5 and anahtar not in hedeflenen_ek_anahtarlar:
+                            hedeflenen_ek_anahtarlar.append(anahtar)
+
             for ogun_adi, tarif_adlari in gun["ogunler"].items():
                 t = _ogun_toplami(tarif_adlari, detay)
                 gi_metin = f"{round(t['gi'])}" if t["gi"] is not None else "-"
@@ -833,6 +890,25 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                     "</table>",
                     unsafe_allow_html=True,
                 )
+
+                if hedeflenen_ek_anahtarlar:
+                    st.markdown("<div class='omgo-veri-bolum'>Hedeflenen Değerler</div>", unsafe_allow_html=True)
+                    _tablo_satirlari_yaz(hedeflenen_ek_anahtarlar, t)
+
+                if st.session_state[tumunu_goster_key]:
+                    kalan_diger = [a for a in DIGER_MAKRO_ANAHTARLARI if a not in hedeflenen_ek_anahtarlar]
+                    kalan_vitamin = [a for a in VITAMIN_ANAHTARLARI if a not in hedeflenen_ek_anahtarlar]
+                    kalan_mineral = [a for a in MINERAL_ANAHTARLARI if a not in hedeflenen_ek_anahtarlar]
+                    if kalan_diger:
+                        st.markdown("<div class='omgo-veri-bolum'>Diğer</div>", unsafe_allow_html=True)
+                        _tablo_satirlari_yaz(kalan_diger, t)
+                    if kalan_vitamin:
+                        st.markdown("<div class='omgo-veri-bolum'>Vitaminler</div>", unsafe_allow_html=True)
+                        _tablo_satirlari_yaz(kalan_vitamin, t)
+                    if kalan_mineral:
+                        st.markdown("<div class='omgo-veri-bolum'>Mineraller</div>", unsafe_allow_html=True)
+                        _tablo_satirlari_yaz(kalan_mineral, t)
+
                 alerjen_metin = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
                 if not fiyat_verisi_var:
                     maliyet_metin = "-"
@@ -853,6 +929,14 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                     st.markdown("<span class='omgo-hedef-rozet omgo-hedefte'>Hedefte</span>", unsafe_allow_html=True)
                 elif hedefte is False:
                     st.markdown("<span class='omgo-hedef-rozet omgo-hedefdisi'>Hedef dışı</span>", unsafe_allow_html=True)
+                st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
+
+            with st.container(key=f"tumunugoster_{card_id}"):
+                tumunu_goster_metni = "▾ Tüm besin değerlerini gizle" if st.session_state[tumunu_goster_key] else "▸ Tüm besin değerlerini gör"
+                if st.button(tumunu_goster_metni, key=f"btn_tumunugoster_{card_id}", use_container_width=True):
+                    st.session_state[tumunu_goster_key] = not st.session_state[tumunu_goster_key]
+                    st.rerun()
+
             st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
             with st.container(key=f"cevir_{card_id}"):
                 if st.button("◤ Yemekleri gör", key=f"btn_cevir2_{card_id}", use_container_width=True):
