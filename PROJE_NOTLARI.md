@@ -3111,3 +3111,27 @@ kısıtı) bu CSS-metin hatası çözülmeden test edilememişti** -- şimdi
 hepsi birlikte canlı ortamda denenebilir.
 
 **Dosya durumu:** pages/0_Yillik_Menu.py güncellendi (1070 satır).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Kart Yüksekliği, Hafta Sonu Rengi ve İki Satırlı Başlık Düzeltildi
+
+Kullanıcı ekran görüntüsü gönderdi -- düzen artık ÇALIŞIYOR (önceki
+CSS-metin hatası çözülmüş), ama 3 ince ayar istendi:
+
+**1) Kart yükseklik tutarsızlığı:** Başlık metni "Pazartesi · 30 Kas"
+gibi bazen 2 satıra taşarken "Salı · 1 Ara" gibi bazen 1 satıra
+sığıyordu -- bu farklı kart yüksekliklerine yol açıyordu. Kullanıcının
+istediği "gün adı üstte tek başına, tarih altta ayrı satırda" düzeni
+bunu YAN ETKİ olarak da çözüyor: artık HER kart başlığı zorunlu olarak
+TAM 2 satır (gün adı \n tarih) olduğu için tüm kartlar aynı yükseklikte.
+CSS'e `white-space: pre-line` eklendi (aksi halde buton metni \n'i
+görmezden gelip boşluğa çevirebilirdi).
+
+**2) Ay adı tam yazıldı:** "Kas" kısaltması yerine "Kasım" (tam ad) --
+AY_KISA sözlüğü kaldırıldı, doğrudan AYLAR_SIRALI kullanılıyor.
+
+**3) Hafta sonu rengi belirginleştirildi:** Önceki soluk ton (#F7EBD8)
+yerine daha doygun bir şeftali/kehribar tonu (#F2CFA0) + altın renkte
+2px kenarlık (#C88A2E) eklendi -- artık Cumartesi/Pazar kartları
+gözle daha net ayrışıyor.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py güncellendi.

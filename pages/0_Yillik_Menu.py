@@ -738,13 +738,13 @@ def _yillik_menu_tasarim_stilini_uygula():
     <style>
     [data-testid='stPageLink'] p { white-space: normal !important; word-break: break-word !important; }
     div[class*="st-key-kart_"] { background: #EDE6D6; border-radius: 14px; box-shadow: 0 8px 24px rgba(43,35,32,0.10), 0 1px 2px rgba(43,35,32,0.08); padding: 0 0 14px; margin-bottom: 4px; overflow: hidden; }
-    div[class*="st-key-kart_hs_"] { background: #F7EBD8; }
+    div[class*="st-key-kart_hs_"] { background: #F2CFA0; border: 2px solid #C88A2E; }
     div[class*="st-key-kartarka_"] { background: #3D2A3B; border-radius: 14px; box-shadow: 0 8px 24px rgba(43,35,32,0.18); padding: 0 0 14px; margin-bottom: 4px; overflow: hidden; }
     div[class*="st-key-kartarka_"] * { color: #EDE6D6 !important; }
-    div[class*="st-key-baslik_"] button { width: 100%; background: transparent !important; border: none !important; border-bottom: 2px solid #C88A2E !important; border-radius: 0 !important; padding: 14px 16px 10px !important; text-align: left !important; box-shadow: none !important; }
-    div[class*="st-key-baslik_"] button p { font-family: 'Fraunces', serif !important; font-size: 20px !important; font-weight: 600 !important; color: #2B2320 !important; }
-    div[class*="st-key-baslikarka_"] button { width: 100%; background: transparent !important; border: none !important; border-bottom: 2px solid #C88A2E !important; border-radius: 0 !important; padding: 14px 16px 10px !important; text-align: left !important; box-shadow: none !important; }
-    div[class*="st-key-baslikarka_"] button p { font-family: 'Fraunces', serif !important; font-size: 18px !important; font-weight: 600 !important; color: #EDE6D6 !important; }
+    div[class*="st-key-baslik_"] button { width: 100%; background: transparent !important; border: none !important; border-bottom: 2px solid #C88A2E !important; border-radius: 0 !important; padding: 14px 16px 10px !important; text-align: left !important; box-shadow: none !important; white-space: pre-line !important; line-height: 1.35 !important; }
+    div[class*="st-key-baslik_"] button p { font-family: 'Fraunces', serif !important; font-size: 19px !important; font-weight: 600 !important; color: #2B2320 !important; white-space: pre-line !important; line-height: 1.35 !important; }
+    div[class*="st-key-baslikarka_"] button { width: 100%; background: transparent !important; border: none !important; border-bottom: 2px solid #C88A2E !important; border-radius: 0 !important; padding: 14px 16px 10px !important; text-align: left !important; box-shadow: none !important; white-space: pre-line !important; line-height: 1.35 !important; }
+    div[class*="st-key-baslikarka_"] button p { font-family: 'Fraunces', serif !important; font-size: 17px !important; font-weight: 600 !important; color: #EDE6D6 !important; white-space: pre-line !important; line-height: 1.35 !important; }
     div[class*="st-key-cevir_"] button { background: transparent !important; border: none !important; box-shadow: none !important; color: #A99B8A !important; font-size: 12px !important; padding: 2px 16px !important; }
     div[class*="st-key-govde_"] { padding: 4px 16px 0; }
     .omgo-ogun-etiket { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; margin: 6px 0 6px; }
@@ -800,11 +800,6 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
     }
 
     GUN_ADLARI = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"]
-    AY_KISA = {
-        "Ocak": "Oca", "Şubat": "Şub", "Mart": "Mar", "Nisan": "Nis", "Mayıs": "May",
-        "Haziran": "Haz", "Temmuz": "Tem", "Ağustos": "Ağu", "Eylül": "Eyl",
-        "Ekim": "Eki", "Kasım": "Kas", "Aralık": "Ara",
-    }
 
     # Her gunun session_state anahtarlarini ONCEDEN (kolonlar olusmadan
     # once) hazirla -- boylece (a) hangi gunun acik oldugunu bilip
@@ -840,7 +835,7 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
             if tarih is not None:
                 gun_adi_gercek = GUN_ADLARI[tarih.weekday()]
                 hafta_sonu_mu = tarih.weekday() >= 5
-                tarih_metni = f"{tarih.day} {AY_KISA[AYLAR_SIRALI[tarih.month - 1]]}"
+                tarih_metni = f"{tarih.day} {AYLAR_SIRALI[tarih.month - 1]}"
             else:
                 gun_adi_gercek = f"Gün {gun['gun']}"
                 hafta_sonu_mu = False
@@ -851,9 +846,18 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
 
             with st.container(key=kart_sinifi):
                 baslik_key_onek = "baslikarka_" if arka_mi else "baslik_"
-                baslik_metni = f"{gun_adi_gercek}"
-                if tarih_metni:
-                    baslik_metni += f"  ·  {tarih_metni}"
+                # YİRMİ BİRİNCİ DÜZELTME (13 Ağustos 2026): kullanıcının
+                # istediği iki satırlı başlık -- gün adı ÜSTTE TEK BAŞINA,
+                # tarih (tam ay adıyla) ALT SATIRDA. "\n" ile ayrılıyor,
+                # CSS'te "white-space: pre-line" ile bu satır sonu
+                # zorunlu kılınıyor (aksi halde buton metni normalde tek
+                # paragraf gibi davranip \n'i boşluğa çevirebilirdi).
+                # Bu ayrıca kart yükseklik tutarsızlığını da (bazı
+                # başlıklar "30 Kas" gibi taşıp iki satıra bölünürken
+                # bazıları "1 Ara" gibi tek satıra sığıyordu) çözüyor --
+                # artık HER kart başlığı her zaman TAM 2 satır, bu yüzden
+                # tüm kartlar aynı yükseklikte oluyor.
+                baslik_metni = f"{gun_adi_gercek}\n{tarih_metni}" if tarih_metni else gun_adi_gercek
                 with st.container(key=f"{baslik_key_onek}{card_id}"):
                     if st.button(baslik_metni, key=f"btn_baslik_{card_id}", use_container_width=True):
                         if not st.session_state[acik_key]:
