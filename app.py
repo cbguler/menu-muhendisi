@@ -906,7 +906,6 @@ st.markdown(
     # bosluğumuz zaten sabit menunun tam yuksekliğini karsiladigindan,
     # Streamlit'in kendi varsayilan payini kucultuyoruz.
     ".block-container { padding-top: 1rem !important; }"
-    "</style>",
     # ON UCUNCU DUZELTME (12 Agustos 2026): Kontrol Paneli'ndeki tanitim
     # videosunun native tarayici kontrol cubugu (oynat/durdur, sure,
     # sessize al, tam ekran, "..." menusu) temizlensin istendi. st.video()

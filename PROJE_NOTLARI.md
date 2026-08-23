@@ -3241,3 +3241,24 @@ fonksiyonu kaldırıldı (pop-up'ta sabit yükseklik kısıtı yok).
 Streamlit kurulu değil) -- ilk canlı testte davranış doğrulanmalı.
 
 **Dosya durumu:** pages/0_Yillik_Menu.py güncellendi (1058 satır).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): app.py'de TypeError Düzeltildi (Fazladan Virgül)
+
+Kullanıcı canlı ortamda "TypeError: multiple values for argument"
+hatası bildirdi -- app.py satır 848 civarındaki st.markdown() çağrısında.
+
+**Kök neden:** Önceki turda ".block-container { padding-top: 1rem
+!important; }" satırını eklerken, hemen ardına YANLIŞLIKLA
+"</style>()," eklenmişti -- ama string birleştirmesi orada bitmemesi
+gerekiyordu (devamında video-kontrol CSS kuralları ve GERÇEK
+"</style>" kapanışı vardı). Bu fazladan virgül, tek olması gereken
+uzun string'i ikiye bölüp, ikinci parçayı POZİSYONEL 2. argüman olarak
+`unsafe_allow_html` parametresine gönderiyordu -- bu da çağrının
+SONUNDAKİ açık `unsafe_allow_html=True,` ile çakışıp "multiple values
+for argument" TypeError'ına yol açıyordu.
+
+**Düzeltme:** Fazladan virgül kaldırıldı. AST ile doğrulandı: artık
+st.markdown() çağrısının TEK bir pozisyonel argümanı var (1913 karakter,
+tek bir "</style>" içeren birleşik CSS string'i).
+
+**Dosya durumu:** app.py düzeltildi.
