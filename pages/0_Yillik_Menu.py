@@ -684,7 +684,18 @@ if st.button("Ay için menü üret", type="primary"):
         for gun, tarih in zip(hafta, hafta_tarihleri):
             gun["tarih"] = tarih
         haftalar.append(hafta)
-    st.session_state["yillik_menu_aylik"] = {"ay": ay_secimi, "yil": yil_secimi, "haftalar": haftalar}
+    # YIRMI IKINCI DUZELTME (13 Agustos 2026, Oturum 11): kullanicinin
+    # "gecmis bir tarih icin uretilen menu, gercek servis kaydiyla
+    # karistirilabilir" endisesi uzerine -- uretimi ENGELLEMIYORUZ (test/
+    # karsilastirma gibi mesru kullanim senaryolari var), sadece secilen
+    # ayin GERCEK son gunu bugunden ONCEYSE (yani tum ay gecmiste kaldiysa)
+    # ekranda acik bir uyari notu gosteriyoruz -- kullaniciyla mutabik
+    # kalinan cozum bu.
+    _ay_son_gunu = gercek_haftalar[-1][-1] if gercek_haftalar else None
+    _gecmis_ay_mi = _ay_son_gunu is not None and _ay_son_gunu < datetime.date.today()
+    st.session_state["yillik_menu_aylik"] = {
+        "ay": ay_secimi, "yil": yil_secimi, "haftalar": haftalar, "gecmis_ay_mi": _gecmis_ay_mi,
+    }
     st.session_state["yillik_menu_hedefler"] = hedefler
 
 RENKLER = {1: "#D85A30", 2: "#639922", 3: "#1D9E75"}
@@ -1047,6 +1058,13 @@ def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
 aylik = st.session_state.get("yillik_menu_aylik")
 if aylik:
     kayitli_hedefler = st.session_state.get("yillik_menu_hedefler")
+
+    if aylik.get("gecmis_ay_mi"):
+        st.warning(
+            "Bu, geçmiş bir tarih için üretildi — gerçek servis kaydı "
+            "değildir, sadece sistemin o dönem için ne önerdiğine dair "
+            "bir örnektir."
+        )
 
     excel_verisi = _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, kayitli_hedefler)
     st.download_button(

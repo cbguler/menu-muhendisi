@@ -3166,3 +3166,32 @@ seçildiğinde küçük bir uyarı notu göstermek. Kullanıcının kararı
 BEKLENİYOR -- henüz hiçbir kısıtlama/uyarı kodu yazılmadı.
 
 **Dosya durumu:** app.py güncellendi (1-2 numaralı maddeler).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Gecmis Tarih Uyari Notu Eklendi + Pop-up Tartismasi
+
+Kullanicinin karari: uyari notu kullanilsin (engelleme degil).
+
+**Uygulandi:** "Ay icin menu uret" butonuna basildiginda, secilen ayin
+GERCEK son gunu bugunden ONCEYSE (_ay_gercek_haftalari ile hesaplanan
+gercek tarih araligina gore), session_state'e "gecmis_ay_mi": True
+bayragi kaydediliyor. Menu goruntulenirken bu bayrak True ise
+st.warning() ile acik bir not gosteriliyor ("Bu, gecmis bir tarih
+icin uretildi -- gercek servis kaydi degildir...").
+
+NOT: ilk denemede st.warning(..., icon="uyari-emoji") yazilmisti --
+kullanicinin "arayuzde emoji yasak" kalici kuralini ihlal ediyordu,
+hemen fark edilip kaldirildi (st.warning()'in kendi varsayilan
+ikonuyla, projenin geri kalaninda zaten boyle kullaniliyor).
+
+**Yeni tartisma -- pop-up kartlar:** Kullanici gunluk menu kartlarinin
+pop-up pencere gibi acilip acilamayacagini sordu. Streamlit'in yerlesik
+st.dialog() bileseni (surum >=1.38'de mevcut, henuz kullanilmiyor) bunu
+saglayabilir. Iki secenek sunuldu:
+  A) Mevcut ac/cevir mekanigi TAMAMEN pop-up'a donusturulur -- yemek
+     listesi + besin tablosu ayni anda, cevirmeye gerek kalmadan.
+  B) Mevcut mekanik KALIR (onaylanan "sanat eseri" hissi korunur),
+     pop-up EKSTRA bir "buyut" secenegi olarak eklenir.
+Kullanicinin cevabi BEKLENIYOR -- henuz kod yazilmadi.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py guncellendi (gecmis tarih
+uyarisi).
