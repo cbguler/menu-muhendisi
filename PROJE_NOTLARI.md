@@ -2795,3 +2795,34 @@ ya da bilinçli olarak boş bırakıldı -- Çöven, ve Kenger'in Vitamin E'si).
 
 **Dosya durumu:** kaynak_duzeltilmis_v26.xlsx (yeni),
 sql/66_kaldirik_kurutulmus.sql (yeni).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): KALDIRIK Tür Kimliği Düzeltildi (Borage/Borago officinalis)
+
+Kullanıcı iki ekran görüntüsü gönderdi (nefis.com, bim.com.tr'den
+Kaldırık tarifleri) -- fotoğraflarda mavi, yıldız şeklinde çiçekler
+görüldü. Bu, KLASİK Borago officinalis (Borage) çiçeği -- Trachystemon
+orientalis'in çan/tüp şeklindeki çiçeğinden BELİRGİN ŞEKİLDE FARKLI.
+
+**Tür kimliği yeniden değerlendirildi:** USDA'da "Borage, raw" (fdcId
+170481) tam ve gerçek bir kayıt bulundu:
+- %93 su içeriği AÇIKÇA belirtilmiş -- TAZE örnek, kesin.
+- Potasyum 470mg/100g -- bizim diğer taze yabani otlarımızla (Madımak
+  K=448, Kaymacık K=631) TUTARLI -- önceki Trachystemon verisindeki
+  (4837.6mg/100g) 10 kat fazla değerden çok daha makul.
+
+Bu hem görsel kanıtla hem büyüklük tutarlılığıyla Borage'ın daha
+doğru tür olduğunu güçlü şekilde destekliyor.
+
+**"KALDIRIK" (taze, YENİ malzeme, 563->564) Borage verisiyle
+eklendi** -- tam profil (kalori, protein, yağ, karbonhidrat, çoğu
+vitamin/mineral).
+
+**"KALDIRIK (KURUTULMUŞ)" (Trachystemon verisi) SİLİNMEDİ** --
+kullanıcıya iki türün de (halk arasında karışık kullanıldığı için)
+ayrı ayrı mı tutulması, yoksa Trachystemon kaydının kaldırılması mı
+istendiği sorulacak.
+
+**Excel:** `kaynak_duzeltilmis_v27.xlsx` (yeni, v26'nın yerini alıyor).
+
+**Dosya durumu:** kaynak_duzeltilmis_v27.xlsx (yeni),
+sql/67_kaldirik_taze_borage.sql (yeni).
