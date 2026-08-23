@@ -2924,3 +2924,43 @@ yerleştirildiğini dir/Get-Content gibi bir komutla doğrulamak.
 **Excel/DB:** Bu turda ilgisiz, sadece Python kodu değişti.
 
 **Dosya durumu:** pages/0_Yillik_Menu.py güncellendi (886 satır).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): "Tüm Öğünler Hedef Dışı" Hatası Düzeltildi (None/0 Karışıklığı)
+
+Kullanıcı, hiçbir değeri değiştirmediği halde tüm 32 besin ögesini
+seçince tüm öğünlerin "hedef dışı" işaretlendiğini bildirdi.
+
+**Kök neden:** Malzeme bazında bir besin ögesi (ör. Vitamin B7 --
+kataloğumuzda birçok malzemede hâlâ eksik) hiç ölçülmemişse, toplama
+kodu bunu sessizce "0" olarak sayıyordu ("değer or 0" deseni) --
+"bilinmiyor" (None) olarak değil. Çoğu besin ögesinin varsayılan hedef
+ALT SINIRI 0'ın üzerinde olduğu için (ör. B7 için 5.0), bu yanlış "0"
+değeri hedefin altında kalıp öğünü "hedef dışı" gösteriyordu. 32
+ögenin hepsi seçilince, HER öğünde en az bir nadir besin ögesi bu
+şekilde yanlış "başarısız" oluyordu.
+
+**Düzeltme (3 katmanda, hepsi aynı mantıkla):**
+1. `pages/0_Yillik_Menu.py` -- `_tarif_detaylarini_getir` ve
+   `_isletme_receteler_ve_detay_getir`: her genişletilmiş besin ögesi
+   için "en az bir malzeme veri verdi mi" bayrağı eklendi -- hiçbiri
+   vermediyse tarif düzeyinde sonuç None (0 değil).
+2. `_ogun_toplami`: aynı mantık öğün (3 tarif) toplamı için de
+   uygulandı -- üç tarifin de o öge için verisi yoksa öğün toplamı None.
+3. `uretim_algoritmasi.py` -- `ogun_besin_toplami`: MENÜ ÜRETİMİ
+   sırasında kullanılan asıl kontrol noktası -- temel 4 alan (kalori/
+   protein/yağ/karbonhidrat, pratikte hep dolu) eskisi gibi "0"
+   sayılmaya devam ediyor, ama 27 genişletilmiş öge için aynı None/0
+   ayrımı uygulandı.
+
+`_hedef_saglaniyor_mu` ve `_hedefte_mi` zaten "deger None ise atla"
+mantığıyla yazılmıştı -- asıl sorun bu fonksiyonlara HİÇBİR ZAMAN
+None ulaşmamasıydı, o yüzden bu üç katman düzeltilerek zincir
+tamamlandı.
+
+**Kullanıcının ikinci notu ("ana tabloda bu değerleri göremiyorum"):**
+Bu, kullanıcının daha önce "görsel/tablo düzenlemelerini sonra ayrı
+isteyeceğim" dediği kapsam -- şimdilik dokunulmadı, ayrı bir istek
+bekleniyor.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py, uretim_algoritmasi.py
+(ikisi de güncellendi).

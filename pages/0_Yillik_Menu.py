@@ -204,7 +204,18 @@ def _tarif_detaylarini_getir(isletme_id):
             ad, {"kalori": 0.0, "protein": 0.0, "yag": 0.0, "karbonhidrat": 0.0,
                  "gi_agirlikli": 0.0, "gi_karb_toplam": 0.0, "maliyet_eur": 0.0,
                  "tam_fiyatli": True, "eksik_malzemeler": set(), "alerjenler": set(),
-                 **{k: 0.0 for k in _GENISLETILMIS_KOLONLAR}}
+                 **{k: 0.0 for k in _GENISLETILMIS_KOLONLAR},
+                 # ON DOKUZUNCU DUZELTME (13 Agustos 2026): bir tarifte
+                 # HICBIR malzeme belirli bir besin ogesi icin veri
+                 # icermiyorsa (ör. Vitamin B7 -- kataloğumuzda birçok
+                 # malzemede hala eksik), toplamin "0" degil "bilinmiyor"
+                 # (None) olmasi gerekiyor -- yoksa hedef kontrolu
+                 # yanlislikla "0 < min" diyerek TUM ogunleri hedef disi
+                 # isaretliyordu (kullanici 32 besin ogesinin hepsini
+                 # secince bu hata ortaya cikti). Her genisletilmis kolon
+                 # icin ayri bir "en az bir malzeme veri verdi mi" bayragi
+                 # tutuyoruz.
+                 **{f"{k}_var_mi": False for k in _GENISLETILMIS_KOLONLAR}}
         )
         girdi["kalori"] += (m.get("kalori") or 0) * oran
         girdi["protein"] += (m.get("protein") or 0) * oran
@@ -216,7 +227,10 @@ def _tarif_detaylarini_getir(isletme_id):
             girdi["gi_agirlikli"] += gi * karb
             girdi["gi_karb_toplam"] += karb
         for kolon in _GENISLETILMIS_KOLONLAR:
-            girdi[kolon] += (m.get(kolon) or 0) * oran
+            deger = m.get(kolon)
+            if deger is not None:
+                girdi[kolon] += deger * oran
+                girdi[f"{kolon}_var_mi"] = True
 
         malzeme_id = kalem["malzeme_id"]
         fiyat = fiyat_by_malzeme.get(malzeme_id)
@@ -237,7 +251,7 @@ def _tarif_detaylarini_getir(isletme_id):
             "yag": v["yag"], "karbonhidrat": v["karbonhidrat"], "gi": gi,
             "maliyet_eur": v["maliyet_eur"], "tam_fiyatli": v["tam_fiyatli"],
             "eksik_malzemeler": v["eksik_malzemeler"], "alerjenler": v["alerjenler"],
-            **{k: v[k] for k in _GENISLETILMIS_KOLONLAR},
+            **{k: (v[k] if v[f"{k}_var_mi"] else None) for k in _GENISLETILMIS_KOLONLAR},
         }
     return sonuc, fiyat_verisi_var
 
@@ -245,6 +259,10 @@ def _tarif_detaylarini_getir(isletme_id):
 def _ogun_toplami(tarif_adlari, detay):
     toplam = {"kalori": 0.0, "protein": 0.0, "yag": 0.0, "karbonhidrat": 0.0, "maliyet_eur": 0.0,
               **{k: 0.0 for k in _GENISLETILMIS_KOLONLAR}}
+    # Ayni "veri var mi" ayrimi burada da gerekli -- meal'deki HICBIR
+    # tarif belirli bir besin ogesi icin veri tasimiyorsa, o ogenin
+    # ogun toplami "0" degil None olmali (bkz. yukaridaki not).
+    genisletilmis_var_mi = {k: False for k in _GENISLETILMIS_KOLONLAR}
     gi_agirlikli = 0.0
     gi_karb_toplam = 0.0
     tam_fiyatli = True
@@ -269,6 +287,10 @@ def _ogun_toplami(tarif_adlari, detay):
             deger = b.get(kolon)
             if deger is not None:
                 toplam[kolon] += deger
+                genisletilmis_var_mi[kolon] = True
+    for kolon in _GENISLETILMIS_KOLONLAR:
+        if not genisletilmis_var_mi[kolon]:
+            toplam[kolon] = None
     toplam["gi"] = round(gi_agirlikli / gi_karb_toplam) if gi_karb_toplam > 0 else None
     toplam["tam_fiyatli"] = tam_fiyatli
     toplam["eksik_malzemeler"] = eksik_malzemeler
@@ -360,7 +382,8 @@ def _isletme_receteler_ve_detay_getir(isletme_id):
             recete_id, {"kalori": 0.0, "protein": 0.0, "yag": 0.0, "karbonhidrat": 0.0,
                         "gi_agirlikli": 0.0, "gi_karb_toplam": 0.0, "maliyet_eur": 0.0,
                         "tam_fiyatli": True, "eksik_malzemeler": set(), "alerjenler": set(),
-                        **{k: 0.0 for k in _GENISLETILMIS_KOLONLAR}}
+                        **{k: 0.0 for k in _GENISLETILMIS_KOLONLAR},
+                        **{f"{k}_var_mi": False for k in _GENISLETILMIS_KOLONLAR}}
         )
         girdi["kalori"] += (m.get("kalori") or 0) * oran
         girdi["protein"] += (m.get("protein") or 0) * oran
@@ -372,7 +395,10 @@ def _isletme_receteler_ve_detay_getir(isletme_id):
             girdi["gi_agirlikli"] += gi * karb
             girdi["gi_karb_toplam"] += karb
         for kolon in _GENISLETILMIS_KOLONLAR:
-            girdi[kolon] += (m.get(kolon) or 0) * oran
+            deger = m.get(kolon)
+            if deger is not None:
+                girdi[kolon] += deger * oran
+                girdi[f"{kolon}_var_mi"] = True
 
         malzeme_id = kalem["malzeme_id"]
         fiyat = fiyat_by_malzeme.get(malzeme_id)
@@ -411,7 +437,7 @@ def _isletme_receteler_ve_detay_getir(isletme_id):
             "yag": v["yag"] / porsiyon, "karbonhidrat": v["karbonhidrat"] / porsiyon, "gi": gi,
             "maliyet_eur": v["maliyet_eur"] / porsiyon, "tam_fiyatli": v["tam_fiyatli"],
             "eksik_malzemeler": v["eksik_malzemeler"], "alerjenler": v["alerjenler"],
-            **{k: v[k] / porsiyon for k in _GENISLETILMIS_KOLONLAR},
+            **{k: (v[k] / porsiyon if v[f"{k}_var_mi"] else None) for k in _GENISLETILMIS_KOLONLAR},
         }
 
     return tarif_listesi, detay, fiyat_verisi_var

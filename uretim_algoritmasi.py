@@ -74,18 +74,37 @@ def _uyumlu_mu(etiket_kumesi):
 def ogun_besin_toplami(t1, t2, t3):
     """3 tarifin toplam kalori/protein/yag/karbonhidrat'ini ve
     karbonhidrata-agirlikli ortalama glisemik indeksini hesaplar.
-    Tariflerde besin alanlari yoksa (None/eksik) 0 sayilir."""
+    Temel 4 alan (kalori/protein/yag/karbonhidrat) icin veri eksikligi
+    0 sayilir (bu alanlar pratikte her zaman doludur). ANCAK 27
+    genisletilmis besin ogesi (vitamin/mineral) icin bu VARSAYIM
+    GECERLI DEGIL -- katalogumuzda birçok malzemede hala eksik veri
+    var (ör. B7/Biyotin). Bir tarifte o ogeye dair HICBIR malzeme veri
+    icermiyorsa deger None olarak geliyor (bkz. 0_Yillik_Menu.py'deki
+    ayni duzeltme) -- burada da 3 tarifin UCU de None ise toplam None
+    kalmali, aksi halde yanlislikla '0 < hedef min' diyerek gecerli
+    kombinasyonlar reddediliyordu (13 Agustos 2026 duzeltmesi)."""
+    TEMEL_4 = ("kalori", "protein", "yag", "karbonhidrat")
     toplam = {k: 0.0 for k in BESIN_ANAHTARLARI}
+    genisletilmis = [k for k in BESIN_ANAHTARLARI if k not in TEMEL_4]
+    var_mi = {k: False for k in genisletilmis}
     gi_agirlikli = 0.0
     gi_karb_toplam = 0.0
     for t in (t1, t2, t3):
-        for k in BESIN_ANAHTARLARI:
+        for k in TEMEL_4:
             toplam[k] += t.get(k) or 0
+        for k in genisletilmis:
+            deger = t.get(k)
+            if deger is not None:
+                toplam[k] += deger
+                var_mi[k] = True
         gi = t.get("gi")
         karb = t.get("karbonhidrat") or 0
         if gi is not None and karb > 0:
             gi_agirlikli += gi * karb
             gi_karb_toplam += karb
+    for k in genisletilmis:
+        if not var_mi[k]:
+            toplam[k] = None
     toplam["gi"] = (gi_agirlikli / gi_karb_toplam) if gi_karb_toplam > 0 else None
     return toplam
 
