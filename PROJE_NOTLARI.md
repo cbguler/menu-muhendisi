@@ -3433,3 +3433,129 @@ _kisa_ad) izole Python ile dogru sonuc verdigi test edildi. Tam
 Streamlit render'i canli ortamda henuz denenmedi.
 
 **Dosya durumu:** pages/0_Yillik_Menu.py guncellendi.
+
+### 13 Ağustos 2026 — XI. Oturum (devam): "Veri Yok" Notu Eklendi + Öncelik Sorgusu Hazırlandı
+
+Kullanıcının "Tüm besin değerlerini gör" ile bazı kategorilerin (Diğer/
+Vitaminler/Mineraller) tamamen bos gorunmesi bildirimi -- SQL ile
+DOGRULANDI: bu bir kod hatasi DEGIL, gercek bir veri bosluğu (564
+malzemeden sadece 68'inde Vitamin C, 195'inde Kalsiyum, 194'unde
+Demir var). O gunun 6 yemeginin malzemeleri, bu ozel besin ogelerini
+hic icermeyen malzemelerden (tuz, yag, baharat gibi) olusmus.
+
+**1) Uygulandi -- "veri yok" notu:** `_tablo_satirlari_yaz` artik
+GERCEK veri yazip yazmadigini (True/False) donduruyor -- hicbir deger
+yoksa sessizce bos birakmak yerine acikca "Bu değerler için veri yok
+(seçilen yemeklerin malzemelerinde henüz ölçülmemiş)" notu gosteriyor.
+
+**2) Devam ediyor -- oncelik sorgusu hazirlandi:** Hangi malzemelerin
+EN COK tarifte kullanildigini (yuksek etki) AMA en cok temel besin
+ogesi (VitC/Kalsiyum/Demir/VitA/Potasyum) eksik oldugunu bulan bir
+sorgu (`oncelik_eksik_malzemeler.sql`) olusturuldu -- sonuc kullaniciya
+sorulacak, sonra bu listedeki malzemeler icin arastirma/doldurma
+devam edecek.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py guncellendi,
+sql/teshis_popup_besin_bos.sql ve sql/oncelik_eksik_malzemeler.sql
+(yeni, sadece teshis/oncelik amacli, veritabanini degistirmiyor).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Öncelikli 6 Malzeme Tamamlandı (İsot Bulunamadı)
+
+Kullanıcının paylaştığı öncelik sorgusu sonucundan (40 satırın ilk 7'si
+görünür durumdaydı) 6 tanesi tamamlandı:
+
+- PATLICAN, KESTANE, NAR EKŞİSİ (Gaziantep) -- TürKomp'tan gerçek veri.
+- MISIR NİŞASTASI -- TürKomp'tan.
+- İNCE BULGUR -- TürKomp'ta tam "ince/köftelik" varyantı yok, en yakın
+  mevcut eşdeğer ("Bulgur, pilavlık, Gaziantep") kullanıldı.
+- YEŞİL BİBER -- USDA'dan ("Peppers, sweet, green, raw") -- TürKomp'ta
+  sadece kırmızı/sarı "California Wonder" tipi bulundu, yeşil yoktu.
+
+**İSOT bulunamadı:** Gerçek bir akademik kaynak (Korkmaz ve ark. 2016,
+Harran Tarım ve Gıda Bilimleri Dergisi) bulundu ve tam metni okundu --
+ama bu makale SADECE renk/nem/pH/su aktivitesi özelliklerini ölçmüş,
+besin değeri (protein/vitamin/mineral) verisi HİÇ YOK. Diğer kaynaklar
+(kaç-kalori siteleri, bloglar) güvenilir olmadığı için kullanılmadı.
+İşlenmedi, boş bırakıldı.
+
+**Kalan ~33 satır** (öncelik sorgusunun geri kalanı) kullanıcıdan
+bekleniyor -- ekran görüntüsü/kaydırma ile paylaşılırsa devam edilecek.
+
+**Dosya durumu:** sql/69_oncelikli_malzemeler_besin_degeri.sql (yeni).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): 32 YÜKSEK ETKİLİ Malzeme Tamamlandı (Excel'den Tam Öncelik Listesi)
+
+Kullanıcı öncelik sorgusunun TAM sonucunu (40 satır) bir Excel dosyası
+(SQL.xlsx) olarak paylaştı -- pandas ile doğrudan okundu. Bu, en
+yüksek etkili malzemeleri ortaya çıkardı (TUZ 128 tarifte, KURU SOĞAN
+79, TEREYAĞI 74, ZEYTİNYAĞI 71 gibi).
+
+**32 malzeme tamamlandı** (30 TürKomp + 2 USDA):
+TUZ, KURU SOĞAN, TEREYAĞI, ZEYTİNYAĞI, ŞEKER, SIĞIR KIYMA (yaklaşık
+eşleşme -- but eti, gerçek kıyma değil), BUĞDAY UNU, PİRİNÇ (HAM),
+LİMON SUYU, DOMATES, SARIMSAK, YOĞURT (TAM), HAVUÇ, KARABİBER, TAVUK
+YUMURTASI, YUFKA, CEVİZ (İÇ), LİMON, NOHUT, BULGUR, TAVUK GÖĞÜS (USDA,
+derili varyant -- TürKomp'ta çiğ/derisiz bulunamadı), AYÇİÇEK YAĞI,
+KAŞAR PEYNİRİ, KONSERVE DOMATES SALÇASI, SÜT (TAM YAĞ), KIRMIZI
+MERCİMEK, KONSERVE DOMATES, LOR PEYNİRİ (USDA ricotta -- en yakın
+uluslararası eşdeğer), KUZU TANDIR (yaklaşık eşleşme -- but eti),
+PUL BİBER, KURU FASULYE, SU (neredeyse sıfır besin değeri, TürKomp'tan
+gerçek veriyle doğrulandı).
+
+**İşlenmeyenler:**
+- İSOT: hâlâ geçerli bir akademik kaynak yok (önceki turda arandı).
+- MAYDONOZ: Bahri'nin listesinde bu yazımla geçiyor ama TürKomp'ta
+  "MAYDANOZ" var (bu oturumda daha önce USDA'dan işlenmişti) --
+  yazım farkı nedeniyle bunun AYNI kalem mi yoksa veritabanında
+  GERÇEKTEN ayrı bir satır mı olduğu netleşmedi, kullanıcıya
+  sorulacak.
+
+**Dosya durumu:** sql/70_yuksek_etkili_malzemeler_besin_degeri.sql
+(yeni, 32 UPDATE içeriyor).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Maydanoz/Maydonoz Aynı Malzeme Doğrulandı, İsot Vikipedi'de de Bulunamadı
+
+Kullanıcı iki şeyi netleştirdi:
+1. İsot'un Türkçe Vikipedi sayfasını paylaştı -- doğrulandı, İsot
+   Urfa'da yetişen kırmızı acı biber türü (tanım/tarihçe/kullanım
+   alanı doğru), AMA sayfa (diğer benzer gıda maddesi sayfaları gibi)
+   hiçbir sayısal besin değeri tablosu içermiyor. İSOT hala
+   çözülemedi, boş kalmaya devam ediyor.
+2. MAYDANOZ ve MAYDONOZ'un aynı malzeme olduğunu, sadece iki farklı
+   yazım şekli olduğunu doğruladı.
+
+**Uygulandı:** Daha önce MAYDANOZ için kullanılan USDA verisi
+("Parsley, fresh") her iki yazılışa da (coalesce ile, sadece boş
+alanlara) uygulandı -- artık hangi yazılış kullanılmış olursa olsun
+veri tutarlı.
+
+**Not:** Bu, veritabanındaki olası "aynı malzemenin iki farklı
+yazımla iki kez kayıtlı olması" veri kalitesi sorununu ÇÖZMÜYOR --
+sadece her iki satırın besin değerlerini tutarlı hale getiriyor.
+Katalogun uzun vadede tek bir yazılış etrafında birleştirilmesi ayrı
+bir konu olarak ele alınabilir.
+
+**Dosya durumu:** sql/71_maydonoz_maydanoz_ayni_malzeme.sql (yeni).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): İSOT için Kullanıcı Onaylı Pul Biber Eşdeğerliği
+
+Kullanıcı, "diyetkolik.com" tipi bir kaynağı önerdi ("İsot Biberi Kaç
+Kalori?" -- 36 kcal/100g) -- Claude bunu REDDETTİ: Pul Biber (aynı
+kategoride, TürKomp'tan gerçek veri) 286 kcal/100g çıkmıştı, 36 kcal
+bunun ~1/8'i, kurutulmuş bir baharat için fiziksel olarak anlamsız;
+ayrıca kaynak/yöntem belirtilmiyor, tıpkı Salep'te reddedilen "kaç
+kalori" siteleri gibi.
+
+Kullanıcı bunun yerine kendi ürün bilgisine dayanarak PUL BİBER ile
+AYNI degerlerin kullanılmasını istedi -- "ikisi de aynı, ikisi de
+kurutulmuş pul olarak kullanılıyor, isot daha acı olanı." Bu, Claude'un
+kendi inisiyatifiyle veri uydurması DEĞİL -- kullanıcının kendi ürün
+bilgisine dayanan, gerçek bir kaynaktan (TürKomp, PUL BİBER için daha
+önce bulunan veri) türetilen bilinçli bir eşdeğerlik kararı.
+
+**Uygulandı:** PUL BİBER'in TürKomp verisi (kalori=286, protein=11.69,
+karbonhidrat=43.67, lif=32.25 -- TürKomp kaydında sadece bu 4 alan
+ölçülmüş, vitamin/mineral o kayıtta da yoktu) İSOT'a coalesce ile
+uygulandı.
+
+**Dosya durumu:** sql/72_isot_pul_biber_esdegeri.sql (yeni).
