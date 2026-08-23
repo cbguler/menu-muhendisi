@@ -2843,3 +2843,47 @@ Artık iki net kayıt var:
 
 **Dosya durumu:** kaynak_duzeltilmis_v28.xlsx (yeni),
 sql/68_kaldirik_kurutulmus_yeniden_adlandirma.sql (yeni).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Yıllık Menü — Tüm Besin Ögeleri Seçilebilir/Kısıtlanabilir Hale Getirildi
+
+Kullanıcı, malzemeler tablosunun artık 27 ek besin ögesi (vitaminler,
+mineraller vb.) içerdiğini belirterek Yıllık Menü'de bunların da kalori
+örneğindeki gibi SEÇİLEBİLİR ve hedef aralığıyla KISITLANABİLİR
+olmasını istedi -- ama hepsini otomatik göstermeden (31 satır birden
+kalabalık olurdu). Görsel/tablo düzenlemeleri ayrı, sonraki bir istek
+olarak ertelendi.
+
+**Yapılan değişiklikler:**
+
+1. `pages/0_Yillik_Menu.py`:
+   - Yeni `TUM_BESIN_ALANLARI` kataloğu: mevcut 5 (kalori/protein/yağ/
+     karbonhidrat/GI) + yeni 27 alan (sodyum, lif, şeker, doymuş yağ,
+     13 vitamin, 10 mineral) -- her biri için etiket + makul min/maks/
+     varsayılan aralık (kabaca "günlük RDA'nın öğün başına düşen payı"
+     mantığıyla, kesin bilimsel tavsiye değil, başlangıç noktası).
+   - `_tarif_detaylarini_getir` ve `_isletme_receteler_ve_detay_getir`:
+     Supabase sorgusu artık 27 yeni kolonu da çekiyor, ağırlıklı toplama
+     mantığı tüm alanlar için genelleştirildi.
+   - `_ogun_toplami`: öğün bazında toplama tüm 27 yeni alanı da kapsıyor.
+   - UI: "Öğün başına besin hedefi uygula" işaretlenince artık ÖNCE bir
+     multiselect çıkıyor ("Hedeflenecek besin değerleri", varsayılan =
+     mevcut 5) -- SADECE seçilen alanlar için öğün başına min/maks
+     girişi gösteriliyor, geri kalan 27 alan gizli kalıyor (kullanıcının
+     "hepsini göstermeden seçilebilir olsun" isteğine uygun).
+
+2. `uretim_algoritmasi.py`:
+   - `BESIN_ANAHTARLARI` sabiti 4 alandan 31 alana genişletildi.
+     `ogun_besin_toplami` ve `_hedef_saglaniyor_mu` zaten anahtar-
+     bağımsız (generic) yazıldığı için BAŞKA hiçbir değişiklik
+     gerekmedi -- sadece bu listeye eklemek yeterli oldu.
+
+**BİLİNÇLİ OLARAK DOKUNULMAYAN:** `pages/5_Tarif_Kutuphanesi.py`'deki
+benzer (dar) sorgu -- kullanıcının isteği özellikle Yıllık Menü
+kapsamındaydı, kapsam genişletilmedi.
+
+**Test edilmedi** -- kod mantıksal olarak tutarlı (sözdizimi + veri akışı
+kontrol edildi) ama gerçek ortamda (Streamlit + Supabase) henüz
+denenmedi.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py, uretim_algoritmasi.py
+(ikisi de güncellendi).

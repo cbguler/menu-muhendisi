@@ -40,7 +40,23 @@ TAMAMLAYICI = {
 }
 
 MEVSIMLER = ["kis", "ilkbahar", "yaz", "sonbahar"]
-BESIN_ANAHTARLARI = ("kalori", "protein", "yag", "karbonhidrat")
+# ON DOKUZUNCU DUZELTME (13 Agustos 2026, Oturum 11): temel 4 alanin
+# yanina, malzemeler tablosundaki 27 genisletilmis besin ogesi de
+# eklendi -- kullanicinin Yillik Menu'de bunlari da SECEREK
+# hedefleyebilmesi icin (bkz. pages/0_Yillik_Menu.py TUM_BESIN_ALANLARI).
+# ogun_besin_toplami ve _hedef_saglaniyor_mu zaten anahtar-bagimsiz
+# (generic) yazildigi icin bu listeye eklemek yeterli, baska bir
+# degisiklik gerekmiyor.
+BESIN_ANAHTARLARI = (
+    "kalori", "protein", "yag", "karbonhidrat",
+    "sodyum_mg", "lif_g", "seker_g", "doymus_yag_g",
+    "vitamin_a_mcg", "vitamin_b1_mg", "vitamin_b2_mg", "vitamin_b3_mg",
+    "vitamin_b5_mg", "vitamin_b6_mg", "vitamin_b7_mcg", "vitamin_b9_mcg",
+    "vitamin_b12_mcg", "vitamin_c_mg", "vitamin_d_mcg", "vitamin_e_mg",
+    "vitamin_k_mcg", "kalsiyum_mg", "demir_mg", "magnezyum_mg",
+    "potasyum_mg", "cinko_mg", "fosfor_mg", "bakir_mg", "manganez_mg",
+    "selenyum_mcg", "iyot_mcg",
+)
 
 
 def _uyumlu_mu(etiket_kumesi):
