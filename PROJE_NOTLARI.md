@@ -2657,3 +2657,101 @@ bizim listemizde zaten yok/farklı isimlerle var.
 
 **Dosya durumu:** kaynak_duzeltilmis_v21.xlsx (yeni). SQL migration
 henüz oluşturulmadı.
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Isırgan (Selenyum) ve Çiriş (B6/B9) Tamamlandı
+
+Kullanıcı "başka kaynaklara da bak, ısırgan otunu da araştır" dedi.
+
+**ISIRGAN:** USDA'da "Stinging Nettles, blanched" bulundu -- ama genel
+profili (kalori/Ca/Fe/K/VitA) bizim mevcut ISIRGAN verimizden (TürKomp
+kaynaklı, farklı tür/hazırlama) belirgin farklı çıktı (ör. Fe 13.14 vs
+1.64 mg/100g). Sadece gerçekten BOŞ olan Selenyum (0.3 mcg/100g)
+yazıldı, diğerlerine dokunulmadı.
+
+**ÇİRİŞ tamamlandı:** Karataş ve ark. (2011, SDU Journal of Science)
+-- TAZE örnekten HPLC ölçümü (metinde "taze çiriş otu örneklerinde"
+diye açıkça doğrulandı, ilk aktarımda μg/g mü mg/g mi olduğu
+belirsizdi, orijinal PDF'ten µg/g olduğu kesinleştirildi). Sadece B6
+(2.197 mg/100g) ve B9 (820 mcg/100g) yazıldı -- B1/B2/B3/VitC zaten
+TürKomp'tan doluydu.
+
+**Diğer Ege otları araştırması:** Çolakoğlu&Bilgir (1977, 1978) --
+sarmaşık/stifno/helvacık/deniz börülcesi/ısırgan/gelincik üzerine --
+aranıp bulunamadı (muhtemelen 1970'ler dönemine ait, dijitalleştirilmemiş).
+
+**Excel:** `kaynak_duzeltilmis_v23.xlsx` (yeni, v21'in yerini alıyor).
+
+**Kalan yabani otlar (~13):** KARAMUK, ÇOBAN ÇANTASI, KARAYEMİŞ,
+KUZUKEMİRDİ, ÇÖVEN, DOLAMBAÇ, ECİBÜCÜ, GELEBORU, HELEVAN, KALDIRIK,
+KAYA KORUĞU, KAYMACIK, KEÇİ AYAĞI, ZİNGİT.
+
+**Dosya durumu:** kaynak_duzeltilmis_v23.xlsx (yeni),
+sql/64_isirgan_ve_ciris_akademik_veri.sql (yeni).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): KARAYEMİŞ Araştırması — Taban Belirsizliği Nedeniyle Ertelendi
+
+Kullanıcı "kalanları da bul" dedi, KARAYEMİŞ için araştırma yapıldı.
+
+**Bulunan (ama YAZILMAYAN) veri:** Kalyoncu, Ersoy, Elidemir, Dolek (2013).
+"Mineral and Some Physico-Chemical Composition of Karayemis (Prunus
+laurocerasus L.) Fruits Grown in Northeast [Turkey]". World Academy
+of Science, Engineering and Technology, 7(6):430-433 -- K, P, Ca, Na,
+Mg, S, Fe, Mn, Zn, Cu, Se, Cr, B, Li, Sr, Al, Ni, V mineral profili
+(ppm cinsinden, Bursa Uludağ Üniversitesi tezi Çizelge 2.2'de
+aktarılmış).
+
+**NEDEN YAZILMADI -- taban (fresh/kuru) belirsizliği:** Aynı tezin
+komşu tablosu (Çizelge 2.1, Ergüney ve ark. 2017 -- şeker/fenolik/yağ
+asitleri) AÇIKÇA "kuru ağırlık üzerinden" diyor, ama mineral tablosu
+(Çizelge 2.2) bu ibareyi TEKRARLAMIYOR. Orijinal Kalyoncu 2013
+makalesinin tam metnine (sadece ikincil aktarım bulundu, orijinal
+makale erişilemedi) ulaşılamadan hangi tabanda olduğu kesinleştirilemedi.
+Kullanıcının "gerçek kaynak + kesin taban olmadan yazma" kuralına göre
+YAZILMADI, ertelendi.
+
+**Durum:** Bu, gerçekten büyük bir araştırma turu oldu (Karayemiş,
+Çiriş, Işırgan, Ebegümeci, Madımak dahil çok sayıda kaynak tarandı).
+Kalan yaklaşık 12-13 yabani ot (KARAMUK, ÇOBAN ÇANTASI, KUZUKEMİRDİ,
+ÇÖVEN, DOLAMBAÇ, ECİBÜCÜ, GELEBORU, HELEVAN, KALDIRIK, KAYA KORUĞU,
+KAYMACIK, KEÇİ AYAĞI, ZİNGİT) için araştırma devam edecek, artı
+KARAYEMİŞ'in taban belirsizliği çözülecek.
+
+**Dosya durumu:** değişiklik yok (bu turda hiçbir veri yazılmadı,
+sadece araştırma yapıldı).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): 10 Yabani Ot TürKomp'ta Doğrudan Bulundu (Ama Zaten Doluymuş)
+
+Kullanıcı GELEBORU->GİLABURU yeniden adlandırmasını onayladı, kurutulmuş
+verinin (tazesi kullanıldığı teyit edilerek) ayrı malzeme olarak
+eklenmesini istedi.
+
+**GİLABURU + 2 YENİ "KURUTULMUŞ" malzeme (560->562):**
+- GELEBORU -> GİLABURU olarak yeniden adlandırıldı (daha yaygın isim).
+- KARAYEMİŞ (KURUTULMUŞ) ve GİLABURU (KURUTULMUŞ) yeni malzeme olarak
+  eklendi -- Kalyoncu ve ark. (2013) ve Taşkın ve ark. (2019)'dan,
+  ikisi de metinde "kurutulmuş" olduğu doğrulanan mineral verileriyle.
+  Tazeleri (KARAYEMİŞ, GİLABURU) zaten TürKomp'tan mevcut olduğu için
+  fresh kullanımı teyit edilmiş sayıldı, ayrıca araştırma gerekmedi.
+
+**10 yabani ot TürKomp'ta DOĞRUDAN bulundu** (KEÇİ AYAĞI, KAYA KORUĞU,
+KUZUKEMİRDİ, KAYMACIK, ÇOBAN ÇANTASI, KARAMUK, HELEVAN, DOLAMBAÇ,
+ECİBÜCÜ, ZİNGİT) -- ama hepsinin ZATEN TürKomp kaynaklı tam verisi
+vardı (muhtemelen çok daha önceki bir eşleştirme aşamasından). Yeni
+çekilen veri, mevcut veriyle BİREBİR AYNI çıktı -- HİÇBİR YENİ KOLON
+YAZILMADI (doğrulandı, 3 örnekle kontrol edildi). Gerçekten eksik olan
+alanlar (Bakır, Manganez) TürKomp'un KENDİSİNDE bu bitkiler için HİÇ
+ÖLÇÜLMEMİŞ -- bu bir veri kaybı değil, kaynağın kendi sistemik
+eksikliği.
+
+**Kalan gerçek boşluk:** Sadece ÇÖVEN ve KALDIRIK için TürKomp'ta
+sayfa bulunamadı (arandı, yok). Bunlar + yukarıdaki 10 malzemenin
+Bakır/Manganez alanları için USDA çapraz kontrolü denenebilir
+(bazıları -- Keçi Ayağı/Ground Elder, Çoban Çantası/Shepherd's Purse
+-- İngilizce karşılığı olan bitkiler, USDA'da bulunabilir).
+
+**Excel:** `kaynak_duzeltilmis_v25.xlsx` (yeni, v24 ile aynı veri
+içeriği -- bu turda hiçbir yeni değer yazılmadı, sadece isim/malzeme
+eklemeleri v24'te zaten yapılmıştı).
+
+**Dosya durumu:** kaynak_duzeltilmis_v25.xlsx (yeni). SQL migration
+GİLABURU rename + 2 kurutulmuş malzeme için hazırlanacak.
