@@ -3195,3 +3195,49 @@ Kullanicinin cevabi BEKLENIYOR -- henuz kod yazilmadi.
 
 **Dosya durumu:** pages/0_Yillik_Menu.py guncellendi (gecmis tarih
 uyarisi).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Kartlar Pop-up'a Dönüştürüldü (Animasyonlu Çevirme)
+
+Kullanıcı kartların pop-up pencere gibi açılmasını, içeride animasyonlu
+çevirme (ön yüz=yemekler, arka yüz=besin verileri) olmasını istedi.
+
+**Uygulanan mimari:** Streamlit'in yerleşik `st.dialog()` bileşeni
+kullanıldı (surum >=1.38'de mevcut, ilk kez kullanılıyor).
+
+- Izgara kartı artık HER ZAMAN kapalı/sabit boyutta (gün adı + tarih +
+  2 nokta) -- önceki "yerinde büyüme" (dinamik sütun oranı) mantığı
+  TAMAMEN kaldırıldı, artık gerek yok, çünkü kartlar artık ızgarada
+  büyümüyor, pop-up açılıyor.
+- Başlığa tıklanınca `st.session_state["yillik_menu_popup_gun_id"]`
+  ayarlanıp `_gun_popup_dialog()` (bir `@st.dialog` fonksiyonu)
+  tetikleniyor.
+- Pop-up içinde ön yüz (yemek listesi, GERÇEK st.page_link ile) / arka
+  yüz (besin/maliyet/hedef, IBM Plex Mono) arasında "cevir" butonuyla
+  geçiş yapılabiliyor.
+- **Animasyon çözümü:** Streamlit'in rerun modeli kalıcı bir CSS
+  transition'ı güvenilir kılmadığı için, "montaj-anlı animasyon" hilesi
+  kullanıldı -- ön/arka yüz her değiştiğinde container key'i de
+  değişiyor (popupgovde_on_ vs popupgovde_arka_), bu yüzden tarayıcı
+  onu HER SEFERINDE yeni bir eleman olarak görüp CSS @keyframes
+  (omgoFlipOn / omgoFlipArka, rotateY + opacity) animasyonunu güvenilir
+  şekilde her çevirmede yeniden oynatıyor.
+
+**AÇIKÇA BELİRTİLEN KISIT:** Pop-up'ın KAPANMASI (X butonu / dışına
+tıklama) Streamlit'in kendi standart davranışını kullanıyor -- kartın
+ızgaradaki tam konumuna "küçülerek geri dönmesi" gibi özel bir kapanış
+animasyonu st.dialog ile YAPILAMIYOR (Streamlit bu seviyede özel
+pozisyon kontrolü sunmuyor), kullanıcıya bu açıkça iletildi.
+
+**Ek güvenlik:** Pop-up'ın sadece ilk tıklamada değil her rerun'da
+(örn. içindeki "çevir" butonuna basıldığında) doğru şekilde açık
+kalması için, session_state kontrolü HER döngüde açıkça yapılıyor --
+Streamlit'in "bir kez çağrılınca kendiliğinden hatırlar" davranışına
+körü körüne güvenmek yerine.
+
+**Temizlik:** Artık kullanılmayan `_dish_kutu_yuksekligi_hesapla`
+fonksiyonu kaldırıldı (pop-up'ta sabit yükseklik kısıtı yok).
+
+**Test durumu:** st.dialog canlı ortamda hiç denenmedi (sandbox'ta
+Streamlit kurulu değil) -- ilk canlı testte davranış doğrulanmalı.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py güncellendi (1058 satır).

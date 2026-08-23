@@ -713,22 +713,6 @@ def _hedefte_mi(ogun_adi, t, hedefler):
     return True
 
 
-def _dish_kutu_yuksekligi_hesapla(tarif_adlari, karakter_basina_px=7, satir_yuksekligi=30, taban_px=12):
-    """Bir gunun yemek adi listesi icin GERCEK metne dayali yukseklik tahmini
-    -- global bir sabit (onceki 240px) yerine, o haftanin o ogunundeki EN
-    UZUN gunun ihtiyacina gore hesaplaniyor. Boylece kisa listeli gunlerde
-    bosluk kalmiyor, uzun listeli gunlerde de tasma olmuyor. Sutun genisligi
-    ekrana gore degisebildigi icin bu yine de bir TAHMIN -- karakter_basina_px
-    ve satir_yuksekligi degerleri tipik masaustu genisligi icin ayarlandi,
-    cok dar/genis ekranlarda hafif sapma olabilir."""
-    sutun_karakter_kapasitesi = 22  # tek satira sigan yaklasik karakter sayisi
-    toplam = taban_px
-    for ad in tarif_adlari:
-        satir_sayisi = max(1, -(-len(ad) // sutun_karakter_kapasitesi))
-        toplam += satir_yuksekligi * satir_sayisi
-    return toplam
-
-
 def _yillik_menu_tasarim_stilini_uygula():
     """YIRMINCI DUZELTME (13 Agustos 2026, Oturum 11): kullanicinin
     onayladigi kart-tasarim mockup'ini (tasarim_onizleme.html) GERCEK
@@ -754,10 +738,7 @@ def _yillik_menu_tasarim_stilini_uygula():
     div[class*="st-key-kartarka_"] * { color: #EDE6D6 !important; }
     div[class*="st-key-baslik_"] button { width: 100%; background: transparent !important; border: none !important; border-bottom: 2px solid #C88A2E !important; border-radius: 0 !important; padding: 14px 16px 10px !important; text-align: left !important; box-shadow: none !important; white-space: pre-line !important; line-height: 1.35 !important; }
     div[class*="st-key-baslik_"] button p { font-family: 'Fraunces', serif !important; font-size: 19px !important; font-weight: 600 !important; color: #2B2320 !important; white-space: pre-line !important; line-height: 1.35 !important; }
-    div[class*="st-key-baslikarka_"] button { width: 100%; background: transparent !important; border: none !important; border-bottom: 2px solid #C88A2E !important; border-radius: 0 !important; padding: 14px 16px 10px !important; text-align: left !important; box-shadow: none !important; white-space: pre-line !important; line-height: 1.35 !important; }
-    div[class*="st-key-baslikarka_"] button p { font-family: 'Fraunces', serif !important; font-size: 17px !important; font-weight: 600 !important; color: #EDE6D6 !important; white-space: pre-line !important; line-height: 1.35 !important; }
     div[class*="st-key-cevir_"] button { background: transparent !important; border: none !important; box-shadow: none !important; color: #A99B8A !important; font-size: 12px !important; padding: 2px 16px !important; }
-    div[class*="st-key-govde_"] { padding: 4px 16px 0; }
     .omgo-ogun-etiket { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; margin: 6px 0 6px; }
     .omgo-ogle { background: #F7EBD8; color: #7A531C; }
     .omgo-aksam { background: #E7ECF1; color: #2E4057; }
@@ -766,8 +747,14 @@ def _yillik_menu_tasarim_stilini_uygula():
     .omgo-veri-tablo td:last-child { text-align: right; font-weight: 500; }
     .omgo-veri-bolum { font-family: Inter, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #C88A2E; margin: 10px 0 3px; }
     .omgo-hedef-rozet { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px; margin-top: 6px; }
-    .omgo-hedefte { background: rgba(91,117,83,0.30); color: #C3DAB8 !important; }
-    .omgo-hedefdisi { background: rgba(166,71,47,0.30); color: #F0C4B5 !important; }
+    .omgo-hedefte { background: rgba(91,117,83,0.30); color: #1B4D1B !important; }
+    .omgo-hedefdisi { background: rgba(166,71,47,0.30); color: #6B2314 !important; }
+    @keyframes omgoFlipOn { from { transform: rotateY(90deg); opacity: 0; } to { transform: rotateY(0deg); opacity: 1; } }
+    @keyframes omgoFlipArka { from { transform: rotateY(-90deg); opacity: 0; } to { transform: rotateY(0deg); opacity: 1; } }
+    div[class*="st-key-popupgovde_on_"] { animation: omgoFlipOn 0.45s ease; transform-style: preserve-3d; }
+    div[class*="st-key-popupgovde_arka_"] { background: #3D2A3B; border-radius: 10px; padding: 12px 16px; animation: omgoFlipArka 0.45s ease; transform-style: preserve-3d; }
+    div[class*="st-key-popupgovde_arka_"] * { color: #EDE6D6 !important; }
+    div[class*="st-key-popupgovde_arka_"] .omgo-veri-bolum { color: #C88A2E !important; }
     </style>
     """
     # ONEMLI: Markdown, 4+ BOSLUKLA BASLAYAN HER SATIRI "kod blogu" sayip
@@ -783,64 +770,117 @@ def _yillik_menu_tasarim_stilini_uygula():
     css_temiz = "\n".join(satir.lstrip() for satir in css_govdesi.split("\n"))
     st.markdown(css_temiz, unsafe_allow_html=True)
 
+def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id):
+    """Pop-up icindeki ON YUZ (yemek listesi) / ARKA YUZ (besin verileri)
+    icerigini, mevcut cevirme durumuna gore cizer. Her cagrildiginda
+    (on yuz <-> arka yuz gecisinde) container key'i degistigi icin
+    (bkz. asagida "popupgovde_on_" / "popupgovde_arka_") tarayici bunu
+    HER SEFERINDE YENI bir eleman olarak görür ve CSS @keyframes
+    animasyonu (omgoFlipOn / omgoFlipArka) guvenilir sekilde HER
+    cevirmede yeniden calisir -- Streamlit'in script-yeniden-calistirma
+    modelinde surekli/kalici bir CSS transition yerine bu "montaj-anli
+    animasyon" yaklasimi tercih edildi (13 Agustos 2026)."""
+    yuz_key = "yillik_menu_popup_yuz"
+    st.session_state.setdefault(yuz_key, "on")
+
+    if st.session_state[yuz_key] == "on":
+        with st.container(key=f"popupgovde_on_{card_id}"):
+            for ogun_adi, tarif_adlari in gun["ogunler"].items():
+                etiket_sinif = "omgo-ogle" if ogun_adi == "Öğle" else "omgo-aksam"
+                st.markdown(
+                    f"<span class='omgo-ogun-etiket {etiket_sinif}'>{ogun_adi}</span>",
+                    unsafe_allow_html=True,
+                )
+                for ad in tarif_adlari:
+                    st.page_link(
+                        "pages/5_Tarif_Kutuphanesi.py", label=ad,
+                        query_params={"tarif": ad}, use_container_width=True,
+                    )
+            st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
+            with st.container(key=f"cevir_{card_id}"):
+                if st.button("◤ Besin değerlerini gör", key=f"btn_cevir_{card_id}", use_container_width=True):
+                    st.session_state[yuz_key] = "arka"
+                    st.rerun()
+    else:
+        with st.container(key=f"popupgovde_arka_{card_id}"):
+            for ogun_adi, tarif_adlari in gun["ogunler"].items():
+                t = _ogun_toplami(tarif_adlari, detay)
+                gi_metin = f"{round(t['gi'])}" if t["gi"] is not None else "-"
+                st.markdown(f"<div class='omgo-veri-bolum'>{ogun_adi} — Makro</div>", unsafe_allow_html=True)
+                st.markdown(
+                    "<table class='omgo-veri-tablo'>"
+                    f"<tr><td>Kalori</td><td>{round(t['kalori'])} kcal</td></tr>"
+                    f"<tr><td>Protein</td><td>{round(t['protein'])} g</td></tr>"
+                    f"<tr><td>Yağ</td><td>{round(t['yag'])} g</td></tr>"
+                    f"<tr><td>Karbonhidrat</td><td>{round(t['karbonhidrat'])} g</td></tr>"
+                    f"<tr><td>Glisemik İndeks</td><td>{gi_metin}</td></tr>"
+                    "</table>",
+                    unsafe_allow_html=True,
+                )
+                alerjen_metin = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
+                if not fiyat_verisi_var:
+                    maliyet_metin = "-"
+                elif t["tam_fiyatli"]:
+                    maliyet_metin = f"{t['maliyet_eur']:.2f} €"
+                else:
+                    eksik_liste = ", ".join(sorted(t["eksik_malzemeler"]))
+                    maliyet_metin = f"≈{t['maliyet_eur']:.2f} € (eksik: {eksik_liste})"
+                st.markdown(
+                    "<table class='omgo-veri-tablo'>"
+                    f"<tr><td>Maliyet</td><td>{maliyet_metin}</td></tr>"
+                    f"<tr><td>Alerjen</td><td>{alerjen_metin}</td></tr>"
+                    "</table>",
+                    unsafe_allow_html=True,
+                )
+                hedefte = _hedefte_mi(ogun_adi, t, hedefler)
+                if hedefte is True:
+                    st.markdown("<span class='omgo-hedef-rozet omgo-hedefte'>Hedefte</span>", unsafe_allow_html=True)
+                elif hedefte is False:
+                    st.markdown("<span class='omgo-hedef-rozet omgo-hedefdisi'>Hedef dışı</span>", unsafe_allow_html=True)
+            st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
+            with st.container(key=f"cevir_{card_id}"):
+                if st.button("◤ Yemekleri gör", key=f"btn_cevir2_{card_id}", use_container_width=True):
+                    st.session_state[yuz_key] = "on"
+                    st.rerun()
+
+
+@st.dialog("Gün Detayı", width="large")
+def _gun_popup_dialog(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni):
+    st.markdown(
+        f"<div style='font-family:Fraunces,serif; font-size:22px; font-weight:600; "
+        f"color:#2B2320; white-space:pre-line; margin-bottom:8px;'>{baslik_metni}</div>",
+        unsafe_allow_html=True,
+    )
+    _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id)
+
+
 def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, hafta_no):
     """Haftayi GUN BASINA BIR KART olarak render eder -- kullanicinin
-    onayladigi mockup tasarimina gore (bkz. tasarim_onizleme.html).
-    Her kart 3 durumdan birinde: (1) KAPALI -- sadece gun adi + tarih +
-    iki kucuk nokta; (2) ACIK/ON YUZ -- Ogle/Aksam yemek listeleri,
-    GERCEK st.page_link widget'lariyla (Tarif Kutuphanesi'ne tiklanabilir
-    olmasi icin -- ham HTML <a> Streamlit'te guvenilmez); (3) ACIK/ARKA
-    YUZ -- tum besin/maliyet/hedef verileri, IBM Plex Mono ile.
+    onayladigi mockup tasarimina gore (bkz. tasarim_onizleme.html), ama
+    YIRMI UCUNCU DUZELTME (13 Agustos 2026) ile ARTIK POP-UP tabanli:
+    ızgaradaki kart HER ZAMAN kapali/sabit boyutta kalir (gun adi +
+    tarih + 2 nokta) -- baslik tiklaninca, Streamlit'in yerlesik
+    st.dialog() bileseniyle GERCEK bir pop-up penceresi acilir. Pop-up
+    icinde ON YUZ (yemek listeleri, GERCEK st.page_link ile) / ARKA
+    YUZ (besin/maliyet/hedef verileri) arasinda "cevirme" animasyonlu
+    gecis yapilabilir (bkz. _gun_popup_govdesini_ciz).
 
-    NOT: Streamlit'in script-yeniden-calistirma modeli, saf CSS 3D
-    donme animasyonunun rerun sinirini asip kalici olarak calismasini
-    guvenilir kilmiyor (her tiklama tum sayfayi yeniden ciziyor) -- bu
-    yuzden 'donme' burada bir ANIMASYON degil, bir DURUM DEGISIMI (on
-    yuz <-> arka yuz icerigi yer degistiriyor). Gorsel dil (renkler,
-    yazi tipleri, kivrik-kose ipucu metni) mockup'takiyle ayni, sadece
-    hareket bir cerceve-atlamasi (rerun) ile gerceklesiyor, kesintisiz
-    donme degil -- kullaniciya net bir sekilde boyle iletildi."""
+    ONEMLI, KULLANICIYA ACIKCA BELIRTILEN KISIT: pop-up'in KAPANMASI
+    (X butonu / disina tiklama) Streamlit'in kendi standart kapanis
+    davranisini kullanir -- kartin ekrandaki izgara konumuna "kuculerek
+    geri donmesi" gibi ozel bir kapanis animasyonu st.dialog ile
+    YAPILAMAZ (Streamlit bu seviyede ozel pozisyon/animasyon kontrolu
+    sunmuyor), bu acikca boyle birakildi."""
     _yillik_menu_tasarim_stilini_uygula()
-
-    ogun_adlari = list(hafta[0]["ogunler"].keys()) if hafta else []
-    dish_yukseklikleri = {
-        ogun_adi: max(
-            _dish_kutu_yuksekligi_hesapla(gun["ogunler"][ogun_adi]) for gun in hafta
-        )
-        for ogun_adi in ogun_adlari
-    }
 
     GUN_ADLARI = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"]
 
-    # Her gunun session_state anahtarlarini ONCEDEN (kolonlar olusmadan
-    # once) hazirla -- boylece (a) hangi gunun acik oldugunu bilip
-    # SUTUN GENISLIK ORANINI ona gore ayarlayabiliriz (st.columns sabit
-    # esit genislik yerine bir ORAN LISTESI de kabul eder -- ör.
-    # [1,1,1,3,1,1,1], acik gune 3 kat yer verir; mockup'taki CSS Grid
-    # "span 3" davranisinin Streamlit karsiligi budur), (b) bir kart
-    # acilirken AYNI HAFTADAKI digerlerini kapatabiliriz (mockup'taki
-    # "tek seferde sadece bir kart acik" davranisi -- bu ONCEDEN
-    # yapilmazsa birden fazla kart ayni anda acik kalip dar sutunlara
-    # sikisir, "sekil bozuklugu" olarak gorunur)."""
     card_idler = [f"{ay_adi}-{hafta_no}-{gun['gun']}" for gun in hafta]
-    acik_keyler = [f"yillik_menu_acik_{cid}" for cid in card_idler]
-    yuz_keyler = [f"yillik_menu_yuz_{cid}" for cid in card_idler]
-    for ak, yk in zip(acik_keyler, yuz_keyler):
-        st.session_state.setdefault(ak, False)
-        st.session_state.setdefault(yk, "on")
 
-    acik_index = next((i for i, ak in enumerate(acik_keyler) if st.session_state[ak]), None)
-    if acik_index is not None:
-        oranlar = [3 if i == acik_index else 1 for i in range(len(hafta))]
-    else:
-        oranlar = [1] * len(hafta)
-    kolonlar = st.columns(oranlar, gap="small")
-
+    kolonlar = st.columns(len(hafta), gap="small")
     for i, (kolon, gun) in enumerate(zip(kolonlar, hafta)):
         with kolon:
             card_id = card_idler[i]
-            acik_key = acik_keyler[i]
-            yuz_key = yuz_keyler[i]
 
             tarih = gun.get("tarih")
             if tarih is not None:
@@ -852,106 +892,32 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
                 hafta_sonu_mu = False
                 tarih_metni = ""
 
-            arka_mi = st.session_state[acik_key] and st.session_state[yuz_key] == "arka"
-            kart_sinifi = f"kart_{'arka_' if arka_mi else ''}{'hs_' if hafta_sonu_mu else ''}{card_id}"
+            kart_sinifi = f"kart_{'hs_' if hafta_sonu_mu else ''}{card_id}"
+            baslik_metni = f"{gun_adi_gercek}\n{tarih_metni}" if tarih_metni else gun_adi_gercek
 
             with st.container(key=kart_sinifi):
-                baslik_key_onek = "baslikarka_" if arka_mi else "baslik_"
-                # YİRMİ BİRİNCİ DÜZELTME (13 Ağustos 2026): kullanıcının
-                # istediği iki satırlı başlık -- gün adı ÜSTTE TEK BAŞINA,
-                # tarih (tam ay adıyla) ALT SATIRDA. "\n" ile ayrılıyor,
-                # CSS'te "white-space: pre-line" ile bu satır sonu
-                # zorunlu kılınıyor (aksi halde buton metni normalde tek
-                # paragraf gibi davranip \n'i boşluğa çevirebilirdi).
-                # Bu ayrıca kart yükseklik tutarsızlığını da (bazı
-                # başlıklar "30 Kas" gibi taşıp iki satıra bölünürken
-                # bazıları "1 Ara" gibi tek satıra sığıyordu) çözüyor --
-                # artık HER kart başlığı her zaman TAM 2 satır, bu yüzden
-                # tüm kartlar aynı yükseklikte oluyor.
-                baslik_metni = f"{gun_adi_gercek}\n{tarih_metni}" if tarih_metni else gun_adi_gercek
-                with st.container(key=f"{baslik_key_onek}{card_id}"):
+                with st.container(key=f"baslik_{card_id}"):
                     if st.button(baslik_metni, key=f"btn_baslik_{card_id}", use_container_width=True):
-                        if not st.session_state[acik_key]:
-                            # Bu hafta icindeki TUM digerlerini kapat --
-                            # tek seferde sadece bir kart acik olsun.
-                            for diger_ak, diger_yk in zip(acik_keyler, yuz_keyler):
-                                st.session_state[diger_ak] = False
-                                st.session_state[diger_yk] = "on"
-                            st.session_state[acik_key] = True
-                        else:
-                            st.session_state[acik_key] = False
+                        st.session_state["yillik_menu_popup_gun_id"] = card_id
+                        st.session_state["yillik_menu_popup_yuz"] = "on"
                         st.rerun()
+                st.markdown(
+                    "<div style='padding:6px 16px 12px; display:flex; gap:5px;'>"
+                    "<span style='width:8px;height:8px;border-radius:50%;background:#C88A2E;display:inline-block;'></span>"
+                    "<span style='width:8px;height:8px;border-radius:50%;background:#2E4057;display:inline-block;'></span>"
+                    "</div>",
+                    unsafe_allow_html=True,
+                )
 
-                if not st.session_state[acik_key]:
-                    st.markdown(
-                        "<div style='padding:6px 16px 12px; display:flex; gap:5px;'>"
-                        "<span style='width:8px;height:8px;border-radius:50%;background:#C88A2E;display:inline-block;'></span>"
-                        "<span style='width:8px;height:8px;border-radius:50%;background:#2E4057;display:inline-block;'></span>"
-                        "</div>",
-                        unsafe_allow_html=True,
-                    )
-                    continue
-
-                with st.container(key=f"govde_{card_id}"):
-                    if st.session_state[yuz_key] == "on":
-                        for ogun_adi, tarif_adlari in gun["ogunler"].items():
-                            etiket_sinif = "omgo-ogle" if ogun_adi == "Öğle" else "omgo-aksam"
-                            st.markdown(
-                                f"<span class='omgo-ogun-etiket {etiket_sinif}'>{ogun_adi}</span>",
-                                unsafe_allow_html=True,
-                            )
-                            dish_key = f"dish-box-{card_id}-{ogun_adi}"
-                            with st.container(height=dish_yukseklikleri[ogun_adi], border=False, key=dish_key):
-                                for ad in tarif_adlari:
-                                    st.page_link(
-                                        "pages/5_Tarif_Kutuphanesi.py", label=ad,
-                                        query_params={"tarif": ad}, use_container_width=True,
-                                    )
-                        st.markdown('<div style="height:4px"></div>', unsafe_allow_html=True)
-                        with st.container(key=f"cevir_{card_id}"):
-                            if st.button("◤ Besin değerlerini gör", key=f"btn_cevir_{card_id}", use_container_width=True):
-                                st.session_state[yuz_key] = "arka"
-                                st.rerun()
-                    else:
-                        for ogun_adi, tarif_adlari in gun["ogunler"].items():
-                            t = _ogun_toplami(tarif_adlari, detay)
-                            gi_metin = f"{round(t['gi'])}" if t["gi"] is not None else "-"
-                            st.markdown(f"<div class='omgo-veri-bolum'>{ogun_adi} — Makro</div>", unsafe_allow_html=True)
-                            st.markdown(
-                                "<table class='omgo-veri-tablo'>"
-                                f"<tr><td>Kalori</td><td>{round(t['kalori'])} kcal</td></tr>"
-                                f"<tr><td>Protein</td><td>{round(t['protein'])} g</td></tr>"
-                                f"<tr><td>Yağ</td><td>{round(t['yag'])} g</td></tr>"
-                                f"<tr><td>Karbonhidrat</td><td>{round(t['karbonhidrat'])} g</td></tr>"
-                                f"<tr><td>Glisemik İndeks</td><td>{gi_metin}</td></tr>"
-                                "</table>",
-                                unsafe_allow_html=True,
-                            )
-                            alerjen_metin = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
-                            if not fiyat_verisi_var:
-                                maliyet_metin = "-"
-                            elif t["tam_fiyatli"]:
-                                maliyet_metin = f"{t['maliyet_eur']:.2f} €"
-                            else:
-                                eksik_liste = ", ".join(sorted(t["eksik_malzemeler"]))
-                                maliyet_metin = f"≈{t['maliyet_eur']:.2f} € (eksik: {eksik_liste})"
-                            st.markdown(
-                                "<table class='omgo-veri-tablo'>"
-                                f"<tr><td>Maliyet</td><td>{maliyet_metin}</td></tr>"
-                                f"<tr><td>Alerjen</td><td>{alerjen_metin}</td></tr>"
-                                "</table>",
-                                unsafe_allow_html=True,
-                            )
-                            hedefte = _hedefte_mi(ogun_adi, t, hedefler)
-                            if hedefte is True:
-                                st.markdown("<span class='omgo-hedef-rozet omgo-hedefte'>Hedefte</span>", unsafe_allow_html=True)
-                            elif hedefte is False:
-                                st.markdown("<span class='omgo-hedef-rozet omgo-hedefdisi'>Hedef dışı</span>", unsafe_allow_html=True)
-                        st.markdown('<div style="height:4px"></div>', unsafe_allow_html=True)
-                        with st.container(key=f"cevir_{card_id}"):
-                            if st.button("◤ Yemekleri gör", key=f"btn_cevir2_{card_id}", use_container_width=True):
-                                st.session_state[yuz_key] = "on"
-                                st.rerun()
+            # YIRMI UCUNCU DUZELTME: pop-up'in HER rerun'da (ör. icindeki
+            # "cevir" butonuna basildiginda) acik kalabilmesi icin, dialog
+            # fonksiyonunu SADECE ilk tiklamada degil, session_state
+            # kontrolu HER dongude yapilarak cagiriyoruz -- bu, Streamlit'in
+            # "dialog'u bir kez cagirinca kendiliginden hatirlar" davranisina
+            # korusuz guvenmek yerine, acikca/guvenilir bir sekilde ayni
+            # pop-up'i her seferinde yeniden tetikliyor.
+            if st.session_state.get("yillik_menu_popup_gun_id") == card_id:
+                _gun_popup_dialog(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni)
 
 
 def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
