@@ -5,6 +5,7 @@
 # menu uretir. Henuz eklenmeyenler: kisisel_beslenme_profili filtrelemesi,
 # menu_takvimi/menu_takvimi_ogeleri'ne yazma (sadece ekranda gosteriyor).
 
+import datetime
 import io
 import random
 
@@ -16,7 +17,7 @@ from openpyxl.utils import get_column_letter
 # NOT (12 Agustos 2026, Oturum 11): logo artik burada AYRICA gosterilmiyor -- app.py'deki ozel menu satirinin icine tasindi, orada zaten her sayfa gecisinde render ediliyor. Burada tekrar cagirmak cift logoya yol acardi.
 
 from db import get_supabase, oturumu_uygula
-from uretim_algoritmasi import MEVSIMLER, hafta_olustur
+from uretim_algoritmasi import hafta_olustur
 
 MEVSIM_AYLARI = {
     "kis": ["Aralık", "Ocak", "Şubat"],
@@ -28,6 +29,47 @@ AYLAR_SIRALI = [
     "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
     "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
 ]
+
+# YIRMINCI DUZELTME (13 Agustos 2026, Oturum 11): kullanicinin "gercek
+# takvim tarihi" istegi uzerine -- Ay -> Mevsim TERS eslesmesi (asagidaki
+# gercek-hafta hesaplamasinda her GUNUN kendi mevsimini bulmak icin).
+AY_TO_MEVSIM = {ay: mevsim for mevsim, aylar in MEVSIM_AYLARI.items() for ay in aylar}
+
+
+def _ay_gercek_haftalari(yil, ay_adi):
+    """Verilen (yil, ay) icin GERCEK ISO takvim haftalarini (Pazartesi-
+    Pazar) dondurur -- ayin kendisi bir haftanin ORTASINDA baslayip
+    bitebildigi icin, DONEN İLK ve SON hafta komsu aya tasan gunler
+    icerebilir (ör. Agustos 2026'nin ilk haftasi 27 Temmuz Pazartesi'nde
+    baslar, 2 Agustos Pazar'da biter -- kullanicinin gonderdigi gercek
+    takvim gorseliyle birebir dogrulandi). Her hafta TAM 7 gercek
+    datetime.date objesi icerir (Pazartesi=index 0 .. Pazar=index 6).
+    Donen deger: [[date, date, ..., 7 tane], ...] seklinde bir hafta listesi."""
+    ay_no = AYLAR_SIRALI.index(ay_adi) + 1
+    ilk_gun = datetime.date(yil, ay_no, 1)
+    if ay_no == 12:
+        son_gun = datetime.date(yil, 12, 31)
+    else:
+        son_gun = datetime.date(yil, ay_no + 1, 1) - datetime.timedelta(days=1)
+
+    # Ayin ilk gununun ait oldugu haftanin Pazartesi'si (weekday(): Pzt=0)
+    ilk_hafta_pazartesi = ilk_gun - datetime.timedelta(days=ilk_gun.weekday())
+    # Ayin son gununun ait oldugu haftanin Pazartesi'si
+    son_hafta_pazartesi = son_gun - datetime.timedelta(days=son_gun.weekday())
+
+    haftalar = []
+    pazartesi = ilk_hafta_pazartesi
+    while pazartesi <= son_hafta_pazartesi:
+        hafta = [pazartesi + datetime.timedelta(days=i) for i in range(7)]
+        haftalar.append(hafta)
+        pazartesi += datetime.timedelta(weeks=1)
+    return haftalar
+
+
+def _tarih_mevsimi(tarih):
+    """Bir datetime.date'in ait oldugu Turkce ay adindan mevsimini bulur."""
+    ay_adi = AYLAR_SIRALI[tarih.month - 1]
+    return AY_TO_MEVSIM[ay_adi]
 
 # ON DOKUZUNCU DUZELTME (13 Agustos 2026, Oturum 11): malzemeler tablosu
 # artik 27 ek besin ogesi iceriyor (45_genisletilmis_besin_degerleri.sql).
@@ -565,9 +607,11 @@ for t in tarifler:
 
 sol, sag, _bos = st.columns([1, 1, 3])
 with sol:
-    mevsim_secimi = st.selectbox("Mevsim", MEVSIMLER, format_func=lambda m: m.capitalize())
+    yil_secimi = st.number_input(
+        "Yıl", min_value=2024, max_value=2035, value=datetime.date.today().year, step=1,
+    )
 with sag:
-    ay_secimi = st.selectbox("Ay", MEVSIM_AYLARI[mevsim_secimi])
+    ay_secimi = st.selectbox("Ay", AYLAR_SIRALI)
 
 besin_hedefi_kullan = st.checkbox("Öğün başına besin hedefi uygula (opsiyonel)")
 
@@ -621,15 +665,26 @@ if hedefler and secili_bolgeler and len(tarifler) < 60:
     )
 
 if st.button("Ay için menü üret", type="primary"):
-    ay_index = AYLAR_SIRALI.index(ay_secimi)
+    gercek_haftalar = _ay_gercek_haftalari(yil_secimi, ay_secimi)
     haftalar = []
-    for hafta_no in range(1, 5):
-        tohum = ay_index * 10 + hafta_no  # deterministik: ayni ay+hafta = ayni sonuc
+    for hafta_tarihleri in gercek_haftalar:
+        # Deterministik tohum: haftanin Pazartesi gununun takvim sirasina
+        # (toordinal) gore -- ayni yil+hafta her zaman ayni sonucu verir,
+        # eski "ay_index*10+hafta_no" semasi gercek haftalar ay sinirini
+        # astigi icin artik anlamli degildi.
+        tohum = hafta_tarihleri[0].toordinal()
         rastgele = random.Random(tohum)
-        haftalar.append(
-            hafta_olustur(tarifler_zengin, mevsim_secimi, rastgele, hedefler=hedefler)
+        gun_mevsimleri = [_tarih_mevsimi(t) for t in hafta_tarihleri]
+        hafta = hafta_olustur(
+            tarifler_zengin, None, rastgele, hedefler=hedefler,
+            gun_mevsimleri=gun_mevsimleri,
         )
-    st.session_state["yillik_menu_aylik"] = {"ay": ay_secimi, "haftalar": haftalar}
+        # Ekranda gercek tarih/hafta gunu adi gosterebilmek icin, o gunun
+        # gercek datetime.date'ini de tasiyoruz.
+        for gun, tarih in zip(hafta, hafta_tarihleri):
+            gun["tarih"] = tarih
+        haftalar.append(hafta)
+    st.session_state["yillik_menu_aylik"] = {"ay": ay_secimi, "yil": yil_secimi, "haftalar": haftalar}
     st.session_state["yillik_menu_hedefler"] = hedefler
 
 RENKLER = {1: "#D85A30", 2: "#639922", 3: "#1D9E75"}
@@ -645,9 +700,6 @@ def _hedefte_mi(ogun_adi, t, hedefler):
         if not (alt <= deger <= ust):
             return False
     return True
-
-
-BILGI_KUTU_YUKSEKLIK = 120  # tipik 3-4 kisa satir icin sikilastirilmis sabit
 
 
 def _dish_kutu_yuksekligi_hesapla(tarif_adlari, karakter_basina_px=7, satir_yuksekligi=30, taban_px=12):
@@ -666,35 +718,126 @@ def _dish_kutu_yuksekligi_hesapla(tarif_adlari, karakter_basina_px=7, satir_yuks
     return toplam
 
 
-def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, hafta_no):
-    """Haftayi ekrana GERCEK Streamlit widget'lariyla render eder (ham HTML
-    string DEGIL) -- boylece her yemek adi st.page_link ile Tarif
-    Kutuphanesi'ne tiklanabilir olur (resmi/desteklenen navigasyon
-    yontemi; ham <a href> linkleri Streamlit'te bilinen sekilde
-    guvenilmezdir).
+def _yillik_menu_tasarim_stilini_uygula():
+    """YIRMINCI DUZELTME (13 Agustos 2026, Oturum 11): kullanicinin
+    onayladigi kart-tasarim mockup'ini (tasarim_onizleme.html) GERCEK
+    Streamlit widget'larina uyguluyoruz. Google Fonts (Fraunces baslik,
+    Inter govde, IBM Plex Mono veri) + sicak kirectasi/patlican moru
+    renk paleti -- tek seferde, sayfa basina enjekte edilir.
 
-    NOT (5 Agustos 2026, besinci deneme): Sabit GLOBAL yukseklik (240px)
-    her hafta/ogun icin ayni kaldigindan, kisa listeli gunlerde buyuk bir
-    bosluk birakip yemek adiyla alt bilgi arasini gereksiz aciyordu.
-    Bunun yerine her hafta+ogun SATIRI icin (ör. "1. Hafta - Ogle") o
-    satirdaki 7 gunun GERCEK yemek adlarina bakip EN UZUN olana gore
-    yukseklik hesaplaniyor (_dish_kutu_yuksekligi_hesapla) -- boylece kisa
-    haftalarda kutu kucuk, uzun haftalarda buyuk oluyor, hep tam ihtiyaca
-    gore. Kenarlik hala st.container(border=False) ile kapali."""
-    # st.page_link varsayilan olarak metni tek satirda kirpiyor (uzun
-    # tarif isimleri sigmayinca "..." ile kesiliyor) -- bunu alt satira
-    # kaydiracak sekilde zorluyoruz.
+    NOT: Streamlit'in kendi buton/container DOM yapisina custom CSS
+    uygulamak icin `key=` parametresiyle olusan `st-key-{key}` sinifina
+    guveniyoruz (Streamlit >=1.38). CSS attribute-selector (*=) ile
+    ORTAK bir on-ek (ör. "kart_") tasiyan TUM kartlari tek kuralla
+    hedefliyoruz -- boylece her gun/hafta icin ayri CSS yazmaya gerek
+    kalmiyor."""
     st.markdown(
-        "<style>"
-        "[data-testid='stPageLink'] p { white-space: normal !important; "
-        "word-break: break-word !important; }"
-        "</style>",
+        """
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+        <style>
+        [data-testid='stPageLink'] p { white-space: normal !important; word-break: break-word !important; }
+
+        div[class*="st-key-kart_"] {
+            background: #EDE6D6;
+            border-radius: 14px;
+            box-shadow: 0 8px 24px rgba(43,35,32,0.10), 0 1px 2px rgba(43,35,32,0.08);
+            padding: 0 0 14px;
+            margin-bottom: 4px;
+            overflow: hidden;
+        }
+        div[class*="st-key-kart_hs_"] { background: #F7EBD8; }
+        div[class*="st-key-kartarka_"] {
+            background: #3D2A3B;
+            border-radius: 14px;
+            box-shadow: 0 8px 24px rgba(43,35,32,0.18);
+            padding: 0 0 14px;
+            margin-bottom: 4px;
+            overflow: hidden;
+        }
+        div[class*="st-key-kartarka_"] * { color: #EDE6D6 !important; }
+
+        div[class*="st-key-baslik_"] button {
+            width: 100%;
+            background: transparent !important;
+            border: none !important;
+            border-bottom: 2px solid #C88A2E !important;
+            border-radius: 0 !important;
+            padding: 14px 16px 10px !important;
+            text-align: left !important;
+            box-shadow: none !important;
+        }
+        div[class*="st-key-baslik_"] button p {
+            font-family: 'Fraunces', serif !important;
+            font-size: 20px !important;
+            font-weight: 600 !important;
+            color: #2B2320 !important;
+        }
+        div[class*="st-key-baslikarka_"] button {
+            width: 100%;
+            background: transparent !important;
+            border: none !important;
+            border-bottom: 2px solid #C88A2E !important;
+            border-radius: 0 !important;
+            padding: 14px 16px 10px !important;
+            text-align: left !important;
+            box-shadow: none !important;
+        }
+        div[class*="st-key-baslikarka_"] button p {
+            font-family: 'Fraunces', serif !important;
+            font-size: 18px !important;
+            font-weight: 600 !important;
+            color: #EDE6D6 !important;
+        }
+        div[class*="st-key-cevir_"] button {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            color: #6B6055 !important;
+            font-size: 12px !important;
+            padding: 2px 16px !important;
+        }
+        div[class*="st-key-govde_"] { padding: 4px 16px 0; }
+        .omgo-ogun-etiket {
+            display: inline-block; font-size: 11px; font-weight: 600;
+            letter-spacing: 0.06em; text-transform: uppercase;
+            padding: 3px 10px; border-radius: 20px; margin: 6px 0 6px;
+        }
+        .omgo-ogle { background: #F7EBD8; color: #7A531C; }
+        .omgo-aksam { background: #E7ECF1; color: #2E4057; }
+        .omgo-veri-tablo { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; }
+        .omgo-veri-tablo td { padding: 3px 0; }
+        .omgo-veri-tablo td:last-child { text-align: right; font-weight: 500; }
+        .omgo-veri-bolum { font-family: Inter, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #C88A2E; margin: 10px 0 3px; }
+        .omgo-hedef-rozet { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px; margin-top: 6px; }
+        .omgo-hedefte { background: rgba(91,117,83,0.30); color: #C3DAB8 !important; }
+        .omgo-hedefdisi { background: rgba(166,71,47,0.30); color: #F0C4B5 !important; }
+        </style>
+        """,
         unsafe_allow_html=True,
     )
 
-    # Bu haftadaki her ogun (Ogle/Aksam) icin, 7 gunun en uzun yemek
-    # listesine gore GEREKEN yukseklik -- render dongusunden ONCE, tek
-    # seferde hesaplaniyor.
+
+def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, hafta_no):
+    """Haftayi GUN BASINA BIR KART olarak render eder -- kullanicinin
+    onayladigi mockup tasarimina gore (bkz. tasarim_onizleme.html).
+    Her kart 3 durumdan birinde: (1) KAPALI -- sadece gun adi + tarih +
+    iki kucuk nokta; (2) ACIK/ON YUZ -- Ogle/Aksam yemek listeleri,
+    GERCEK st.page_link widget'lariyla (Tarif Kutuphanesi'ne tiklanabilir
+    olmasi icin -- ham HTML <a> Streamlit'te guvenilmez); (3) ACIK/ARKA
+    YUZ -- tum besin/maliyet/hedef verileri, IBM Plex Mono ile.
+
+    NOT: Streamlit'in script-yeniden-calistirma modeli, saf CSS 3D
+    donme animasyonunun rerun sinirini asip kalici olarak calismasini
+    guvenilir kilmiyor (her tiklama tum sayfayi yeniden ciziyor) -- bu
+    yuzden 'donme' burada bir ANIMASYON degil, bir DURUM DEGISIMI (on
+    yuz <-> arka yuz icerigi yer degistiriyor). Gorsel dil (renkler,
+    yazi tipleri, kivrik-kose ipucu metni) mockup'takiyle ayni, sadece
+    hareket bir cerceve-atlamasi (rerun) ile gerceklesiyor, kesintisiz
+    donme degil -- kullaniciya net bir sekilde boyle iletildi."""
+    _yillik_menu_tasarim_stilini_uygula()
+
     ogun_adlari = list(hafta[0]["ogunler"].keys()) if hafta else []
     dish_yukseklikleri = {
         ogun_adi: max(
@@ -703,82 +846,119 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
         for ogun_adi in ogun_adlari
     }
 
+    GUN_ADLARI = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"]
+    AY_KISA = {
+        "Ocak": "Oca", "Şubat": "Şub", "Mart": "Mar", "Nisan": "Nis", "Mayıs": "May",
+        "Haziran": "Haz", "Temmuz": "Tem", "Ağustos": "Ağu", "Eylül": "Eyl",
+        "Ekim": "Eki", "Kasım": "Kas", "Aralık": "Ara",
+    }
+
     kolonlar = st.columns(len(hafta), gap="small")
     for kolon, gun in zip(kolonlar, hafta):
         with kolon:
-            st.markdown(f"**Gün {gun['gun']}**")
-            for i, (ogun_adi, tarif_adlari) in enumerate(gun["ogunler"].items()):
-                if i > 0:
-                    st.write("")
-                    st.write("")
-                st.markdown(f"**{ogun_adi.upper()}**")
+            card_id = f"{ay_adi}-{hafta_no}-{gun['gun']}"
+            acik_key = f"yillik_menu_acik_{card_id}"
+            yuz_key = f"yillik_menu_yuz_{card_id}"  # "on" | "arka"
+            st.session_state.setdefault(acik_key, False)
+            st.session_state.setdefault(yuz_key, "on")
 
-                dish_key = f"dish-box-{ay_adi}-{hafta_no}-{gun['gun']}-{ogun_adi}"
-                with st.container(height=dish_yukseklikleri[ogun_adi], border=False, key=dish_key):
-                    for ad in tarif_adlari:
-                        st.page_link(
-                            "pages/5_Tarif_Kutuphanesi.py", label=ad,
-                            query_params={"tarif": ad}, use_container_width=True,
-                        )
+            tarih = gun.get("tarih")
+            if tarih is not None:
+                gun_adi_gercek = GUN_ADLARI[tarih.weekday()]
+                hafta_sonu_mu = tarih.weekday() >= 5
+                tarih_metni = f"{tarih.day} {AY_KISA[AYLAR_SIRALI[tarih.month - 1]]}"
+            else:
+                gun_adi_gercek = f"Gün {gun['gun']}"
+                hafta_sonu_mu = False
+                tarih_metni = ""
 
-                t = _ogun_toplami(tarif_adlari, detay)
-                info_key = f"info-box-{ay_adi}-{hafta_no}-{gun['gun']}-{ogun_adi}"
-                with st.container(height=BILGI_KUTU_YUKSEKLIK, border=False, key=info_key):
-                    # ON SEKIZINCI DUZELTME (13 Agustos 2026, Oturum 11):
-                    # kullanici besin/maliyet satirlarinin PASTEL degil
-                    # BELIRGIN renklerle gosterilmesini istedi. Onceki hali
-                    # st.caption(":blue[...]") kullaniyordu -- st.caption()
-                    # Streamlit temasinda kucuk+SOLUK render edilen bir
-                    # bilesen, ustune renk direktifi eklense bile hafif/
-                    # pastel kaliyor. Simdi st.markdown + dogrudan HTML/CSS
-                    # ile daha DOYGUN renkler ve YARI KALIN font kullanildi.
-                    # Font-size bilerek caption'in yaklasik boyutuyla (0.8rem)
-                    # AYNI tutuldu ve margin:0 verildi -- yoksa normal
-                    # markdown paragraf boslugu, sabit 120px'lik kutuyu
-                    # (BILGI_KUTU_YUKSEKLIK) tasirip ic kaydirma cubugu
-                    # cikarabilirdi.
-                    gi_metin = f"{round(t['gi'])}" if t["gi"] is not None else "-"
+            arka_mi = st.session_state[acik_key] and st.session_state[yuz_key] == "arka"
+            kart_sinifi = f"kart_{'arka_' if arka_mi else ''}{'hs_' if hafta_sonu_mu else ''}{card_id}"
+
+            with st.container(key=kart_sinifi):
+                baslik_key_onek = "baslikarka_" if arka_mi else "baslik_"
+                baslik_metni = f"{gun_adi_gercek}"
+                if tarih_metni:
+                    baslik_metni += f"  ·  {tarih_metni}"
+                with st.container(key=f"{baslik_key_onek}{card_id}"):
+                    if st.button(baslik_metni, key=f"btn_baslik_{card_id}", use_container_width=True):
+                        if not st.session_state[acik_key]:
+                            st.session_state[acik_key] = True
+                            st.session_state[yuz_key] = "on"
+                        else:
+                            st.session_state[acik_key] = False
+                        st.rerun()
+
+                if not st.session_state[acik_key]:
                     st.markdown(
-                        "<div style='font-size:0.8rem; font-weight:600; "
-                        "color:#0B5ED7; margin:0; line-height:1.35;'>"
-                        f"{round(t['kalori'])} kcal · P{round(t['protein'])}g · "
-                        f"Y{round(t['yag'])}g · K{round(t['karbonhidrat'])}g · "
-                        f"Gİ{gi_metin}</div>",
+                        "<div style='padding:6px 16px 12px; display:flex; gap:5px;'>"
+                        "<span style='width:8px;height:8px;border-radius:50%;background:#C88A2E;display:inline-block;'></span>"
+                        "<span style='width:8px;height:8px;border-radius:50%;background:#2E4057;display:inline-block;'></span>"
+                        "</div>",
                         unsafe_allow_html=True,
                     )
-                    alerjen_metin = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
-                    st.markdown(
-                        "<div style='font-size:0.8rem; font-weight:600; "
-                        f"color:#0B5ED7; margin:0; line-height:1.35;'>Alerjen: {alerjen_metin}</div>",
-                        unsafe_allow_html=True,
-                    )
+                    continue
 
-                    if not fiyat_verisi_var:
-                        _maliyet_metin = "Maliyet: -"
-                    elif t["tam_fiyatli"]:
-                        _maliyet_metin = f"Maliyet: {t['maliyet_eur']:.2f} €"
+                with st.container(key=f"govde_{card_id}"):
+                    if st.session_state[yuz_key] == "on":
+                        for ogun_adi, tarif_adlari in gun["ogunler"].items():
+                            etiket_sinif = "omgo-ogle" if ogun_adi == "Öğle" else "omgo-aksam"
+                            st.markdown(
+                                f"<span class='omgo-ogun-etiket {etiket_sinif}'>{ogun_adi}</span>",
+                                unsafe_allow_html=True,
+                            )
+                            dish_key = f"dish-box-{card_id}-{ogun_adi}"
+                            with st.container(height=dish_yukseklikleri[ogun_adi], border=False, key=dish_key):
+                                for ad in tarif_adlari:
+                                    st.page_link(
+                                        "pages/5_Tarif_Kutuphanesi.py", label=ad,
+                                        query_params={"tarif": ad}, use_container_width=True,
+                                    )
+                        st.markdown('<div style="height:4px"></div>', unsafe_allow_html=True)
+                        with st.container(key=f"cevir_{card_id}"):
+                            if st.button("◤ Besin değerlerini gör", key=f"btn_cevir_{card_id}", use_container_width=True):
+                                st.session_state[yuz_key] = "arka"
+                                st.rerun()
                     else:
-                        eksik_liste = ", ".join(sorted(t["eksik_malzemeler"]))
-                        _maliyet_metin = f"Maliyet: ≈{t['maliyet_eur']:.2f} € (eksik fiyat: {eksik_liste})"
-                    st.markdown(
-                        "<div style='font-size:0.8rem; font-weight:600; "
-                        f"color:#1B7A3D; margin:0; line-height:1.35;'>{_maliyet_metin}</div>",
-                        unsafe_allow_html=True,
-                    )
-
-                    hedefte = _hedefte_mi(ogun_adi, t, hedefler)
-                    if hedefte is True:
-                        st.markdown(
-                            "<div style='font-size:0.8rem; font-weight:600; "
-                            "color:#1B7A3D; margin:0; line-height:1.35;'>Hedefte</div>",
-                            unsafe_allow_html=True,
-                        )
-                    elif hedefte is False:
-                        st.markdown(
-                            "<div style='font-size:0.8rem; font-weight:600; "
-                            "color:#D9720B; margin:0; line-height:1.35;'>Hedef dışı</div>",
-                            unsafe_allow_html=True,
-                        )
+                        for ogun_adi, tarif_adlari in gun["ogunler"].items():
+                            t = _ogun_toplami(tarif_adlari, detay)
+                            gi_metin = f"{round(t['gi'])}" if t["gi"] is not None else "-"
+                            st.markdown(f"<div class='omgo-veri-bolum'>{ogun_adi} — Makro</div>", unsafe_allow_html=True)
+                            st.markdown(
+                                "<table class='omgo-veri-tablo'>"
+                                f"<tr><td>Kalori</td><td>{round(t['kalori'])} kcal</td></tr>"
+                                f"<tr><td>Protein</td><td>{round(t['protein'])} g</td></tr>"
+                                f"<tr><td>Yağ</td><td>{round(t['yag'])} g</td></tr>"
+                                f"<tr><td>Karbonhidrat</td><td>{round(t['karbonhidrat'])} g</td></tr>"
+                                f"<tr><td>Glisemik İndeks</td><td>{gi_metin}</td></tr>"
+                                "</table>",
+                                unsafe_allow_html=True,
+                            )
+                            alerjen_metin = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
+                            if not fiyat_verisi_var:
+                                maliyet_metin = "-"
+                            elif t["tam_fiyatli"]:
+                                maliyet_metin = f"{t['maliyet_eur']:.2f} €"
+                            else:
+                                eksik_liste = ", ".join(sorted(t["eksik_malzemeler"]))
+                                maliyet_metin = f"≈{t['maliyet_eur']:.2f} € (eksik: {eksik_liste})"
+                            st.markdown(
+                                "<table class='omgo-veri-tablo'>"
+                                f"<tr><td>Maliyet</td><td>{maliyet_metin}</td></tr>"
+                                f"<tr><td>Alerjen</td><td>{alerjen_metin}</td></tr>"
+                                "</table>",
+                                unsafe_allow_html=True,
+                            )
+                            hedefte = _hedefte_mi(ogun_adi, t, hedefler)
+                            if hedefte is True:
+                                st.markdown("<span class='omgo-hedef-rozet omgo-hedefte'>Hedefte</span>", unsafe_allow_html=True)
+                            elif hedefte is False:
+                                st.markdown("<span class='omgo-hedef-rozet omgo-hedefdisi'>Hedef dışı</span>", unsafe_allow_html=True)
+                        st.markdown('<div style="height:4px"></div>', unsafe_allow_html=True)
+                        with st.container(key=f"cevir_{card_id}"):
+                            if st.button("◤ Yemekleri gör", key=f"btn_cevir2_{card_id}", use_container_width=True):
+                                st.session_state[yuz_key] = "on"
+                                st.rerun()
 
 
 def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):

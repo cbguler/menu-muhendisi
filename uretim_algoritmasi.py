@@ -251,11 +251,24 @@ def _fast_food_sec(grup4_havuz, birlesik_etiketler, rastgele):
     return rastgele.choice(adaylar)
 
 
-def hafta_olustur(tarifler, mevsim, rastgele, hedefler=None, gun_sayisi=7):
+def hafta_olustur(tarifler, mevsim, rastgele, hedefler=None, gun_sayisi=7, gun_mevsimleri=None):
     """tarifler: [{"ad","grup"(1/2/3, opsiyonel 4),"mevsim_etiketi","etiketler", ...besin}, ...]
     hedefler: {"Öğle": {"kalori":(min,max), ...}, "Akşam": {...}} ya da None.
     grup=4 (isletmenin kendi Icecek/Baslangic/Pizza/Burger receteleri)
-    varsa, her ogune ISTEGE BAGLI 4. bir tarif eklenir -- bkz. _fast_food_sec."""
+    varsa, her ogune ISTEGE BAGLI 4. bir tarif eklenir -- bkz. _fast_food_sec.
+
+    gun_mevsimleri: YIRMINCI DUZELTME (13 Agustos 2026, Oturum 11) --
+    kullanicinin "her gun kendi gercek tarihinin ait oldugu mevsimden
+    beslensin" karari uzerine eklendi. GERCEK takvim haftalari (Pazartesi-
+    Pazar) ay/mevsim sinirlarini asabilir (ör. 31 Agustos=yaz, 1 Eylul=
+    sonbahar, ayni haftada). Bu listeye [gun1_mevsim, gun2_mevsim, ...]
+    seklinde (gun_sayisi uzunlugunda) o haftanin HER GUNUNUN GERCEK
+    mevsimi verilirse, o gunun ogun_olustur cagrisinda mevsim yerine bu
+    kullanilir -- `mevsim` parametresi ise SADECE gun_mevsimleri
+    verilmediginde (eski/geriye-donuk kullanim, ör. yillik_ornek_uret)
+    devreye girer. Hafta ici tekrarsizlik (madde 2, kullanilan_hafta)
+    mevsim karisik olsa bile HALA TUM HAFTA icin gecerli -- bir tarif,
+    hangi mevsimden gelirse gelsin, ayni hafta icinde iki kez cikmaz."""
     grup1 = [t for t in tarifler if t["grup"] == 1]
     grup2 = [t for t in tarifler if t["grup"] == 2]
     grup3 = [t for t in tarifler if t["grup"] == 3]
@@ -264,10 +277,11 @@ def hafta_olustur(tarifler, mevsim, rastgele, hedefler=None, gun_sayisi=7):
     kullanilan_hafta = set()
     hafta = []
     for gun_no in range(1, gun_sayisi + 1):
+        gun_mevsimi = gun_mevsimleri[gun_no - 1] if gun_mevsimleri else mevsim
         gun = {"gun": gun_no, "ogunler": {}}
         for ogun_adi in ("Öğle", "Akşam"):
             hedef = (hedefler or {}).get(ogun_adi)
-            t1, t2, t3 = ogun_olustur(grup1, grup2, grup3, mevsim, kullanilan_hafta, rastgele, hedef)
+            t1, t2, t3 = ogun_olustur(grup1, grup2, grup3, gun_mevsimi, kullanilan_hafta, rastgele, hedef)
             for t in (t1, t2, t3):
                 kullanilan_hafta.add(t["ad"])
             ogun_tarifleri = [t1["ad"], t2["ad"], t3["ad"]]

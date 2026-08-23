@@ -2964,3 +2964,77 @@ bekleniyor.
 
 **Dosya durumu:** pages/0_Yillik_Menu.py, uretim_algoritmasi.py
 (ikisi de güncellendi).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Gerçek Takvim Entegrasyonu + Kart Tasarımı Uygulandı
+
+Kullanıcı önce görsel tasarımı (kart bazlı, tıkla-aç, tekrar tıkla-
+çevir) onayladı, sonra "takvimi gerçek takvim yapalım" dedi. Gönderdiği
+2026 takvim görseliyle netleşen istek: GERÇEK ISO takvim haftaları
+(Pazartesi-Pazar), ay sınırlarını aşabilen (ör. 31 Ağustos + 1-6 Eylül
+aynı haftada). En kritik nokta: "her gün kendi gerçek tarihinin ait
+olduğu mevsimden beslensin" -- kullanıcı bunu onayladı.
+
+**1) uretim_algoritmasi.py -- gün bazında mevsim desteği:**
+`hafta_olustur` artık opsiyonel `gun_mevsimleri` parametresi alıyor
+(7 elemanlı mevsim listesi, günlük). Verilmezse eski `mevsim` (tek
+değer, geriye dönük uyumluluk) kullanılır. `ogun_olustur` zaten GÜN
+BAZINDA çağrıldığı için (haftalık döngünün içinde), bu değişiklik
+minimal oldu -- anayasa kuralları (uyumsuzluk/madde 11, tamamlayıcı/
+madde 13, hedef kontrolü) hiç değişmedi. Haftalık tekrarsızlık
+(madde 2, kullanılan_hafta) hâlâ TÜM hafta için tek bir küme --
+mevsim karışık olsa bile bir tarif aynı haftada iki kez çıkmaz.
+Gerçekçi boyutta (30 tarif/grup/mevsim) sahte veriyle test edildi,
+gün bazında doğru mevsimden seçim yapıldığı doğrulandı.
+
+**2) pages/0_Yillik_Menu.py -- gerçek tarih hesaplama:**
+- `AY_TO_MEVSIM`: Ay->Mevsim ters eşleşmesi (yeni).
+- `_ay_gercek_haftalari(yil, ay_adi)`: verilen ay için gerçek ISO
+  haftalarını (her biri 7 datetime.date) hesaplar -- ayın ilk/son
+  gününün ait olduğu haftanın Pazartesi'sinden başlayıp biter. 2026
+  Ağustos için Python'da test edildi, kullanıcının gönderdiği GERÇEK
+  takvim görseliyle BİREBİR eşleşti (Hafta 1: 27 Tem-2 Ağu, Hafta 6:
+  31 Ağu-6 Eyl).
+- `_tarih_mevsimi(tarih)`: bir tarihin mevsimini bulur.
+- UI: "Mevsim" seçim kutusu kaldırıldı, yerine "Yıl" (number_input,
+  varsayılan bugünün yılı) eklendi. "Ay" artık tüm 12 ayı gösteriyor
+  (mevsime göre filtrelenmiyor, çünkü mevsim artık gün bazında otomatik
+  hesaplanıyor).
+- Buton mantığı: sabit "her ay = 4 hafta" varsayımı kaldırıldı (bu,
+  ay uzunluğunu hiç hesaba katmıyordu!) -- artık `_ay_gercek_haftalari`
+  ile o ayı kapsayan GERÇEK hafta sayısı (4-6 arası) kullanılıyor.
+  Tohum artık haftanın gerçek Pazartesi tarihinden (toordinal())
+  türetiliyor -- eski "ay_index*10+hafta_no" şeması artık anlamlı
+  değildi (gerçek haftalar ay sınırını aşabildiği için).
+  Her `gun` dict'ine gerçek `tarih` (datetime.date) eklendi.
+
+**3) Kart tasarımı -- onaylanan mockup GERÇEK Streamlit'e uygulandı:**
+`_hafta_kartlarini_goster` tamamen yeniden yazıldı:
+- Her gün artık bir KART (sıcak kireçtaşı zemin, altın alt-çizgi
+  başlık, Fraunces/IBM Plex Mono yazı tipleri Google Fonts'tan).
+- 3 durum: KAPALI (sadece gün adı + tarih + 2 küçük nokta) -> başlığa
+  tıkla -> AÇIK/ÖN YÜZ (Öğle/Akşam yemek listeleri, GERÇEK
+  st.page_link ile) -> "Besin değerlerini gör" tıkla -> AÇIK/ARKA YÜZ
+  (koyu patlıcan moru zemin, IBM Plex Mono ile tam besin/maliyet/
+  hedef tablosu).
+- Gün başlığında artık "Gün 1" değil GERÇEK gün adı (Pazartesi...)
+  + gerçek tarih (ör. "23 Ağu") gösteriliyor. Hafta sonu günleri
+  (Cumartesi/Pazar) hafif farklı bir zemin tonuyla ayrılıyor.
+- **ÖNEMLİ KISIT (kullanıcıya iletildi):** Streamlit'in script-yeniden-
+  çalıştırma modeli, mockup'taki KESINTİSİZ 3D döndürme animasyonunun
+  birebir aynı şekilde çalışmasını garanti etmiyor -- her tıklama tüm
+  sayfayı yeniden çiziyor, bu yüzden "çevirme" bir ANİMASYON değil bir
+  DURUM DEĞİŞİMİ (ön yüz/arka yüz içeriği yer değiştiriyor, ama akıcı
+  dönme hareketi olmayabilir). Görsel dil (renkler, yazı tipleri,
+  ipucu metni) mockup'la aynı.
+- CSS, Streamlit'in `key=` parametresinin ürettiği `st-key-{key}`
+  sınıfını hedefliyor (Streamlit >=1.38 -- requirements.txt'te
+  doğrulandı). Bu, canlı ortamda GÖRÜLMEDEN test edilemedi -- ilk
+  gerçek denemede küçük görsel ince ayarlar gerekebilir.
+
+**Test durumu:** Python sözdizimi + AST + üretim algoritması mantığı
+(sahte veriyle) test edildi. Streamlit arayüzünün GERÇEK görünümü
+(CSS'in Streamlit DOM'una doğru uygulanıp uygulanmadığı) canlı ortamda
+henüz görülmedi.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py, uretim_algoritmasi.py
+(ikisi de büyük ölçüde güncellendi).
