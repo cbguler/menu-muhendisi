@@ -3135,3 +3135,34 @@ yerine daha doygun bir şeftali/kehribar tonu (#F2CFA0) + altın renkte
 gözle daha net ayrışıyor.
 
 **Dosya durumu:** pages/0_Yillik_Menu.py güncellendi.
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Üst Başlık Boşluğu Düzeltildi, "Menü Mühendisi" Yazısı Eklendi + Geçmiş Tarih Tartışması
+
+**1) Sayfa başlığının çok aşağıda kalması (app.py):** Sebep bulundu --
+sabit (position:fixed) nav çubuğunun altına eklenen manuel boşluk
+(spacer, .ust_menu_bosluk_masaustu) ile Streamlit'in KENDİ varsayılan
+üst dolgusu (.block-container'ın "wide" düzende araç çubuğu için
+ayırdığı birkaç rem'lik pay) ÜST ÜSTE binip toplam boşluğu gereğinden
+fazla yapıyordu. `.block-container { padding-top: 1rem !important; }`
+eklenerek Streamlit'in kendi payı küçültüldü -- bu TÜM sayfalarda
+(sadece Yıllık Menü'de değil) düzelme sağlıyor.
+
+**2) "Menü Mühendisi" yazısı eklendi:** Hem masaüstü hem mobil nav
+satırının (logo + menü butonları) HEMEN ÜSTÜNE, ortalanmış, yeşil
+vurgu renkli (#0F6E56, mevcut pastel paletle tutarlı) bir başlık
+eklendi. Sabit nav çubuğunun toplam yüksekliği arttığı için, altındaki
+boşluk (spacer) değerleri de buna göre büyütüldü (masaüstü 180->210px,
+mobil 96->120px) -- aksi halde bu yeni satır sayfa içeriğini
+öncekinden biraz daha fazla örtebilirdi.
+
+**3) TARTIŞMA -- geçmiş tarihe menü üretimi:** Kullanıcı, sistemin
+geçmiş bir tarih için menü üretebildiğini fark edip bunun doğru olup
+olmadığını sordu. Claude'un görüşü paylaşıldı: üretimin kendisi
+sorunlu değil (deterministik, "bu sistem o hafta için ne önerirdi"
+sorusuna cevap veren bir simülasyon) -- asıl risk, üretilen menü ile
+GERÇEKTEN servis edilmiş bir kaydın şu an görsel olarak ayırt
+edilememesi. Öneri: üretimi engellemek yerine, geçmiş bir tarih
+seçildiğinde küçük bir uyarı notu göstermek. Kullanıcının kararı
+BEKLENİYOR -- henüz hiçbir kısıtlama/uyarı kodu yazılmadı.
+
+**Dosya durumu:** app.py güncellendi (1-2 numaralı maddeler).

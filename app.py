@@ -889,11 +889,24 @@ st.markdown(
     "@media (min-width: 768px) { .st-key-masaustu_nav { top: 60px; } }"
     "@media (max-width: 767px) { .st-key-mobil_nav { top: 60px; } }"
     # Logo buyudugu icin (simdi 144px masaustu, 72px mobil) altindaki
-    # icerigin ortulmemesi icin bosluklar da buyutuldu.
-    ".ust_menu_bosluk_masaustu { height: 180px; }"
-    ".ust_menu_bosluk_mobil { height: 96px; }"
+    # icerigin ortulmemesi icin bosluklar da buyutuldu. "Menü Mühendisi"
+    # basligi eklendigi icin (13 Agustos 2026) bosluklar bir miktar daha
+    # arttirildi (bu yeni satirin kapladigi yuksekligi de karsilasin diye).
+    ".ust_menu_bosluk_masaustu { height: 210px; }"
+    ".ust_menu_bosluk_mobil { height: 120px; }"
     "@media (min-width: 768px) { .ust_menu_bosluk_mobil { display: none !important; } }"
     "@media (max-width: 767px) { .ust_menu_bosluk_masaustu { display: none !important; } }"
+    # YIRMI BIRINCI DUZELTME (13 Agustos 2026, Oturum 11): kullanici
+    # sayfa basliklarinin (ör. "Yıllık Menü Üretim Motoru") gereksiz
+    # asagida kaldigini bildirdi. Sebep: Streamlit'in KENDI varsayilan
+    # ust-bosluğu (.block-container'in varsayilan padding-top'u, "wide"
+    # duzende arac cubugu icin ayrilan pay -- genelde birkac rem) bizim
+    # zaten eklediğimiz sabit menu-bosluğu (yukarida) ile ÜST ÜSTE
+    # bindigi icin toplam bosluk gereğinden fazla oluyordu. Kendi
+    # bosluğumuz zaten sabit menunun tam yuksekliğini karsiladigindan,
+    # Streamlit'in kendi varsayilan payini kucultuyoruz.
+    ".block-container { padding-top: 1rem !important; }"
+    "</style>",
     # ON UCUNCU DUZELTME (12 Agustos 2026): Kontrol Paneli'ndeki tanitim
     # videosunun native tarayici kontrol cubugu (oynat/durdur, sure,
     # sessize al, tam ekran, "..." menusu) temizlensin istendi. st.video()
@@ -913,6 +926,11 @@ st.markdown(
 )
 
 with st.container(key="masaustu_nav"):
+    st.markdown(
+        "<div style='text-align:center; font-size:1.05rem; font-weight:600; "
+        "color:#0F6E56; letter-spacing:0.02em; margin-bottom:0.3rem;'>Menü Mühendisi</div>",
+        unsafe_allow_html=True,
+    )
     # ON BESINCI DUZELTME (12 Agustos 2026): logo 1.5x daha buyutuldu
     # (96px->144px). Kullanici ayrica menu ogelerinin logo ile ALT
     # HIZALI (bottom-aligned) durmasini istedi. Bunun icin CSS hack'i
@@ -931,6 +949,11 @@ with st.container(key="masaustu_nav"):
                 st.page_link(_sayfa, use_container_width=True)
 
 with st.container(key="mobil_nav"):
+    st.markdown(
+        "<div style='text-align:center; font-size:0.95rem; font-weight:600; "
+        "color:#0F6E56; letter-spacing:0.02em; margin-bottom:0.2rem;'>Menü Mühendisi</div>",
+        unsafe_allow_html=True,
+    )
     _logo_kolonu, _menu_kolonu = st.columns([1, 3], vertical_alignment="center")
     with _logo_kolonu:
         st.image("assets/logo.png", width=72)
