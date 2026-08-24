@@ -171,6 +171,30 @@ def _mutfaklari_getir():
     return (supabase.table("mutfaklar").select("kod, ad").execute()).data
 
 
+def _sayfalayarak_getir(sorgu_uret, sayfa_boyutu=1000):
+    """OTUZUNCU DUZELTME (13 Agustos 2026, Oturum 11): kullanicinin
+    bildirdigi maliyet tutarsizligi ARASTIRILDI -- kok sebep bulundu.
+    Supabase/PostgREST, .range() belirtilmese bile sorgu basina
+    varsayilan olarak en fazla 1000 satir donduruyor -- sinirin
+    uzerindeki satirlar HATA VERMEDEN sessizce kesiliyor. Bu sayfanin
+    fiyat sorgulari (asagida) bu korumayi hic kullanmiyordu --
+    pages/5_Tarif_Kutuphanesi.py'de AYNI sorun icin zaten var olan bu
+    yardimci fonksiyon buraya da kopyalandi ve HER IKI fiyat
+    sorgusuna (global + isletmeye ozel tarifler) uygulandi. `sorgu_uret`,
+    her cagrildiginda henuz .range()/.execute() uygulanmamis YENI bir
+    sorgu builder'i donduren bir fonksiyon olmali (ayni builder tekrar
+    kullanilamiyor)."""
+    tumu = []
+    offset = 0
+    while True:
+        sayfa = sorgu_uret().range(offset, offset + sayfa_boyutu - 1).execute().data
+        tumu.extend(sayfa)
+        if len(sayfa) < sayfa_boyutu:
+            break
+        offset += sayfa_boyutu
+    return tumu
+
+
 mutfaklar_listesi = _mutfaklari_getir()
 sol_mutfak, _bos_mutfak = st.columns([1, 3])
 with sol_mutfak:
@@ -231,31 +255,29 @@ def _tarif_detaylarini_getir(isletme_id):
     ).data
     id_to_ad = {r["id"]: r["ad"] for r in receteler}
 
-    malzeme_kalemleri = (
-        supabase.table("recete_malzemeleri")
+    malzeme_kalemleri = _sayfalayarak_getir(
+        lambda: supabase.table("recete_malzemeleri")
         .select(
             "recete_id, malzeme_id, miktar_gram, "
             "malzemeler(ad, kalori, protein, yag, karbonhidrat, glisemik_indeks, "
             + ", ".join(_GENISLETILMIS_KOLONLAR) + ")"
         )
-        .execute()
-    ).data
+    )
 
-    alerjen_kayitlari = (
-        supabase.table("malzeme_alerjen").select("malzeme_id, alerjenler(ad)").execute()
-    ).data
+    alerjen_kayitlari = _sayfalayarak_getir(
+        lambda: supabase.table("malzeme_alerjen").select("malzeme_id, alerjenler(ad)")
+    )
     alerjen_by_malzeme = {}
     for kayit in alerjen_kayitlari:
         ad = (kayit.get("alerjenler") or {}).get("ad")
         if ad:
             alerjen_by_malzeme.setdefault(kayit["malzeme_id"], set()).add(ad)
 
-    fiyat_kayitlari = (
-        supabase.table("malzeme_guncel_fiyat")
+    fiyat_kayitlari = _sayfalayarak_getir(
+        lambda: supabase.table("malzeme_guncel_fiyat")
         .select("malzeme_id, fiyat_eur")
         .eq("isletme_id", isletme_id)
-        .execute()
-    ).data
+    )
     fiyat_by_malzeme = {f["malzeme_id"]: f["fiyat_eur"] for f in fiyat_kayitlari}
     fiyat_verisi_var = len(fiyat_by_malzeme) > 0
 
@@ -408,32 +430,30 @@ def _isletme_receteler_ve_detay_getir(isletme_id):
     id_to_ad = {r["id"]: r["ad"] for r in receteler}
     porsiyon_by_id = {r["id"]: (r["porsiyon_sayisi"] or 1) for r in receteler}
 
-    malzeme_kalemleri = (
-        supabase.table("recete_malzemeleri")
+    malzeme_kalemleri = _sayfalayarak_getir(
+        lambda: supabase.table("recete_malzemeleri")
         .select(
             "recete_id, malzeme_id, miktar_gram, "
             "malzemeler(ad, kalori, protein, yag, karbonhidrat, glisemik_indeks, "
             + ", ".join(_GENISLETILMIS_KOLONLAR) + ")"
         )
         .in_("recete_id", list(id_to_ad.keys()))
-        .execute()
-    ).data or []
+    ) or []
 
-    alerjen_kayitlari = (
-        supabase.table("malzeme_alerjen").select("malzeme_id, alerjenler(ad)").execute()
-    ).data or []
+    alerjen_kayitlari = _sayfalayarak_getir(
+        lambda: supabase.table("malzeme_alerjen").select("malzeme_id, alerjenler(ad)")
+    ) or []
     alerjen_by_malzeme = {}
     for kayit in alerjen_kayitlari:
         ad = (kayit.get("alerjenler") or {}).get("ad")
         if ad:
             alerjen_by_malzeme.setdefault(kayit["malzeme_id"], set()).add(ad)
 
-    fiyat_kayitlari = (
-        supabase.table("malzeme_guncel_fiyat")
+    fiyat_kayitlari = _sayfalayarak_getir(
+        lambda: supabase.table("malzeme_guncel_fiyat")
         .select("malzeme_id, fiyat_eur")
         .eq("isletme_id", isletme_id)
-        .execute()
-    ).data or []
+    ) or []
     fiyat_by_malzeme = {f["malzeme_id"]: f["fiyat_eur"] for f in fiyat_kayitlari}
     fiyat_verisi_var = len(fiyat_by_malzeme) > 0
 

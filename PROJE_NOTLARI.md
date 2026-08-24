@@ -3752,3 +3752,45 @@ Excel'deki öğün başlık satırına da uygulandı, hedef kontrolü orada da
 
 **Dosya durumu:** pages/0_Yillik_Menu.py, pages/5_Tarif_Kutuphanesi.py
 güncellendi.
+
+### 13 Ağustos 2026 — XI. Oturum (devam): ACİL DÜZELTME -- Sayfalama Eksikliği Nedeniyle Sessiz Veri Kaybı
+
+Kullanıcı, 30 Ekim Cuma Akşam Yemeği için pop-up'ta 30.94€ görürken,
+Tarif Kütüphanesi'nden aynı 3 yemeğin (Kayısılı Kuzu Tandır 20.81€ +
+Ezo Gelin Çorbası 3.37€ + Kayısı Tatlısı 12.05€) TOPLAMININ 36.23€
+çıktığını bildirdi -- oran temiz bir katsayı DEĞİLDİ (önceki "porsiyon
+ayarı" sorunundan farklı), bu yüzden gerçek bir kod hatası olduğu
+anlaşıldı, "acil çözüm" istendi.
+
+**KÖK SEBEP BULUNDU (kod karşılaştırmasıyla, tahmin değil):**
+`pages/5_Tarif_Kutuphanesi.py`'de zaten var olan `_sayfalayarak_getir`
+yardımcı fonksiyonunun docstring'i şunu açıkça belirtiyor: "Supabase/
+PostgREST, .range() belirtilmese bile sorgu başına varsayılan olarak
+en fazla 1000 satır döndürüyor -- sınırın üzerindeki satırlar HATA
+VERMEDEN sessizce kesiliyor." Tarif Kütüphanesi bu korumayı
+kullanıyordu, AMA `pages/0_Yillik_Menu.py`'deki AYNI tabloları çeken
+sorgular (malzeme_guncel_fiyat VE recete_malzemeleri VE malzeme_
+alerjen) bu korumayı HİÇ kullanmıyordu -- düz `.execute()` ile
+çekiliyorlardı.
+
+**recete_malzemeleri (tarif-malzeme iliski tablosu) EN CIDDI risk
+altındaydi** -- 241 tarif × ortalama malzeme sayısı kolayca 1000
+satırı geçebilir, bu da SADECE maliyeti değil, bazı tariflerin kalori/
+protein/vitamin hesaplarını da sessizce eksik bırakıyor olabilirdi.
+
+**Düzeltme:** `_sayfalayarak_getir` fonksiyonu (Tarif Kütüphanesi'nden
+birebir aynı mantıkla) 0_Yillik_Menu.py'ye de eklendi, TÜM 6 ilgili
+sorgu (malzeme_kalemleri ×2, alerjen_kayitlari ×2, fiyat_kayitlari ×2
+-- hem global hem işletmeye özel tarif fonksiyonlarında) bu güvenli
+yöntemle değiştirildi.
+
+**Kontrol edilen ama şimdilik risksiz bulunan:** `receteler` tablosu
+(241 satır, 1000 sınırının altında) -- ileride tarif sayısı büyürse
+gözden geçirilebilir.
+
+**Bu düzeltme muhtemelen sadece bu bir maliyet farkını değil, daha
+önce fark edilmemiş başka gizli tutarsızlıkları da (bazı tariflerin
+kalori/vitamin toplamlarında) düzeltmiş olabilir.**
+
+**Dosya durumu:** pages/0_Yillik_Menu.py güncellendi (kritik veri
+bütünlüğü düzeltmesi).
