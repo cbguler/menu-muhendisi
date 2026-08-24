@@ -3900,3 +3900,27 @@ eklemiş), "Görsel henüz eklenmedi" placeholder'ı devredeydi.
 
 **Dosya durumu:** app.py güncellendi, assets/baslik_susu_sol.png ve
 assets/baslik_susu_sag.png (yeni, projeye eklenmesi gerekiyor).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Besin Değerleri 1 Porsiyona, Maliyet 10 Porsiyona Ayrıldı
+
+Kullanıcı, pop-up'ta besin değerlerinin (kalori 9364 kcal gibi) çok
+yüksek göründüğünü fark etti -- doğru gözlem: besin değerleri
+MÜŞTERİNİN GERÇEKTE YEDİĞİ 1 porsiyona göre gösterilmeli (sağlık
+bilgisi olarak bu doğru), MALİYET ise mutfak/üretim planlaması için
+10 porsiyona göre kalmalı.
+
+**Uygulandı (hem pop-up hem Excel export):**
+- `OLCEKLENECEK_ALANLAR` artık SADECE `["maliyet_eur"]` -- kalori/
+  protein/yağ/karbonhidrat ve tüm 27 genişletilmiş besin ögesi artık
+  ÖLÇEKLENMEDEN (t_ham, 1 porsiyon) gösteriliyor.
+- Bu, "Hedeflenen Değerler" tablosunu da otomatik olarak dogru hale
+  getirdi -- hedef aralıkları zaten 1 porsiyon bazında kalibre
+  edilmişti (bir önceki düzeltme), artık gösterilen değerler de aynı
+  bazda, tutarlı.
+- Ust bilgi notu ikiye ayrıldı: "(besin değerleri 1 porsiyon için)"
+  başlığın altında, "Maliyet (10 porsiyon için)" ayrıca maliyet
+  tablosunun üstünde.
+- Excel export'ta öğün başlık etiketi "(10 porsiyon)" -> "(besin: 1 p.
+  / maliyet: 10 p.)" olarak netleştirildi.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py güncellendi.
