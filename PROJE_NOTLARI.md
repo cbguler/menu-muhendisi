@@ -3631,3 +3631,17 @@ ortalanmış, büyük harf). Koyu arka planda (popupkart_arka_) rengin
 doğru (ochre) kalması için özel bir öncelik kuralı da eklendi.
 
 **Dosya durumu:** pages/0_Yillik_Menu.py güncellendi.
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Ön Yüzdeki Öğün Etiketleri de Büyütüldü
+
+Kullanıcı, arka yüzde onaylanan büyük/kalın/ortalanmış öğün başlığı
+stilinin ön yüze (yemek listesi görünümü) de uygulanmasını istedi.
+
+**Uygulandı:** Ön yüzdeki küçük "ÖĞLE"/"AKŞAM" pastel pill-etiketleri
+(.omgo-ogun-etiket/.omgo-ogle/.omgo-aksam) kaldırıldı, yerine arka
+yüzle AYNI .omgo-ogun-baslik-buyuk sınıfı (Fraunces, 19px, 700 ağırlık,
+ortalanmış, büyük harf, "ÖĞLE YEMEĞİ"/"AKŞAM YEMEĞİ") kullanıldı.
+Artık ön ve arka yüzde öğün başlıkları tutarlı görünüyor. Kullanılmayan
+eski pill-etiket CSS kuralları temizlendi.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py güncellendi.

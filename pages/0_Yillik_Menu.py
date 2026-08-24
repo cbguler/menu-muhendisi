@@ -740,9 +740,6 @@ def _yillik_menu_tasarim_stilini_uygula():
     div[class*="st-key-baslik_"] button p { font-family: 'Fraunces', serif !important; font-size: 19px !important; font-weight: 600 !important; color: #2B2320 !important; white-space: pre-line !important; line-height: 1.35 !important; }
     div[class*="st-key-cevir_"] button { background: transparent !important; border: none !important; box-shadow: none !important; color: #A99B8A !important; font-size: 12px !important; padding: 2px 16px !important; }
     div[class*="st-key-tumunugoster_"] button { background: transparent !important; border: none !important; box-shadow: none !important; color: #C88A2E !important; font-size: 12px !important; font-weight: 600 !important; padding: 2px 16px !important; }
-    .omgo-ogun-etiket { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; margin: 6px 0 6px; }
-    .omgo-ogle { background: #F7EBD8; color: #7A531C; }
-    .omgo-aksam { background: #E7ECF1; color: #2E4057; }
     .omgo-veri-tablo { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; }
     .omgo-veri-tablo td { padding: 3px 0; }
     .omgo-veri-tablo td:last-child { text-align: right; font-weight: 500; }
@@ -867,9 +864,8 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
 
         if st.session_state[yuz_key] == "on":
             for ogun_adi, tarif_adlari in gun["ogunler"].items():
-                etiket_sinif = "omgo-ogle" if ogun_adi == "Öğle" else "omgo-aksam"
                 st.markdown(
-                    f"<span class='omgo-ogun-etiket {etiket_sinif}'>{ogun_adi}</span>",
+                    f"<div class='omgo-ogun-baslik-buyuk'>{ogun_adi.upper()} YEMEĞİ</div>",
                     unsafe_allow_html=True,
                 )
                 for ad in tarif_adlari:
