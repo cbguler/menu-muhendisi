@@ -3826,3 +3826,46 @@ yok) -- ozellikle her yemegin recete_id'sinin dogru bulunup
 bulunmadigi (isim eslesmesi) canli denemede dogrulanmali.
 
 **Dosya durumu:** pages/0_Yillik_Menu.py guncellendi (1347+ satir).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): 27 Besin Ögesi Hedef Aralığı GERÇEK VERİYE GÖRE Yeniden Kalibre Edildi
+
+Kullanıcı, "neredeyse hiç öğün hedefte çıkmıyor" sorununu bildirdi --
+ekran görüntüleriyle (16+ mikrobesin AYNI ANDA hedeflenmiş, gerçek
+değerler -- Fosfor 5734mg, Potasyum 11032mg gibi -- çok yüksek)
+teşhis netleşti: sorun kod hatası değil, TUM_BESIN_ALANLARI'ndaki
+varsayılan hedef aralıklarının "kabaca tahmin" olup GERÇEK (artık tam
+olan) veriyle uyuşmamasıydı.
+
+Kullanıcı, "hedeflenen değer sayısını azalt" seçeneğini KESİNLİKLE
+REDDETTİ -- gelecekte hastane/huzurevi/yatılı okul gibi ÇOK SAYIDA
+besin ögesini AYNI ANDA hedefleyecek kurumsal kısıtlar ekleyeceğini
+belirtti, altyapının bunu desteklemesi gerektiğini vurguladı.
+
+**Uygulanan çözüm:** kalibrasyon_besin_dagilimi.sql ile TÜM tariflerin
+(564 malzeme, tam veri) GERÇEK tek-tarif medyan/p90 dağılımı ölçüldü
+(kullanıcı CSV olarak paylaştı). Bir öğün ~3 tarifin (ana+yardımcı+
+tamamlayıcı) toplamı olduğu için, "3 x medyan" o besin ögesi için
+TİPİK bir öğün değeri kabul edildi, TÜM 32 alanın (5 temel + 27
+genişletilmiş) def_alt/def_ust değerleri bu gerçek dağılıma göre
+YENİDEN YAZILDI.
+
+**En çok değişen alanlar (önceki tahminler gerçek veriden ÇOK
+UZAKTI):**
+- Sodyum: 200-800mg -> 800-5000mg (gerçek medyan zaten 1126mg/tarif!)
+- Fosfor: 100-300mg -> 100-900mg
+- Potasyum: 400-1200mg -> 300-2500mg
+- Kalsiyum: 150-450mg -> 50-600mg
+- İyot: 20-60mcg -> 10-500mcg
+- Vitamin D: 2-6mcg -> 0-3mcg (gercek medyan sadece 0.04!)
+- Vitamin B7: 5-15mcg -> 0-8mcg (gercek medyan sadece 0.24!)
+- Diger 20 alanda da daha kucuk duzeltmeler yapildi (Yağ, Vitamin B2/
+  B3/B6/B12/C/K, Çinko, Bakır, Manganez).
+
+**Dogrulama:** Gercek medyan x3 degerleri TUM 32 yeni aralikla test
+edildi -- **31/31 basarili** (kalori zaten dogruydu, digerleri artik
+dogru). Tip tutarliligi (StreamlitMixedNumericTypesError riski) ve
+mantikli siralama (min<=varsayilan_alt<=varsayilan_ust<=maks) da
+otomatik dogrulandi.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py guncellendi (TUM_BESIN_
+ALANLARI tamamen yeniden kalibre edildi).
