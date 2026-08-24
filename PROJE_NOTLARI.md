@@ -3924,3 +3924,26 @@ bilgisi olarak bu doğru), MALİYET ise mutfak/üretim planlaması için
   / maliyet: 10 p.)" olarak netleştirildi.
 
 **Dosya durumu:** pages/0_Yillik_Menu.py güncellendi.
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Pop-up Düzeni Yeniden Sıralandı -- Alerjen/Hedef Yukarı, Maliyet Belirginleştirildi
+
+Kullanıcı üç istek yaptı:
+1. "Hedef dışı" durumunun 10-porsiyon hesabıyla ilgili olup olmadığını
+   sordu -- KOD DOĞRULANDI: _hedefte_mi HER ZAMAN t_ham (1 porsiyon,
+   ölçeklenmemiş) kullanıyor, 10-porsiyonluk maliyet ölçeklemesiyle hiç
+   ilgisi yok. Bazı öğünlerin (10+ hedeflenen değerle) "hedef dışı"
+   çıkması artık beklenen, sağlıklı bir varyasyon.
+2. Alerjen bilgisi maliyetle ilgisiz olduğu için besin verilerinin
+   (İyot'un) hemen altına taşındı.
+3. "Hedefte/Hedef dışı" rozeti de besin hedefiyle ilgili olduğu için
+   Alerjen'in hemen altına taşındı (Maliyet bölümünden önce).
+4. Maliyet başlığı ve tablosu belirginleştirildi -- yeni .omgo-maliyet-
+   baslik (Fraunces serif, 15px, kalın, altın #E8B34A) ve .omgo-maliyet-
+   tablo (14px, kalın, aynı altın renk) sınıfları eklendi, koyu arka
+   planda doğru rengin kalması için özel öncelik kuralları da eklendi.
+
+**Yeni sıralama (arka yüz):** Makro tablo -> Hedeflenen Değerler ->
+(varsa) Tüm besin değerleri -> Alerjen -> Hedefte/Hedef dışı rozeti
+-> Maliyet başlığı -> Malzeme/Enerji/İşçilik/Toplam Maliyet tablosu.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py güncellendi.

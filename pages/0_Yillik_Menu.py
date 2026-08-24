@@ -914,6 +914,10 @@ def _yillik_menu_tasarim_stilini_uygula():
     .omgo-veri-bolum { font-family: Inter, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #C88A2E; margin: 10px 0 3px; }
     .omgo-ogun-baslik-buyuk { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 700; text-align: center; color: #C88A2E; margin: 14px 0 8px; text-transform: uppercase; letter-spacing: 0.02em; }
     .omgo-hedef-rozet { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px; margin-top: 6px; }
+    .omgo-maliyet-baslik { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 700; color: #C88A2E; margin: 14px 0 4px; }
+    .omgo-maliyet-tablo td { font-size: 14px !important; font-weight: 600 !important; color: #E8B34A !important; padding: 4px 0 !important; }
+    div[class*="st-key-popupkart_arka_"] .omgo-maliyet-baslik { color: #E8B34A !important; }
+    div[class*="st-key-popupkart_arka_"] .omgo-maliyet-tablo td { color: #E8B34A !important; font-weight: 600 !important; font-size: 14px !important; }
     .omgo-veri-yok { font-size: 11.5px; font-style: italic; opacity: 0.65; margin-bottom: 6px; }
     .omgo-hedefte { background: rgba(91,117,83,0.30); color: #1B4D1B !important; }
     .omgo-hedefdisi { background: rgba(166,71,47,0.30); color: #6B2314 !important; }
@@ -1116,26 +1120,46 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                         st.markdown("<div class='omgo-veri-bolum'>Mineraller</div>", unsafe_allow_html=True)
                         _tablo_satirlari_yaz(kalan_mineral, t)
 
+                # OTUZ BESINCI DUZELTME (13 Agustos 2026, Oturum 11):
+                # kullanicinin istegiyle -- Alerjen maliyetle ilgili
+                # olmadigi icin besin verilerinin HEMEN ALTINA (Iyot'un
+                # altina) tasindi; "Hedef dısı/Hedefte" rozeti de besin
+                # degerlerinin hedefe uyup uymadigini gosterdigi icin
+                # (maliyetle degil) Alerjen'in hemen altina alindi.
+                # Maliyet bolumu artik bunlarin ALTINDA, ayri ve
+                # belirgin bir baslikla.
                 alerjen_metin = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
                 st.markdown(
-                    f"<div style='font-size:11px; opacity:0.7; margin-bottom:2px;'>"
-                    f"Maliyet ({PORSIYON_STANDART} porsiyon için)</div>",
+                    f"<table class='omgo-veri-tablo'><tr><td>Alerjen</td><td>{alerjen_metin}</td></tr></table>",
+                    unsafe_allow_html=True,
+                )
+                # ONEMLI: hedefler (kullanicinin "Ogun basina besin hedefi"
+                # ile belirledigi araliklar) HEP 1 PORSIYON baz alinarak
+                # tasarlandi -- bu yuzden hedef kontrolu OLCEKLENMEMIS
+                # t_ham ile yapiliyor, ekranda gosterilen 10-porsiyonluk
+                # t degil.
+                hedefte = _hedefte_mi(ogun_adi, t_ham, hedefler)
+                if hedefte is True:
+                    st.markdown("<span class='omgo-hedef-rozet omgo-hedefte'>Hedefte</span>", unsafe_allow_html=True)
+                elif hedefte is False:
+                    st.markdown("<span class='omgo-hedef-rozet omgo-hedefdisi'>Hedef dışı</span>", unsafe_allow_html=True)
+
+                st.markdown(
+                    f"<div class='omgo-maliyet-baslik'>Maliyet ({PORSIYON_STANDART} porsiyon için)</div>",
                     unsafe_allow_html=True,
                 )
                 if not fiyat_verisi_var:
                     st.markdown(
-                        "<table class='omgo-veri-tablo'>"
+                        "<table class='omgo-veri-tablo omgo-maliyet-tablo'>"
                         "<tr><td>Maliyet</td><td>-</td></tr>"
-                        f"<tr><td>Alerjen</td><td>{alerjen_metin}</td></tr>"
                         "</table>",
                         unsafe_allow_html=True,
                     )
                 elif not t["tam_fiyatli"]:
                     eksik_liste = ", ".join(sorted(t["eksik_malzemeler"]))
                     st.markdown(
-                        "<table class='omgo-veri-tablo'>"
+                        "<table class='omgo-veri-tablo omgo-maliyet-tablo'>"
                         f"<tr><td>Maliyet</td><td>≈{t['maliyet_eur']:.2f} € (eksik: {eksik_liste})</td></tr>"
-                        f"<tr><td>Alerjen</td><td>{alerjen_metin}</td></tr>"
                         "</table>",
                         unsafe_allow_html=True,
                     )
@@ -1161,25 +1185,14 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                     malzeme_eur = t["maliyet_eur"]  # zaten PORSIYON_STANDART ile olceklendi
                     toplam_eur = malzeme_eur + toplam_enerji + toplam_iscilik
                     st.markdown(
-                        "<table class='omgo-veri-tablo'>"
+                        "<table class='omgo-veri-tablo omgo-maliyet-tablo'>"
                         f"<tr><td>Malzeme</td><td>{malzeme_eur:.2f} €</td></tr>"
                         f"<tr><td>Enerji</td><td>{toplam_enerji:.2f} €</td></tr>"
                         f"<tr><td>İşçilik</td><td>{toplam_iscilik:.2f} €</td></tr>"
-                        f"<tr><td><b>Toplam Maliyet</b></td><td><b>{toplam_eur:.2f} €</b></td></tr>"
-                        f"<tr><td>Alerjen</td><td>{alerjen_metin}</td></tr>"
+                        f"<tr><td>Toplam Maliyet</td><td>{toplam_eur:.2f} €</td></tr>"
                         "</table>",
                         unsafe_allow_html=True,
                     )
-                # ONEMLI: hedefler (kullanicinin "Ogun basina besin hedefi"
-                # ile belirledigi araliklar) HEP 1 PORSIYON baz alinarak
-                # tasarlandi -- bu yuzden hedef kontrolu OLCEKLENMEMIS
-                # t_ham ile yapiliyor, ekranda gosterilen 10-porsiyonluk
-                # t degil.
-                hedefte = _hedefte_mi(ogun_adi, t_ham, hedefler)
-                if hedefte is True:
-                    st.markdown("<span class='omgo-hedef-rozet omgo-hedefte'>Hedefte</span>", unsafe_allow_html=True)
-                elif hedefte is False:
-                    st.markdown("<span class='omgo-hedef-rozet omgo-hedefdisi'>Hedef dışı</span>", unsafe_allow_html=True)
                 st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
 
             with st.container(key=f"tumunugoster_{card_id}"):
