@@ -3645,3 +3645,75 @@ Artık ön ve arka yüzde öğün başlıkları tutarlı görünüyor. Kullanıl
 eski pill-etiket CSS kuralları temizlendi.
 
 **Dosya durumu:** pages/0_Yillik_Menu.py güncellendi.
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Mobil Düzensizlik İncelemesi + Maliyet Tutarsızlığı Araştırması
+
+**1) Mobil/tablet kart düzensizliği:** Kullanıcı, uzun gün adlarının
+(Perşembe, Çarşamba vb.) dar ekranlarda kendi içinde kırılıp kartların
+farklı boylarda göründüğünü, "bölge menü kartları" gibi başka yerlerde
+de aynı sorunun olduğunu bildirdi.
+
+Uygulanan (UNTESTED, canlı ortamda görülmeden):
+- @media (max-width:700px/480px) ile başlık font boyutu kademeli
+  küçültüldü (19px -> 11px -> 9.5px).
+- @media (max-width:700px) ile Streamlit'in sütun kapsayıcısına
+  ([data-testid="stHorizontalBlock"] -- TAHMIN, dogrulanmadi)
+  flex-wrap eklendi -- boylece dar ekranda 7 sutun alt satirlara
+  kayabilir, her kart daha genis kalir. Bu CSS TÜM sayfaya (ayni
+  0_Yillik_Menu.py icindeki "bölge (mutfak)" secim sutunlari dahil)
+  etki eder -- kullanicinin bahsettigi "bölge menü kartları" da
+  muhtemelen bu fix'ten faydalanacak (ayni sayfada, ayni st.columns
+  mekanizmasi kullaniliyorsa).
+
+**2) Maliyet tutarsızlığı (1.58€ pop-up vs 8.17€ tarif toplamı):**
+Kod TAM olarak incelendi -- GLOBAL tarifler (İçli Köfte gibi) için
+hem pop-up hem Tarif Kütüphanesi AYNI formülü kullanıyor (malzeme
+başına miktar/1000 × fiyat, porsiyon bölmesi/çarpması YOK bu
+fonksiyonda). Kod düzeyinde bir bölme/çarpma hatası BULUNAMADI.
+
+TESPIT EDİLEN GERÇEK FARK: Tarif Kütüphanesi'nde "Porsiyon sayısı"
+(st.number_input, varsayılan 1) kullanıcı tarafından değiştirilebilir
+ve gösterilen maliyeti bu sayıyla ÇARPIYOR (`malzeme_eur =
+tarif["maliyet_eur"] * porsiyon`). Kullanıcıya, İçli Köfte'ye
+baktığında bu kutunun gerçekten "1" gösterip göstermediği soruldu --
+eğer farklıysa (Streamlit widget durumu sayfalar arası kalıcı olabilir),
+bu ÇARPIMDAN kaynaklanan bir görünüm farkı olabilir, kod hatası değil.
+POP-UP'IN gösterdiği değere güvenilmesi önerildi (her zaman "1
+porsiyon" varsayımıyla hesaplanıyor). Kullanıcının yanıtı BEKLENİYOR.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py güncellendi (mobil CSS).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Mobil/Tablet Kart Düzeni Düzeltildi + Maliyet Tutarsızlığı Açıklığa Kavuşturuldu
+
+**1) Maliyet tutarsızlığı (ARAŞTIRILDI, kod hatası DEĞİL):** Kullanıcı,
+Yıllık Menü pop-up'ında öğle yemeği için 1.58€ gördüğünü ama Tarif
+Kütüphanesi'nde aynı 3 yemeğin (İçli Köfte 5.39€ + Mercimek Çorbası
+1.75€ + Nar Taneli Meyve Tabağı 1.03€ = 8.17€) TOPLAMININ çok daha
+yüksek çıktığını bildirdi -- "hangisi doğru?" diye sordu.
+
+Kod incelendi: Tarif Kütüphanesi'nde "Porsiyon sayısı" kutusu VARSAYILAN
+1 (satır 192), ve gösterilen maliyet `tarif["maliyet_eur"] * porsiyon`
+formülüyle hesaplanıyor -- bu, Yıllık Menü'nün kullandığı TEMEL
+`maliyet_eur` (recete_malzemeleri tablosundaki, 1 PORSİYON baz alınarak
+tasarlanmış miktarlar üzerinden) ile BİREBİR AYNI kaynak. Oran hesabı
+(8.17/1.58 ≈ 5.17) kullanıcının o tarifleri incelerken "Porsiyon
+sayısı" kutusunu muhtemelen ~5'e ayarlamış (fark etmeden) olduğuna
+işaret ediyor. **Sonuç: Yıllık Menü'deki 1.58€ doğru** (1 kişilik
+porsiyon başına) -- kullanıcıdan Tarif Kütüphanesi'nde "Porsiyon
+sayısı" kutusunun değerini kontrol etmesi istendi.
+
+**2) Mobil/tablet kart düzeni düzeltildi:** Kullanıcı ekran görüntüsü
+gönderdi -- mobil/tablet genişlikte hem hafta günü kartları hem bölge
+menü kartları eşit-sabit 7 (veya N) sütuna sıkışıp metin kelime
+ortasından bölünüyordu (ör. "Pazar/tesi"). Kök neden: mevcut duyarlı
+(responsive) CSS kuralı SADECE 700px altı (telefon) genişliği
+kapsıyordu, tablet (tipik 700-1024px) dışarıda kalıyordu. Eşik
+1024px'e genişletildi.
+
+Ayrıca, bu CSS'in ASIL enjeksiyon noktası (_yillik_menu_tasarim_
+stilini_uygula) SADECE menü üretildikten SONRA çalıştığı için, menü
+üretilmeden önce görünen bölge menü kartları bu korumadan mahrum
+kalıyordu -- yeni, küçük bir `_duyarli_sutun_css_uygula()` fonksiyonu
+sayfanın EN BAŞINDA, koşulsuz çağrılarak eklendi.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py güncellendi (1199 satır).

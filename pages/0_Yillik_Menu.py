@@ -142,6 +142,30 @@ st.caption(
 )
 
 
+def _duyarli_sutun_css_uygula():
+    """YIRMI SEKIZINCI DUZELTME (13 Agustos 2026, Oturum 11): asil kart
+    stili (_yillik_menu_tasarim_stilini_uygula) SADECE menu uretildikten
+    sonra (hafta kartlari cizilirken) cagriliyordu -- ama bolge menu
+    kartlari (asagida) menu uretilmeden ONCE, sayfanin en basinda
+    render ediliyor. Kullanici mobil/tablette bu erken kartlarin da
+    (hafta kartlari gibi) dar ekranda sikisip metnin kelime ortasindan
+    bolundugunu bildirdi. Bu kucuk, ERKEN cagrilan fonksiyon SADECE
+    duyarli (responsive) sutun kuralini once yukluyor -- boylece
+    hicbir kart turu (menu uretilmis olsun olmasin) bu korumadan
+    mahrum kalmiyor. Asil buyuk stil fonksiyonu da ayni kurali tekrar
+    icerir (zararsiz, CSS yeniden-enjeksiyonu idempotenttir)."""
+    st.markdown(
+        '<style>@media (max-width: 1024px) { [data-testid="stHorizontalBlock"] '
+        '{ flex-wrap: wrap !important; row-gap: 10px; } '
+        '[data-testid="stHorizontalBlock"] > div { flex: 1 1 30% !important; '
+        'min-width: 130px !important; } }</style>',
+        unsafe_allow_html=True,
+    )
+
+
+_duyarli_sutun_css_uygula()
+
+
 @st.cache_data(ttl=3600)
 def _mutfaklari_getir():
     return (supabase.table("mutfaklar").select("kod, ad").execute()).data
@@ -738,6 +762,18 @@ def _yillik_menu_tasarim_stilini_uygula():
     div[class*="st-key-kartarka_"] * { color: #EDE6D6 !important; }
     div[class*="st-key-baslik_"] button { width: 100%; background: transparent !important; border: none !important; border-bottom: 2px solid #C88A2E !important; border-radius: 0 !important; padding: 14px 16px 10px !important; text-align: left !important; box-shadow: none !important; white-space: pre-line !important; line-height: 1.35 !important; }
     div[class*="st-key-baslik_"] button p { font-family: 'Fraunces', serif !important; font-size: 19px !important; font-weight: 600 !important; color: #2B2320 !important; white-space: pre-line !important; line-height: 1.35 !important; }
+    @media (max-width: 700px) { div[class*="st-key-baslik_"] button p { font-size: 11px !important; line-height: 1.25 !important; } div[class*="st-key-baslik_"] button { padding: 8px 6px 6px !important; } }
+    @media (max-width: 480px) { div[class*="st-key-baslik_"] button p { font-size: 9.5px !important; } }
+    /* YIRMI SEKIZINCI DUZELTME (13 Agustos 2026, Oturum 11): kullanici,
+    mobil VE TABLET genislikte kartlarin (hem hafta gunu hem bolge menu
+    kartlari) esit-sabit sutun sayisina sikisip metnin kelime ortasindan
+    bolundugunu bildirdi. Onceki esik (700px) SADECE telefon genisligini
+    kapsiyordu -- tablet (tipik 700-1024px) disarida kaliyordu, tam
+    kullanicinin gordugu sorun buydu. Esik 1024px'e genisletildi, boylece
+    tabletler de bu sutunlarin ALT SATIRA kaymasindan (flex-wrap)
+    faydalaniyor -- 7 sutunluk hafta artik dar ekranlarda 3-4'erli
+    satirlara bolunebiliyor, metin kelime ortasindan kesilmiyor. */
+    @media (max-width: 1024px) { [data-testid="stHorizontalBlock"] { flex-wrap: wrap !important; row-gap: 10px; } [data-testid="stHorizontalBlock"] > div { flex: 1 1 30% !important; min-width: 130px !important; } }
     div[class*="st-key-cevir_"] button { background: transparent !important; border: none !important; box-shadow: none !important; color: #A99B8A !important; font-size: 12px !important; padding: 2px 16px !important; }
     div[class*="st-key-tumunugoster_"] button { background: transparent !important; border: none !important; box-shadow: none !important; color: #C88A2E !important; font-size: 12px !important; font-weight: 600 !important; padding: 2px 16px !important; }
     .omgo-veri-tablo { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; }
