@@ -3615,3 +3615,19 @@ bekleniyor.
 
 **Dosya durumu:** 6 yeni SQL dosyası, orijinal büyük
 73_excel_veritabani_tam_senkronizasyon.sql yerine kullanılacak.
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Öğün Başlıkları Büyütüldü ve Yeniden Adlandırıldı
+
+Kullanıcı "MAKRO" etiketinin anlamını sordu (kalori/protein/yağ/
+karbonhidrat/GI = makro-besin ögeleri, aşağıdaki Vitaminler/
+Mineraller'den -- mikro besin ögeleri -- ayırt etmek için) --
+açıklandı. Kullanıcı bu başlığın "ÖĞLE YEMEĞİ"/"AKŞAM YEMEĞİ" olarak
+değiştirilmesini, daha büyük/kalın fontla ve ortalanmış olmasını
+istedi.
+
+**Uygulandı:** "{Öğle/Akşam} — Makro" -> "{ÖĞLE/AKŞAM} YEMEĞİ" (yeni
+.omgo-ogun-baslik-buyuk sınıfı: Fraunces serif, 19px, 700 ağırlık,
+ortalanmış, büyük harf). Koyu arka planda (popupkart_arka_) rengin
+doğru (ochre) kalması için özel bir öncelik kuralı da eklendi.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py güncellendi.

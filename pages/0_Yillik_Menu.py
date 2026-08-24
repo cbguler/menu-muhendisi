@@ -747,7 +747,9 @@ def _yillik_menu_tasarim_stilini_uygula():
     .omgo-veri-tablo td { padding: 3px 0; }
     .omgo-veri-tablo td:last-child { text-align: right; font-weight: 500; }
     .omgo-veri-bolum { font-family: Inter, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #C88A2E; margin: 10px 0 3px; }
+    .omgo-ogun-baslik-buyuk { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 700; text-align: center; color: #C88A2E; margin: 14px 0 8px; text-transform: uppercase; letter-spacing: 0.02em; }
     .omgo-hedef-rozet { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px; margin-top: 6px; }
+    .omgo-veri-yok { font-size: 11.5px; font-style: italic; opacity: 0.65; margin-bottom: 6px; }
     .omgo-hedefte { background: rgba(91,117,83,0.30); color: #1B4D1B !important; }
     .omgo-hedefdisi { background: rgba(166,71,47,0.30); color: #6B2314 !important; }
     @keyframes omgoFlipOn { 0% { transform: rotateY(90deg); } 100% { transform: rotateY(0deg); } }
@@ -758,6 +760,7 @@ def _yillik_menu_tasarim_stilini_uygula():
     div[class*="st-key-popupkart_arka_"] { background: #3D2A3B; border-radius: 14px; padding: 18px 20px; box-shadow: 0 10px 30px rgba(43,35,32,0.30); animation: omgoFlipArka 0.65s cubic-bezier(0.3,0.1,0.2,1) both; transform-style: preserve-3d; backface-visibility: hidden; transform-origin: center center; }
     div[class*="st-key-popupkart_arka_"] * { color: #EDE6D6 !important; }
     div[class*="st-key-popupkart_arka_"] .omgo-veri-bolum { color: #C88A2E !important; }
+    div[class*="st-key-popupkart_arka_"] .omgo-ogun-baslik-buyuk { color: #C88A2E !important; }
     </style>
     """
     # ONEMLI: Markdown, 4+ BOSLUKLA BASLAYAN HER SATIRI "kod blogu" sayip
@@ -828,6 +831,15 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
         return etiket.split(" (")[0].replace("Vitamin ", "")
 
     def _tablo_satirlari_yaz(anahtarlar, t):
+        """Satirlari yazar, en az bir GERCEK deger yazilip yazilmadigini
+        (True/False) dondurur -- YIRMI YEDINCI DUZELTME (13 Agustos 2026):
+        kullanici, bir kategoride HIC veri olmadiginda basligin altinin
+        sessizce bos kalmasinin "bozuk" gibi gorundugunu bildirdi (halbuki
+        gercek sebep: o gunun secilen yemeklerindeki malzemelerin bu
+        belirli besin ogeleri icin katalogumuzda henuz veri OLMAMASI --
+        SQL ile dogrulandi, ör. 564 malzemeden sadece 68'inde Vitamin C
+        var). Artik veri yoksa acikca "Bu degerler icin veri yok" notu
+        gosteriliyor, sessiz bosluk birakilmiyor."""
         satirlar = []
         for anahtar in anahtarlar:
             deger = t.get(anahtar)
@@ -836,6 +848,13 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
             satirlar.append(f"<tr><td>{_kisa_ad(anahtar)}</td><td>{_deger_formatla(deger)} {_birim_al(anahtar)}</td></tr>")
         if satirlar:
             st.markdown("<table class='omgo-veri-tablo'>" + "".join(satirlar) + "</table>", unsafe_allow_html=True)
+            return True
+        st.markdown(
+            "<div class='omgo-veri-yok'>Bu değerler için veri yok (seçilen yemeklerin "
+            "malzemelerinde henüz ölçülmemiş)</div>",
+            unsafe_allow_html=True,
+        )
+        return False
 
     kapsayici_key = f"popupkart_{'on' if st.session_state[yuz_key]=='on' else 'arka'}_{card_id}"
     with st.container(key=kapsayici_key):
@@ -879,7 +898,7 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
             for ogun_adi, tarif_adlari in gun["ogunler"].items():
                 t = _ogun_toplami(tarif_adlari, detay)
                 gi_metin = f"{round(t['gi'])}" if t["gi"] is not None else "-"
-                st.markdown(f"<div class='omgo-veri-bolum'>{ogun_adi} — Makro</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='omgo-ogun-baslik-buyuk'>{ogun_adi.upper()} YEMEĞİ</div>", unsafe_allow_html=True)
                 st.markdown(
                     "<table class='omgo-veri-tablo'>"
                     f"<tr><td>Kalori</td><td>{round(t['kalori'])} kcal</td></tr>"
