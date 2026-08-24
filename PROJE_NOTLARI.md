@@ -3976,3 +3976,24 @@ yüzde daha açık altın (#E8B34A, koyu metin) olacak şekilde bağlam-
 duyarlı stillendirildi.
 
 **Dosya durumu:** pages/0_Yillik_Menu.py güncellendi.
+
+### 13 Ağustos 2026 — XI. Oturum (devam): "Tüm Besin Değerlerini Gör" Kaldırıldı, Başlık Değişti, Maliyet Kutusu Açık Renge Çevrildi
+
+Kullanıcı, konumu değiştirmeme rağmen butonun hâlâ işlevsiz göründüğünü
+bildirdi ve kaldırılmasını istedi -- KALDIRILDI: buton, session_state
+anahtarı, gated Diğer/Vitaminler/Mineraller gösterim bloğu ve ilgili
+CSS kuralı tamamen temizlendi (kalıntı yok, doğrulandı). "Hedeflenen
+Değerler" (çalışan kısım) olduğu gibi kaldı.
+
+**"Gün Detayı" -> "Günün Menüsü"** olarak değiştirildi. Ortalama
+denendi (CSS ile [data-testid="stDialog"] h1/h2 hedeflendi) ama
+DÜRÜSTÇE belirtildi: bu Streamlit'in kendi pencere başlığı, daha önce
+de not edildiği gibi tam CSS kontrolü garanti değil -- canlı ortamda
+doğrulanmalı.
+
+**Maliyet kutusu tamamen yeniden tasarlandı:** Önceki düşük-saydamlıklı
+ochre tint (koyu arka planla karışıp okunması zor bir ton üretmişti)
+kaldırıldı -- artık SOLID açık krem (#EDE6D6) arka plan + koyu ink
+(#2B2320) metin ile net, yüksek kontrastlı bir "pencere" oluyor.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py güncellendi.

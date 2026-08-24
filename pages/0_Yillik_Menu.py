@@ -910,18 +910,17 @@ def _yillik_menu_tasarim_stilini_uygula():
     div[class*="st-key-cevir_"] button:hover { background: #B37B28 !important; }
     div[class*="st-key-popupkart_arka_"] div[class*="st-key-cevir_"] button { background: #E8B34A !important; color: #3D2A3B !important; box-shadow: 0 2px 6px rgba(0,0,0,0.25) !important; }
     div[class*="st-key-popupkart_arka_"] div[class*="st-key-cevir_"] button:hover { background: #F0C36A !important; }
-    div[class*="st-key-tumunugoster_"] button { background: transparent !important; border: none !important; box-shadow: none !important; color: #C88A2E !important; font-size: 12px !important; font-weight: 600 !important; padding: 2px 16px !important; }
     .omgo-veri-tablo { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; }
     .omgo-veri-tablo td { padding: 3px 0; }
     .omgo-veri-tablo td:last-child { text-align: right; font-weight: 500; }
     .omgo-veri-bolum { font-family: Inter, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #C88A2E; margin: 10px 0 3px; }
     .omgo-ogun-baslik-buyuk { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 700; text-align: center; color: #C88A2E; margin: 14px 0 8px; text-transform: uppercase; letter-spacing: 0.02em; }
     .omgo-hedef-rozet { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px; margin-top: 6px; }
-    .omgo-maliyet-baslik { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 700; color: #C88A2E; margin: 0 0 6px; }
-    div[class*="st-key-maliyetkutu_"] { background: rgba(200,138,46,0.14); border: 1px solid rgba(200,138,46,0.35); border-radius: 10px; padding: 12px 14px; margin: 10px 0; }
-    .omgo-maliyet-tablo td { font-size: 14px !important; font-weight: 600 !important; color: #E8B34A !important; padding: 4px 0 !important; }
-    div[class*="st-key-popupkart_arka_"] .omgo-maliyet-baslik { color: #E8B34A !important; }
-    div[class*="st-key-popupkart_arka_"] .omgo-maliyet-tablo td { color: #E8B34A !important; font-weight: 600 !important; font-size: 14px !important; }
+    .omgo-maliyet-baslik { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 700; color: #7A531C; margin: 0 0 6px; }
+    div[class*="st-key-maliyetkutu_"] { background: #EDE6D6; border: 1px solid #C88A2E; border-radius: 10px; padding: 12px 14px; margin: 10px 0; }
+    .omgo-maliyet-tablo td { font-size: 14px !important; font-weight: 600 !important; color: #2B2320 !important; padding: 4px 0 !important; }
+    div[class*="st-key-popupkart_arka_"] .omgo-maliyet-baslik { color: #7A531C !important; }
+    div[class*="st-key-popupkart_arka_"] .omgo-maliyet-tablo td { color: #2B2320 !important; font-weight: 600 !important; font-size: 14px !important; }
     .omgo-veri-yok { font-size: 11.5px; font-style: italic; opacity: 0.65; margin-bottom: 6px; }
     .omgo-hedefte { background: rgba(91,117,83,0.30); color: #1B4D1B !important; }
     .omgo-hedefdisi { background: rgba(166,71,47,0.30); color: #6B2314 !important; }
@@ -929,6 +928,7 @@ def _yillik_menu_tasarim_stilini_uygula():
     @keyframes omgoFlipArka { 0% { transform: rotateY(-90deg); } 100% { transform: rotateY(0deg); } }
     [data-testid="stDialog"] { perspective: 1200px; }
     .stApp { perspective: 1200px; }
+    [data-testid="stDialog"] h1, [data-testid="stDialog"] h2, [data-testid="stDialog"] [data-testid="stMarkdownContainer"] h1 { text-align: center !important; width: 100% !important; }
     div[class*="st-key-popupkart_on_"] { background: #EDE6D6; border-radius: 14px; padding: 18px 20px; box-shadow: 0 10px 30px rgba(43,35,32,0.20); animation: omgoFlipOn 0.65s cubic-bezier(0.3,0.1,0.2,1) both; transform-style: preserve-3d; backface-visibility: hidden; transform-origin: center center; }
     div[class*="st-key-popupkart_arka_"] { background: #3D2A3B; border-radius: 14px; padding: 18px 20px; box-shadow: 0 10px 30px rgba(43,35,32,0.30); animation: omgoFlipArka 0.65s cubic-bezier(0.3,0.1,0.2,1) both; transform-style: preserve-3d; backface-visibility: hidden; transform-origin: center center; }
     div[class*="st-key-popupkart_arka_"] * { color: #EDE6D6 !important; }
@@ -968,8 +968,6 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
     guvenilir sekilde yeniden calisir."""
     yuz_key = "yillik_menu_popup_yuz"
     st.session_state.setdefault(yuz_key, "on")
-    tumunu_goster_key = "yillik_menu_popup_tumunu_goster"
-    st.session_state.setdefault(tumunu_goster_key, False)
 
     # YIRMI ALTINCI DUZELTME (13 Agustos 2026, Oturum 11) -- kullanicinin
     # secimi "D": arka yuzde varsayilan olarak temel 5 deger + (varsa)
@@ -1110,39 +1108,6 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                     st.markdown("<div class='omgo-veri-bolum'>Hedeflenen Değerler</div>", unsafe_allow_html=True)
                     _tablo_satirlari_yaz(hedeflenen_ek_anahtarlar, t)
 
-                if ogun_adi == list(gun["ogunler"].keys())[0]:
-                    # OTUZ ALTINCI DUZELTME (13 Agustos 2026, Oturum 11):
-                    # kullanici butonun "islevsiz" gorundugunu bildirdi --
-                    # aslinda calisiyordu ama buton pencerenin EN ALTINDA
-                    # (Maliyet'in de altinda) durup, actigi icerik (Diger/
-                    # Vitaminler/Mineraller) cok daha YUKARIDA belirdigi
-                    # icin kullanicinin o an bulundugu kaydirma konumunda
-                    # HICBIR SEY DEGISMEMIS gibi gorunuyordu. Buton simdi
-                    # acacagi icerigin TAM USTUNE tasindi -- boylece etkisi
-                    # aninda, ayni kaydirma konumunda gorunur. Gereksiz
-                    # st.rerun() da kaldirildi (st.button zaten tikland
-                    # iginda otomatik rerun tetikliyor, dialog icinde
-                    # fazladan cagri bir riski ortadan kaldirmak icin
-                    # kaldirildi).
-                    with st.container(key=f"tumunugoster_{card_id}"):
-                        tumunu_goster_metni = "▾ Tüm besin değerlerini gizle" if st.session_state[tumunu_goster_key] else "▸ Tüm besin değerlerini gör"
-                        if st.button(tumunu_goster_metni, key=f"btn_tumunugoster_{card_id}", use_container_width=True):
-                            st.session_state[tumunu_goster_key] = not st.session_state[tumunu_goster_key]
-
-                if st.session_state[tumunu_goster_key]:
-                    kalan_diger = [a for a in DIGER_MAKRO_ANAHTARLARI if a not in hedeflenen_ek_anahtarlar]
-                    kalan_vitamin = [a for a in VITAMIN_ANAHTARLARI if a not in hedeflenen_ek_anahtarlar]
-                    kalan_mineral = [a for a in MINERAL_ANAHTARLARI if a not in hedeflenen_ek_anahtarlar]
-                    if kalan_diger:
-                        st.markdown("<div class='omgo-veri-bolum'>Diğer</div>", unsafe_allow_html=True)
-                        _tablo_satirlari_yaz(kalan_diger, t)
-                    if kalan_vitamin:
-                        st.markdown("<div class='omgo-veri-bolum'>Vitaminler</div>", unsafe_allow_html=True)
-                        _tablo_satirlari_yaz(kalan_vitamin, t)
-                    if kalan_mineral:
-                        st.markdown("<div class='omgo-veri-bolum'>Mineraller</div>", unsafe_allow_html=True)
-                        _tablo_satirlari_yaz(kalan_mineral, t)
-
                 # OTUZ BESINCI DUZELTME (13 Agustos 2026, Oturum 11):
                 # kullanicinin istegiyle -- Alerjen maliyetle ilgili
                 # olmadigi icin besin verilerinin HEMEN ALTINA (Iyot'un
@@ -1226,7 +1191,7 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                     st.rerun()
 
 
-@st.dialog("Gün Detayı")
+@st.dialog("Günün Menüsü")
 def _gun_popup_dialog(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni):
     _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni)
 
