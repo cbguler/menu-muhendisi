@@ -3717,3 +3717,38 @@ kalıyordu -- yeni, küçük bir `_duyarli_sutun_css_uygula()` fonksiyonu
 sayfanın EN BAŞINDA, koşulsuz çağrılarak eklendi.
 
 **Dosya durumu:** pages/0_Yillik_Menu.py güncellendi (1199 satır).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Standart Porsiyon 10'a Çıkarıldı (Tarif Kütüphanesi + Yıllık Menü + Excel)
+
+Kullanıcı, gerçek mutfaklarda (ve evde bile) tek porsiyonluk üretimin
+nadir olduğunu belirterek uygulamanın standart porsiyon sayısını 10'a
+çıkarmasını, bunun her maliyet/tarif gösterilen yerde AÇIKÇA
+belirtilmesini istedi.
+
+**1) Tarif Kütüphanesi:** "Porsiyon sayısı" kutusunun varsayılan
+değeri 1 -> 10 yapıldı. Mevcut kod zaten dinamik olarak
+"Malzemeler (N porsiyon için)" etiketi ve tüm besin/maliyet
+hesaplarını `* porsiyon` ile ölçeklediği için, sadece varsayılanı
+değiştirmek yeterli oldu (gerçek üretim maliyeti -- enerji/işçilik --
+hesabı da zaten dinamik olarak ölçekleniyor).
+
+**2) Yıllık Menü pop-up'ı (arka yüz):** Daha önce SADECE 1 porsiyonluk
+değerler gösteriliyordu (hiç ölçekleme yoktu). Artık kalori/protein/
+yağ/karbonhidrat/maliyet VE tüm 27 genişletilmiş besin ögesi 10 ile
+çarpılıyor, öğün başlığının hemen altına "(10 porsiyon için)" notu
+eklendi. Glisemik İndeks (bir ORAN olduğu için) ve alerjen/eksik-fiyat
+listeleri (kategorik bilgi) ÖLÇEKLENMEDİ -- doğru mantık.
+
+**KRİTİK DÜZELTME:** "Hedefte/Hedef dışı" kontrolü (_hedefte_mi),
+kullanıcının belirlediği hedef aralıkları HÂLÂ 1 porsiyon baz alınarak
+tasarlandığı için, ÖLÇEKLENMEMİŞ (t_ham) değerlerle yapılmaya devam
+ediyor -- ekranda gösterilen (10x) değerle DEĞİL. Bu ayrım
+yapılmasaydı, hemen hemen her öğün yanlışlıkla "hedef dışı"
+görünürdü.
+
+**3) Excel export:** Aynı 10x ölçekleme ve "(10 porsiyon)" etiketi
+Excel'deki öğün başlık satırına da uygulandı, hedef kontrolü orada da
+ölçeklenmemiş değerle yapılıyor.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py, pages/5_Tarif_Kutuphanesi.py
+güncellendi.

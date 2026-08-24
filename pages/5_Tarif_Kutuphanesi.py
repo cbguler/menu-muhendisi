@@ -189,7 +189,7 @@ varsayilan_index = isimler_sirali.index(query_tarif) if query_tarif in isimler_s
 secilen_ad = st.selectbox("Tarif", isimler_sirali, index=varsayilan_index)
 tarif = next(t for t in filtrelenmis if t["ad"] == secilen_ad)
 
-porsiyon = st.number_input("Porsiyon sayısı", min_value=1, max_value=200, value=1, step=1)
+porsiyon = st.number_input("Porsiyon sayısı", min_value=1, max_value=200, value=10, step=1)
 
 st.subheader(tarif["ad"])
 st.caption(

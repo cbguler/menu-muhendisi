@@ -927,10 +927,30 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                         if anahtar not in TEMEL_5 and anahtar not in hedeflenen_ek_anahtarlar:
                             hedeflenen_ek_anahtarlar.append(anahtar)
 
+            # YIRMI DOKUZUNCU DUZELTME (13 Agustos 2026, Oturum 11):
+            # kullanicinin talebiyle -- gercek mutfaklarda tek porsiyonluk
+            # uretim nadir oldugu icin -- pop-up'taki TUM miktarlar (kalori,
+            # protein, yag, karbonhidrat, maliyet, tum vitamin/mineraller)
+            # STANDART 10 PORSIYONA gore olcekleniyor. Glisemik indeks bir
+            # ORAN oldugu icin (Tarif Kutuphanesi'ndeki ayni ilkeyle
+            # tutarli) OLCEKLENMIYOR. Alerjen/eksik-fiyat listeleri de
+            # miktar degil, kategorik bilgi oldugu icin degismiyor.
+            PORSIYON_STANDART = 10
+            OLCEKLENECEK_ALANLAR = ["kalori", "protein", "yag", "karbonhidrat", "maliyet_eur"] + _GENISLETILMIS_KOLONLAR
+
             for ogun_adi, tarif_adlari in gun["ogunler"].items():
-                t = _ogun_toplami(tarif_adlari, detay)
+                t_ham = _ogun_toplami(tarif_adlari, detay)
+                t = dict(t_ham)
+                for alan in OLCEKLENECEK_ALANLAR:
+                    if t.get(alan) is not None:
+                        t[alan] = t[alan] * PORSIYON_STANDART
                 gi_metin = f"{round(t['gi'])}" if t["gi"] is not None else "-"
                 st.markdown(f"<div class='omgo-ogun-baslik-buyuk'>{ogun_adi.upper()} YEMEĞİ</div>", unsafe_allow_html=True)
+                st.markdown(
+                    f"<div style='text-align:center; font-size:11px; opacity:0.7; "
+                    f"margin-top:-6px; margin-bottom:8px;'>({PORSIYON_STANDART} porsiyon için)</div>",
+                    unsafe_allow_html=True,
+                )
                 st.markdown(
                     "<table class='omgo-veri-tablo'>"
                     f"<tr><td>Kalori</td><td>{round(t['kalori'])} kcal</td></tr>"
@@ -975,7 +995,12 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                     "</table>",
                     unsafe_allow_html=True,
                 )
-                hedefte = _hedefte_mi(ogun_adi, t, hedefler)
+                # ONEMLI: hedefler (kullanicinin "Ogun basina besin hedefi"
+                # ile belirledigi araliklar) HEP 1 PORSIYON baz alinarak
+                # tasarlandi -- bu yuzden hedef kontrolu OLCEKLENMEMIS
+                # t_ham ile yapiliyor, ekranda gosterilen 10-porsiyonluk
+                # t degil.
+                hedefte = _hedefte_mi(ogun_adi, t_ham, hedefler)
                 if hedefte is True:
                     st.markdown("<span class='omgo-hedef-rozet omgo-hedefte'>Hedefte</span>", unsafe_allow_html=True)
                 elif hedefte is False:
@@ -1078,8 +1103,8 @@ def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
     normal_yazi = Font(name=yazi_tipi)
     RENK_ANA, RENK_YARDIMCI, RENK_TAMAMLAYICI, RENK_FAST_FOOD = "D85A30", "639922", "1D9E75", "BA7517"
 
-    def oyun_bloguna_yaz(satir, ogun_adi, tarif_adlari, t, gun_kolonu):
-        ws.cell(row=satir, column=1, value=ogun_adi).font = alan_yazi
+    def oyun_bloguna_yaz(satir, ogun_adi, tarif_adlari, t, t_ham, gun_kolonu):
+        ws.cell(row=satir, column=1, value=f"{ogun_adi} (10 porsiyon)").font = alan_yazi
         satir += 1
         # Yemek satirlari, o ogunde 4. (istege bagli Fast Food) tarif
         # var mi yok mu -- 6 Agustos 2026'da eklendi -- gore DINAMIK
@@ -1112,7 +1137,7 @@ def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
             elif etiket == "Alerjen":
                 deger = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
             elif etiket == "Hedef Durumu":
-                hedefte = _hedefte_mi(ogun_adi, t, hedefler)
+                hedefte = _hedefte_mi(ogun_adi, t_ham, hedefler)
                 deger = {True: "Hedefte", False: "Hedef dışı", None: "-"}[hedefte]
             else:  # Maliyet
                 if not fiyat_verisi_var:
@@ -1149,8 +1174,15 @@ def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
             gun_kolonu = g + 2
             s = blok_baslangic
             for ogun_adi, tarif_adlari in gun["ogunler"].items():
-                t = _ogun_toplami(tarif_adlari, detay)
-                s = oyun_bloguna_yaz(s, ogun_adi, tarif_adlari, t, gun_kolonu)
+                # 10 porsiyona olcekleme (bkz. pop-up'taki ayni mantik,
+                # 13 Agustos 2026) -- hedefte kontrolu icin ayrica
+                # olceklenmemis t_ham tutuluyor.
+                t_ham = _ogun_toplami(tarif_adlari, detay)
+                t = dict(t_ham)
+                for alan in ["kalori", "protein", "yag", "karbonhidrat", "maliyet_eur"] + _GENISLETILMIS_KOLONLAR:
+                    if t.get(alan) is not None:
+                        t[alan] = t[alan] * 10
+                s = oyun_bloguna_yaz(s, ogun_adi, tarif_adlari, t, t_ham, gun_kolonu)
         satir = s + 1  # bir sonraki hafta bloğundan önce bos satir
 
     genislikler = [24] + [24] * 7
