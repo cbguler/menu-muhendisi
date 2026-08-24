@@ -3794,3 +3794,35 @@ kalori/vitamin toplamlarında) düzeltmiş olabilir.**
 
 **Dosya durumu:** pages/0_Yillik_Menu.py güncellendi (kritik veri
 bütünlüğü düzeltmesi).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Pop-up Artik TAM Uretim Maliyeti Gosteriyor (Malzeme+Enerji+Iscilik)
+
+Kullanicinin sorusu uzerine kod incelendi ve ONEMLI bir mimari
+tutarsizlik bulundu: Tarif Kutuphanesi'nde ZATEN var olan "Gerçek
+üretim maliyeti (malzeme + enerji + işçilik)" hesaplamasi (üretim
+asamalari -- isil islem/ozgul isi/sicaklik farkindan enerji, aktif
+dakikadan iscilik) Yillik Menu pop-up'inda HIC KULLANILMIYORDU --
+pop-up sadece basit malzeme toplamini gosteriyordu. Kullanici, pop-up'in
+da TAM hesaplamaya gore guncellenmesini istedi.
+
+**Uygulandi:** `_uretim_asamalarini_getir`, `_maliyet_ayarlarini_getir`,
+`_gercek_maliyet_hesapla` fonksiyonlari (5_Tarif_Kutuphanesi.py'den
+BIREBIR AYNI mantikla) 0_Yillik_Menu.py'ye eklendi. Ayrica yeni bir
+`_tum_tarif_id_by_ad_getir` fonksiyonu eklendi (pop-up'in `detay`
+sozlugu sadece ADA gore anahtarli, id tasimiyordu -- uretim
+asamalarina erismek icin id gerekiyor).
+
+Pop-up'taki "Maliyet" satiri artik 4 satira bolundu: Malzeme / Enerji /
+İşçilik / **Toplam Maliyet** (kalin) -- her ogundeki 3 (veya 4) yemegin
+uretim asamalari ayri ayri hesaplanip toplaniyor, malzeme maliyetiyle
+(zaten 10 porsiyona olceklenmis) birlikte gosteriliyor.
+
+**Bilinen, henuz guncellenmeyen tutarsizlik:** Excel export
+(_aylik_menu_excel_olustur) hala SADECE malzeme maliyetini gosteriyor
+-- kullanici ayrica isterse bu da ayni modele guncellenebilir.
+
+**Test durumu:** Canli ortamda test EDILEMEDI (sandbox'ta Streamlit
+yok) -- ozellikle her yemegin recete_id'sinin dogru bulunup
+bulunmadigi (isim eslesmesi) canli denemede dogrulanmali.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py guncellendi (1347+ satir).

@@ -195,6 +195,101 @@ def _sayfalayarak_getir(sorgu_uret, sayfa_boyutu=1000):
     return tumu
 
 
+# OTUZ BIRINCI DUZELTME (13 Agustos 2026, Oturum 11): kullanicinin
+# talebiyle -- pop-up'taki maliyet SADECE malzeme maliyetiydi, oysa
+# Tarif Kutuphanesi'nde ("Gerçek üretim maliyeti") zaten var olan
+# malzeme+enerji+işçilik modeliyle TUTARSIZDI. Asagidaki 3 fonksiyon,
+# pages/5_Tarif_Kutuphanesi.py'deki BIREBIR AYNI mantikla buraya da
+# eklendi, boylece pop-up da tam maliyeti gosterebiliyor.
+@st.cache_data(ttl=3600)
+def _tum_tarif_id_by_ad_getir(isletme_id):
+    """Pop-up'ta uretim asamalarina (enerji/iscilik icin) erismek icin
+    tarif ADINDAN id'sine ihtiyacimiz var -- detay sozlugu (yukarida)
+    sadece ada gore anahtarlanmis, id tasimiyor."""
+    genel = _sayfalayarak_getir(
+        lambda: supabase.table("receteler").select("id, ad").is_("isletme_id", "null")
+    )
+    ozel = _sayfalayarak_getir(
+        lambda: supabase.table("receteler").select("id, ad").eq("isletme_id", isletme_id)
+    )
+    return {r["ad"]: r["id"] for r in genel + ozel}
+
+
+@st.cache_data(ttl=3600)
+def _uretim_asamalarini_getir(recete_id):
+    asamalar = (
+        supabase.table("recete_asamalari")
+        .select("id, ad, sira, sure_dakika, aktif_dakika, isil_islem_mi, enerji_kaynagi, baslangic_sicaklik, hedef_sicaklik, verimlilik_orani")
+        .eq("recete_id", recete_id)
+        .order("sira")
+        .execute()
+    ).data
+    if not asamalar:
+        return []
+    asama_malzeme_kayitlari = (
+        supabase.table("asama_malzemeleri")
+        .select("asama_id, recete_malzemeleri(miktar_gram, malzemeler(ozgul_isi))")
+        .in_("asama_id", [a["id"] for a in asamalar])
+        .execute()
+    ).data
+    for a in asamalar:
+        a["isitilan_kutle_gram"] = sum(
+            (k["recete_malzemeleri"] or {}).get("miktar_gram", 0)
+            for k in asama_malzeme_kayitlari
+            if k["asama_id"] == a["id"]
+        )
+        a["agirlikli_ozgul_isi"] = None
+        kayitlar_bu_asama = [
+            k for k in asama_malzeme_kayitlari
+            if k["asama_id"] == a["id"] and k.get("recete_malzemeleri")
+        ]
+        if kayitlar_bu_asama and a["isitilan_kutle_gram"] > 0:
+            toplam_ozgul_isi_agirlikli = sum(
+                k["recete_malzemeleri"]["miktar_gram"]
+                * ((k["recete_malzemeleri"].get("malzemeler") or {}).get("ozgul_isi") or 0)
+                for k in kayitlar_bu_asama
+            )
+            a["agirlikli_ozgul_isi"] = toplam_ozgul_isi_agirlikli / a["isitilan_kutle_gram"]
+    return asamalar
+
+
+@st.cache_data(ttl=3600)
+def _maliyet_ayarlarini_getir(isletme_id):
+    sonuc = (
+        supabase.table("isletme_maliyet_ayarlari")
+        .select("*")
+        .eq("isletme_id", isletme_id)
+        .execute()
+    ).data
+    if sonuc:
+        return sonuc[0]
+    return {
+        "elektrik_birim_fiyat_eur_kwh": 0.12,
+        "dogalgaz_birim_fiyat_eur_kwh": 0.08,
+        "personel_saat_ucreti_eur": 5.0,
+        "genel_gider_yuzdesi": 15.0,
+    }
+
+
+def _gercek_maliyet_hesapla(asamalar, ayarlar, porsiyon):
+    enerji_eur = 0.0
+    iscilik_dk = 0.0
+    for a in asamalar:
+        iscilik_dk += a["aktif_dakika"] if a["aktif_dakika"] is not None else a["sure_dakika"]
+        if a["isil_islem_mi"] and a["agirlikli_ozgul_isi"] and a["isitilan_kutle_gram"]:
+            kutle = a["isitilan_kutle_gram"] * porsiyon
+            delta_t = a["hedef_sicaklik"] - a["baslangic_sicaklik"]
+            joule = kutle * a["agirlikli_ozgul_isi"] * delta_t
+            kwh = joule / 3_600_000.0 / a["verimlilik_orani"]
+            birim_fiyat = (
+                ayarlar["elektrik_birim_fiyat_eur_kwh"] if a["enerji_kaynagi"] == "elektrik"
+                else ayarlar["dogalgaz_birim_fiyat_eur_kwh"]
+            )
+            enerji_eur += kwh * birim_fiyat
+    iscilik_eur = (iscilik_dk / 60.0) * ayarlar["personel_saat_ucreti_eur"]
+    return enerji_eur, iscilik_eur
+
+
 mutfaklar_listesi = _mutfaklari_getir()
 sol_mutfak, _bos_mutfak = st.columns([1, 3])
 with sol_mutfak:
@@ -1002,19 +1097,53 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
 
                 alerjen_metin = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
                 if not fiyat_verisi_var:
-                    maliyet_metin = "-"
-                elif t["tam_fiyatli"]:
-                    maliyet_metin = f"{t['maliyet_eur']:.2f} €"
-                else:
+                    st.markdown(
+                        "<table class='omgo-veri-tablo'>"
+                        "<tr><td>Maliyet</td><td>-</td></tr>"
+                        f"<tr><td>Alerjen</td><td>{alerjen_metin}</td></tr>"
+                        "</table>",
+                        unsafe_allow_html=True,
+                    )
+                elif not t["tam_fiyatli"]:
                     eksik_liste = ", ".join(sorted(t["eksik_malzemeler"]))
-                    maliyet_metin = f"≈{t['maliyet_eur']:.2f} € (eksik: {eksik_liste})"
-                st.markdown(
-                    "<table class='omgo-veri-tablo'>"
-                    f"<tr><td>Maliyet</td><td>{maliyet_metin}</td></tr>"
-                    f"<tr><td>Alerjen</td><td>{alerjen_metin}</td></tr>"
-                    "</table>",
-                    unsafe_allow_html=True,
-                )
+                    st.markdown(
+                        "<table class='omgo-veri-tablo'>"
+                        f"<tr><td>Maliyet</td><td>≈{t['maliyet_eur']:.2f} € (eksik: {eksik_liste})</td></tr>"
+                        f"<tr><td>Alerjen</td><td>{alerjen_metin}</td></tr>"
+                        "</table>",
+                        unsafe_allow_html=True,
+                    )
+                else:
+                    # OTUZ BIRINCI DUZELTME (13 Agustos 2026): Tarif
+                    # Kutuphanesi'ndeki "Gerçek üretim maliyeti (malzeme +
+                    # enerji + işçilik)" modeliyle TUTARLI olmasi icin,
+                    # her yemegin uretim asamalarindan enerji+iscilik
+                    # maliyeti de hesaplanip malzeme maliyetine ekleniyor.
+                    tarif_id_sozluk = _tum_tarif_id_by_ad_getir(st.session_state.isletme_id)
+                    ayarlar = _maliyet_ayarlarini_getir(st.session_state.isletme_id)
+                    toplam_enerji = 0.0
+                    toplam_iscilik = 0.0
+                    for ad in tarif_adlari:
+                        rid = tarif_id_sozluk.get(ad)
+                        if rid is None:
+                            continue
+                        asamalar = _uretim_asamalarini_getir(rid)
+                        if asamalar:
+                            e, i = _gercek_maliyet_hesapla(asamalar, ayarlar, PORSIYON_STANDART)
+                            toplam_enerji += e
+                            toplam_iscilik += i
+                    malzeme_eur = t["maliyet_eur"]  # zaten PORSIYON_STANDART ile olceklendi
+                    toplam_eur = malzeme_eur + toplam_enerji + toplam_iscilik
+                    st.markdown(
+                        "<table class='omgo-veri-tablo'>"
+                        f"<tr><td>Malzeme</td><td>{malzeme_eur:.2f} €</td></tr>"
+                        f"<tr><td>Enerji</td><td>{toplam_enerji:.2f} €</td></tr>"
+                        f"<tr><td>İşçilik</td><td>{toplam_iscilik:.2f} €</td></tr>"
+                        f"<tr><td><b>Toplam Maliyet</b></td><td><b>{toplam_eur:.2f} €</b></td></tr>"
+                        f"<tr><td>Alerjen</td><td>{alerjen_metin}</td></tr>"
+                        "</table>",
+                        unsafe_allow_html=True,
+                    )
                 # ONEMLI: hedefler (kullanicinin "Ogun basina besin hedefi"
                 # ile belirledigi araliklar) HEP 1 PORSIYON baz alinarak
                 # tasarlandi -- bu yuzden hedef kontrolu OLCEKLENMEMIS
