@@ -3559,3 +3559,59 @@ karbonhidrat=43.67, lif=32.25 -- TürKomp kaydında sadece bu 4 alan
 uygulandı.
 
 **Dosya durumu:** sql/72_isot_pul_biber_esdegeri.sql (yeni).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): ÖNEMLİ KEŞİF -- Excel-Veritabanı Senkronizasyon Boşluğu Bulundu ve Kapatıldı
+
+Kullanıcı Excel'in de güncellenmesini istedi. Migration 69-72'deki 41
+malzemenin Excel karşılığı kontrol edilirken KRİTİK bir bulgu ortaya
+çıktı: bu 41 malzemenin 38'inde HİÇBİR yeni hücre gerekmedi -- Excel'de
+ZATEN dolu, gerçekçi değerler vardı (ör. TUZ sodyum=38700mg, TEREYAĞI
+kalori=717) ama bu veri HİÇ veritabanına aktarılmamıştı!
+
+**Sonuç:** Önceki turlarda "veri yok, araştırmam lazım" diye
+yaklaştığım birçok durumun aslında "veri Excel'de zaten var ama
+veritabanına hiç senkronize edilmemiş" olduğu anlaşıldı.
+
+**Yapılan:** Excel'deki (v28) TÜM 564 malzemenin TÜM dolu hücreleri
+tek bir kapsamlı SQL migration'a (73 numaralı) dönüştürüldü --
+coalesce() ile SADECE veritabanında hâlâ boş olan alanlar dolduruluyor,
+hiçbir mevcut veri değişmiyor. İstatistik: 564 malzeme, 14.214 SET
+ifadesi (hücre). Bu, muhtemelen bu 41 malzemenin ÇOK ötesinde,
+katalogun geri kalanındaki birçok boşluğu da tek seferde kapatacak.
+
+**Excel:** kaynak_duzeltilmis_v29.xlsx (yeni) -- sadece 6 hücre yeni
+eklendi (ŞEKER, CEVİZ İÇ, KIRMIZI MERCİMEK, KURU FASULYE'de birkaç
+alan), geri kalanı v28 ile aynı (zaten doluydu).
+
+**ÖNEMLİ TAVSİYE:** 73 numaralı migration çalıştırıldıktan sonra,
+veritabanının besin verisi kapsamı önemli ölçüde artacak -- bundan
+sonraki "eksik malzeme" araştırmalarına başlamadan ÖNCE bu
+migration'ın çalıştırılıp çalıştırılmadığı kontrol edilmeli, aksi
+halde zaten Excel'de olan veri için gereksiz yere tekrar araştırma
+yapılabilir.
+
+**Dosya durumu:** kaynak_duzeltilmis_v29.xlsx (yeni),
+sql/73_excel_veritabani_tam_senkronizasyon.sql (yeni, BÜYÜK dosya --
+564 UPDATE, 14.214 hücre).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): 73 Numaralı Migration 6 Parçaya Bölündü
+
+Kullanıcı, 73 numaralı migration'ı Supabase SQL Editor'de KAYDEDEMEDİĞİNİ
+bildirdi ("Failed to rename snippet: request entity too large") --
+"Untitled query" olarak calistirip kaydetmeden birakmak da işe
+yaramıyor (sayfa yenilendiğinde/başka sorgu açıldığında kayboluyor).
+
+**Çözüm:** 564 UPDATE ifadesi 6 eşit parçaya bölündü:
+- sql/73_1_excel_veritabani_senkronizasyon_parca1.sql (94 ifade, ~103KB)
+- sql/73_2_..._parca2.sql (94 ifade, ~104KB)
+- sql/73_3_..._parca3.sql (94 ifade, ~105KB)
+- sql/73_4_..._parca4.sql (94 ifade, ~107KB)
+- sql/73_5_..._parca5.sql (94 ifade, ~107KB)
+- sql/73_6_..._parca6.sql (94 ifade, ~89KB)
+
+Her biri bağımsız çalıştırılıp kaydedilebilir, hepsi coalesce()
+güvenliğini koruyor. Kullanıcının hepsini sırayla çalıştırması
+bekleniyor.
+
+**Dosya durumu:** 6 yeni SQL dosyası, orijinal büyük
+73_excel_veritabani_tam_senkronizasyon.sql yerine kullanılacak.
