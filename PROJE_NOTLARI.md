@@ -3997,3 +3997,42 @@ kaldırıldı -- artık SOLID açık krem (#EDE6D6) arka plan + koyu ink
 (#2B2320) metin ile net, yüksek kontrastlı bir "pencere" oluyor.
 
 **Dosya durumu:** pages/0_Yillik_Menu.py güncellendi.
+
+### 24 Ağustos 2026 — XI. Oturum (devam): 73 Numaralı Migration (6 Parça) Supabase'de Çalıştırıldı ve Doğrulandı
+
+Kullanıcı, önceki oturumda 6 parçaya bölünen 73 numaralı Excel-veritabanı
+senkronizasyon migration'ının (564 malzeme, 14.214 hücre) tamamını
+Supabase SQL Editor'de sırayla çalıştırdı. Doğrulama üç aşamada yapıldı:
+
+1. **Statik kontrol (çalıştırmadan önce):** 6 parçanın hepsi
+   sqlparse ile ayrıştırıldı -- her biri tam 94 UPDATE içeriyor
+   (6×94=564), malzeme adları arasında hiç tekrar yok, tırnak/syntax
+   hatası bulunamadı.
+2. **8 kritik malzeme kontrolü:** KALDIRIK, GİLABURU, KEÇİ SÜTÜ,
+   MANDA SÜTÜ, ŞEVKETİ BOSTAN KÖK UNU ve türevleri veritabanında
+   sorgulandı -- 8/8 mevcut çıktı.
+3. **Nokta atışı doğrulama (asıl kanıt):** MAYDANOZ (KURU) malzemesinin
+   `vitamin_c_mg` alanı migration dosyasındaki değerle (149) BİREBİR
+   eşleşti -- bu denli kendine özgü bir sayının migration'sız orada
+   bulunması istatistiksel olarak imkansıza yakın, yani hücre gerçekten
+   migration tarafından dolduruldu. Aynı sorguda TAVUK GÖĞÜS'ün
+   `manganez_mg`/`bakir_mg` alanlarının migration'ın yazacağı
+   değerlerden (0.002/0.004) FARKLI çıkması da (0.018/0.039) ayrı bir
+   doğrulama: `coalesce()` daha önce dolu olan hücrelerin üzerine
+   yazmadığını kanıtladı -- veri kaybı riski yok.
+
+**Not:** 6 parçanın sonundaki `toplam,vitc_dolu` doğrulama sorgusu
+her seferinde aynı (564, 414) sonucu verdi -- bu bir hata değil, sorgu
+TÜM tabloyu kontrol ettiği için (sadece o parçanın işlediği 94
+malzemeyi değil) ve kullanıcı 6 parçayı da çalıştırdıktan SONRA teker
+teker export ettiği için tüm sonuçlar migration-sonrası nihai durumu
+gösterdi.
+
+**Sonuç:** 73 numaralı migration (6 parça) başarıyla ve güvenli şekilde
+tamamlandı. Excel'deki (v29) 564 malzemenin dolu hücreleri artık
+veritabanında -- önceki oturumlarda "veri yok, araştırmam lazım"
+denilen birçok durumun aslında sadece senkronize edilmemiş veri olduğu
+teyit edildi.
+
+**Dosya durumu:** Değişiklik yok (bu bir doğrulama kaydı) -- Supabase
+veritabanı güncellendi, kod tarafında değişiklik gerekmedi.
