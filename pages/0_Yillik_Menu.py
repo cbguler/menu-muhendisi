@@ -906,7 +906,10 @@ def _yillik_menu_tasarim_stilini_uygula():
     faydalaniyor -- 7 sutunluk hafta artik dar ekranlarda 3-4'erli
     satirlara bolunebiliyor, metin kelime ortasindan kesilmiyor. */
     @media (max-width: 1024px) { [data-testid="stHorizontalBlock"] { flex-wrap: wrap !important; row-gap: 10px; } [data-testid="stHorizontalBlock"] > div { flex: 1 1 30% !important; min-width: 130px !important; } }
-    div[class*="st-key-cevir_"] button { background: transparent !important; border: none !important; box-shadow: none !important; color: #A99B8A !important; font-size: 12px !important; padding: 2px 16px !important; }
+    div[class*="st-key-cevir_"] button { background: #C88A2E !important; border: none !important; box-shadow: 0 2px 6px rgba(200,138,46,0.35) !important; color: #FFFFFF !important; font-size: 13px !important; font-weight: 600 !important; padding: 8px 16px !important; border-radius: 8px !important; }
+    div[class*="st-key-cevir_"] button:hover { background: #B37B28 !important; }
+    div[class*="st-key-popupkart_arka_"] div[class*="st-key-cevir_"] button { background: #E8B34A !important; color: #3D2A3B !important; box-shadow: 0 2px 6px rgba(0,0,0,0.25) !important; }
+    div[class*="st-key-popupkart_arka_"] div[class*="st-key-cevir_"] button:hover { background: #F0C36A !important; }
     div[class*="st-key-tumunugoster_"] button { background: transparent !important; border: none !important; box-shadow: none !important; color: #C88A2E !important; font-size: 12px !important; font-weight: 600 !important; padding: 2px 16px !important; }
     .omgo-veri-tablo { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; }
     .omgo-veri-tablo td { padding: 3px 0; }
@@ -914,7 +917,8 @@ def _yillik_menu_tasarim_stilini_uygula():
     .omgo-veri-bolum { font-family: Inter, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #C88A2E; margin: 10px 0 3px; }
     .omgo-ogun-baslik-buyuk { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 700; text-align: center; color: #C88A2E; margin: 14px 0 8px; text-transform: uppercase; letter-spacing: 0.02em; }
     .omgo-hedef-rozet { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px; margin-top: 6px; }
-    .omgo-maliyet-baslik { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 700; color: #C88A2E; margin: 14px 0 4px; }
+    .omgo-maliyet-baslik { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 700; color: #C88A2E; margin: 0 0 6px; }
+    div[class*="st-key-maliyetkutu_"] { background: rgba(200,138,46,0.14); border: 1px solid rgba(200,138,46,0.35); border-radius: 10px; padding: 12px 14px; margin: 10px 0; }
     .omgo-maliyet-tablo td { font-size: 14px !important; font-weight: 600 !important; color: #E8B34A !important; padding: 4px 0 !important; }
     div[class*="st-key-popupkart_arka_"] .omgo-maliyet-baslik { color: #E8B34A !important; }
     div[class*="st-key-popupkart_arka_"] .omgo-maliyet-tablo td { color: #E8B34A !important; font-weight: 600 !important; font-size: 14px !important; }
@@ -1106,6 +1110,25 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                     st.markdown("<div class='omgo-veri-bolum'>Hedeflenen Değerler</div>", unsafe_allow_html=True)
                     _tablo_satirlari_yaz(hedeflenen_ek_anahtarlar, t)
 
+                if ogun_adi == list(gun["ogunler"].keys())[0]:
+                    # OTUZ ALTINCI DUZELTME (13 Agustos 2026, Oturum 11):
+                    # kullanici butonun "islevsiz" gorundugunu bildirdi --
+                    # aslinda calisiyordu ama buton pencerenin EN ALTINDA
+                    # (Maliyet'in de altinda) durup, actigi icerik (Diger/
+                    # Vitaminler/Mineraller) cok daha YUKARIDA belirdigi
+                    # icin kullanicinin o an bulundugu kaydirma konumunda
+                    # HICBIR SEY DEGISMEMIS gibi gorunuyordu. Buton simdi
+                    # acacagi icerigin TAM USTUNE tasindi -- boylece etkisi
+                    # aninda, ayni kaydirma konumunda gorunur. Gereksiz
+                    # st.rerun() da kaldirildi (st.button zaten tikland
+                    # iginda otomatik rerun tetikliyor, dialog icinde
+                    # fazladan cagri bir riski ortadan kaldirmak icin
+                    # kaldirildi).
+                    with st.container(key=f"tumunugoster_{card_id}"):
+                        tumunu_goster_metni = "▾ Tüm besin değerlerini gizle" if st.session_state[tumunu_goster_key] else "▸ Tüm besin değerlerini gör"
+                        if st.button(tumunu_goster_metni, key=f"btn_tumunugoster_{card_id}", use_container_width=True):
+                            st.session_state[tumunu_goster_key] = not st.session_state[tumunu_goster_key]
+
                 if st.session_state[tumunu_goster_key]:
                     kalan_diger = [a for a in DIGER_MAKRO_ANAHTARLARI if a not in hedeflenen_ek_anahtarlar]
                     kalan_vitamin = [a for a in VITAMIN_ANAHTARLARI if a not in hedeflenen_ek_anahtarlar]
@@ -1144,62 +1167,57 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                 elif hedefte is False:
                     st.markdown("<span class='omgo-hedef-rozet omgo-hedefdisi'>Hedef dışı</span>", unsafe_allow_html=True)
 
-                st.markdown(
-                    f"<div class='omgo-maliyet-baslik'>Maliyet ({PORSIYON_STANDART} porsiyon için)</div>",
-                    unsafe_allow_html=True,
-                )
-                if not fiyat_verisi_var:
+                with st.container(key=f"maliyetkutu_{card_id}_{ogun_adi}"):
                     st.markdown(
-                        "<table class='omgo-veri-tablo omgo-maliyet-tablo'>"
-                        "<tr><td>Maliyet</td><td>-</td></tr>"
-                        "</table>",
+                        f"<div class='omgo-maliyet-baslik'>Maliyet ({PORSIYON_STANDART} porsiyon için)</div>",
                         unsafe_allow_html=True,
                     )
-                elif not t["tam_fiyatli"]:
-                    eksik_liste = ", ".join(sorted(t["eksik_malzemeler"]))
-                    st.markdown(
-                        "<table class='omgo-veri-tablo omgo-maliyet-tablo'>"
-                        f"<tr><td>Maliyet</td><td>≈{t['maliyet_eur']:.2f} € (eksik: {eksik_liste})</td></tr>"
-                        "</table>",
-                        unsafe_allow_html=True,
-                    )
-                else:
-                    # OTUZ BIRINCI DUZELTME (13 Agustos 2026): Tarif
-                    # Kutuphanesi'ndeki "Gerçek üretim maliyeti (malzeme +
-                    # enerji + işçilik)" modeliyle TUTARLI olmasi icin,
-                    # her yemegin uretim asamalarindan enerji+iscilik
-                    # maliyeti de hesaplanip malzeme maliyetine ekleniyor.
-                    tarif_id_sozluk = _tum_tarif_id_by_ad_getir(st.session_state.isletme_id)
-                    ayarlar = _maliyet_ayarlarini_getir(st.session_state.isletme_id)
-                    toplam_enerji = 0.0
-                    toplam_iscilik = 0.0
-                    for ad in tarif_adlari:
-                        rid = tarif_id_sozluk.get(ad)
-                        if rid is None:
-                            continue
-                        asamalar = _uretim_asamalarini_getir(rid)
-                        if asamalar:
-                            e, i = _gercek_maliyet_hesapla(asamalar, ayarlar, PORSIYON_STANDART)
-                            toplam_enerji += e
-                            toplam_iscilik += i
-                    malzeme_eur = t["maliyet_eur"]  # zaten PORSIYON_STANDART ile olceklendi
-                    toplam_eur = malzeme_eur + toplam_enerji + toplam_iscilik
-                    st.markdown(
-                        "<table class='omgo-veri-tablo omgo-maliyet-tablo'>"
-                        f"<tr><td>Malzeme</td><td>{malzeme_eur:.2f} €</td></tr>"
-                        f"<tr><td>Enerji</td><td>{toplam_enerji:.2f} €</td></tr>"
-                        f"<tr><td>İşçilik</td><td>{toplam_iscilik:.2f} €</td></tr>"
-                        f"<tr><td>Toplam Maliyet</td><td>{toplam_eur:.2f} €</td></tr>"
-                        "</table>",
-                        unsafe_allow_html=True,
-                    )
+                    if not fiyat_verisi_var:
+                        st.markdown(
+                            "<table class='omgo-veri-tablo omgo-maliyet-tablo'>"
+                            "<tr><td>Maliyet</td><td>-</td></tr>"
+                            "</table>",
+                            unsafe_allow_html=True,
+                        )
+                    elif not t["tam_fiyatli"]:
+                        eksik_liste = ", ".join(sorted(t["eksik_malzemeler"]))
+                        st.markdown(
+                            "<table class='omgo-veri-tablo omgo-maliyet-tablo'>"
+                            f"<tr><td>Maliyet</td><td>≈{t['maliyet_eur']:.2f} € (eksik: {eksik_liste})</td></tr>"
+                            "</table>",
+                            unsafe_allow_html=True,
+                        )
+                    else:
+                        # OTUZ BIRINCI DUZELTME (13 Agustos 2026): Tarif
+                        # Kutuphanesi'ndeki "Gerçek üretim maliyeti (malzeme +
+                        # enerji + işçilik)" modeliyle TUTARLI olmasi icin,
+                        # her yemegin uretim asamalarindan enerji+iscilik
+                        # maliyeti de hesaplanip malzeme maliyetine ekleniyor.
+                        tarif_id_sozluk = _tum_tarif_id_by_ad_getir(st.session_state.isletme_id)
+                        ayarlar = _maliyet_ayarlarini_getir(st.session_state.isletme_id)
+                        toplam_enerji = 0.0
+                        toplam_iscilik = 0.0
+                        for ad in tarif_adlari:
+                            rid = tarif_id_sozluk.get(ad)
+                            if rid is None:
+                                continue
+                            asamalar = _uretim_asamalarini_getir(rid)
+                            if asamalar:
+                                e, i = _gercek_maliyet_hesapla(asamalar, ayarlar, PORSIYON_STANDART)
+                                toplam_enerji += e
+                                toplam_iscilik += i
+                        malzeme_eur = t["maliyet_eur"]  # zaten PORSIYON_STANDART ile olceklendi
+                        toplam_eur = malzeme_eur + toplam_enerji + toplam_iscilik
+                        st.markdown(
+                            "<table class='omgo-veri-tablo omgo-maliyet-tablo'>"
+                            f"<tr><td>Malzeme</td><td>{malzeme_eur:.2f} €</td></tr>"
+                            f"<tr><td>Enerji</td><td>{toplam_enerji:.2f} €</td></tr>"
+                            f"<tr><td>İşçilik</td><td>{toplam_iscilik:.2f} €</td></tr>"
+                            f"<tr><td>Toplam Maliyet</td><td>{toplam_eur:.2f} €</td></tr>"
+                            "</table>",
+                            unsafe_allow_html=True,
+                        )
                 st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
-
-            with st.container(key=f"tumunugoster_{card_id}"):
-                tumunu_goster_metni = "▾ Tüm besin değerlerini gizle" if st.session_state[tumunu_goster_key] else "▸ Tüm besin değerlerini gör"
-                if st.button(tumunu_goster_metni, key=f"btn_tumunugoster_{card_id}", use_container_width=True):
-                    st.session_state[tumunu_goster_key] = not st.session_state[tumunu_goster_key]
-                    st.rerun()
 
             st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
             with st.container(key=f"cevir_{card_id}"):

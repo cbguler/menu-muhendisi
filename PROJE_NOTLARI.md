@@ -3947,3 +3947,32 @@ Kullanıcı üç istek yaptı:
 -> Maliyet başlığı -> Malzeme/Enerji/İşçilik/Toplam Maliyet tablosu.
 
 **Dosya durumu:** pages/0_Yillik_Menu.py güncellendi.
+
+### 13 Ağustos 2026 — XI. Oturum (devam): Maliyet Kutusu, Gercek Buton Gorunumu, "Tum Besin Degerleri" Buton Duzeltmesi
+
+Kullanıcının 3 isteği:
+
+**1) "Tüm besin değerlerini gör" işlevsiz görünüyordu:** Kod incelendi
+-- mantık aslında ÇALIŞIYORDU, ama buton pencerenin EN ALTINDA (Maliyet
+bölümünün de altında) duruyordu, açtığı içerik (Diğer/Vitaminler/
+Mineraller) ise çok daha YUKARIDA (Hedeflenen Değerler'in hemen
+altında) beliriyordu -- kullanıcı o an aşağıda olduğu için hiçbir şey
+değişmemiş gibi görünüyordu. Buton, açacağı içeriğin TAM ÜSTÜNE
+taşındı (Hedeflenen Değerler'in hemen altı) -- artık etkisi aynı
+kaydırma konumunda anında görünür. Ayrıca gereksiz `st.rerun()` çağrısı
+kaldırıldı (güvenlik için -- st.button zaten tıklanınca otomatik rerun
+tetikliyor).
+
+**2) Maliyet bölümü ayrı bir "pencere" gibi yapıldı:** Yeni
+`st-key-maliyetkutu_` konteyner + CSS ile kendi arka planı (ochre
+rengin %14 saydamlığı), kenarlığı ve köşe yuvarlaklığı olan ayrı bir
+kutu haline getirildi.
+
+**3) "Besin değerleri ve maliyet" / "Günlük menüye dön" gerçek buton
+görünümüne kavuşturuldu:** Önceden şeffaf arka plan/kenarlıksız
+(düz metin gibi görünen) stil, dolu arka plan + gölge + yuvarlak
+köşelerle değiştirildi -- ön yüzde ochre (#C88A2E, beyaz metin), arka
+yüzde daha açık altın (#E8B34A, koyu metin) olacak şekilde bağlam-
+duyarlı stillendirildi.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py güncellendi.
