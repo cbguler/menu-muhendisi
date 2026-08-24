@@ -3869,3 +3869,34 @@ otomatik dogrulandi.
 
 **Dosya durumu:** pages/0_Yillik_Menu.py guncellendi (TUM_BESIN_
 ALANLARI tamamen yeniden kalibre edildi).
+
+### 13 Ağustos 2026 — XI. Oturum (devam): "Menü Mühendisi" Başlığına Sebze/Meyve/Et/Balık Süslemesi Eklendi
+
+Kullanıcı, "Kontrol Paneli sayfasındaki gibi" başlığın etrafına sebze/
+meyve/malzeme/et-balık süslemesi istedi. Kullanıcı, Kontrol Paneli'nin
+kendi tanıtım görsellerini (tanitim_menu.png, tanitim_receteler.png,
+tanitim_uretim_asamalari.png, tanitim_yillik_menu.png, tanitim_video.mp4)
+paylaştı -- bunlar sandbox'ta hiç yoktu (kullanıcı kendi tarafında
+eklemiş), "Görsel henüz eklenmedi" placeholder'ı devredeydi.
+
+**Uygulanan:**
+1. tanitim_yillik_menu.png'den (Kontrol Paneli'nin kendi süsleme dili)
+   sol-üst köşe (yaprak+armut/lale+elma/nar-çiçeği) ve sağ-üst köşe
+   (ananas+güneş) demetleri PIL ile kırpıldı, HSV doygunluk-tabanlı bir
+   maskeyle arka planı SAYDAM yapıldı (krem/bej ton düşük doygunluk,
+   ikonlar yüksek doygunluk -- net ayrıştı), assets/baslik_susu_sol.png
+   ve assets/baslik_susu_sag.png olarak kaydedildi.
+2. Kaynak görsellerde et/balık AYRI bir ikon olarak yoktu (sadece büyük
+   illüstrasyonların içinde) -- bu yüzden domates, biber, balık, et
+   için AYNI düz-tasarım tarzında (tek renkli, sade), mevcut Yıllık
+   Menü kart paletiyle (rust #A6472F, sage #5B7553, indigo #2E4057)
+   tutarlı kendi SVG ikonlarım eklendi.
+3. Masaüstü nav satırı: [raster süs-sol] [domates][biber] Menü
+   Mühendisi [balık][et] [raster süs-sağ] -- base64 veri-URI ile
+   gömüldü (Streamlit özel CSS/HTML'de yerel dosya yolu güvenilir
+   çalışmıyor).
+4. Mobil nav satırı: sayfa ağırlığı için raster GÖRSELLER DAHIL
+   EDİLMEDİ, sadece küçük domates+balık SVG'si (hafif).
+
+**Dosya durumu:** app.py güncellendi, assets/baslik_susu_sol.png ve
+assets/baslik_susu_sag.png (yeni, projeye eklenmesi gerekiyor).

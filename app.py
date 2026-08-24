@@ -925,10 +925,60 @@ st.markdown(
 )
 
 with st.container(key="masaustu_nav"):
+    # OTUZ UCUNCU DUZELTME (13 Agustos 2026, Oturum 11): kullanicinin
+    # "Kontrol Paneli sayfasindaki gibi" istegi uzerine -- kullanicinin
+    # gonderdigi tanitim_yillik_menu.png gorselinden (Kontrol Paneli'nin
+    # kendi susleme dili) sol/sag kose demetleri (yaprak+elma+nar,
+    # gunes+ananas) kirpilip SAYDAM arka planla assets/baslik_susu_*.png
+    # olarak kaydedildi, base64 ile dogrudan HTML'e gomuldu (Streamlit'in
+    # ozel CSS/HTML enjeksiyonunda yerel dosya yolu guvenilir CALISMIYOR,
+    # base64 veri-URI en saglam yontem). Kaynak gorsellerde et/balik
+    # ayri birer "ikon" olarak yoktu (sadece buyuk illustrasyonlarin
+    # icinde) -- bu yuzden domates/biber/balik/et icin AYNI duz-tasarim
+    # tarzinda (tek renkli, sade sekiller) kendi SVG ikonlarim, mevcut
+    # renk paletiyle (rust/sage/indigo -- Yillik Menu kart tasarimindaki
+    # AYNI renkler) tutarli olacak sekilde eklendi.
+    with open("assets/baslik_susu_sol.png", "rb") as _f:
+        _sol_susu_b64 = base64.b64encode(_f.read()).decode("ascii")
+    with open("assets/baslik_susu_sag.png", "rb") as _f:
+        _sag_susu_b64 = base64.b64encode(_f.read()).decode("ascii")
+
+    _domates_svg = (
+        "<svg viewBox='0 0 60 60' width='34' height='34'>"
+        "<circle cx='30' cy='36' r='19' fill='#A6472F'/>"
+        "<path d='M30 14 L34 19 L39 15 L37 22 L44 20 L38 26 L30 14' fill='#5B7553'/>"
+        "</svg>"
+    )
+    _biber_svg = (
+        "<svg viewBox='0 0 60 60' width='28' height='40'>"
+        "<path d='M30 10 C19 16,14 32,20 46 C24 53,36 53,40 46 C46 32,41 16,30 10 Z' fill='#5B7553'/>"
+        "<path d='M28 8 L33 8 L30 15 Z' fill='#3D5236'/>"
+        "</svg>"
+    )
+    _balik_svg = (
+        "<svg viewBox='0 0 70 40' width='46' height='26'>"
+        "<path d='M4 20 C14 4,48 4,58 20 C48 36,14 36,4 20 Z' fill='#2E4057'/>"
+        "<path d='M58 20 L69 9 L69 31 Z' fill='#2E4057'/>"
+        "<circle cx='17' cy='16' r='2.6' fill='#EDE6D6'/>"
+        "</svg>"
+    )
+    _et_svg = (
+        "<svg viewBox='0 0 60 60' width='36' height='32'>"
+        "<path d='M9 32 C7 16,24 6,40 11 C54 15,56 30,47 40 C38 50,17 49,10 40 C7 37,8 35,9 32 Z' fill='#A6472F'/>"
+        "<path d='M41 14 C48 20,50 30,44 37' stroke='#EDE6D6' stroke-width='3' fill='none' stroke-linecap='round'/>"
+        "</svg>"
+    )
+
     st.markdown(
-        "<div style='text-align:center; font-size:2.75rem; font-weight:700; "
-        "color:#0F6E56; letter-spacing:-0.01em; margin-bottom:0.3rem; "
-        "font-family: \"Source Sans Pro\", sans-serif;'>Menü Mühendisi</div>",
+        "<div style='display:flex; align-items:center; justify-content:center; gap:10px;'>"
+        f"<img src='data:image/png;base64,{_sol_susu_b64}' style='height:58px;' alt=''/>"
+        f"{_domates_svg}{_biber_svg}"
+        "<div style='font-size:2.75rem; font-weight:700; color:#0F6E56; "
+        "letter-spacing:-0.01em; font-family:\"Source Sans Pro\",sans-serif; "
+        "white-space:nowrap;'>Menü Mühendisi</div>"
+        f"{_balik_svg}{_et_svg}"
+        f"<img src='data:image/png;base64,{_sag_susu_b64}' style='height:58px;' alt=''/>"
+        "</div>",
         unsafe_allow_html=True,
     )
     # ON BESINCI DUZELTME (12 Agustos 2026): logo 1.5x daha buyutuldu
@@ -949,9 +999,29 @@ with st.container(key="masaustu_nav"):
                 st.page_link(_sayfa, use_container_width=True)
 
 with st.container(key="mobil_nav"):
+    # Mobilde sayfa agirligini dusuk tutmak icin agir raster gorseller
+    # (base64 ~65-72KB her biri) DAHIL EDILMEDI -- sadece hafif, kucuk
+    # boyutlu SVG ikonlar (domates + balik) kullanildi.
+    _domates_svg_kucuk = (
+        "<svg viewBox='0 0 60 60' width='20' height='20'>"
+        "<circle cx='30' cy='36' r='19' fill='#A6472F'/>"
+        "<path d='M30 14 L34 19 L39 15 L37 22 L44 20 L38 26 L30 14' fill='#5B7553'/>"
+        "</svg>"
+    )
+    _balik_svg_kucuk = (
+        "<svg viewBox='0 0 70 40' width='30' height='17'>"
+        "<path d='M4 20 C14 4,48 4,58 20 C48 36,14 36,4 20 Z' fill='#2E4057'/>"
+        "<path d='M58 20 L69 9 L69 31 Z' fill='#2E4057'/>"
+        "<circle cx='17' cy='16' r='2.6' fill='#EDE6D6'/>"
+        "</svg>"
+    )
     st.markdown(
-        "<div style='text-align:center; font-size:1.65rem; font-weight:700; "
-        "color:#0F6E56; letter-spacing:-0.01em; margin-bottom:0.2rem;'>Menü Mühendisi</div>",
+        "<div style='display:flex; align-items:center; justify-content:center; gap:6px;'>"
+        f"{_domates_svg_kucuk}"
+        "<div style='font-size:1.65rem; font-weight:700; color:#0F6E56; "
+        "letter-spacing:-0.01em;'>Menü Mühendisi</div>"
+        f"{_balik_svg_kucuk}"
+        "</div>",
         unsafe_allow_html=True,
     )
     _logo_kolonu, _menu_kolonu = st.columns([1, 3], vertical_alignment="center")
