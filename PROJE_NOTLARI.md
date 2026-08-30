@@ -4238,3 +4238,26 @@ gerçek tarayıcıda hâlâ sorun olursa DevTools ile gerçek DOM yapısına
 bakmak gerekebilir.
 
 **Dosya durumu:** app.py güncellendi.
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Video TypeError Düzeltildi (key desteklenmiyor) + Video Doğru Oranda Yeniden Kırpıldı
+
+Bir önceki düzeltme (key= ekleme) yeni bir hataya yol açtı: bu
+Streamlit sürümünde `st.video()` `key` parametresini KABUL ETMİYOR
+(TypeError, canlı hatadan doğrudan okundu). Yaklaşım tamamen değiştirildi.
+
+**Kalıcı çözüm:** `key` fikri tamamen terk edildi. Bunun yerine video,
+orijinal kaynaktan YENİDEN kırpıldı -- pixel analiziyle (Python/PIL)
+720px'lik kaynak yükseklikte gerçek içeriğin (yazı+ikonlar) sadece
+153-573 aralığında olduğu, üstünde/altında ~150px boş krem alan
+olduğu bulundu. Bu boşluk kırpıldı, video artık DOĞAL olarak ~3:1
+(geniş-kısa banner) oranında. Masaüstü (480x158) ve mobil (300x98) için
+AYRI dosyalar üretildi -- zaten farklı boyutta olmaları gerekiyordu,
+ayrıca farklı byte içeriği Streamlit'in "aynı elemanı iki kez
+oluşturma" (duplicate ID) sorununu da hiç yaşanmadan ortadan kaldırıyor
+(key'e hiç gerek kalmadı).
+
+**Dosya durumu:** app.py güncellendi; `assets/baslik_video.mp4` artık
+KULLANILMIYOR, yerine `assets/baslik_video_masaustu.mp4` ve
+`assets/baslik_video_mobil.mp4` (ikisi de yeni ikili dosya)
+eklenmeli.

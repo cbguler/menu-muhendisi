@@ -903,11 +903,15 @@ st.markdown(
     ".st-key-baslik_video_masaustu, .st-key-baslik_video_mobil {"
     "  overflow: hidden !important; margin: 0 auto 4px !important;"
     "}"
+    # KIRK BIRINCI DUZELTME: video artik dogal olarak ~3:1 oraninda
+    # (kirpma sonrasi 480x158 / 300x98) -- asagidaki kutu boyutlari da
+    # AYNI orana (~3:1) getirildi, boylece object-fit:cover pratikte
+    # hemen hemen hic kirpma yapmiyor (sadece yuvarlama farki kadar).
     ".st-key-baslik_video_masaustu {"
-    "  width: 220px !important; height: 56px !important; border-radius: 8px !important;"
+    "  width: 260px !important; height: 85px !important; border-radius: 8px !important;"
     "}"
     ".st-key-baslik_video_mobil {"
-    "  width: 150px !important; height: 40px !important; border-radius: 6px !important;"
+    "  width: 180px !important; height: 59px !important; border-radius: 6px !important;"
     "}"
     ".st-key-baslik_video_masaustu div, .st-key-baslik_video_mobil div {"
     "  width: 100% !important; height: 100% !important; max-width: none !important;"
@@ -934,8 +938,8 @@ st.markdown(
     # bandi kaldirildigi icin eskisinden COK daha az yer kaplamali).
     # YINE DE TAHMINI bir deger -- gercek tarayicida piksel farkı
     # kalirsa bu iki sayi ince ayar gerektirir.
-    ".ust_menu_bosluk_masaustu { height: 150px; }"
-    ".ust_menu_bosluk_mobil { height: 100px; }"
+    ".ust_menu_bosluk_masaustu { height: 180px; }"
+    ".ust_menu_bosluk_mobil { height: 120px; }"
     "@media (min-width: 768px) { .ust_menu_bosluk_mobil { display: none !important; } }"
     "@media (max-width: 767px) { .ust_menu_bosluk_masaustu { display: none !important; } }"
     # YIRMI BIRINCI DUZELTME (13 Agustos 2026, Oturum 11): kullanici
@@ -977,20 +981,24 @@ with st.container(key="masaustu_nav"):
     # loop/muted parametreleri Kontrol Paneli'ndeki tanitim videosuyla
     # AYNI yontem (bkz. _video_varsa_goster). Video dosyasi yoksa sayfa
     # kirilmasin diye once varligi kontrol ediliyor.
+    # KIRK BIRINCI DUZELTME (30 Agustos 2026): `st.video()` bu Streamlit
+    # surumunde `key` parametresi KABUL ETMIYOR (TypeError verdi, canli
+    # hata mesajindan dogrudan goruldu, tahmin edilmedi) -- key
+    # yaklasimi TAMAMEN TERK EDILDI. Bunun yerine masaustu ve mobil icin
+    # FARKLI dosyalar kullaniliyor (zaten farkli boyutlarda olmalari
+    # gerekiyordu) -- farkli byte icerigi, Streamlit'in ayni-icerikli
+    # elemanlari "duplicate" sayma sorununu da dogal olarak ortadan
+    # kaldiriyor. Video ayrica videonun ORIJINALINDEN yeniden kirpildi:
+    # 720px'lik kaynak yukseklikte 153-573 araligi disinda (ust/alt)
+    # sadece bos krem alan vardi -- o kirpilip video artik doganl olarak
+    # ~3:1 (genis-kisa banner) oranina sahip, CSS'te zorlama kırpmaya
+    # ihtiyac kalmadi.
     with st.container(key="baslik_video_masaustu"):
-        if os.path.exists("assets/baslik_video.mp4"):
-            with open("assets/baslik_video.mp4", "rb") as _f:
-                # KIRKINCI DUZELTME (30 Agustos 2026): masaustu ve mobil
-                # versiyonlar AYNI dosyayi/parametreleri kullandigi icin
-                # Streamlit ikisini ayni eleman saniyor ve
-                # StreamlitDuplicateElementId hatasi firlatiyordu --
-                # her ikisine de benzersiz `key` verildi.
-                st.video(
-                    _f.read(), format="video/mp4", autoplay=True, loop=True, muted=True,
-                    key="baslik_video_masaustu_widget",
-                )
+        if os.path.exists("assets/baslik_video_masaustu.mp4"):
+            with open("assets/baslik_video_masaustu.mp4", "rb") as _f:
+                st.video(_f.read(), format="video/mp4", autoplay=True, loop=True, muted=True)
         else:
-            st.caption("(assets/baslik_video.mp4 henüz eklenmedi)")
+            st.caption("(assets/baslik_video_masaustu.mp4 henüz eklenmedi)")
 
     # ON BESINCI DUZELTME (12 Agustos 2026): logo 1.5x daha buyutuldu
     # (96px->144px). Kullanici ayrica menu ogelerinin logo ile ALT
@@ -1015,14 +1023,11 @@ with st.container(key="mobil_nav"):
     # sekilde videoyla degistirildi (daha kucuk boyutta -- CSS'te
     # .st-key-baslik_video_mobil).
     with st.container(key="baslik_video_mobil"):
-        if os.path.exists("assets/baslik_video.mp4"):
-            with open("assets/baslik_video.mp4", "rb") as _f:
-                st.video(
-                    _f.read(), format="video/mp4", autoplay=True, loop=True, muted=True,
-                    key="baslik_video_mobil_widget",
-                )
+        if os.path.exists("assets/baslik_video_mobil.mp4"):
+            with open("assets/baslik_video_mobil.mp4", "rb") as _f:
+                st.video(_f.read(), format="video/mp4", autoplay=True, loop=True, muted=True)
         else:
-            st.caption("(assets/baslik_video.mp4 henüz eklenmedi)")
+            st.caption("(assets/baslik_video_mobil.mp4 henüz eklenmedi)")
 
     _logo_kolonu, _menu_kolonu = st.columns([1, 3], vertical_alignment="center")
     with _logo_kolonu:
