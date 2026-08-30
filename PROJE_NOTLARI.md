@@ -4287,3 +4287,25 @@ yeniden üretim) sunuldu, onay bekleniyor.
 
 **Dosya durumu:** app.py güncellendi (spacer yükseklikleri de GEÇİCİ
 olarak ~520px/180px'e büyütüldü, kullanıcı tercihine göre değişebilir).
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Tam Genişlik Denemesi Geri Alındı (Beklendiği Gibi Çok Uzun Oldu) — Yeni Banner Video Ölçüleri Verildi
+
+Kullanıcı canlıda test etti: video gerçekten ~400px+ uzadı, sayfa
+kullanılamaz hale geldi ("kımıldayamıyorum") -- bir önceki notta bu
+risk zaten açıkça belirtilmişti, şimdi doğrulandı.
+
+**Geçici çözüm:** Kompakt sabit kutuya (260x85 / 180x59,
+object-fit:cover) GERİ DÖNÜLDÜ -- şu an yanlarda boşluk var ama en
+azından kullanılabilir durumda.
+
+**Kalıcı çözüm için kullanıcıya verilen ölçü:** Kullanıcı yeni bir
+video üretecek, banner şeklinde olabileceğini belirtti. Önerilen kanvas:
+1600x150px (~10.7:1 oran) -- "Menü Mühendisi" TEK SATIRDA, ikonlar
+şeridin genişliğine yayılmış halde. Bu oranda video geldiğinde
+width:100% CSS'i tekrar uygulanacak (bkz. bir önceki oturum notu) --
+o zaman video zaten doğru oranda üretildiği için aşırı yükseklik sorunu
+YAŞANMAYACAK.
+
+**Dosya durumu:** app.py güncellendi (video CSS + spacer'lar geri
+alındı, kompakt duruma döndü).
