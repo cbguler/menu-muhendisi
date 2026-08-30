@@ -4261,3 +4261,29 @@ oluşturma" (duplicate ID) sorununu da hiç yaşanmadan ortadan kaldırıyor
 KULLANILMIYOR, yerine `assets/baslik_video_masaustu.mp4` ve
 `assets/baslik_video_mobil.mp4` (ikisi de yeni ikili dosya)
 eklenmeli.
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Video Tam Genişliğe Yayıldı (Yükseklik Çelişkisi Açıkça Belirtildi)
+
+Kullanıcı: video sağda/solda boşluk kalmadan mümkün olduğunca
+yayılsın; hangi piksel boyutunda yeniden üretmesi gerektiğini sordu.
+
+**Yapılan:** Video CSS'i sabit 260x85/180x59 kutudan `width:100%` +
+`height:auto`'ya çevrildi -- video artık container'ın TAM genişliğini
+kaplıyor, kendi doğal oranını (yaklaşık 3:1) koruyarak (kırpma/germe
+YOK, ikisi de içeriği çirkinleştirirdi).
+
+**Matematiksel çelişki (kullanıcıya açıkça belirtildi, sessizce
+geçilmedi):** ~3:1 oranda TAM masaüstü genişliği (~1300px) doğal
+olarak ~400-430px YÜKSEKLİK demek -- bu, kullanıcının bir önceki
+"ekranın yarısına kadar geliyor" şikayetini YENİDEN yaratabilir.
+Mobilde sorun yok (dar ekranda aynı oran ~120-130px'e denk geliyor).
+Gerçekten hem tam genişlik hem kısa (~80-100px) hem de bozulmasız
+isteniyorsa, videonun ~13:1-16:1 oranında (ör. 1600x120, TEK SATIR
+yazı, ikonlar geniş aralıklı) YENİDEN üretilmesi gerekiyor -- mevcut
+video 2 satırlık dikey metin içerdiği için bu kadar ince bir şeride
+sığmıyor. Kullanıcıya bu 3 seçenek (tam genişlik+uzun / kompakt+dar /
+yeniden üretim) sunuldu, onay bekleniyor.
+
+**Dosya durumu:** app.py güncellendi (spacer yükseklikleri de GEÇİCİ
+olarak ~520px/180px'e büyütüldü, kullanıcı tercihine göre değişebilir).

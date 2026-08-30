@@ -900,25 +900,30 @@ st.markdown(
     # HER SEYI (Streamlit'in hangi ic yapiyi kullandigina bakmaksizin)
     # yuzde 100 genislik/yukseklige zorluyorum -- boylece ic yapi ne
     # olursa olsun disariya tasamiyor.
+    # KIRK IKINCI DUZELTME (30 Agustos 2026): kullanici "sagda solda
+    # bosluk kalmasin, mumkun oldugunca yayilsin" dedi -- sabit
+    # 260x85/180x59 kutusu bunu saglamiyordu (container'dan dar oldugu
+    # icin yanlarda bosluk kaliyordu). Simdi video container'in TAM
+    # genisligini kaplayacak (width:100%) ve kendi DOGAL en-boy oranini
+    # (yaklasik 3:1) koruyacak sekilde ayarlandi -- YANLARDA BOSLUK
+    # KALMIYOR ama bunun matematiksel bedeli var: 3:1 oranda TAM
+    # genislik (~1300px) demek video ~400-430px YUKSEKLIK demek (bkz.
+    # asagidaki not, kullaniciya da acikca soylenmeli). Kirpma
+    # (object-fit:cover) veya germe (aspect-ratio bozma) YAPILMADI --
+    # ikisi de video icerigini (yazi/ikonlar) cirkin/okunmasiz hale
+    # getirirdi. Gercekten hem TAM GENISLIK hem KISA (~80-100px) hem de
+    # bozulmasiz/kirpilmasiz isteniyorsa, videonun kaynagindan YENIDEN,
+    # cok daha genis bir kanvasta (ör. 1600x130, TEK SATIR yazi, ikonlar
+    # genis araliklarla) uretilmesi gerekir -- mevcut video 2 satirlik
+    # dikey metin icerdigi icin bu kadar ince bir seride sigmaz.
     ".st-key-baslik_video_masaustu, .st-key-baslik_video_mobil {"
-    "  overflow: hidden !important; margin: 0 auto 4px !important;"
-    "}"
-    # KIRK BIRINCI DUZELTME: video artik dogal olarak ~3:1 oraninda
-    # (kirpma sonrasi 480x158 / 300x98) -- asagidaki kutu boyutlari da
-    # AYNI orana (~3:1) getirildi, boylece object-fit:cover pratikte
-    # hemen hemen hic kirpma yapmiyor (sadece yuvarlama farki kadar).
-    ".st-key-baslik_video_masaustu {"
-    "  width: 260px !important; height: 85px !important; border-radius: 8px !important;"
-    "}"
-    ".st-key-baslik_video_mobil {"
-    "  width: 180px !important; height: 59px !important; border-radius: 6px !important;"
+    "  width: 100% !important; margin: 0 0 4px !important;"
     "}"
     ".st-key-baslik_video_masaustu div, .st-key-baslik_video_mobil div {"
-    "  width: 100% !important; height: 100% !important; max-width: none !important;"
+    "  width: 100% !important; max-width: none !important;"
     "}"
     ".st-key-baslik_video_masaustu video, .st-key-baslik_video_mobil video {"
-    "  width: 100% !important; height: 100% !important;"
-    "  object-fit: cover !important;"
+    "  width: 100% !important; height: auto !important;"
     "}"
     # Pastel "buton" gorunumu -- Kontrol Paneli'ndeki mevcut renk paletiyle
     # birebir ayni (bkz. yukaridaki SVG: fill #E1F5EE, stroke #0F6E56,
@@ -938,8 +943,14 @@ st.markdown(
     # bandi kaldirildigi icin eskisinden COK daha az yer kaplamali).
     # YINE DE TAHMINI bir deger -- gercek tarayicida piksel farkı
     # kalirsa bu iki sayi ince ayar gerektirir.
-    ".ust_menu_bosluk_masaustu { height: 180px; }"
-    ".ust_menu_bosluk_mobil { height: 120px; }"
+    # KIRK IKINCI DUZELTME: video tam genislige (~3:1 oraninda) cikinca
+    # yuksekligi de OTOMATIK olarak ~400px+ civarina cikiyor (bkz. yukarida
+    # video CSS'indeki not) -- bosluk da buna gore GECICI olarak
+    # buyutuldu. BU DURUM, kullanicinin bir onceki "cok fazla yer
+    # kapliyor" sikayetini YENIDEN yaratabilir -- kullaniciya acikca
+    # soruldu, onay/tercih bekleniyor.
+    ".ust_menu_bosluk_masaustu { height: 520px; }"
+    ".ust_menu_bosluk_mobil { height: 180px; }"
     "@media (min-width: 768px) { .ust_menu_bosluk_mobil { display: none !important; } }"
     "@media (max-width: 767px) { .ust_menu_bosluk_masaustu { display: none !important; } }"
     # YIRMI BIRINCI DUZELTME (13 Agustos 2026, Oturum 11): kullanici
