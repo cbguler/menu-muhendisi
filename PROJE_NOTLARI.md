@@ -4175,3 +4175,40 @@ buton etiketinde hem açıklama metninde hem boş-durum mesajında
 kullanıldığı için tek satırlık bir değişiklik üç yeri birden düzeltti.
 
 **Dosya durumu:** pages/0_Yillik_Menu.py güncellendi.
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Üst Menü Yüksekliği Küçültüldü + "Menü Mühendisi" Yazısı Yerine Dönen Video Kondu
+
+Kullanıcı iki şey bildirdi: (1) başlık/logo/menü ekranın yarısına kadar
+geliyor, yukarı alınması mümkün mü; (2) "Menü Mühendisi" yazısı yerine
+kendi gönderdiği tanıtım videosu döngü halinde konsun.
+
+**Kök neden (1. madde):** Üst satırın en büyük tek unsuru, aslında
+"Menü Mühendisi" yazı bandı değil, 12 Ağustos'taki 14./15. düzeltmelerde
+144px'e büyütülmüş `logo.png` idi (o zamanki gerekçe farklıydı -- logo
+tek başınaydı, belirgin olması isteniyordu). İki unsur üst üste
+(yazı bandı + 144px logo satırı) toplam yüksekliği fazlasıyla
+büyütüyordu.
+
+**Yapılanlar:**
+- Eskiden ayrı bir satırda duran SVG ikon + base64 PNG köşe süsü +
+  2.75rem "Menü Mühendisi" metninden oluşan bant TAMAMEN kaldırıldı,
+  yerine kullanıcının gönderdiği tanıtım videosu (`assets/
+  baslik_video.mp4`) döngülü/sessiz/otomatik oynatımla kondu (Kontrol
+  Paneli'ndeki tanıtım videosuyla AYNI `st.video()` yöntemi). Orijinal
+  video (1280x720, 3MB, sesli) küçük gösterileceği için 640x360'a
+  küçültülüp ses izi kaldırılarak ~176KB'a indirildi.
+- `logo.png` hedef boyutu 144px'den 56px'e (masaüstü) / 72px'den 40px'e
+  (mobil) küçültüldü -- artık videoyla aynı satırda, tipik bir nav
+  çubuğu yüksekliğinde.
+- `LOGO_ORANI` (sütun payı) 4.0'dan 1.4'e düşürüldü (144px'lik logo
+  için genişletilmiş paya artık gerek yok).
+- Alttaki içeriğin üst menü tarafından örtülmemesi için ayrılan boşluk
+  yükseklikleri (260px/145px) 150px/100px'e düşürüldü -- YENİDEN
+  TAHMİNİ değerler, gerçek tarayıcıda piksel farkı kalırsa ince ayar
+  gerekebilir (dürüstçe belirtilmeli).
+
+**Dosya durumu:** app.py güncellendi; `assets/baslik_video.mp4` (yeni
+ikili dosya) eklenmeli. Eski `assets/baslik_susu_sol.png` ve
+`baslik_susu_sag.png` artık kod tarafından kullanılmıyor (silinmesi
+opsiyonel, dosyalar kalsa da zararı yok).

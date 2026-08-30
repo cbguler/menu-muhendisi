@@ -14,6 +14,7 @@
 
 import base64
 import hashlib
+import os
 import time
 from datetime import datetime, timedelta, timezone
 
@@ -837,19 +838,18 @@ if st.session_state.admin_mi:
 # tablet genisliklerinde) butonlar sikisip satir kayabilir, bu durumda
 # oranlarin ince ayara ihtiyaci olur.
 #
-# ON DORDUNCU DUZELTME (12 Agustos 2026): kullanici masaustunde logonun
-# 2x buyutulmedigini bildirdi (mobilde buyudu, doğrulandı). Olasi neden:
-# LOGO_ORANI (1.3), 7 buton + bosluk sutunuyla (toplam ~23.9 birim)
-# kiyaslandiginda COK DAR bir sutun payi veriyordu (~%5.4) -- istenen
-# 96px genislik, sutunun kendisi o kadar genis olmadigi icin Streamlit'in
-# varsayilan "resim kendi kabini tasmasin" davranisiyla kirpiliyor/
-# kucultuluyor olabilir. Mobilde sorun yasanmamasinin nedeni, oradaki
-# logo sutununun (toplam sadece 2 elemanli bir satirda) orantili olarak
-# COK DAHA GENIS bir pay almasi. Iki onlem birden alindi: (1) LOGO_ORANI
-# belirgin sekilde arttirildi, (2) resmin kendisine dogrudan genislik
-# zorlayan bir CSS kurali eklendi (asagida) -- sutun payindan bagimsiz
-# bir guvenlik agi olarak.
-LOGO_ORANI = 4.0
+# OTUZ DOKUZUNCU DUZELTME (30 Agustos 2026): kullanicinin "basligin
+# altinda cok fazla bosluk var" bildirimi uzerine -- ana sebep, ayri bir
+# satirda duran buyuk suslu "Menü Mühendisi" yazi/ikon bandi (2.75rem
+# font + 58px kose gorselleri) DEGIL, esas olarak logo.png'nin 144px'e
+# kadar buyutulmus olmasiydi (12 Agustos'taki 14./15. duzeltmeler --
+# o zamanki tek gerekce logonun buyuk/belirgin olmasiydi). Simdi ayni
+# satirda kucuk, dongulu bir video (kullanicinin istegiyle, "Menü
+# Mühendisi" yazi bandinin YERINE) oldugu icin logo tekrar KUCULTULDU
+# (56px masaustu / 40px mobil) -- boylece butun ust satir tipik bir nav
+# cubugu yuksekliginde kaliyor. LOGO_ORANI da buna uygun kucultuldu
+# (144px'lik logo icin genisletilmis sutun payina artik gerek yok).
+LOGO_ORANI = 1.4
 BUTON_ORANI = 2.8
 BOSLUK_ORANI = 2.2
 
@@ -879,10 +879,27 @@ st.markdown(
     "}"
     ".st-key-mobil_nav div[data-testid='stColumn'] { width: auto !important; min-width: 0 !important; }"
     # Guvenlik agi: resmin kendi genisligini sutun payindan BAGIMSIZ
-    # olarak zorluyoruz -- yukaridaki LOGO_ORANI artisiyla birlikte
-    # calisir, tek basina LOGO_ORANI yetmezse bu devreye girer.
-    ".st-key-masaustu_nav [data-testid='stImage'] img { width: 144px !important; height: auto !important; }"
-    ".st-key-mobil_nav [data-testid='stImage'] img { width: 72px !important; height: auto !important; }"
+    # olarak zorluyoruz. OTUZ DOKUZUNCU DUZELTME: hedef boyut 144/72'den
+    # 56/40'a kucultuldu (yukaridaki gerekce).
+    ".st-key-masaustu_nav [data-testid='stImage'] img { width: 56px !important; height: auto !important; }"
+    ".st-key-mobil_nav [data-testid='stImage'] img { width: 40px !important; height: auto !important; }"
+    # OTUZ DOKUZUNCU DUZELTME: dongulu baslik videosu -- eskiden burada
+    # SVG+PNG+buyuk metinden olusan suslu bir bant vardi ("Menü
+    # Mühendisi" yazisi), kullanici istegiyle YERINE kucuk, kirpilmis
+    # (object-fit:cover) bir video kondu. st.video()'nun kendi varsayilan
+    # genisligi (tum sutunu kaplar) burada ISTENMIYOR -- video etiketine
+    # dogrudan sabit piksel boyutu zorlanıyor.
+    ".st-key-baslik_video_masaustu, .st-key-baslik_video_mobil {"
+    "  display: flex; justify-content: center; margin-bottom: 4px;"
+    "}"
+    ".st-key-baslik_video_masaustu video {"
+    "  width: 220px !important; height: 56px !important;"
+    "  object-fit: cover !important; border-radius: 8px !important;"
+    "}"
+    ".st-key-baslik_video_mobil video {"
+    "  width: 150px !important; height: 40px !important;"
+    "  object-fit: cover !important; border-radius: 6px !important;"
+    "}"
     # Pastel "buton" gorunumu -- Kontrol Paneli'ndeki mevcut renk paletiyle
     # birebir ayni (bkz. yukaridaki SVG: fill #E1F5EE, stroke #0F6E56,
     # metin #085041).
@@ -896,12 +913,13 @@ st.markdown(
     "}"
     "@media (min-width: 768px) { .st-key-masaustu_nav { top: 60px; } }"
     "@media (max-width: 767px) { .st-key-mobil_nav { top: 60px; } }"
-    # Logo buyudugu icin (simdi 144px masaustu, 72px mobil) altindaki
-    # icerigin ortulmemesi icin bosluklar da buyutuldu. "Menü Mühendisi"
-    # basligi eklendigi icin (13 Agustos 2026) bosluklar bir miktar daha
-    # arttirildi (bu yeni satirin kapladigi yuksekligi de karsilasin diye).
-    ".ust_menu_bosluk_masaustu { height: 260px; }"
-    ".ust_menu_bosluk_mobil { height: 145px; }"
+    # OTUZ DOKUZUNCU DUZELTME: bosluk yukseklikleri, kucuk video +
+    # kucuk logo ile YENIDEN TAHMIN edildi (144px logo + buyuk metin
+    # bandi kaldirildigi icin eskisinden COK daha az yer kaplamali).
+    # YINE DE TAHMINI bir deger -- gercek tarayicida piksel farkı
+    # kalirsa bu iki sayi ince ayar gerektirir.
+    ".ust_menu_bosluk_masaustu { height: 150px; }"
+    ".ust_menu_bosluk_mobil { height: 100px; }"
     "@media (min-width: 768px) { .ust_menu_bosluk_mobil { display: none !important; } }"
     "@media (max-width: 767px) { .ust_menu_bosluk_masaustu { display: none !important; } }"
     # YIRMI BIRINCI DUZELTME (13 Agustos 2026, Oturum 11): kullanici
@@ -933,108 +951,55 @@ st.markdown(
 )
 
 with st.container(key="masaustu_nav"):
-    # OTUZ UCUNCU DUZELTME (13 Agustos 2026, Oturum 11): kullanicinin
-    # "Kontrol Paneli sayfasindaki gibi" istegi uzerine -- kullanicinin
-    # gonderdigi tanitim_yillik_menu.png gorselinden (Kontrol Paneli'nin
-    # kendi susleme dili) sol/sag kose demetleri (yaprak+elma+nar,
-    # gunes+ananas) kirpilip SAYDAM arka planla assets/baslik_susu_*.png
-    # olarak kaydedildi, base64 ile dogrudan HTML'e gomuldu (Streamlit'in
-    # ozel CSS/HTML enjeksiyonunda yerel dosya yolu guvenilir CALISMIYOR,
-    # base64 veri-URI en saglam yontem). Kaynak gorsellerde et/balik
-    # ayri birer "ikon" olarak yoktu (sadece buyuk illustrasyonlarin
-    # icinde) -- bu yuzden domates/biber/balik/et icin AYNI duz-tasarim
-    # tarzinda (tek renkli, sade sekiller) kendi SVG ikonlarim, mevcut
-    # renk paletiyle (rust/sage/indigo -- Yillik Menu kart tasarimindaki
-    # AYNI renkler) tutarli olacak sekilde eklendi.
-    with open("assets/baslik_susu_sol.png", "rb") as _f:
-        _sol_susu_b64 = base64.b64encode(_f.read()).decode("ascii")
-    with open("assets/baslik_susu_sag.png", "rb") as _f:
-        _sag_susu_b64 = base64.b64encode(_f.read()).decode("ascii")
+    # OTUZ DOKUZUNCU DUZELTME (30 Agustos 2026): eskiden burada
+    # (OTUZ UCUNCU DUZELTME, 13 Agustos) SVG ikonlar + base64 PNG kose
+    # susleri + "Menü Mühendisi" buyuk metniyle olusan bir bant vardi --
+    # kullanici istegiyle YERINE kendi gonderdigi dongulu tanitim
+    # videosu kondu (assets/baslik_video.mp4 -- orijinal 1280x720/3MB
+    # dosya, sadece kucuk gosterilecegi icin 640x360'a kucultulup ses
+    # izi kaldirilarak ~176KB'a indirildi). st.video()'nun autoplay/
+    # loop/muted parametreleri Kontrol Paneli'ndeki tanitim videosuyla
+    # AYNI yontem (bkz. _video_varsa_goster). Video dosyasi yoksa sayfa
+    # kirilmasin diye once varligi kontrol ediliyor.
+    with st.container(key="baslik_video_masaustu"):
+        if os.path.exists("assets/baslik_video.mp4"):
+            with open("assets/baslik_video.mp4", "rb") as _f:
+                st.video(_f.read(), format="video/mp4", autoplay=True, loop=True, muted=True)
+        else:
+            st.caption("(assets/baslik_video.mp4 henüz eklenmedi)")
 
-    _domates_svg = (
-        "<svg viewBox='0 0 60 60' width='34' height='34'>"
-        "<circle cx='30' cy='36' r='19' fill='#A6472F'/>"
-        "<path d='M30 14 L34 19 L39 15 L37 22 L44 20 L38 26 L30 14' fill='#5B7553'/>"
-        "</svg>"
-    )
-    _biber_svg = (
-        "<svg viewBox='0 0 60 60' width='28' height='40'>"
-        "<path d='M30 10 C19 16,14 32,20 46 C24 53,36 53,40 46 C46 32,41 16,30 10 Z' fill='#5B7553'/>"
-        "<path d='M28 8 L33 8 L30 15 Z' fill='#3D5236'/>"
-        "</svg>"
-    )
-    _balik_svg = (
-        "<svg viewBox='0 0 70 40' width='46' height='26'>"
-        "<path d='M4 20 C14 4,48 4,58 20 C48 36,14 36,4 20 Z' fill='#2E4057'/>"
-        "<path d='M58 20 L69 9 L69 31 Z' fill='#2E4057'/>"
-        "<circle cx='17' cy='16' r='2.6' fill='#EDE6D6'/>"
-        "</svg>"
-    )
-    _et_svg = (
-        "<svg viewBox='0 0 60 60' width='36' height='32'>"
-        "<path d='M9 32 C7 16,24 6,40 11 C54 15,56 30,47 40 C38 50,17 49,10 40 C7 37,8 35,9 32 Z' fill='#A6472F'/>"
-        "<path d='M41 14 C48 20,50 30,44 37' stroke='#EDE6D6' stroke-width='3' fill='none' stroke-linecap='round'/>"
-        "</svg>"
-    )
-
-    st.markdown(
-        "<div style='display:flex; align-items:center; justify-content:center; gap:10px;'>"
-        f"<img src='data:image/png;base64,{_sol_susu_b64}' style='height:58px;' alt=''/>"
-        f"{_domates_svg}{_biber_svg}"
-        "<div style='font-size:2.75rem; font-weight:700; color:#0F6E56; "
-        "letter-spacing:-0.01em; font-family:\"Source Sans Pro\",sans-serif; "
-        "white-space:nowrap;'>Menü Mühendisi</div>"
-        f"{_balik_svg}{_et_svg}"
-        f"<img src='data:image/png;base64,{_sag_susu_b64}' style='height:58px;' alt=''/>"
-        "</div>",
-        unsafe_allow_html=True,
-    )
     # ON BESINCI DUZELTME (12 Agustos 2026): logo 1.5x daha buyutuldu
     # (96px->144px). Kullanici ayrica menu ogelerinin logo ile ALT
     # HIZALI (bottom-aligned) durmasini istedi. Bunun icin CSS hack'i
     # DEGIL, Streamlit'in resmi `vertical_alignment="bottom"` parametresi
     # kullanildi (dokumante edilmis API -- "top" varsayilan, "center"/
-    # "bottom" da destekleniyor, dogrulandi).
+    # "bottom" da destekleniyor, dogrulandi). OTUZ DOKUZUNCU DUZELTME:
+    # logo hedefi 144px'den 56px'e kucultuldu (yukaridaki gerekce).
     _tum_kolonlar = st.columns(
         [LOGO_ORANI] + [BUTON_ORANI] * len(sayfa_listesi) + [BOSLUK_ORANI],
         vertical_alignment="bottom",
     )
     with _tum_kolonlar[0]:
-        st.image("assets/logo.png", width=144)
+        st.image("assets/logo.png", width=56)
     for _i, (_kolon, _sayfa) in enumerate(zip(_tum_kolonlar[1:-1], sayfa_listesi)):
         with _kolon:
             with st.container(key=f"nav_buton_masaustu_{_i}"):
                 st.page_link(_sayfa, use_container_width=True)
 
 with st.container(key="mobil_nav"):
-    # Mobilde sayfa agirligini dusuk tutmak icin agir raster gorseller
-    # (base64 ~65-72KB her biri) DAHIL EDILMEDI -- sadece hafif, kucuk
-    # boyutlu SVG ikonlar (domates + balik) kullanildi.
-    _domates_svg_kucuk = (
-        "<svg viewBox='0 0 60 60' width='20' height='20'>"
-        "<circle cx='30' cy='36' r='19' fill='#A6472F'/>"
-        "<path d='M30 14 L34 19 L39 15 L37 22 L44 20 L38 26 L30 14' fill='#5B7553'/>"
-        "</svg>"
-    )
-    _balik_svg_kucuk = (
-        "<svg viewBox='0 0 70 40' width='30' height='17'>"
-        "<path d='M4 20 C14 4,48 4,58 20 C48 36,14 36,4 20 Z' fill='#2E4057'/>"
-        "<path d='M58 20 L69 9 L69 31 Z' fill='#2E4057'/>"
-        "<circle cx='17' cy='16' r='2.6' fill='#EDE6D6'/>"
-        "</svg>"
-    )
-    st.markdown(
-        "<div style='display:flex; align-items:center; justify-content:center; gap:6px;'>"
-        f"{_domates_svg_kucuk}"
-        "<div style='font-size:1.65rem; font-weight:700; color:#0F6E56; "
-        "letter-spacing:-0.01em;'>Menü Mühendisi</div>"
-        f"{_balik_svg_kucuk}"
-        "</div>",
-        unsafe_allow_html=True,
-    )
+    # OTUZ DOKUZUNCU DUZELTME: mobildeki kucuk SVG+metin bandi da ayni
+    # sekilde videoyla degistirildi (daha kucuk boyutta -- CSS'te
+    # .st-key-baslik_video_mobil).
+    with st.container(key="baslik_video_mobil"):
+        if os.path.exists("assets/baslik_video.mp4"):
+            with open("assets/baslik_video.mp4", "rb") as _f:
+                st.video(_f.read(), format="video/mp4", autoplay=True, loop=True, muted=True)
+        else:
+            st.caption("(assets/baslik_video.mp4 henüz eklenmedi)")
+
     _logo_kolonu, _menu_kolonu = st.columns([1, 3], vertical_alignment="center")
     with _logo_kolonu:
-        st.image("assets/logo.png", width=72)
+        st.image("assets/logo.png", width=40)
     with _menu_kolonu:
         with st.popover("Menü"):
             for _sayfa in sayfa_listesi:
