@@ -4069,3 +4069,94 @@ yüzden "görüntüleme" kapsamında sayıldı; sadece dışarı taşınabilir/
 kalıcı çıktı (Excel) engellendi.
 
 **Dosya durumu:** pages/0_Yillik_Menu.py güncellendi.
+
+
+### 24 Ağustos 2026 — XI. Oturum (devam): Reçete Silme Hatası — Eksik CASCADE Bulundu ve Düzeltildi
+
+Kullanıcı Reçete Üretimi sayfasında bir reçeteyi silmeye çalışırken
+`postgrest.exceptions.APIError` aldı (mhtml ekran görüntüsünden tam
+traceback okundu: `pages/1_Recete_Uretimi.py`, satır 189,
+`supabase.table("receteler").delete()...`).
+
+**İlk teori YANLIŞTI, teşhis sorgusuyla düzeltildi:** `recete_malzemeleri`
+ve `recete_asamalari` (ve altındaki `asama_malzemeleri`/
+`asama_bagimliliklari`) zaten `ON DELETE CASCADE` ile kuruluydu — sorun
+onlarda değildi. Gerçek suçlu, koda bakarken akla gelmeyen iki tablo:
+`menu_ogeleri_recete_id_fkey` ve `menu_takvimi_ogeleri_recete_id_fkey`
+— ikisi de CASCADE'siz. `menu_ogeleri`, Özel Menü Üretimi'nde ("Menüye
+ekle") kullanılıyor — silinen reçete daha önce satışa açılmışsa FK
+ihlali oluşuyordu. `menu_takvimi_ogeleri` henüz hiçbir sayfa tarafından
+yazılmıyor (gelecekte aynı hatayı verecekti).
+
+**Ürün kararı (kullanıcıyla teyit edildi):** `receteler` tamamen
+işletmenin özel verisi (241 tariflik genel kütüphaneden ayrı) —
+kullanıcı reçetesini istediği gibi silebilmeli/değiştirebilmeli, bu
+değişiklik kendi menüsüne otomatik yansımalı. Yani engelleme/uyarı
+DEĞİL, sessiz CASCADE doğru davranış.
+
+**Düzeltme (74_menu_iliskileri_cascade_ekle.sql, TEST EDİLMEDİ):** her
+iki foreign key gerçek isimleriyle (teşhis sorgusundan doğrulandı,
+tahmin edilmedi) drop edilip `ON DELETE CASCADE` ile yeniden eklendi.
+
+**Dosya durumu:** sql/74_menu_iliskileri_cascade_ekle.sql (yeni).
+
+
+### 24 Ağustos 2026 — XI. Oturum (devam): Büyük Talep Grubu (9 Madde) — Reçete/Menü İş Akışı Yeniden Şekillendirildi
+
+Kullanıcı ekran görüntüsü üzerinden 9 maddelik bir değişiklik listesi
+verdi. Hepsi uygulandı:
+
+1. **Genel gider payı kaldırıldı:** Daha önce başka hesaplamalardan
+   çıkarılmıştı, tutarlılık için Reçete Üretimi'ndeki "Gerçek porsiyon
+   maliyeti" bölümünden de kaldırıldı. `recete_uretim_maliyeti` VIEW'inin
+   SQL tanımına dokunulmadı (görülmeyen bir şey üzerinde risk almamak
+   için) — bunun yerine Python tarafında `genel_gider_payi_eur` toplam
+   maliyetten geri çıkarılıyor.
+2. **Gizlilik garantisi + kısaltma açıklaması:** Reçete Üretimi
+   sayfasının açıklaması genişletildi (reçetelerin başka işletmeler
+   tarafından KESİNLİKLE görülemeyeceği garantisi + yeni reçete
+   oluşturunca işletme kısaltmasının otomatik ekleneceği bilgisi).
+   `isletmeler.kisaltma` (yeni sütun) + Abonelik sayfasında "İşletme
+   kısaltılmış adı" kutusu eklendi. Yeni reçete kaydedilirken kısaltma
+   otomatik olarak adın sonuna ekleniyor (ör. "Tavuk Sote (ACM)").
+3. **İşletme Maliyet Ayarları taşındı:** Reçete Üretimi'nden kaldırılıp
+   Abonelik sayfasına taşındı — gerekçe: bu ayarlar tek bir reçeteye
+   değil işletmenin TÜM reçetelerine (241 kütüphane tarifi dahil)
+   uygulanıyor, doğal yeri hesap/işletme genelinde bir ayar sayfası.
+4. **Genişletilmiş açıklama (Abonelik'te):** Maliyet ayarlarının
+   tahmini olduğu, malzeme maliyetlerinin ayrı ve sistemde zaten mevcut
+   olduğu, buradaki değişikliğin TÜM reçetelere (default 241 dahil)
+   anında yansıyacağı açıkça belirtildi.
+5. **Porsiyon sayısı kaldırıldı, "uygun aylar" eklendi:** Yeni reçete
+   formunda porsiyon girişi kaldırıldı, artık SABİT 10 olarak
+   kaydediliyor (uyarı metniyle birlikte). Yerine "Bu reçete yılın
+   hangi aylarında sunulabilir?" çoklu-seçim eklendi
+   (`receteler.uygun_aylar`, yeni sütun, `text[]`).
+6. **Reçete Üretimi + Özel Menü Üretimi birleştirildi:** "Özel Menü
+   Üretimi" ayrı sayfa olmaktan çıkarıldı, Reçete Üretimi'nin en altında
+   seçili reçeteye özel bir "Satışa Açma" bölümü haline getirildi.
+   `pages/2_Menu.py` navigasyondan kaldırıldı (dosyanın kendisi repodan
+   silinmeli — `git rm pages/2_Menu.py`). NOT: bu birleşmenin doğal bir
+   sonucu olarak, satışa açma bölümü artık malzeme + en az bir üretim
+   aşaması eklenmiş reçetelerde görünüyor (öncesinde herhangi bir reçete
+   maliyetsiz de menüye eklenebiliyordu) — bu, "önce tamamla, sonra
+   satışa aç" akışıyla tutarlı kabul edildi, bilinçli bir tasarım
+   kararı olarak not düşülüyor.
+7. **"Ekle" buton hizası düzeltildi:** Malzeme ekleme formunda
+   `st.columns(..., vertical_alignment="bottom")` eklendi (app.py'deki
+   nav satırıyla aynı çözüm).
+8. **Malzeme maliyeti başlığı güncellendi:** "(10 porsiyon için)" ibaresi
+   eklendi (porsiyon artık sabit olduğu için).
+9. **Besin değerleri genişletildi:** "(porsiyon başı)" başlığı korundu,
+   73 numaralı migration'la eklenen 24 vitamin/mineral değeri artık
+   küçük fontla (12px), tek bir esnek (flex-wrap) satırda gösteriliyor.
+   Dürüstçe belirtilmeli: 24 kalemin gerçekten 1-2 satıra sığması ekran
+   genişliğine bağlı, dar ekranlarda CSS otomatik alt satıra kayar.
+
+**Düzeltme (75_isletme_kisaltma_ve_recete_uygun_aylar.sql, TEST
+EDİLMEDİ):** `isletmeler.kisaltma` ve `receteler.uygun_aylar` sütunları
+eklendi.
+
+**Dosya durumu:** sql/75_isletme_kisaltma_ve_recete_uygun_aylar.sql
+(yeni), app.py, pages/1_Recete_Uretimi.py, pages/6_Abonelik.py
+güncellendi; pages/2_Menu.py silinmeli.

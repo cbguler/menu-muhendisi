@@ -674,7 +674,8 @@ def kontrol_paneli_sayfasi():
             "Özel reçetelerini sadece sen görürsün, başka işletmeler "
             "erişemez. Bu reçeteler, aşağıdaki \"Yıllık Menü\" bölümündeki "
             "241 tariflik genel Türk mutfağı kütüphanesinden AYRIDIR — "
-            "hazır olduğunda Özel Menü Üretimi sayfasından satışa sunabilirsin."
+            "hazır olduğunda aynı sayfanın en altındaki \"Satışa Açma\" "
+            "bölümünden satışa sunabilirsin."
         )
     with sutun_gorsel:
         _gorsel_varsa_goster("tanitim_uretim_asamalari.png", use_container_width=True)
@@ -686,14 +687,16 @@ def kontrol_paneli_sayfasi():
     with sutun_gorsel:
         _gorsel_varsa_goster("tanitim_menu.png", use_container_width=True)
     with sutun_metin:
-        st.header("Özel Menü Üretimi")
+        st.header("Satışa Açma")
         st.write(
-            "Reçete Üretimi bölümünde oluşturduğun bir yemeği buradan menüye "
-            "eklersin ve bir satış fiyatı belirlersin. Sistem, o yemeğin "
-            "maliyetiyle satış fiyatını karşılaştırıp kâr marjını anlık "
-            "olarak gösterir — malzeme fiyatı değiştiğinde kâr marjı da "
-            "otomatik olarak yeniden hesaplanır, elle güncelleme "
-            "gerekmez."
+            "Reçete Üretimi sayfasında bir reçeteyi tamamlayıp (malzeme + "
+            "üretim aşamaları + maliyet) maliyetini gördükten sonra, aynı "
+            "sayfanın en altındaki \"Satışa Açma\" bölümünden doğrudan "
+            "menüye ekleyip bir satış fiyatı belirlersin — ayrı bir sayfaya "
+            "geçmene gerek yok. Sistem, o yemeğin maliyetiyle satış "
+            "fiyatını karşılaştırıp kâr marjını anlık olarak gösterir — "
+            "malzeme fiyatı değiştiğinde kâr marjı da otomatik olarak "
+            "yeniden hesaplanır, elle güncelleme gerekmez."
         )
         st.markdown(
             "- **Kategori bazlı organizasyon:** Çorba, Ana Yemek, Salata, "
@@ -753,7 +756,12 @@ def kontrol_paneli_sayfasi():
 kontrol_sayfasi = st.Page(kontrol_paneli_sayfasi, title="Kontrol Paneli", default=True)
 yillik_menu_sayfasi = st.Page("pages/0_Yillik_Menu.py", title="Yıllık Menü")
 recete_uretimi_sayfasi = st.Page("pages/1_Recete_Uretimi.py", title="Reçete Üretimi")
-menu_sayfasi = st.Page("pages/2_Menu.py", title="Özel Menü Üretimi")
+# OTUZ SEKIZINCI DUZELTME (24 Agustos 2026): "Ozel Menu Uretimi" ayri bir
+# sayfa olmaktan cikarildi -- kullanici talebiyle Recete Uretimi'nin
+# devami (ayni sayfanin alt bolumu) haline getirildi (bkz. pages/
+# 1_Recete_Uretimi.py "Satışa Açma" bolumu). pages/2_Menu.py artik
+# navigasyonda yok -- dosyanin kendisi repodan silinmeli (git rm
+# pages/2_Menu.py).
 tarif_kutuphanesi_sayfasi = st.Page(
     "pages/5_Tarif_Kutuphanesi.py", title="Tarif Kütüphanesi", url_path="tarif-kutuphanesi",
 )
@@ -767,7 +775,7 @@ sayfa_listesi = [kontrol_sayfasi]
 # durumdaki kisitlama (islem yapamama) salt_okunur ile ayri saglaniyor.
 if not st.session_state.odeme_bekleniyor:
     sayfa_listesi += [
-        yillik_menu_sayfasi, recete_uretimi_sayfasi, menu_sayfasi, tarif_kutuphanesi_sayfasi,
+        yillik_menu_sayfasi, recete_uretimi_sayfasi, tarif_kutuphanesi_sayfasi,
     ]
 sayfa_listesi.append(abonelik_sayfasi)
 # Admin sayfasi SADECE admin oturumunda navigasyon listesine ekleniyor --

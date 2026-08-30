@@ -60,10 +60,18 @@ isletme_bilgi = (
 ).data or {}
 
 with st.form("isletme_bilgi_formu"):
-    yeni_ad = st.text_input("İşletme adı", value=isletme_bilgi.get("ad", ""))
+    ad_sutunu, kisaltma_sutunu = st.columns([2, 1])
+    yeni_ad = ad_sutunu.text_input("İşletme adı", value=isletme_bilgi.get("ad", ""))
+    yeni_kisaltma = kisaltma_sutunu.text_input(
+        "İşletme kısaltılmış adı", value=isletme_bilgi.get("kisaltma", ""),
+        max_chars=12,
+        help="Reçete Üretimi'nde oluşturduğun her yeni reçetenin adının "
+        "sonuna otomatik olarak eklenir (ör. \"Tavuk Sote (ACM)\") -- "
+        "boş bırakırsan hiçbir şey eklenmez.",
+    )
     st.caption(
-        "Bu ad, Yıllık Menü sayfasındaki işletmenin kendi özel menüsünü "
-        "dahil etme butonunun üzerinde görünür."
+        "İşletme adı, Yıllık Menü sayfasındaki işletmenin kendi özel "
+        "menüsünü dahil etme butonunun üzerinde görünür."
     )
     yeni_adres = st.text_area(
         "İşletme adresi", value=isletme_bilgi.get("adres", ""), height=80,
@@ -88,6 +96,7 @@ with st.form("isletme_bilgi_formu"):
                 supabase.table("isletmeler")
                 .update({
                     "ad": yeni_ad.strip(),
+                    "kisaltma": yeni_kisaltma.strip() or None,
                     "adres": yeni_adres.strip() or None,
                     "fatura_adresi": yeni_fatura_adresi.strip() or None,
                     "vergi_dairesi": yeni_vergi_dairesi.strip() or None,
@@ -114,6 +123,80 @@ with st.form("isletme_bilgi_formu"):
                     "\"isletmeler\" tablosunun RLS politikalarını kontrol etmek "
                     "gerekiyor."
                 )
+
+st.divider()
+
+# ---------------------------------------------------------------------
+# Isletme maliyet ayarlari (24 Agustos 2026: Recete Uretimi sayfasindan
+# BURAYA tasindi -- kullanicinin gerekcesi: bu ayarlar tek bir receteye
+# ozgu degil, isletmenin TUM receteleri (kendi ozel receteleri + Yillik
+# Menu'deki 241 kutuphane tarifi DAHIL) icin gecerli, o yuzden dogal
+# yeri "hesap/isletme genelinde" bir ayar sayfasidir, tek tek recete
+# calisilirken karsina cikan bir form degil.
+#
+# Genel gider payi alani (12 Agustos 2026'da hesaplamalardan cikarilmis
+# ama BU FORMDA hala soruluyordu) BURADAN DA KALDIRILDI -- artik hicbir
+# hesaplamada kullanilmiyor, formda birakmak kullaniciyi yanlis
+# yonlendirirdi ("bunu degistirsem maliyete yansir mi" sorusu). Alttaki
+# genel_gider_yuzdesi DB sutunu DOKUNULMADI (silinmedi) -- sadece
+# arayuzden kaldirildi, ileride geri getirilmek istenirse veri kaybi
+# olmaz.
+# ---------------------------------------------------------------------
+st.subheader("İşletme Maliyet Ayarları")
+st.caption(
+    "Bu ayarlar Reçete Üretimi sayfasında değil buradadır, çünkü tek "
+    "bir reçeteye değil işletmenin TÜM reçetelerine birden uygulanır -- "
+    "hem kendi oluşturduğun özel reçetelere, hem de Yıllık Menü "
+    "sayfasındaki hazır 241 tariflik kütüphaneden ürettiğin menülere. "
+    "Malzeme maliyetleri (fiyatlar) zaten sistemde ayrı olarak "
+    "tutuluyor, burada SADECE enerji ve işçilik birim fiyatları var. "
+    "Aşağıdaki rakamlar başlangıç için makul TAHMİNİ değerlerdir -- "
+    "işletmenin gerçek elektrik, doğalgaz ve saatlik personel maliyeti "
+    "bu değerlerden farklıysa burada değiştirebilirsin; yaptığın "
+    "değişiklik hesaplanan TÜM porsiyon maliyetlerine (default gelen "
+    "241 reçete dahil) anında yansır."
+)
+
+ayar_sonuc = (
+    supabase.table("isletme_maliyet_ayarlari")
+    .select("*")
+    .eq("isletme_id", isletme_id)
+    .execute()
+)
+maliyet_ayarlari = ayar_sonuc.data[0] if ayar_sonuc.data else None
+
+if maliyet_ayarlari is None:
+    yeni_ayar = (
+        supabase.table("isletme_maliyet_ayarlari")
+        .insert({"isletme_id": isletme_id})
+        .execute()
+    )
+    maliyet_ayarlari = yeni_ayar.data[0]
+
+with st.form("maliyet_ayarlari_formu"):
+    mc1, mc2, mc3 = st.columns(3)
+    elektrik = mc1.number_input(
+        "Elektrik (€/kWh)",
+        value=float(maliyet_ayarlari["elektrik_birim_fiyat_eur_kwh"]), step=0.01,
+    )
+    dogalgaz = mc2.number_input(
+        "Doğalgaz (€/kWh)",
+        value=float(maliyet_ayarlari["dogalgaz_birim_fiyat_eur_kwh"]), step=0.01,
+    )
+    saat_ucreti = mc3.number_input(
+        "Personel saat ücreti (€)",
+        value=float(maliyet_ayarlari["personel_saat_ucreti_eur"]), step=0.5,
+    )
+    if st.form_submit_button("Kaydet"):
+        supabase.table("isletme_maliyet_ayarlari").update(
+            {
+                "elektrik_birim_fiyat_eur_kwh": elektrik,
+                "dogalgaz_birim_fiyat_eur_kwh": dogalgaz,
+                "personel_saat_ucreti_eur": saat_ucreti,
+            }
+        ).eq("isletme_id", isletme_id).execute()
+        st.success("Kaydedildi -- tüm reçetelerin maliyeti güncellendi.")
+        st.rerun()
 
 st.divider()
 
