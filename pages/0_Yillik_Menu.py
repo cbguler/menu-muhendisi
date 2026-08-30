@@ -1378,11 +1378,22 @@ if aylik:
         )
 
     excel_verisi = _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, kayitli_hedefler)
+    # OTUZ DORDUNCU DUZELTME (24 Agustos 2026): kod incelemesinde bulundu --
+    # bu sayfada veritabanina yazma OLMADIGI icin "salt_okunur" hic
+    # kullanilmamisti, ama bu buton bir ISTISNA: odeme onayi bekleyen
+    # kullanici, sinirsiz sayida aylik menu uretip GERCEK, disari
+    # tasinabilir bir Excel ciktisi alabiliyordu -- diger 3 sayfadaki
+    # ("goruntule ama islem yapma") kurali fiilen boşa cikaran tek nokta
+    # buydu. Menu ONIZLEMESI (ekrandaki kartlar) bilerek disabled
+    # BIRAKILDI -- sadece disariya TASINABILIR/KALICI cikti (Excel)
+    # engelleniyor, ayni Recete Uretimi/Ozel Menu Uretimi'ndeki "olustur/
+    # kaydet" butonlarinin gated olup form alanlarinin gated olmamasi gibi.
     st.download_button(
         "Excel'e indir",
         data=excel_verisi,
         file_name=f"yillik_menu_{aylik['ay']}.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        disabled=st.session_state.get("salt_okunur", False),
     )
 
     fast_food_notasi = (

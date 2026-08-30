@@ -4036,3 +4036,36 @@ teyit edildi.
 
 **Dosya durumu:** Değişiklik yok (bu bir doğrulama kaydı) -- Supabase
 veritabanı güncellendi, kod tarafında değişiklik gerekmedi.
+
+### 24 Ağustos 2026 — XI. Oturum (devam): Bekleyen Testler İçin Kod İncelemesi — Yıllık Menü'de Salt Okunur Boşluğu Bulundu ve Düzeltildi
+
+Dört bekleyen test maddesi (beni hatırla, navigasyon, abonelik akışı,
+kayıt tetikleyicisi) için kod incelemesi yapıldı:
+
+- **Beni hatırla / navigasyon:** Yeni bir hata bulunamadı, mevcut
+  yorumlardaki analiz ve tahminler (JS round-trip, breakpoint piksel
+  değerleri) tutarlı görünüyor -- gerçek doğrulama hâlâ gerekiyor.
+- **Kayıt tetikleyicisi:** `49_abonelik_durum_kisit_duzelt.sql`'in
+  mantığı sağlam (kısıt dinamik bulunuyor, eski değerler korunuyor)
+  ama notlarda hâlâ "TEST EDİLMEDİ" yazıyor, sonrasında bir doğrulama
+  kaydı yok -- gerçek bir kayıt denemesiyle teyit edilmesi gerekiyor.
+- **Abonelik akışı -- GERÇEK BOŞLUK BULUNDU:** app.py'nin "salt_okunur
+  durumundaki kullanıcı 4 sayfada da HİÇBİR işlem yapamaz" iddiası
+  doğru değildi. Reçete Üretimi ve Özel Menü Üretimi'ndeki TÜM mutasyon
+  işlemleri (`oluştur`/`sil`/`ekle`) doğru şekilde
+  `disabled=salt_okunur` ile korunuyordu, ama **Yıllık Menü sayfasında
+  `salt_okunur` HİÇ kullanılmıyordu**. Bu sayfa veritabanına yazmadığı
+  için veri kaybı riski yoktu, ama "Excel'e indir" butonu tamamen açık
+  bırakılmıştı -- yani ödemesi admin onayı bekleyen bir kullanıcı,
+  sınırsız sayıda tam yıllık menü üretip gerçek, dışarı taşınabilir bir
+  Excel çıktısı alabiliyordu. Bu, diğer sayfalardaki "görüntüle ama
+  işlem yapma" kuralını en değerli özellikte fiilen boşa çıkarıyordu.
+
+**Düzeltme:** `pages/0_Yillik_Menu.py`'deki "Excel'e indir" butonuna
+`disabled=st.session_state.get("salt_okunur", False)` eklendi. Menü
+ÖNİZLEMESİ (ekrandaki kartlar, "Ay için menü üret" butonu) BİLEREK
+kısıtlanmadı -- veritabanına yazmıyor, kalıcı bir çıktı üretmiyor, bu
+yüzden "görüntüleme" kapsamında sayıldı; sadece dışarı taşınabilir/
+kalıcı çıktı (Excel) engellendi.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py güncellendi.
