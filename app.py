@@ -889,16 +889,32 @@ st.markdown(
     # (object-fit:cover) bir video kondu. st.video()'nun kendi varsayilan
     # genisligi (tum sutunu kaplar) burada ISTENMIYOR -- video etiketine
     # dogrudan sabit piksel boyutu zorlanıyor.
+    # KIRKINCI DUZELTME (30 Agustos 2026): onceki CSS sadece `video`
+    # etiketini hedefliyordu -- ama Streamlit'in kendi ic sarmalayici
+    # div'leri (data-testid='stVideo' vb.) muhtemelen KENDI genislik/
+    # yukseklik/en-boy-orani mantigini uyguluyor, bu da `video` etiketine
+    # zorlanan boyutu GECERSIZ kiliyordu (ekran goruntusunde video
+    # beklenenden COK farkli/garip bir kutuda gorundu). DAHA SAGLAM
+    # yontem: benim KONTROL ETTIGIM dis kutuyu (`.st-key-baslik_video_*`)
+    # SABIT piksel boyutuna ve `overflow:hidden`e zorluyorum, ICINDEKI
+    # HER SEYI (Streamlit'in hangi ic yapiyi kullandigina bakmaksizin)
+    # yuzde 100 genislik/yukseklige zorluyorum -- boylece ic yapi ne
+    # olursa olsun disariya tasamiyor.
     ".st-key-baslik_video_masaustu, .st-key-baslik_video_mobil {"
-    "  display: flex; justify-content: center; margin-bottom: 4px;"
+    "  overflow: hidden !important; margin: 0 auto 4px !important;"
     "}"
-    ".st-key-baslik_video_masaustu video {"
-    "  width: 220px !important; height: 56px !important;"
-    "  object-fit: cover !important; border-radius: 8px !important;"
+    ".st-key-baslik_video_masaustu {"
+    "  width: 220px !important; height: 56px !important; border-radius: 8px !important;"
     "}"
-    ".st-key-baslik_video_mobil video {"
-    "  width: 150px !important; height: 40px !important;"
-    "  object-fit: cover !important; border-radius: 6px !important;"
+    ".st-key-baslik_video_mobil {"
+    "  width: 150px !important; height: 40px !important; border-radius: 6px !important;"
+    "}"
+    ".st-key-baslik_video_masaustu div, .st-key-baslik_video_mobil div {"
+    "  width: 100% !important; height: 100% !important; max-width: none !important;"
+    "}"
+    ".st-key-baslik_video_masaustu video, .st-key-baslik_video_mobil video {"
+    "  width: 100% !important; height: 100% !important;"
+    "  object-fit: cover !important;"
     "}"
     # Pastel "buton" gorunumu -- Kontrol Paneli'ndeki mevcut renk paletiyle
     # birebir ayni (bkz. yukaridaki SVG: fill #E1F5EE, stroke #0F6E56,
@@ -964,7 +980,15 @@ with st.container(key="masaustu_nav"):
     with st.container(key="baslik_video_masaustu"):
         if os.path.exists("assets/baslik_video.mp4"):
             with open("assets/baslik_video.mp4", "rb") as _f:
-                st.video(_f.read(), format="video/mp4", autoplay=True, loop=True, muted=True)
+                # KIRKINCI DUZELTME (30 Agustos 2026): masaustu ve mobil
+                # versiyonlar AYNI dosyayi/parametreleri kullandigi icin
+                # Streamlit ikisini ayni eleman saniyor ve
+                # StreamlitDuplicateElementId hatasi firlatiyordu --
+                # her ikisine de benzersiz `key` verildi.
+                st.video(
+                    _f.read(), format="video/mp4", autoplay=True, loop=True, muted=True,
+                    key="baslik_video_masaustu_widget",
+                )
         else:
             st.caption("(assets/baslik_video.mp4 henüz eklenmedi)")
 
@@ -993,7 +1017,10 @@ with st.container(key="mobil_nav"):
     with st.container(key="baslik_video_mobil"):
         if os.path.exists("assets/baslik_video.mp4"):
             with open("assets/baslik_video.mp4", "rb") as _f:
-                st.video(_f.read(), format="video/mp4", autoplay=True, loop=True, muted=True)
+                st.video(
+                    _f.read(), format="video/mp4", autoplay=True, loop=True, muted=True,
+                    key="baslik_video_mobil_widget",
+                )
         else:
             st.caption("(assets/baslik_video.mp4 henüz eklenmedi)")
 

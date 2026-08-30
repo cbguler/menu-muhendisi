@@ -4212,3 +4212,29 @@ büyütüyordu.
 ikili dosya) eklenmeli. Eski `assets/baslik_susu_sol.png` ve
 `baslik_susu_sag.png` artık kod tarafından kullanılmıyor (silinmesi
 opsiyonel, dosyalar kalsa da zararı yok).
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Video Çakışma Hatası (StreamlitDuplicateElementId) Düzeltildi + Boyutlandırma Sağlamlaştırıldı
+
+Kullanıcı canlıda gerçek hatayı bildirdi: `StreamlitDuplicateElementId`.
+Kök neden nettti (traceback'ten doğrudan okundu, tahmin gerekmedi):
+masaüstü ve mobil versiyonlarda `st.video()` AYNI dosya + AYNI
+parametrelerle, `key=` verilmeden iki kez çağrılıyordu -- Streamlit
+ikisini aynı eleman sayıp ikincisinde çöküyordu.
+
+**Düzeltme:** her iki çağrıya da benzersiz `key` eklendi
+(`baslik_video_masaustu_widget` / `baslik_video_mobil_widget`).
+
+**Ayrıca bildirilen görsel sorun:** video beklenen 220x56 kutuya değil,
+garip/küçük bir kutuya sığmıştı -- muhtemelen Streamlit'in `st.video()`
+için kullandığı iç sarmalayıcı yapı (`data-testid='stVideo'` vb.)
+sadece `video` etiketine zorlanan boyutu geçersiz kılıyordu. CSS daha
+sağlam hale getirildi: artık KONTROL ETTİĞİMİZ dış kutu
+(`.st-key-baslik_video_*`) sabit piksele ve `overflow:hidden`'a
+zorlanıyor, içindeki HER şey (Streamlit'in iç yapısı ne olursa olsun)
+%100 genişlik/yüksekliğe zorlanıyor -- yani iç yapı ne olursa olsun
+dışarı taşamıyor. Dürüstçe belirtilmeli: bu da canlıda doğrulanmadı,
+gerçek tarayıcıda hâlâ sorun olursa DevTools ile gerçek DOM yapısına
+bakmak gerekebilir.
+
+**Dosya durumu:** app.py güncellendi.
