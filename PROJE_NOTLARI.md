@@ -4309,3 +4309,33 @@ YAŞANMAYACAK.
 
 **Dosya durumu:** app.py güncellendi (video CSS + spacer'lar geri
 alındı, kompakt duruma döndü).
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Yeni Banner Video Geldi (Tek Satır) — Tam Genişlik Bu Sefer Doğru Oranda
+
+Kullanıcı önerilen ölçülere uygun (tek satır "Menü Mühendisi" yazısı,
+ikonlar kenarlarda) yeni bir video gönderdi. Doğrulama şu şekilde
+yapıldı:
+
+1. Piksel analiziyle (Python/PIL, tüm 10 saniyelik döngü boyunca, en
+   kalabalık anlar dahil) içeriğin dikey olarak y=197-503 (720px
+   içinde) arasında kaldığı bulundu -- ~4.2:1 doğal oran.
+2. Sadece yazı + yakın ikonlara odaklanan DAHA SIKI bir kırpım
+   (y=288-438, 150px) denendi, önizleme kareleri (sakin VE en kalabalık
+   an) kontrol edildi -- yazı her durumda tam okunaklı kalıyor, sadece
+   en kalabalık andaki uzak ikonların bir kısmı kırpılıyor (kabul
+   edilebilir, hatta o an zaten fazla kalabalıktı).
+3. Sonuç oran ~8.5:1 (1280x150) -- tam masaüstü genişliğinde (~1300px)
+   bu ARTIK sadece ~150px yükseklik demek (bir önceki ~3:1 orandaki
+   videonun 400px+'ine kıyasla çok daha makul).
+
+**Değişiklik:** `width:100%` tekrar uygulandı (bu sefer video zaten
+doğru oranda olduğu için güvenli). `assets/baslik_video_masaustu.mp4`
+(1000x118) ve `assets/baslik_video_mobil.mp4` (640x76) içerikleri
+YENİ videoyla DEĞİŞTİRİLDİ (dosya adları aynı kaldı, sadece içerik
+güncellendi). Boşluk yükseklikleri de buna göre (240px/115px)
+küçültüldü.
+
+**Dosya durumu:** app.py güncellendi; `assets/baslik_video_masaustu.mp4`
+ve `assets/baslik_video_mobil.mp4` İÇERİKLERİ değiştirilmeli (aynı
+dosya adlarıyla üzerine yazılacak).

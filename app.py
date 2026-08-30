@@ -916,28 +916,21 @@ st.markdown(
     # cok daha genis bir kanvasta (ör. 1600x130, TEK SATIR yazi, ikonlar
     # genis araliklarla) uretilmesi gerekir -- mevcut video 2 satirlik
     # dikey metin icerdigi icin bu kadar ince bir seride sigmaz.
-    # KIRK UCUNCU DUZELTME (30 Agustos 2026): kullanici "cok buyudu,
-    # kimildayamiyorum" dedi -- beklendigi gibi (bkz. bir onceki
-    # duzeltmenin notu, bu risk acikca belirtilmisti). GECICI OLARAK
-    # kompakt kutuya geri donuldu -- kullanici uygun bant/banner oraninda
-    # (ör. 1600x150, ~10.7:1) YENI bir video hazirlayana kadar. Yeni
-    # video gelince bu blok tekrar width:100%'e cevrilebilir (o zaman
-    # dogru oranda oldugu icin asiri yukseklik sorunu olmayacak).
+    # KIRK DORDUNCU DUZELTME (30 Agustos 2026): kullanicinin yeni
+    # gonderdigi video artik TEK SATIR yazi + kenarlara yayilmis
+    # ikonlarla dogru "banner" oraninda (~8.5:1, 1280x150'ye kirpildi --
+    # animasyonun EN kalabalik anindaki icerik dahi olcup dogrulandi).
+    # Bu oranda tam genislik (~1300px) ARTIK ~150px yukseklige denk
+    # geliyor (bir onceki ~3:1 orandaki videonun 400px+'ine kiyasla COK
+    # daha makul) -- width:100% GUVENLE tekrar uygulanabilir.
     ".st-key-baslik_video_masaustu, .st-key-baslik_video_mobil {"
-    "  overflow: hidden !important; margin: 0 auto 4px !important;"
-    "}"
-    ".st-key-baslik_video_masaustu {"
-    "  width: 260px !important; height: 85px !important; border-radius: 8px !important;"
-    "}"
-    ".st-key-baslik_video_mobil {"
-    "  width: 180px !important; height: 59px !important; border-radius: 6px !important;"
+    "  width: 100% !important; margin: 0 0 4px !important;"
     "}"
     ".st-key-baslik_video_masaustu div, .st-key-baslik_video_mobil div {"
-    "  width: 100% !important; height: 100% !important; max-width: none !important;"
+    "  width: 100% !important; max-width: none !important;"
     "}"
     ".st-key-baslik_video_masaustu video, .st-key-baslik_video_mobil video {"
-    "  width: 100% !important; height: 100% !important;"
-    "  object-fit: cover !important;"
+    "  width: 100% !important; height: auto !important;"
     "}"
     # Pastel "buton" gorunumu -- Kontrol Paneli'ndeki mevcut renk paletiyle
     # birebir ayni (bkz. yukaridaki SVG: fill #E1F5EE, stroke #0F6E56,
@@ -963,8 +956,8 @@ st.markdown(
     # buyutuldu. BU DURUM, kullanicinin bir onceki "cok fazla yer
     # kapliyor" sikayetini YENIDEN yaratabilir -- kullaniciya acikca
     # soruldu, onay/tercih bekleniyor.
-    ".ust_menu_bosluk_masaustu { height: 180px; }"
-    ".ust_menu_bosluk_mobil { height: 120px; }"
+    ".ust_menu_bosluk_masaustu { height: 240px; }"
+    ".ust_menu_bosluk_mobil { height: 115px; }"
     "@media (min-width: 768px) { .ust_menu_bosluk_mobil { display: none !important; } }"
     "@media (max-width: 767px) { .ust_menu_bosluk_masaustu { display: none !important; } }"
     # YIRMI BIRINCI DUZELTME (13 Agustos 2026, Oturum 11): kullanici
