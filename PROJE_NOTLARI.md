@@ -4160,3 +4160,18 @@ eklendi.
 **Dosya durumu:** sql/75_isletme_kisaltma_ve_recete_uygun_aylar.sql
 (yeni), app.py, pages/1_Recete_Uretimi.py, pages/6_Abonelik.py
 güncellendi; pages/2_Menu.py silinmeli.
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Yıllık Menü'deki "Özel Menü" Butonu İşletme Kısaltmasını Kullanıyor
+
+Kullanıcı talebi: Bölge (mutfak) satırındaki en sağdaki buton (işletmenin
+kendi özel reçetelerini menüye dahil eden buton), tam işletme adı yerine
+kısaltılmış adı göstersin; kısaltma tanımlanmamışsa "ÖZEL" yazsın.
+
+**Düzeltme:** `isletme_adi` değişkeni artık `isletmeler.ad` yerine
+`isletmeler.kisaltma`'dan besleniyor (75 numaralı migration'la eklenen
+sütun), boşsa "ÖZEL" varsayılan değeri kullanılıyor. Aynı değişken hem
+buton etiketinde hem açıklama metninde hem boş-durum mesajında
+kullanıldığı için tek satırlık bir değişiklik üç yeri birden düzeltti.
+
+**Dosya durumu:** pages/0_Yillik_Menu.py güncellendi.

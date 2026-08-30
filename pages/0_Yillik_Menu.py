@@ -670,9 +670,15 @@ if "kendi_menu_dahil" not in st.session_state:
     st.session_state.kendi_menu_dahil = False
 
 isletme_bilgi = (
-    supabase.table("isletmeler").select("ad").eq("id", st.session_state.isletme_id).single().execute()
+    supabase.table("isletmeler").select("kisaltma").eq("id", st.session_state.isletme_id).single().execute()
 ).data
-isletme_adi = (isletme_bilgi or {}).get("ad") or "Kendi Menüm"
+# OTUZ DOKUZUNCU DUZELTME (30 Agustos 2026): kullanici talebiyle -- bu
+# buton artik isletmenin TAM adi degil, KISALTILMIS adi (bkz. Abonelik
+# sayfasi, 75 numarali migration) ile etiketleniyor -- satirdaki diger
+# butonlarla (kisa bolge adlari) boy/stil olarak tutarli olsun diye.
+# Kisaltma girilmemisse jenerik "ÖZEL" kullanilir.
+isletme_kisaltma = ((isletme_bilgi or {}).get("kisaltma") or "").strip()
+isletme_adi = isletme_kisaltma or "ÖZEL"
 
 st.markdown("**Bölge (mutfak)**")
 st.caption(
