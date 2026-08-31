@@ -754,7 +754,7 @@ def kontrol_paneli_sayfasi():
 # ama artik sidebar'da "app" degil "Kontrol Paneli" gorunuyor.
 # ---------------------------------------------------------------------
 
-kontrol_sayfasi = st.Page(kontrol_paneli_sayfasi, title="Kontrol Paneli", default=True)
+kontrol_sayfasi = st.Page(kontrol_paneli_sayfasi, title="Ana Sayfa", default=True)
 yillik_menu_sayfasi = st.Page("pages/0_Yillik_Menu.py", title="Yıllık Menü")
 recete_uretimi_sayfasi = st.Page("pages/1_Recete_Uretimi.py", title="Reçete Üretimi")
 # OTUZ SEKIZINCI DUZELTME (24 Agustos 2026): "Ozel Menu Uretimi" ayri bir
@@ -898,10 +898,26 @@ st.markdown(
     "[class*='st-key-nav_buton_'] {"
     "  background-color: #E1F5EE; border: 1px solid #0F6E56;"
     "  border-radius: 8px; padding: 0.25rem 0.3rem; text-align: center;"
+    "  width: 190px !important;"
     "}"
     "[class*='st-key-nav_buton_'] a {"
     "  color: #085041 !important; text-decoration: none !important;"
     "  font-weight: 500; justify-content: center !important;"
+    "}"
+    # ELLI UCUNCU DUZELTME (30 Agustos 2026): butonlar "Tarif
+    # Kütüphanesi" (en uzun etiket) rahatca sigacak sabit bir genislige
+    # (190px) getirildi -- yukarida her butona zaten uygulaniyor. Buton
+    # SATIRI da satiri doldurmasin, SOLA YASLI paketlensin diye
+    # sutunlar flex:0 0 auto yapildi (esit-oranli "satiri doldur"
+    # davranisi iptal edildi). Satir, logonun (144px) SAG kenarindan
+    # baslasin diye sol bosluk (padding) logo genisligi + aradaki
+    # bosluk kadar (20px) verildi.
+    ".st-key-nav_buton_satiri { padding-left: 164px !important; }"
+    ".st-key-nav_buton_satiri div[data-testid='stHorizontalBlock'] {"
+    "  justify-content: flex-start !important; flex-wrap: wrap !important;"
+    "}"
+    ".st-key-nav_buton_satiri div[data-testid='stColumn'] {"
+    "  flex: 0 0 auto !important; width: auto !important;"
     "}"
     "@media (min-width: 768px) { .st-key-masaustu_nav { top: 60px; } }"
     "@media (max-width: 767px) { .st-key-mobil_nav { top: 60px; } }"
@@ -1051,15 +1067,21 @@ with st.container(key="masaustu_nav"):
         "</div>",
         unsafe_allow_html=True,
     )
-    # Nav butonlari ARTIK AYRI bir satirda, logo/yaziyla hic yer
-    # paylasmiyor -- hepsi ESIT sutun payinda (BUTON_ORANI hepsinde ayni),
-    # bu yuzden "Admin" (veya herhangi biri) asla farkli boyuta
-    # dusemez/tasamaz.
-    _buton_kolonlari = st.columns([1] * len(sayfa_listesi))
-    for _i, (_kolon, _sayfa) in enumerate(zip(_buton_kolonlari, sayfa_listesi)):
-        with _kolon:
-            with st.container(key=f"nav_buton_masaustu_{_i}"):
-                st.page_link(_sayfa, use_container_width=True)
+    # ELLI UCUNCU DUZELTME (30 Agustos 2026): kullanici -- (1) butonlar
+    # cok buyuk, hepsi "Tarif Kütüphanesi" kadar (en uzun etiket) sabit
+    # genislikte olsun (esit-oranli sutunlarin TAM SATIRA gerilmesi
+    # yerine); (2) buton satiri logonun SOL kenarindan degil, logonun
+    # SAG kenarindan (izdüşümünden) baslasin. Esit-oranli st.columns
+    # dogal olarak "satiri doldur" mantigiyla calisir (icerige gore
+    # kucuk kalmaz) -- bu yuzden CSS ile butonlara SABIT piksel genislik
+    # zorlanip satir "sola yaslı" hale getirildi, ayrica logo genisligi
+    # (144px) kadar sol bosluk eklendi.
+    with st.container(key="nav_buton_satiri"):
+        _buton_kolonlari = st.columns([1] * len(sayfa_listesi))
+        for _i, (_kolon, _sayfa) in enumerate(zip(_buton_kolonlari, sayfa_listesi)):
+            with _kolon:
+                with st.container(key=f"nav_buton_masaustu_{_i}"):
+                    st.page_link(_sayfa, use_container_width=True)
 
 with st.container(key="mobil_nav"):
     # Mobilde tek buton (popover) oldugu icin "Admin tasar" turu bir

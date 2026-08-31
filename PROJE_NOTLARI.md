@@ -4527,3 +4527,25 @@ yani logo yaziya bağlıydı.
 konumundan tamamen bağımsız) yerleştirildi.
 
 **Dosya durumu:** app.py güncellendi.
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Butonlar Sabit Genişliğe Getirildi, Logonun Sağından Başlıyor, İlk Buton "Ana Sayfa" Oldu
+
+Kullanıcı üç şey istedi: (1) butonlar çok büyük, hepsi "Tarif
+Kütüphanesi"ne (en uzun etiket) yetecek sabit boyutta olsun; (2) ilk
+butonun adı "Ana Sayfa" olsun; (3) buton satırı logonun altından değil,
+logonun sağ kenarından (izdüşümünden) başlasın.
+
+**Düzeltme:**
+- `kontrol_sayfasi` başlığı "Kontrol Paneli"den "Ana Sayfa"ya
+  değiştirildi (sadece görünen buton etiketi -- sayfanın kendi
+  fonksiyonu/içeriği değişmedi).
+- Eşit-oranlı `st.columns` doğal olarak "satırı doldur" mantığıyla
+  çalışıyordu (bu yüzden butonlar gereğinden büyüktü). Her butona sabit
+  190px genişlik zorlandı, buton satırının sütunları `flex:0 0 auto`
+  yapılarak satırı doldurma davranışı iptal edildi -- artık butonlar
+  SOLA YASLI paketleniyor.
+- Buton satırına logo genişliği + boşluk kadar (164px) sol dolgu
+  eklendi -- satır artık logonun sağ kenarından başlıyor.
+
+**Dosya durumu:** app.py güncellendi.
