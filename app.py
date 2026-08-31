@@ -924,7 +924,29 @@ st.markdown(
     # geliyor (bir onceki ~3:1 orandaki videonun 400px+'ine kiyasla COK
     # daha makul) -- width:100% GUVENLE tekrar uygulanabilir.
     ".st-key-baslik_video_masaustu, .st-key-baslik_video_mobil {"
-    "  margin: 0 0 4px !important;"
+    "  margin: 0 0 4px !important; padding: 0 !important;"
+    "}"
+    # KIRK YEDINCI DUZELTME (30 Agustos 2026): banner kenarlara
+    # yapismiyordu -- kullanici ekran goruntusuyle dogruladi, gorsel
+    # container'in ortasinda dar bir sutunda kalmis. Sebep: img'e
+    # width:100% verilmesi yetmiyor, cunku Streamlit'in KENDI markdown
+    # sarmalayicilari (stMarkdown, stMarkdownContainer, element-container)
+    # varsayilan olarak kendi ic genislik/max-width kurallarini
+    # tasiyabiliyor. Bu sefer Streamlit'in resmi data-testid'lerini
+    # DOGRUDAN hedefleyip HER seviyede genislik zorlaniyor.
+    ".st-key-baslik_video_masaustu [data-testid='stMarkdown'],"
+    ".st-key-baslik_video_masaustu [data-testid='stMarkdownContainer'],"
+    ".st-key-baslik_video_masaustu [data-testid='stElementContainer'],"
+    ".st-key-baslik_video_masaustu > div,"
+    ".st-key-baslik_video_mobil [data-testid='stMarkdown'],"
+    ".st-key-baslik_video_mobil [data-testid='stMarkdownContainer'],"
+    ".st-key-baslik_video_mobil [data-testid='stElementContainer'],"
+    ".st-key-baslik_video_mobil > div {"
+    "  width: 100% !important; max-width: 100% !important;"
+    "}"
+    ".st-key-baslik_video_masaustu img, .st-key-baslik_video_mobil img {"
+    "  width: 100% !important; max-width: 100% !important;"
+    "  height: auto !important; display: block !important;"
     "}"
     # Pastel "buton" gorunumu -- Kontrol Paneli'ndeki mevcut renk paletiyle
     # birebir ayni (bkz. yukaridaki SVG: fill #E1F5EE, stroke #0F6E56,

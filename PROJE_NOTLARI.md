@@ -4377,3 +4377,34 @@ küçük dosya boyutu için renk paleti sıkıştırıldı) eklenmeli. Video
 dosyaları (`baslik_video_*.mp4`) hâlâ projede duruyor ama artık
 kullanılmıyor -- kullanıcı videoya dönmek isterse kolayca eski koda
 dönülebilir (git geçmişinde mevcut).
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Banner'daki Kalıntı Şeffaflık Hatası ve Tam Genişlik Sorunu Düzeltildi
+
+Kullanıcı canlıda test etti, iki somut hata bildirdi (ekran görüntüsüyle
+doğrulandı):
+
+1. **"Menü Mühendisi" etrafında hâlâ dama deseni var.** Kök neden
+   bulundu: bir önceki adımda dosya boyutunu küçültmek için kullanılan
+   `Image.quantize()` çağrısı görseli "P" (palet) moduna çeviriyor ve
+   BU SIRADA GERÇEK ALFA KANALINI BOZUYORDU (doğrulandı: kaydedilen
+   dosyanın modu "P" çıktı, RGBA değil). Yani şeffaflık hesabı doğruydu
+   ama son adımda kayboluyordu. **Düzeltme:** RGB küçültme/renk azaltma
+   ve alfa kanalı TAMAMEN AYRI işlendi, alfa hiç dokunulmadan sona
+   eklendi -- doğrulama: `banner_v3_masaustu.png` artık gerçekten RGBA
+   modunda ve alfa=0 oranı beklenen ~%19.4.
+2. **Banner kenarlara yapışmıyor, ortada dar bir sütunda kalıyor.**
+   Kök neden: `<img width:100%>` yetmiyor, çünkü Streamlit'in KENDİ
+   markdown sarmalayıcıları (`stMarkdown`, `stMarkdownContainer`,
+   `stElementContainer`) kendi iç genişlik/max-width kuralları
+   taşıyabiliyor. **Düzeltme:** Streamlit'in resmi data-testid'leri
+   doğrudan hedeflenip her seviyede `width:100%` zorlandı (+ genel
+   `> div` yedek kuralı, canlıda test edilemediği için ek güvenlik).
+
+**Üçüncü madde (üst boşluk "ekranın ortasına kadar" iddiası) netleştirilmedi**
+-- gönderilen ekran görüntüsünde bariz bir "ortaya kadar" boşluk
+görünmüyordu, kullanıcıya doğrudan soruldu, tahmin edilmedi.
+
+**Dosya durumu:** app.py güncellendi;
+`assets/baslik_banner_masaustu.png` ve `assets/baslik_banner_mobil.png`
+İÇERİKLERİ (aynı dosya adlarıyla) değiştirilmeli.
