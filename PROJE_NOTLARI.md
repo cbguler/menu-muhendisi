@@ -4459,3 +4459,37 @@ yüzünden) farklı hizada görünüyor, kopuk duruyordu.
   bir önceki net talebi.
 
 **Dosya durumu:** app.py güncellendi.
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Admin Butonu Taşma Hatası + Yazı 5 Kat Büyütüldü, Ortalandı — Yapısal Değişiklik: İki Ayrı Satır
+
+Kullanıcı ekran görüntüsüyle iki şey gösterdi: (1) "Admin" butonu
+satıra sığmayıp yeni satıra düşmüş, tek başına kalınca tam genişliğe
+gerilmiş (diğer butonlardan çok daha büyük görünüyor); (2) "Menü
+Mühendisi" yazısı ortalanmalı VE fontu 5 kat büyütülmeli (1.6rem'den
+8rem'e).
+
+**Admin butonu hatasının kök nedeni:** Bir önceki düzeltmede logo+yazı
+bloğuna zorlanan `min-width:430px`, geri kalan butonlara yetecek alan
+bırakmıyordu -- "Admin" satıra sığmayınca kendi satırına düştü, tek
+başına kaldığı için flex-grow ile tam genişliğe yayıldı.
+
+**Yapısal karar:** 8rem'lik bir yazı + 144px logo + 6 buton hiçbir
+şekilde tek satıra sığmaz -- zorlarsak aynı hata (ya da daha kötüsü)
+tekrarlanırdı. Bunun yerine logo+yazı ve nav butonları TAMAMEN AYRI
+satırlara bölündü:
+- **Üst satır:** logo (144px) + "Menü Mühendisi" (8rem, kalın, yeşil)
+  -- `justify-content:center` ile ORTALANMIŞ.
+- **Alt satır:** 6 nav butonu, HEPSİ EŞİT sütun payında (`[1]*6`) --
+  artık logo/yazı ile hiç yer paylaşmadıkları için hiçbiri farklı
+  boyuta düşemez/taşamaz.
+
+Mobilde tek buton (popover "Menü") olduğu için bu risk hiç yoktu,
+mobil yapı değiştirilmedi.
+
+**Dürüstçe belirtilmeli:** Boşluk yüksekliği (380px) TAHMİNİ -- 8rem
+gibi aşırı büyük bir yazının logoyla aynı satırda mı kalacağı yoksa
+ekran genişliğine göre alt satıra mı düşeceği gerçek tarayıcıda
+doğrulanmadı.
+
+**Dosya durumu:** app.py güncellendi.

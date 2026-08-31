@@ -842,10 +842,10 @@ if st.session_state.admin_mi:
 # eski begenilen boyutuna (144px) dondugu icin LOGO_ORANI da eski
 # genis degerine dondu. Yeni: BASLIK_YAZI_ORANI, logonun yanindaki sade
 # "Menü Mühendisi" yazisi icin.
-LOGO_ORANI = 4.0
-BASLIK_YAZI_ORANI = 3.2
-BUTON_ORANI = 2.8
-BOSLUK_ORANI = 2.2
+# ELLINCI DUZELTME (30 Agustos 2026): logo+yazi ve nav butonlari artik
+# AYRI satirlarda (yukarida aciklandi) -- LOGO_ORANI/BASLIK_YAZI_ORANI/
+# BOSLUK_ORANI gibi "ayni satirda paylasilan sutun orani" sabitlerine
+# artik gerek yok, butonlar basitce esit sutunlara (`[1]*n`) bolunuyor.
 
 st.markdown(
     "<style>"
@@ -872,17 +872,15 @@ st.markdown(
     "  align-items: center !important; gap: 0.5rem !important;"
     "}"
     ".st-key-mobil_nav div[data-testid='stColumn'] { width: auto !important; min-width: 0 !important; }"
-    # KIRK DOKUZUNCU DUZELTME (30 Agustos 2026): logo+yazi sutunu
-    # ("Menü Mühendisi") komsu buton sutununun UZERINE tasmisti --
-    # sutun orani (LOGO_ORANI) tahmini yetersizdi. Oran ayarlamak yerine
-    # (bu zaten bir kez basarisiz oldu) bu SUTUNA CSS ile GARANTI bir
-    # minimum genislik veriliyor -- boylece oran ne olursa olsun
-    # (flex-grow ile ekstra pay alsa da) EN AZ bu kadar yer ayrilmis
-    # oluyor, komsu sutunlar geri kalan alani paylasiyor.
-    ".st-key-masaustu_nav div[data-testid='stHorizontalBlock'] > "
-    "div[data-testid='stColumn']:first-child {"
-    "  min-width: 430px !important; flex: 0 1 430px !important;"
-    "}"
+    # ELLINCI DUZELTME (30 Agustos 2026): masaustunde logo+yazi ARTIK
+    # butonlarla ayni satirda DEGIL (ayri satirlara bolundu, bkz. Python
+    # kodu) -- bu yuzden bir onceki (KIRK DOKUZUNCU) ":first-child
+    # min-width:430px" kurali BURADAN KALDIRILDI (kalsaydi artik ilk
+    # NAV BUTONUNU 430px'e zorlayip diger butonlarla farkli boyuta
+    # sokardi -- tam da simdi duzelttigimiz "Admin farkli boyutta"
+    # hatasinin bir baskasini yaratirdi). Mobildeki kural KALDI, cunku
+    # mobilde logo+yazi hala popover butonuyla AYNI satirda (sadece 2
+    # eleman oldugu icin tasma riski yok).
     ".st-key-mobil_nav div[data-testid='stHorizontalBlock'] > "
     "div[data-testid='stColumn']:first-child {"
     "  min-width: 200px !important; flex: 0 1 auto !important;"
@@ -925,8 +923,14 @@ st.markdown(
     # KIRK SEKIZINCI DUZELTME: artik TEK satir var (144px logo + yazi +
     # butonlar, alt-hizali) -- ayri banner satiri tamamen kalktigi icin
     # bosluk da buyuk olcude kuculdu.
-    ".ust_menu_bosluk_masaustu { height: 165px; }"
-    ".ust_menu_bosluk_mobil { height: 90px; }"
+    # ELLINCI DUZELTME: yazi 5 kat buyudu (8rem) VE artik logo+yazi bir
+    # satirda, nav butonlari AYRI bir satirda -- toplam yukseklik
+    # onemli olcude artti. Bu TAHMINI bir deger -- 8rem gibi asiri buyuk
+    # bir metnin logoyla AYNI satirda mi kalacagi yoksa flex-wrap ile
+    # ALT SATIRA mi dusecegi ekran genisligine gore degisir, gercek
+    # tarayicida dogrulanmasi gerekiyor.
+    ".ust_menu_bosluk_masaustu { height: 380px; }"
+    ".ust_menu_bosluk_mobil { height: 100px; }"
     "@media (min-width: 768px) { .ust_menu_bosluk_mobil { display: none !important; } }"
     "@media (max-width: 767px) { .ust_menu_bosluk_masaustu { display: none !important; } }"
     # YIRMI BIRINCI DUZELTME (13 Agustos 2026, Oturum 11): kullanici
@@ -1017,28 +1021,38 @@ with st.container(key="masaustu_nav"):
     # SUTUNA (CSS ile) GARANTI bir minimum genislik veriliyor (bkz.
     # asagidaki min-width kurali) -- oran tahmini az yanlis olsa bile
     # artik tasma olmuyor.
+    # ELLINCI DUZELTME (30 Agustos 2026): kullanici iki sey istedi --
+    # (1) yazi 5 KAT buyutulsun (1.6rem -> 8rem), (2) ortalanmali. Bu
+    # boyutta bir yazi + 144px logo + 6 buton ARTIK TEK SATIRA hicbir
+    # sekilde sigmaz -- zorlarsak bir onceki hata (Admin butonunun
+    # tasip tek basina genislemesi) kacinilmaz olurdu. YAPISAL COZUM:
+    # logo+buyuk yazi KENDI satirinda (ortalanmis), nav butonlari
+    # AYRI, kendi satirinda (esit sutun paylarinda, digerleriyle YER
+    # KAVGASI YOK) -- butonlar artik HER ZAMAN standart/esit boyutta,
+    # logo/yazi boyutundan tamamen bagimsiz.
     with open("assets/logo.png", "rb") as _f:
         _logo_b64 = base64.b64encode(_f.read()).decode("ascii")
-    _tum_kolonlar = st.columns(
-        [LOGO_ORANI] + [BUTON_ORANI] * len(sayfa_listesi) + [BOSLUK_ORANI],
-        vertical_alignment="bottom",
+    st.markdown(
+        f"<div style='display:flex; align-items:center; justify-content:center; "
+        f"gap:20px; flex-wrap:wrap; padding:0.3rem 0;'>"
+        f"<img src='data:image/png;base64,{_logo_b64}' style='width:144px; height:auto; flex-shrink:0;'/>"
+        "<span style='font-size:8rem; font-weight:700; color:#0F6E56; "
+        "line-height:1; white-space:nowrap;'>Menü Mühendisi</span></div>",
+        unsafe_allow_html=True,
     )
-    with _tum_kolonlar[0]:
-        st.markdown(
-            f"<div style='display:flex; align-items:center; gap:14px; height:100%;'>"
-            f"<img src='data:image/png;base64,{_logo_b64}' style='width:144px; height:auto; flex-shrink:0;'/>"
-            "<span style='font-size:1.6rem; font-weight:700; color:#0F6E56; "
-            "white-space:nowrap;'>Menü Mühendisi</span></div>",
-            unsafe_allow_html=True,
-        )
-    for _i, (_kolon, _sayfa) in enumerate(zip(_tum_kolonlar[1:-1], sayfa_listesi)):
+    # Nav butonlari ARTIK AYRI bir satirda, logo/yaziyla hic yer
+    # paylasmiyor -- hepsi ESIT sutun payinda (BUTON_ORANI hepsinde ayni),
+    # bu yuzden "Admin" (veya herhangi biri) asla farkli boyuta
+    # dusemez/tasamaz.
+    _buton_kolonlari = st.columns([1] * len(sayfa_listesi))
+    for _i, (_kolon, _sayfa) in enumerate(zip(_buton_kolonlari, sayfa_listesi)):
         with _kolon:
             with st.container(key=f"nav_buton_masaustu_{_i}"):
                 st.page_link(_sayfa, use_container_width=True)
 
 with st.container(key="mobil_nav"):
-    # KIRK DOKUZUNCU DUZELTME: mobilde de ayni sekilde logo+yazi TEK
-    # blokta birlestirildi.
+    # Mobilde tek buton (popover) oldugu icin "Admin tasar" turu bir
+    # risk yok -- logo+yazi ve popover butonu ayni satirda kalabilir.
     _logo_yazi_kolonu, _menu_kolonu = st.columns([3, 2], vertical_alignment="center")
     with _logo_yazi_kolonu:
         st.markdown(
