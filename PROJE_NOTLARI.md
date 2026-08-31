@@ -4513,3 +4513,17 @@ yazısı çok aşağı inmiş, altındaki tanıtım videosu kaybolmuş.
   teyit kullanıcıdan gelecek).
 
 **Dosya durumu:** app.py güncellendi.
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Logo Sola Yaslandı, Başlık Yazısı Tam Ortaya Alındı (Birbirinden Bağımsız)
+
+Kullanıcı: logo sola yanaşsın, başlık yazısı (logodan bağımsız olarak)
+ortada olmalı -- önceki tasarımda ikisi "grup olarak" ortalanıyordu,
+yani logo yaziya bağlıydı.
+
+**Düzeltme:** Dış kutu `position:relative` yapıldı, logo
+`position:absolute; left:0` ile sola sabitlendi, yazı ise
+`width:100%; text-align:center` ile TÜM satırın ortasına (logonun
+konumundan tamamen bağımsız) yerleştirildi.
+
+**Dosya durumu:** app.py güncellendi.

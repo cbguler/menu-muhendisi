@@ -1034,12 +1034,21 @@ with st.container(key="masaustu_nav"):
     # logo/yazi boyutundan tamamen bagimsiz.
     with open("assets/logo.png", "rb") as _f:
         _logo_b64 = base64.b64encode(_f.read()).decode("ascii")
+    # ELLI IKINCI DUZELTME (30 Agustos 2026): kullanici logo SOLA
+    # YASLANSIN, yazi ORTADA kalsin dedi -- yani ikisi ARTIK BIRBIRINE
+    # BAGLI DEGIL (once "grupca ortalama" yapiliyordu, logo yaziyla
+    # birlikte kayiyordu). Coz: disaridaki kutuyu `position:relative`
+    # yapip logoyu `position:absolute; left:0` ile SOLA SABITLEDIK,
+    # yaziyi ise `width:100%; text-align:center` ile TUM SATIRIN
+    # ORTASINA (logonun konumundan BAGIMSIZ) yerlestirdik.
     st.markdown(
-        f"<div style='display:flex; align-items:center; justify-content:center; "
-        f"gap:20px; flex-wrap:wrap; padding:0.3rem 0;'>"
-        f"<img src='data:image/png;base64,{_logo_b64}' style='width:144px; height:auto; flex-shrink:0;'/>"
+        "<div style='position:relative; min-height:144px; padding:0.3rem 0;'>"
+        f"<img src='data:image/png;base64,{_logo_b64}' style='width:144px; height:auto; "
+        "position:absolute; left:0; top:50%; transform:translateY(-50%);'/>"
+        "<div style='width:100%; text-align:center;'>"
         "<span style='font-size:4rem; font-weight:700; color:#0F6E56; "
-        "line-height:1; white-space:nowrap;'>Menü Mühendisi</span></div>",
+        "line-height:1; white-space:nowrap;'>Menü Mühendisi</span></div>"
+        "</div>",
         unsafe_allow_html=True,
     )
     # Nav butonlari ARTIK AYRI bir satirda, logo/yaziyla hic yer
