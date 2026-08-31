@@ -4437,3 +4437,25 @@ onarımı) tamamen TERK EDİLDİ. Yerine:
 `baslik_banner_mobil.png`, `baslik_video_masaustu.mp4`,
 `baslik_video_mobil.mp4` artık HİÇBİRİ kullanılmıyor (silinmesi
 opsiyonel, kod onlara referans vermiyor).
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): "Menü Mühendisi" Yazısı Butona Taşıyordu — Sabit Minimum Genişlikle Düzeltildi
+
+Kullanıcı ekran görüntüsüyle gösterdi: "Menü Mühendisi" yazısı,
+yanındaki "Kontrol Paneli" nav butonunun ÜZERİNE taşmıştı (yazı sütunu
+oranı -- BASLIK_YAZI_ORANI -- yeterince genişletilmemiş). Ayrıca logo
+(yukarıda, 144px) ile yazı (aşağıda, `vertical_alignment="bottom"`
+yüzünden) farklı hizada görünüyor, kopuk duruyordu.
+
+**Düzeltme:**
+- Logo + yazı, İKİ AYRI sütun yerine TEK bir flex HTML bloğunda
+  (`align-items:center`) birleştirildi -- artık doğal olarak aynı
+  hizada.
+- Sütun oranını (bir kez zaten yanlış çıkmıştı) tekrar tahmin etmek
+  yerine, bu İLK SÜTUNA CSS ile GARANTİ bir minimum genişlik verildi
+  (masaüstü 430px, mobil 200px) -- oran hesabı ne olursa olsun bu kadar
+  yer garantili, komşu buton sütunları geri kalanı paylaşıyor.
+- Logo boyutu KORUNDU (144px masaüstü / 72px mobil) -- kullanıcının
+  bir önceki net talebi.
+
+**Dosya durumu:** app.py güncellendi.

@@ -872,6 +872,21 @@ st.markdown(
     "  align-items: center !important; gap: 0.5rem !important;"
     "}"
     ".st-key-mobil_nav div[data-testid='stColumn'] { width: auto !important; min-width: 0 !important; }"
+    # KIRK DOKUZUNCU DUZELTME (30 Agustos 2026): logo+yazi sutunu
+    # ("Menü Mühendisi") komsu buton sutununun UZERINE tasmisti --
+    # sutun orani (LOGO_ORANI) tahmini yetersizdi. Oran ayarlamak yerine
+    # (bu zaten bir kez basarisiz oldu) bu SUTUNA CSS ile GARANTI bir
+    # minimum genislik veriliyor -- boylece oran ne olursa olsun
+    # (flex-grow ile ekstra pay alsa da) EN AZ bu kadar yer ayrilmis
+    # oluyor, komsu sutunlar geri kalan alani paylasiyor.
+    ".st-key-masaustu_nav div[data-testid='stHorizontalBlock'] > "
+    "div[data-testid='stColumn']:first-child {"
+    "  min-width: 430px !important; flex: 0 1 430px !important;"
+    "}"
+    ".st-key-mobil_nav div[data-testid='stHorizontalBlock'] > "
+    "div[data-testid='stColumn']:first-child {"
+    "  min-width: 200px !important; flex: 0 1 auto !important;"
+    "}"
     # KIRK SEKIZINCI DUZELTME (30 Agustos 2026): banner/video tamamen
     # kaldirildi -- kullanici "ust tarafta menu basliklarindan baska
     # islevi olan bir sey yok, alt tarafin genislemesi lazim" dedi.
@@ -990,35 +1005,47 @@ with st.container(key="masaustu_nav"):
     # islevi yok, alt tarafin genislemesi lazim" -- ayri bir banner
     # satiri tamamen ortadan kalkinca ust kisim ARTIK SADECE bu tek
     # (144px) satir kadar yer kapliyor.
+    # KIRK DOKUZUNCU DUZELTME (30 Agustos 2026): kullanici ekran
+    # goruntusuyle dogruladi -- yazi sutunu ("Menü Mühendisi") yeterince
+    # genis degildi, ilk nav butonunun ("Kontrol Paneli") UZERINE tasti.
+    # Ayrica logo ile yazi vertical_alignment="bottom" yuzunden ayri
+    # hizada duruyordu (yazi alt kisimda, logo yukarida) -- gorsel olarak
+    # kopuk duruyordu. Iki ayri sutun yerine logo+yazi TEK BIR flex
+    # HTML blogunda birlestirildi (align-items:center ile dogal olarak
+    # ayni hizada) -- bu da yaziya ayrilan genislik tahminine olan
+    # bagimliligi ortadan kaldirmiyor, o yuzden asagida ayrica bu ILK
+    # SUTUNA (CSS ile) GARANTI bir minimum genislik veriliyor (bkz.
+    # asagidaki min-width kurali) -- oran tahmini az yanlis olsa bile
+    # artik tasma olmuyor.
+    with open("assets/logo.png", "rb") as _f:
+        _logo_b64 = base64.b64encode(_f.read()).decode("ascii")
     _tum_kolonlar = st.columns(
-        [LOGO_ORANI, BASLIK_YAZI_ORANI] + [BUTON_ORANI] * len(sayfa_listesi) + [BOSLUK_ORANI],
+        [LOGO_ORANI] + [BUTON_ORANI] * len(sayfa_listesi) + [BOSLUK_ORANI],
         vertical_alignment="bottom",
     )
     with _tum_kolonlar[0]:
-        st.image("assets/logo.png", width=144)
-    with _tum_kolonlar[1]:
         st.markdown(
-            "<div style='font-size:1.7rem; font-weight:700; color:#0F6E56; "
-            "white-space:nowrap; padding-bottom:0.3rem;'>Menü Mühendisi</div>",
+            f"<div style='display:flex; align-items:center; gap:14px; height:100%;'>"
+            f"<img src='data:image/png;base64,{_logo_b64}' style='width:144px; height:auto; flex-shrink:0;'/>"
+            "<span style='font-size:1.6rem; font-weight:700; color:#0F6E56; "
+            "white-space:nowrap;'>Menü Mühendisi</span></div>",
             unsafe_allow_html=True,
         )
-    for _i, (_kolon, _sayfa) in enumerate(zip(_tum_kolonlar[2:-1], sayfa_listesi)):
+    for _i, (_kolon, _sayfa) in enumerate(zip(_tum_kolonlar[1:-1], sayfa_listesi)):
         with _kolon:
             with st.container(key=f"nav_buton_masaustu_{_i}"):
                 st.page_link(_sayfa, use_container_width=True)
 
 with st.container(key="mobil_nav"):
-    # KIRK SEKIZINCI DUZELTME: mobilde de ayni sekilde banner kaldirildi,
-    # logo eski boyutuna (72px) dondu, yaninda kucuk sade yazi eklendi.
-    _logo_kolonu, _yazi_kolonu, _menu_kolonu = st.columns(
-        [1, 2, 2], vertical_alignment="center"
-    )
-    with _logo_kolonu:
-        st.image("assets/logo.png", width=72)
-    with _yazi_kolonu:
+    # KIRK DOKUZUNCU DUZELTME: mobilde de ayni sekilde logo+yazi TEK
+    # blokta birlestirildi.
+    _logo_yazi_kolonu, _menu_kolonu = st.columns([3, 2], vertical_alignment="center")
+    with _logo_yazi_kolonu:
         st.markdown(
-            "<div style='font-size:1.1rem; font-weight:700; color:#0F6E56; "
-            "white-space:nowrap;'>Menü Mühendisi</div>",
+            f"<div style='display:flex; align-items:center; gap:8px;'>"
+            f"<img src='data:image/png;base64,{_logo_b64}' style='width:72px; height:auto; flex-shrink:0;'/>"
+            "<span style='font-size:1.05rem; font-weight:700; color:#0F6E56; "
+            "white-space:nowrap;'>Menü Mühendisi</span></div>",
             unsafe_allow_html=True,
         )
     with _menu_kolonu:
