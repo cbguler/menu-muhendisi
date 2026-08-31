@@ -4549,3 +4549,22 @@ logonun sağ kenarından (izdüşümünden) başlasın.
   eklendi -- satır artık logonun sağ kenarından başlıyor.
 
 **Dosya durumu:** app.py güncellendi.
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Butonlar Alt Alta Düşmüştü — CSS İsim Çakışması Bulundu ve Düzeltildi
+
+Kullanıcı ekran görüntüsüyle gösterdi: butonlar yan yana değil ALT ALTA
+dizilmiş, solda da büyük boş/renkli bir kutu belirmiş.
+
+**Kök neden:** Buton stilini veren CSS seçicisi (`[class*='st-key-nav_
+buton_']`, CONTAINS eşleşmesi) yanlışlıkla saran KUTUNUN kendi anahtarı
+olan `nav_buton_satiri` ile de eşleşiyordu -- çünkü "nav_buton_satiri"
+de "nav_buton_" alt dizesini içeriyor. Sonuç: sarmalayıcı kutunun
+KENDİSİ 190px genişliğe sıkıştırıldı, içindeki butonlar da bu dar
+kutuya alt alta sıkışmak zorunda kaldı.
+
+**Düzeltme:** Seçici `[class*='st-key-nav_buton_masaustu_']` olarak
+daraltıldı -- artık sadece tek tek butonları eşleştiriyor, sarmalayıcı
+kutuyu (`nav_buton_satiri`) etkilemiyor.
+
+**Dosya durumu:** app.py güncellendi.

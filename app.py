@@ -895,12 +895,12 @@ st.markdown(
     # Pastel "buton" gorunumu -- Kontrol Paneli'ndeki mevcut renk paletiyle
     # birebir ayni (bkz. yukaridaki SVG: fill #E1F5EE, stroke #0F6E56,
     # metin #085041).
-    "[class*='st-key-nav_buton_'] {"
+    "[class*='st-key-nav_buton_masaustu_'] {"
     "  background-color: #E1F5EE; border: 1px solid #0F6E56;"
     "  border-radius: 8px; padding: 0.25rem 0.3rem; text-align: center;"
     "  width: 190px !important;"
     "}"
-    "[class*='st-key-nav_buton_'] a {"
+    "[class*='st-key-nav_buton_masaustu_'] a {"
     "  color: #085041 !important; text-decoration: none !important;"
     "  font-weight: 500; justify-content: center !important;"
     "}"
