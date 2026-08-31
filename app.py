@@ -838,18 +838,12 @@ if st.session_state.admin_mi:
 # tablet genisliklerinde) butonlar sikisip satir kayabilir, bu durumda
 # oranlarin ince ayara ihtiyaci olur.
 #
-# OTUZ DOKUZUNCU DUZELTME (30 Agustos 2026): kullanicinin "basligin
-# altinda cok fazla bosluk var" bildirimi uzerine -- ana sebep, ayri bir
-# satirda duran buyuk suslu "Menü Mühendisi" yazi/ikon bandi (2.75rem
-# font + 58px kose gorselleri) DEGIL, esas olarak logo.png'nin 144px'e
-# kadar buyutulmus olmasiydi (12 Agustos'taki 14./15. duzeltmeler --
-# o zamanki tek gerekce logonun buyuk/belirgin olmasiydi). Simdi ayni
-# satirda kucuk, dongulu bir video (kullanicinin istegiyle, "Menü
-# Mühendisi" yazi bandinin YERINE) oldugu icin logo tekrar KUCULTULDU
-# (56px masaustu / 40px mobil) -- boylece butun ust satir tipik bir nav
-# cubugu yuksekliginde kaliyor. LOGO_ORANI da buna uygun kucultuldu
-# (144px'lik logo icin genisletilmis sutun payina artik gerek yok).
-LOGO_ORANI = 1.4
+# KIRK SEKIZINCI DUZELTME (30 Agustos 2026): banner kaldirildi, logo
+# eski begenilen boyutuna (144px) dondugu icin LOGO_ORANI da eski
+# genis degerine dondu. Yeni: BASLIK_YAZI_ORANI, logonun yanindaki sade
+# "Menü Mühendisi" yazisi icin.
+LOGO_ORANI = 4.0
+BASLIK_YAZI_ORANI = 3.2
 BUTON_ORANI = 2.8
 BOSLUK_ORANI = 2.2
 
@@ -878,76 +872,13 @@ st.markdown(
     "  align-items: center !important; gap: 0.5rem !important;"
     "}"
     ".st-key-mobil_nav div[data-testid='stColumn'] { width: auto !important; min-width: 0 !important; }"
-    # Guvenlik agi: resmin kendi genisligini sutun payindan BAGIMSIZ
-    # olarak zorluyoruz. OTUZ DOKUZUNCU DUZELTME: hedef boyut 144/72'den
-    # 56/40'a kucultuldu (yukaridaki gerekce).
-    ".st-key-masaustu_nav [data-testid='stImage'] img { width: 56px !important; height: auto !important; }"
-    ".st-key-mobil_nav [data-testid='stImage'] img { width: 40px !important; height: auto !important; }"
-    # OTUZ DOKUZUNCU DUZELTME: dongulu baslik videosu -- eskiden burada
-    # SVG+PNG+buyuk metinden olusan suslu bir bant vardi ("Menü
-    # Mühendisi" yazisi), kullanici istegiyle YERINE kucuk, kirpilmis
-    # (object-fit:cover) bir video kondu. st.video()'nun kendi varsayilan
-    # genisligi (tum sutunu kaplar) burada ISTENMIYOR -- video etiketine
-    # dogrudan sabit piksel boyutu zorlanıyor.
-    # KIRKINCI DUZELTME (30 Agustos 2026): onceki CSS sadece `video`
-    # etiketini hedefliyordu -- ama Streamlit'in kendi ic sarmalayici
-    # div'leri (data-testid='stVideo' vb.) muhtemelen KENDI genislik/
-    # yukseklik/en-boy-orani mantigini uyguluyor, bu da `video` etiketine
-    # zorlanan boyutu GECERSIZ kiliyordu (ekran goruntusunde video
-    # beklenenden COK farkli/garip bir kutuda gorundu). DAHA SAGLAM
-    # yontem: benim KONTROL ETTIGIM dis kutuyu (`.st-key-baslik_video_*`)
-    # SABIT piksel boyutuna ve `overflow:hidden`e zorluyorum, ICINDEKI
-    # HER SEYI (Streamlit'in hangi ic yapiyi kullandigina bakmaksizin)
-    # yuzde 100 genislik/yukseklige zorluyorum -- boylece ic yapi ne
-    # olursa olsun disariya tasamiyor.
-    # KIRK IKINCI DUZELTME (30 Agustos 2026): kullanici "sagda solda
-    # bosluk kalmasin, mumkun oldugunca yayilsin" dedi -- sabit
-    # 260x85/180x59 kutusu bunu saglamiyordu (container'dan dar oldugu
-    # icin yanlarda bosluk kaliyordu). Simdi video container'in TAM
-    # genisligini kaplayacak (width:100%) ve kendi DOGAL en-boy oranini
-    # (yaklasik 3:1) koruyacak sekilde ayarlandi -- YANLARDA BOSLUK
-    # KALMIYOR ama bunun matematiksel bedeli var: 3:1 oranda TAM
-    # genislik (~1300px) demek video ~400-430px YUKSEKLIK demek (bkz.
-    # asagidaki not, kullaniciya da acikca soylenmeli). Kirpma
-    # (object-fit:cover) veya germe (aspect-ratio bozma) YAPILMADI --
-    # ikisi de video icerigini (yazi/ikonlar) cirkin/okunmasiz hale
-    # getirirdi. Gercekten hem TAM GENISLIK hem KISA (~80-100px) hem de
-    # bozulmasiz/kirpilmasiz isteniyorsa, videonun kaynagindan YENIDEN,
-    # cok daha genis bir kanvasta (ör. 1600x130, TEK SATIR yazi, ikonlar
-    # genis araliklarla) uretilmesi gerekir -- mevcut video 2 satirlik
-    # dikey metin icerdigi icin bu kadar ince bir seride sigmaz.
-    # KIRK DORDUNCU DUZELTME (30 Agustos 2026): kullanicinin yeni
-    # gonderdigi video artik TEK SATIR yazi + kenarlara yayilmis
-    # ikonlarla dogru "banner" oraninda (~8.5:1, 1280x150'ye kirpildi --
-    # animasyonun EN kalabalik anindaki icerik dahi olcup dogrulandi).
-    # Bu oranda tam genislik (~1300px) ARTIK ~150px yukseklige denk
-    # geliyor (bir onceki ~3:1 orandaki videonun 400px+'ine kiyasla COK
-    # daha makul) -- width:100% GUVENLE tekrar uygulanabilir.
-    ".st-key-baslik_video_masaustu, .st-key-baslik_video_mobil {"
-    "  margin: 0 0 4px !important; padding: 0 !important;"
-    "}"
-    # KIRK YEDINCI DUZELTME (30 Agustos 2026): banner kenarlara
-    # yapismiyordu -- kullanici ekran goruntusuyle dogruladi, gorsel
-    # container'in ortasinda dar bir sutunda kalmis. Sebep: img'e
-    # width:100% verilmesi yetmiyor, cunku Streamlit'in KENDI markdown
-    # sarmalayicilari (stMarkdown, stMarkdownContainer, element-container)
-    # varsayilan olarak kendi ic genislik/max-width kurallarini
-    # tasiyabiliyor. Bu sefer Streamlit'in resmi data-testid'lerini
-    # DOGRUDAN hedefleyip HER seviyede genislik zorlaniyor.
-    ".st-key-baslik_video_masaustu [data-testid='stMarkdown'],"
-    ".st-key-baslik_video_masaustu [data-testid='stMarkdownContainer'],"
-    ".st-key-baslik_video_masaustu [data-testid='stElementContainer'],"
-    ".st-key-baslik_video_masaustu > div,"
-    ".st-key-baslik_video_mobil [data-testid='stMarkdown'],"
-    ".st-key-baslik_video_mobil [data-testid='stMarkdownContainer'],"
-    ".st-key-baslik_video_mobil [data-testid='stElementContainer'],"
-    ".st-key-baslik_video_mobil > div {"
-    "  width: 100% !important; max-width: 100% !important;"
-    "}"
-    ".st-key-baslik_video_masaustu img, .st-key-baslik_video_mobil img {"
-    "  width: 100% !important; max-width: 100% !important;"
-    "  height: auto !important; display: block !important;"
-    "}"
+    # KIRK SEKIZINCI DUZELTME (30 Agustos 2026): banner/video tamamen
+    # kaldirildi -- kullanici "ust tarafta menu basliklarindan baska
+    # islevi olan bir sey yok, alt tarafin genislemesi lazim" dedi.
+    # Logo eski begenilen boyutuna (144px/72px) DONDURULDU, yaninda
+    # sade bir metin var (CSS gerektirmiyor, dogrudan inline style).
+    ".st-key-masaustu_nav [data-testid='stImage'] img { width: 144px !important; height: auto !important; }"
+    ".st-key-mobil_nav [data-testid='stImage'] img { width: 72px !important; height: auto !important; }"
     # Pastel "buton" gorunumu -- Kontrol Paneli'ndeki mevcut renk paletiyle
     # birebir ayni (bkz. yukaridaki SVG: fill #E1F5EE, stroke #0F6E56,
     # metin #085041).
@@ -976,8 +907,11 @@ st.markdown(
     # genislikte masaustu ~180px, mobilde (dar viewport genisligi
     # yuzunden) ~55px yukseklige denk geliyor. Bosluklar buna gore
     # (video+logo/buton satiri+padding toplami) yeniden hesaplandi.
-    ".ust_menu_bosluk_masaustu { height: 260px; }"
-    ".ust_menu_bosluk_mobil { height: 115px; }"
+    # KIRK SEKIZINCI DUZELTME: artik TEK satir var (144px logo + yazi +
+    # butonlar, alt-hizali) -- ayri banner satiri tamamen kalktigi icin
+    # bosluk da buyuk olcude kuculdu.
+    ".ust_menu_bosluk_masaustu { height: 165px; }"
+    ".ust_menu_bosluk_mobil { height: 90px; }"
     "@media (min-width: 768px) { .ust_menu_bosluk_mobil { display: none !important; } }"
     "@media (max-width: 767px) { .ust_menu_bosluk_masaustu { display: none !important; } }"
     # YIRMI BIRINCI DUZELTME (13 Agustos 2026, Oturum 11): kullanici
@@ -1046,55 +980,47 @@ with st.container(key="masaustu_nav"):
     # orijinal yerine sadece yazi+yakin malzemeleri iceren bir serit
     # (0,470)-(2816,860) kirpildi -- yeni oran ~7.2:1, tam genislikte
     # (~1300px) ~180px yukseklik demek (709px'e kiyasla COK makul).
-    with st.container(key="baslik_video_masaustu"):
-        if os.path.exists("assets/baslik_banner_masaustu.png"):
-            with open("assets/baslik_banner_masaustu.png", "rb") as _f:
-                _banner_b64_masaustu = base64.b64encode(_f.read()).decode("ascii")
-            st.markdown(
-                f"<img src='data:image/png;base64,{_banner_b64_masaustu}' "
-                "style='width:100%; height:auto; display:block;' alt='Menü Mühendisi'/>",
-                unsafe_allow_html=True,
-            )
-        else:
-            st.caption("(assets/baslik_banner_masaustu.png henüz eklenmedi)")
-
-    # ON BESINCI DUZELTME (12 Agustos 2026): logo 1.5x daha buyutuldu
-    # (96px->144px). Kullanici ayrica menu ogelerinin logo ile ALT
-    # HIZALI (bottom-aligned) durmasini istedi. Bunun icin CSS hack'i
-    # DEGIL, Streamlit'in resmi `vertical_alignment="bottom"` parametresi
-    # kullanildi (dokumante edilmis API -- "top" varsayilan, "center"/
-    # "bottom" da destekleniyor, dogrulandi). OTUZ DOKUZUNCU DUZELTME:
-    # logo hedefi 144px'den 56px'e kucultuldu (yukaridaki gerekce).
+    # KIRK SEKIZINCI DUZELTME (30 Agustos 2026): kullanici bircok video/
+    # banner denemesinden sonra en temiz cozumde karar kildi -- ayri
+    # banner SATIRI TAMAMEN KALDIRILDI (en cok yer kaplayan sey oydu),
+    # logo eski begenilen boyutuna (144px) DONDURULDU, yaninda SADE bir
+    # "Menü Mühendisi" yazisi (agir SVG/PNG suslemesi OLMADAN) ayni
+    # SATIRDA (nav butonlariyla birlikte, TEK satir) gosteriliyor.
+    # Gerekce: "ust tarafta menu basliklarindan baska hicbir seyin
+    # islevi yok, alt tarafin genislemesi lazim" -- ayri bir banner
+    # satiri tamamen ortadan kalkinca ust kisim ARTIK SADECE bu tek
+    # (144px) satir kadar yer kapliyor.
     _tum_kolonlar = st.columns(
-        [LOGO_ORANI] + [BUTON_ORANI] * len(sayfa_listesi) + [BOSLUK_ORANI],
+        [LOGO_ORANI, BASLIK_YAZI_ORANI] + [BUTON_ORANI] * len(sayfa_listesi) + [BOSLUK_ORANI],
         vertical_alignment="bottom",
     )
     with _tum_kolonlar[0]:
-        st.image("assets/logo.png", width=56)
-    for _i, (_kolon, _sayfa) in enumerate(zip(_tum_kolonlar[1:-1], sayfa_listesi)):
+        st.image("assets/logo.png", width=144)
+    with _tum_kolonlar[1]:
+        st.markdown(
+            "<div style='font-size:1.7rem; font-weight:700; color:#0F6E56; "
+            "white-space:nowrap; padding-bottom:0.3rem;'>Menü Mühendisi</div>",
+            unsafe_allow_html=True,
+        )
+    for _i, (_kolon, _sayfa) in enumerate(zip(_tum_kolonlar[2:-1], sayfa_listesi)):
         with _kolon:
             with st.container(key=f"nav_buton_masaustu_{_i}"):
                 st.page_link(_sayfa, use_container_width=True)
 
 with st.container(key="mobil_nav"):
-    # OTUZ DOKUZUNCU DUZELTME: mobildeki kucuk SVG+metin bandi da ayni
-    # sekilde videoyla degistirildi (daha kucuk boyutta -- CSS'te
-    # .st-key-baslik_video_mobil).
-    with st.container(key="baslik_video_mobil"):
-        if os.path.exists("assets/baslik_banner_mobil.png"):
-            with open("assets/baslik_banner_mobil.png", "rb") as _f:
-                _banner_b64_mobil = base64.b64encode(_f.read()).decode("ascii")
-            st.markdown(
-                f"<img src='data:image/png;base64,{_banner_b64_mobil}' "
-                "style='width:100%; height:auto; display:block;' alt='Menü Mühendisi'/>",
-                unsafe_allow_html=True,
-            )
-        else:
-            st.caption("(assets/baslik_banner_mobil.png henüz eklenmedi)")
-
-    _logo_kolonu, _menu_kolonu = st.columns([1, 3], vertical_alignment="center")
+    # KIRK SEKIZINCI DUZELTME: mobilde de ayni sekilde banner kaldirildi,
+    # logo eski boyutuna (72px) dondu, yaninda kucuk sade yazi eklendi.
+    _logo_kolonu, _yazi_kolonu, _menu_kolonu = st.columns(
+        [1, 2, 2], vertical_alignment="center"
+    )
     with _logo_kolonu:
-        st.image("assets/logo.png", width=40)
+        st.image("assets/logo.png", width=72)
+    with _yazi_kolonu:
+        st.markdown(
+            "<div style='font-size:1.1rem; font-weight:700; color:#0F6E56; "
+            "white-space:nowrap;'>Menü Mühendisi</div>",
+            unsafe_allow_html=True,
+        )
     with _menu_kolonu:
         with st.popover("Menü"):
             for _sayfa in sayfa_listesi:

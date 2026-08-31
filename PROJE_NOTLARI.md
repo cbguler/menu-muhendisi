@@ -4408,3 +4408,32 @@ görünmüyordu, kullanıcıya doğrudan soruldu, tahmin edilmedi.
 **Dosya durumu:** app.py güncellendi;
 `assets/baslik_banner_masaustu.png` ve `assets/baslik_banner_mobil.png`
 İÇERİKLERİ (aynı dosya adlarıyla) değiştirilmeli.
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Banner/Video Tamamen Kaldırıldı — Tek Satır Kompakt Başlık (Logo 144px Geri Döndü)
+
+Kullanıcı, üzerine ok çizdiği bir ekran görüntüsüyle net bir tercih
+belirtti: üst kısımda (banner+nav) sadece menü başlıklarının işlevi
+var, asıl işlemler hep alt tarafta -- bu yüzden üst kısmın daralıp alt
+kısmın genişlemesi gerekiyor. Ayrıca logo (56px'e küçültülmüştü) çok
+küçük kalmış, önceki 144px boyutundan memnunmuş. Kullanıcının kendi
+önerisiyle: "Eğer bunları düzeltmek banner'ı kaldırmayı gerektiriyorsa,
+o zaman normal bir başlık yazısı konulsun."
+
+**Karar:** Video/banner denemeleri (bu oturumda ~8 iterasyon: sabit
+kutu → tam genişlik → banner.jpg → şeffaflık onarımı → tam genişlik
+onarımı) tamamen TERK EDİLDİ. Yerine:
+- Logo eski begenilen boyutuna (144px masaüstü / 72px mobil) döndürüldü.
+- Ayrı banner SATIRI tamamen kaldırıldı -- artık TEK bir satır var:
+  logo + sade "Menü Mühendisi" yazısı (ağır SVG/PNG süslemesi OLMADAN,
+  düz metin) + nav butonları, hepsi aynı satırda, alt-hizalı
+  (`vertical_alignment="bottom"`).
+- Bu, üst kısmı önceki TÜM tasarımlardan (orijinal banner+logo satırı
+  dahil) daha kısa hale getiriyor -- artık sadece 144px'lik TEK satır
+  kadar yer kaplıyor, ayrı bir banner satırının ek yüksekliği yok.
+- Boşluk yükseklikleri buna göre büyük ölçüde küçültüldü (165px/90px).
+
+**Dosya durumu:** app.py güncellendi. `assets/baslik_banner_masaustu.png`,
+`baslik_banner_mobil.png`, `baslik_video_masaustu.mp4`,
+`baslik_video_mobil.mp4` artık HİÇBİRİ kullanılmıyor (silinmesi
+opsiyonel, kod onlara referans vermiyor).
