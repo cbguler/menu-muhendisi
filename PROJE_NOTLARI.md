@@ -4493,3 +4493,23 @@ ekran genişliğine göre alt satıra mı düşeceği gerçek tarayıcıda
 doğrulanmadı.
 
 **Dosya durumu:** app.py güncellendi.
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Yazı Yarıya İndirildi (4rem), Aşırı Boşluk Küçültüldü
+
+Kullanıcı: başlık çok büyük olmuş, yarıya indirelim; "Hoş Geldin"
+yazısı çok aşağı inmiş, altındaki tanıtım videosu kaybolmuş.
+
+**Düzeltme:**
+- Font 8rem'den 4rem'e yarılandı (istendiği gibi).
+- Bir önceki 380px'lik boşluk tahmini GEREĞİNDEN FAZLAYDI -- 8rem'lik
+  yazının logoyla aynı satırda kalacağını (ekran görüntüsüyle
+  doğrulandı) hesaba katmıyordu. 4rem'e inince logo (144px) artık
+  satırın açıkça en uzun elemanı, yükseklik çok daha öngörülebilir --
+  220px'e düşürüldü.
+- "Video kayboldu" şikayeti muhtemelen bu aşırı boşluğun videoyu görünen
+  alanın çok altına itmesinden kaynaklanıyordu -- video kodunun
+  kendisine dokunulmadı, boşluk düzelince görünmesi bekleniyor (kesin
+  teyit kullanıcıdan gelecek).
+
+**Dosya durumu:** app.py güncellendi.

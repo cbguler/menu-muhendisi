@@ -923,13 +923,15 @@ st.markdown(
     # KIRK SEKIZINCI DUZELTME: artik TEK satir var (144px logo + yazi +
     # butonlar, alt-hizali) -- ayri banner satiri tamamen kalktigi icin
     # bosluk da buyuk olcude kuculdu.
-    # ELLINCI DUZELTME: yazi 5 kat buyudu (8rem) VE artik logo+yazi bir
-    # satirda, nav butonlari AYRI bir satirda -- toplam yukseklik
-    # onemli olcude artti. Bu TAHMINI bir deger -- 8rem gibi asiri buyuk
-    # bir metnin logoyla AYNI satirda mi kalacagi yoksa flex-wrap ile
-    # ALT SATIRA mi dusecegi ekran genisligine gore degisir, gercek
-    # tarayicida dogrulanmasi gerekiyor.
-    ".ust_menu_bosluk_masaustu { height: 380px; }"
+    # ELLI BIRINCI DUZELTME (30 Agustos 2026): kullanici "380px COK
+    # FAZLA, alt/video kayboldu (asiri asagi itildi)" dedi -- hakliydi,
+    # o tahmin 8rem'lik yazinin logoyla AYNI satirda kalacagini (ekran
+    # goruntusunde dogrulandi) hesaba katmiyordu, gereginden fazla
+    # buyuk bir GUVENLIK PAYI birakmisti. Yazi da 4rem'e yarilandiginda
+    # logo (144px) artik ACIKCA satirin en uzun elemani -- yukseklik
+    # artik COK daha ongorulebilir: ~154px (logo+yazi satiri) + ~50px
+    # (buton satiri) + ~15px (padding) = ~220px.
+    ".ust_menu_bosluk_masaustu { height: 220px; }"
     ".ust_menu_bosluk_mobil { height: 100px; }"
     "@media (min-width: 768px) { .ust_menu_bosluk_mobil { display: none !important; } }"
     "@media (max-width: 767px) { .ust_menu_bosluk_masaustu { display: none !important; } }"
@@ -1036,7 +1038,7 @@ with st.container(key="masaustu_nav"):
         f"<div style='display:flex; align-items:center; justify-content:center; "
         f"gap:20px; flex-wrap:wrap; padding:0.3rem 0;'>"
         f"<img src='data:image/png;base64,{_logo_b64}' style='width:144px; height:auto; flex-shrink:0;'/>"
-        "<span style='font-size:8rem; font-weight:700; color:#0F6E56; "
+        "<span style='font-size:4rem; font-weight:700; color:#0F6E56; "
         "line-height:1; white-space:nowrap;'>Menü Mühendisi</span></div>",
         unsafe_allow_html=True,
     )
