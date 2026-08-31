@@ -4339,3 +4339,41 @@ küçültüldü.
 **Dosya durumu:** app.py güncellendi; `assets/baslik_video_masaustu.mp4`
 ve `assets/baslik_video_mobil.mp4` İÇERİKLERİ değiştirilmeli (aynı
 dosya adlarıyla üzerine yazılacak).
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Statik Banner Denemesi Başarısız Oldu → Kalıcı Çözüm: Şeffaflık Onarıldı + Base64 Gömme
+
+Önceki deneme (st.image + CSS zorlama) TAMAMEN başarısız oldu -- kullanıcı
+ekran görüntüsüyle doğruladı: görsel küçük kaldı VE 800px'lik boşluk
+devasa boş alan yarattı ("Menü Mühendisi'ne Hoş Geldin" ekranın çok
+aşağısına kaydı).
+
+**Kök neden:** `st.image()`'ın Streamlit tarafından sarmalanan iç yapısı
+CSS zorlamasına (`width:100%`) beklenen şekilde cevap vermedi -- bu
+dosyada zaten önceden keşfedilmiş bir kısıt (`baslik_susu_sol/sag.png`
+yorumuna bakınız: "Streamlit'in özel CSS/HTML enjeksiyonunda st.image()
+güvenilir ÇALIŞMIYOR").
+
+**Kalıcı çözüm (iki ayrı sorun birden çözüldü):**
+1. **Şeffaflık:** `banner.jpg`'deki dama deseni piksel piksel analiz
+   edildi (iki kesin renk: beyaz #FFFFFF ve açık gri #C6C6C4 civarı,
+   gri-tonlu piksel tespiti ile) ve GERÇEK PNG şeffaflığına çevrildi --
+   beyaz uygulama arka planıyla artık sorunsuz harmanlanıyor.
+2. **Boyut:** 2816x1536 (~1.83:1, aşırı uzun) orijinal yerine sadece
+   yazı + yakın malzemeleri içeren bir şerit ((0,470)-(2816,860))
+   kırpıldı -- yeni oran ~7.2:1, tam genişlikte (~1300px) ~180px
+   yükseklik demek (709px'e kıyasla çok makul, önceki video
+   çözümüyle aynı mertebede).
+3. **Gömme yöntemi:** `st.image()` TAMAMEN terk edildi, bunun yerine
+   dosyada zaten kanıtlanmış base64+ham HTML yöntemi kullanıldı --
+   inline `style="width:100%"` doğrudan `<img>` etiketine yazıldığı
+   için Streamlit'in iç sarmalayıcı yapısından tamamen bağımsız,
+   güvenilir çalışıyor.
+
+**Dosya durumu:** app.py güncellendi; `assets/baslik_banner.jpg`
+(kullanılmıyor, silinebilir) yerine `assets/baslik_banner_masaustu.png`
+(88KB) ve `assets/baslik_banner_mobil.png` (32KB, gerçek şeffaflıklı,
+küçük dosya boyutu için renk paleti sıkıştırıldı) eklenmeli. Video
+dosyaları (`baslik_video_*.mp4`) hâlâ projede duruyor ama artık
+kullanılmıyor -- kullanıcı videoya dönmek isterse kolayca eski koda
+dönülebilir (git geçmişinde mevcut).

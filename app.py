@@ -924,14 +924,7 @@ st.markdown(
     # geliyor (bir onceki ~3:1 orandaki videonun 400px+'ine kiyasla COK
     # daha makul) -- width:100% GUVENLE tekrar uygulanabilir.
     ".st-key-baslik_video_masaustu, .st-key-baslik_video_mobil {"
-    "  width: 100% !important; margin: 0 0 4px !important;"
-    "}"
-    ".st-key-baslik_video_masaustu div, .st-key-baslik_video_mobil div {"
-    "  width: 100% !important; max-width: none !important;"
-    "}"
-    ".st-key-baslik_video_masaustu video, .st-key-baslik_video_mobil video,"
-    ".st-key-baslik_video_masaustu img, .st-key-baslik_video_mobil img {"
-    "  width: 100% !important; height: auto !important;"
+    "  margin: 0 0 4px !important;"
     "}"
     # Pastel "buton" gorunumu -- Kontrol Paneli'ndeki mevcut renk paletiyle
     # birebir ayni (bkz. yukaridaki SVG: fill #E1F5EE, stroke #0F6E56,
@@ -957,12 +950,12 @@ st.markdown(
     # buyutuldu. BU DURUM, kullanicinin bir onceki "cok fazla yer
     # kapliyor" sikayetini YENIDEN yaratabilir -- kullaniciya acikca
     # soruldu, onay/tercih bekleniyor.
-    # KIRK BESINCI DUZELTME (GECICI ONIZLEME): banner.jpg ~709px
-    # yukseklikte gosterilecegi icin bosluk da GECICI olarak buyutuldu.
-    # Kullanici bu onizlemeyi reddederse (yukaridaki uyariya bakilirsa
-    # muhtemel) bu deger de video'ya donulurken eski haline getirilmeli.
-    ".ust_menu_bosluk_masaustu { height: 800px; }"
-    ".ust_menu_bosluk_mobil { height: 320px; }"
+    # KIRK ALTINCI DUZELTME: yeni banner ~7.2:1 oraninda -- tam
+    # genislikte masaustu ~180px, mobilde (dar viewport genisligi
+    # yuzunden) ~55px yukseklige denk geliyor. Bosluklar buna gore
+    # (video+logo/buton satiri+padding toplami) yeniden hesaplandi.
+    ".ust_menu_bosluk_masaustu { height: 260px; }"
+    ".ust_menu_bosluk_mobil { height: 115px; }"
     "@media (min-width: 768px) { .ust_menu_bosluk_mobil { display: none !important; } }"
     "@media (max-width: 767px) { .ust_menu_bosluk_masaustu { display: none !important; } }"
     # YIRMI BIRINCI DUZELTME (13 Agustos 2026, Oturum 11): kullanici
@@ -1016,27 +1009,32 @@ with st.container(key="masaustu_nav"):
     # sadece bos krem alan vardi -- o kirpilip video artik doganl olarak
     # ~3:1 (genis-kisa banner) oranina sahip, CSS'te zorlama kırpmaya
     # ihtiyac kalmadi.
-    # KIRK BESINCI DUZELTME (30 Agustos 2026, GECICI ONIZLEME): kullanici
-    # videoyu begenmedi, kendi gonderdigi STATIK banner.jpg'yi "goreyim"
-    # dedi. Video kodu SILINMEDI, sadece devre disi birakildi (asagida
-    # yorumda) -- kullanici karar verince kolayca geri donebiliriz.
-    # ONEMLI UYARI (kullaniciya da ayrica soylendi): (1) banner.jpg bir
-    # JPEG -- JPEG SEFFAFLIK TASIYAMAZ, gorseldeki "dama deseni" gercek
-    # seffaflik DEGIL, dogrudan piksel olarak gomulu -- yani ekranda
-    # GERCEKTEN gri/beyaz kareler gorunecek, arka planla harmanlanmayacak.
-    # (2) gorsel 2816x1536 (~1.83:1) -- ince bir "banner" degil, neredeyse
-    # kare bir gorsel -- tam genislikte (~1300px) ~709px yukseklik demek,
-    # bir onceki en kotu video denemesinden (400px) bile DAHA UZUN.
+    # KIRK ALTINCI DUZELTME (30 Agustos 2026): bir onceki deneme
+    # (st.image + CSS zorlama) TAMAMEN BASARISIZ oldu -- gorsel kucuk
+    # kaldi VE bosluk devasa bos alan yaratti (kullanici ekran
+    # goruntusuyle dogruladi). CSS hack'i TAMAMEN TERK EDILDI. Bunun
+    # yerine bu dosyada ZATEN KANITLANMIS yontem kullanildi: base64 ile
+    # dogrudan HTML'e gomme (bkz. eski baslik_susu_sol/sag.png yorumu,
+    # "Streamlit'in ozel CSS/HTML enjeksiyonunda st.image() guvenilir
+    # CALISMIYOR, base64 veri-URI en saglam yontem"). AYRICA iki sorun
+    # kaynaginda cozuldu: (1) banner.jpg'deki dama deseni piksel piksel
+    # tespit edilip (iki kesin renk: beyaz #FFFFFF ve acik gri #C6C6C4)
+    # GERCEK PNG SEFFAFLIGINA cevrildi -- artik arka planla (beyaz)
+    # sorunsuz harmanlaniyor; (2) 2816x1536'lik (~1.83:1, COK uzun)
+    # orijinal yerine sadece yazi+yakin malzemeleri iceren bir serit
+    # (0,470)-(2816,860) kirpildi -- yeni oran ~7.2:1, tam genislikte
+    # (~1300px) ~180px yukseklik demek (709px'e kiyasla COK makul).
     with st.container(key="baslik_video_masaustu"):
-        if os.path.exists("assets/baslik_banner.jpg"):
-            st.image("assets/baslik_banner.jpg", use_container_width=True)
+        if os.path.exists("assets/baslik_banner_masaustu.png"):
+            with open("assets/baslik_banner_masaustu.png", "rb") as _f:
+                _banner_b64_masaustu = base64.b64encode(_f.read()).decode("ascii")
+            st.markdown(
+                f"<img src='data:image/png;base64,{_banner_b64_masaustu}' "
+                "style='width:100%; height:auto; display:block;' alt='Menü Mühendisi'/>",
+                unsafe_allow_html=True,
+            )
         else:
-            st.caption("(assets/baslik_banner.jpg henüz eklenmedi)")
-        # if os.path.exists("assets/baslik_video_masaustu.mp4"):
-        #     with open("assets/baslik_video_masaustu.mp4", "rb") as _f:
-        #         st.video(_f.read(), format="video/mp4", autoplay=True, loop=True, muted=True)
-        # else:
-        #     st.caption("(assets/baslik_video_masaustu.mp4 henüz eklenmedi)")
+            st.caption("(assets/baslik_banner_masaustu.png henüz eklenmedi)")
 
     # ON BESINCI DUZELTME (12 Agustos 2026): logo 1.5x daha buyutuldu
     # (96px->144px). Kullanici ayrica menu ogelerinin logo ile ALT
@@ -1061,15 +1059,16 @@ with st.container(key="mobil_nav"):
     # sekilde videoyla degistirildi (daha kucuk boyutta -- CSS'te
     # .st-key-baslik_video_mobil).
     with st.container(key="baslik_video_mobil"):
-        if os.path.exists("assets/baslik_banner.jpg"):
-            st.image("assets/baslik_banner.jpg", use_container_width=True)
+        if os.path.exists("assets/baslik_banner_mobil.png"):
+            with open("assets/baslik_banner_mobil.png", "rb") as _f:
+                _banner_b64_mobil = base64.b64encode(_f.read()).decode("ascii")
+            st.markdown(
+                f"<img src='data:image/png;base64,{_banner_b64_mobil}' "
+                "style='width:100%; height:auto; display:block;' alt='Menü Mühendisi'/>",
+                unsafe_allow_html=True,
+            )
         else:
-            st.caption("(assets/baslik_banner.jpg henüz eklenmedi)")
-        # if os.path.exists("assets/baslik_video_mobil.mp4"):
-        #     with open("assets/baslik_video_mobil.mp4", "rb") as _f:
-        #         st.video(_f.read(), format="video/mp4", autoplay=True, loop=True, muted=True)
-        # else:
-        #     st.caption("(assets/baslik_video_mobil.mp4 henüz eklenmedi)")
+            st.caption("(assets/baslik_banner_mobil.png henüz eklenmedi)")
 
     _logo_kolonu, _menu_kolonu = st.columns([1, 3], vertical_alignment="center")
     with _logo_kolonu:
