@@ -4651,3 +4651,36 @@ bulunduğu yere (`assets/{ikon_adi}.png`, düz) göre güncellendi --
 kullanıcının klasör açıp dosyaları taşımasına gerek kalmadı.
 
 **Dosya durumu:** pages/1_Recete_Uretimi.py güncellendi.
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Hazırlık İkonları Tarif Kütüphanesi'ne de Eklendi (Paylaşımlı Modüle Taşındı)
+
+Kullanıcı ikonların ASIL Tarif Kütüphanesi'nde (241 kütüphane tarifi)
+görünmesini istediğini belirtti -- önceki entegrasyon sadece Reçete
+Üretimi'ndeydi (kullanıcının kendi özel reçeteleri).
+
+**Yapısal fark:** Reçete Üretimi'nde her "aşama"nın kısa, ayrı bir adı
+var (tek tek eşleştirme mantıklı). Tarif Kütüphanesi'nde ise
+yapılandırılmış aşama listesi YOK -- tek parça bir `hazirlik_talimati`
+metni var. Bu yüzden yaklaşım uyarlandı: metin içinde GEÇEN TÜM
+teknikler taranıp, bulunanların hepsi talimat metninin ÜSTÜNDE küçük
+bir sırada gösteriliyor ("bu tarifte kullanılan teknikler" özeti gibi).
+
+**Refactor:** 20 satırlık eşleme sözlüğü ve eşleştirme mantığı yeni,
+paylaşımlı `asama_ikonlari.py` modülüne taşındı -- hem
+`pages/1_Recete_Uretimi.py` hem `pages/5_Tarif_Kutuphanesi.py` aynı
+moduldeki `tek_ikon_bul()` / `tum_ikonlari_bul()` fonksiyonlarını
+kullanıyor, kod tekrarı yok.
+
+**Küçük bir teknik not:** İkon sayısı tarife göre değişebildiği
+(1-20 arası) için `st.columns()` yerine `st.image()`'in liste desteği
+kullanıldı -- sabit sütun sayısıyla sıkışma/taşma riski (daha önceki
+"Admin butonu" hatasındaki gibi) böylece alınmadı.
+
+Mantık, gerçekçi bir örnek talimat metniyle test edildi (5 farklı
+teknik doğru bulundu: doğrama, dilimleme, kavurma, fırınlama,
+karıştırma).
+
+**Dosya durumu:** `asama_ikonlari.py` (yeni, paylaşımlı modül),
+`pages/1_Recete_Uretimi.py` (sadeleştirildi, artık bu modülü
+kullanıyor), `pages/5_Tarif_Kutuphanesi.py` güncellendi.

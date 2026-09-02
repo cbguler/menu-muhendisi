@@ -7,8 +7,6 @@
 # Akis: recete olustur -> malzeme ekle -> (ayni sayfada, asagida) uretim
 # asamasi ekle -> kritik yol + gercek maliyet gorunur.
 
-import os
-
 import streamlit as st
 
 # NOT (12 Agustos 2026, Oturum 11): logo artik burada AYRICA gosterilmiyor -- app.py'deki ozel menu satirinin icine tasindi, orada zaten her sayfa gecisinde render ediliyor. Burada tekrar cagirmak cift logoya yol acardi.
@@ -377,39 +375,14 @@ malzeme_etiket = {
 # ör. "ez" koku "bezeler" kelimesinin İÇİNDE var ama BASINDA degil,
 # bu yuzden yanlislikla eslesmez). Eslesme bulunamazsa ikon gosterilmez,
 # hata vermez.
-_ASAMA_IKON_KOKLERI = {
-    "dograma": ["doğra", "dogra"],
-    "dilimleme": ["dilim"],
-    "rendeleme": ["rende"],
-    "soyma": ["soy"],
-    "kavurma": ["kavur"],
-    "kizartma": ["kızart", "kizart"],
-    "haslama": ["haşla", "hasla", "kaynat"],
-    "izgara": ["ızgara", "izgara"],
-    "firinlama": ["fırın", "firin"],
-    "buharda_pisirme": ["buhar"],
-    "kozleme": ["közle", "kozle"],
-    "karistirma": ["karıştır", "karistir"],
-    "cirpma": ["çırp", "cirp"],
-    "yogurma": ["yoğur", "yogur"],
-    "ezme": ["ez"],
-    "suzme": ["süz", "suz"],
-    "marine_etme": ["marine"],
-    "dinlendirme": ["dinlen"],
-    "demleme": ["demle"],
-    "baharatlama": ["baharatla", "tuzla", "tatlandır", "tatlandir"],
-}
-
-
-def _asama_ikonu_bul(asama_adi):
-    kelimeler = asama_adi.strip().lower().split()
-    for ikon_adi, kokler in _ASAMA_IKON_KOKLERI.items():
-        for kelime in kelimeler:
-            if any(kelime.startswith(kok) for kok in kokler):
-                yol = f"assets/{ikon_adi}.png"
-                if os.path.exists(yol):
-                    return yol
-    return None
+# ELLI DORDUNCU DUZELTME (30 Agustos 2026): kullanicinin Gemini ile
+# urettigi 20 hazirlik-asamasi ikonu uretim asamalarina otomatik
+# eslestiriliyor. ELLI BESINCI DUZELTME (ayni gun, devam): mantik
+# `asama_ikonlari.py` PAYLASIMLI modulune tasindi -- kullanici bu
+# ikonlarin AYRICA Tarif Kutuphanesi'nde de (241 kutuphane tarifinin
+# hazirlik_talimati metninde) gorunmesini istedi, ayni 20 satirlik
+# esleme sozlugunu iki sayfada TEKRAR YAZMAMAK icin.
+from asama_ikonlari import tek_ikon_bul as _asama_ikonu_bul
 
 
 asamalar = (

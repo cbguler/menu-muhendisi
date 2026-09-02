@@ -15,6 +15,7 @@ import streamlit as st
 
 # NOT (12 Agustos 2026, Oturum 11): logo artik burada AYRICA gosterilmiyor -- app.py'deki ozel menu satirinin icine tasindi, orada zaten her sayfa gecisinde render ediliyor. Burada tekrar cagirmak cift logoya yol acardi.
 
+from asama_ikonlari import tum_ikonlari_bul
 from db import get_supabase, oturumu_uygula
 
 st.set_page_config(page_title="Tarif Kütüphanesi", page_icon="assets/favicon.png", layout="wide")
@@ -345,6 +346,22 @@ else:
 
 st.write("**Hazırlık talimatı**")
 if tarif["hazirlik_talimati"]:
+    # ELLI BESINCI DUZELTME (30 Agustos 2026): kullanici bu ikonlarin
+    # (ozellikle) Tarif Kutuphanesi'nde gorunmesini istedi. Burada
+    # Recete Uretimi'ndekinden FARKLI bir yaklasim gerekti -- orada
+    # her "asama"nin kisa, ayri bir adi var (tek tek eslestirme
+    # mantikli), ama burada TEK PARCA bir "hazirlik_talimati" metni var
+    # (yapilandirilmis asama listesi yok). Bu yuzden metin icinde GECEN
+    # TUM teknikler taranip, bulunanlarin hepsi kucuk bir sirada, talimat
+    # metninin USTUNDE "bu tarifte kullanilan teknikler" ozeti gibi
+    # gosteriliyor.
+    _bulunan_ikonlar = tum_ikonlari_bul(tarif["hazirlik_talimati"])
+    if _bulunan_ikonlar:
+        # st.columns() yerine st.image()'in LISTE destegi kullanildi --
+        # eleman sayisi tarife gore degisebiliyor (1'den 20'ye kadar),
+        # sabit sutun sayisiyla ("Admin butonu" hatasindaki gibi)
+        # sikisma/tasma riski almamak icin.
+        st.image(_bulunan_ikonlar, width=56)
     st.write(tarif["hazirlik_talimati"])
 else:
     st.info(
