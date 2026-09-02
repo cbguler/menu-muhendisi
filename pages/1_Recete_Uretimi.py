@@ -7,6 +7,8 @@
 # Akis: recete olustur -> malzeme ekle -> (ayni sayfada, asagida) uretim
 # asamasi ekle -> kritik yol + gercek maliyet gorunur.
 
+import os
+
 import streamlit as st
 
 # NOT (12 Agustos 2026, Oturum 11): logo artik burada AYRICA gosterilmiyor -- app.py'deki ozel menu satirinin icine tasindi, orada zaten her sayfa gecisinde render ediliyor. Burada tekrar cagirmak cift logoya yol acardi.
@@ -368,6 +370,48 @@ malzeme_etiket = {
     for rm in recete_malzemeleri
 }
 
+# ELLI DORDUNCU DUZELTME (30 Agustos 2026): kullanicinin Gemini ile
+# urettigi 20 hazirlik-asamasi ikonu (doğrama/kavurma/haşlama vb.)
+# uretim asamalarina otomatik eslestiriliyor -- her asamanin ADI
+# icindeki fiile bakarak (kelime BASI eslesmesi, alt dize DEGIL --
+# ör. "ez" koku "bezeler" kelimesinin İÇİNDE var ama BASINDA degil,
+# bu yuzden yanlislikla eslesmez). Eslesme bulunamazsa ikon gosterilmez,
+# hata vermez.
+_ASAMA_IKON_KOKLERI = {
+    "dograma": ["doğra", "dogra"],
+    "dilimleme": ["dilim"],
+    "rendeleme": ["rende"],
+    "soyma": ["soy"],
+    "kavurma": ["kavur"],
+    "kizartma": ["kızart", "kizart"],
+    "haslama": ["haşla", "hasla", "kaynat"],
+    "izgara": ["ızgara", "izgara"],
+    "firinlama": ["fırın", "firin"],
+    "buharda_pisirme": ["buhar"],
+    "kozleme": ["közle", "kozle"],
+    "karistirma": ["karıştır", "karistir"],
+    "cirpma": ["çırp", "cirp"],
+    "yogurma": ["yoğur", "yogur"],
+    "ezme": ["ez"],
+    "suzme": ["süz", "suz"],
+    "marine_etme": ["marine"],
+    "dinlendirme": ["dinlen"],
+    "demleme": ["demle"],
+    "baharatlama": ["baharatla", "tuzla", "tatlandır", "tatlandir"],
+}
+
+
+def _asama_ikonu_bul(asama_adi):
+    kelimeler = asama_adi.strip().lower().split()
+    for ikon_adi, kokler in _ASAMA_IKON_KOKLERI.items():
+        for kelime in kelimeler:
+            if any(kelime.startswith(kok) for kok in kokler):
+                yol = f"assets/{ikon_adi}.png"
+                if os.path.exists(yol):
+                    return yol
+    return None
+
+
 asamalar = (
     supabase.table("recete_asamalari")
     .select("*")
@@ -410,10 +454,20 @@ else:
         sure_metni = f"{a['sure_dakika']:.0f} dk"
         if a.get("aktif_dakika") is not None and a["aktif_dakika"] != a["sure_dakika"]:
             sure_metni += f" (aktif işçilik: {a['aktif_dakika']:.0f} dk)"
-        st.markdown(
+
+        _ikon_yolu = _asama_ikonu_bul(a["ad"])
+        _asama_metni = (
             f"**{a['sira']}. {a['ad']}** ({sure_metni}) — "
             f"Malzeme: {kullanilan} — Isıl işlem: {isil} — Bağımlı olduğu: {bagimlilik_metni}"
         )
+        if _ikon_yolu:
+            _asama_ikon_kolonu, _asama_metin_kolonu = st.columns([1, 11], vertical_alignment="center")
+            with _asama_ikon_kolonu:
+                st.image(_ikon_yolu, width=56)
+            with _asama_metin_kolonu:
+                st.markdown(_asama_metni)
+        else:
+            st.markdown(_asama_metni)
         if st.button("Sil", key=f"asama_sil_{a['id']}", disabled=st.session_state.get("salt_okunur", False)):
             supabase.table("recete_asamalari").delete().eq("id", a["id"]).execute()
             st.rerun()

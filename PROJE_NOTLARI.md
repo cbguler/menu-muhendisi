@@ -4616,3 +4616,38 @@ Gerçek kullanımda yanlış pozitif/negatif fark edilirse
 `_GENERIK_YEMEK_TURU_SONEKLERI` listesi güncellenebilir.
 
 **Dosya durumu:** uretim_algoritmasi.py güncellendi.
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Hazırlık Aşaması İkonları Reçete Üretimi'ne Entegre Edildi
+
+Kullanıcının Gemini ile ürettiği 20 hazırlık-aşaması ikonu (doğrama,
+kavurma, haşlama, marine etme vb. — sıcak dama deseni sorunları
+çözülüp gerçek PNG şeffaflığına çevrilmişti) artık Üretim Aşamaları
+bölümünde otomatik gösteriliyor.
+
+**Eşleştirme yöntemi:** Her aşamanın ADI içindeki kelimelere bakılıyor
+-- eşleşme KELİME BAŞI ile yapılıyor (alt dize değil), böylece ör.
+"ez" kökü "bezeler" kelimesinin İÇİNDE geçtiği için YANLIŞLIKLA
+eşleşmez (kelime "ez" ile BAŞLAMIYOR). 20 gerçekçi örnek cümleyle test
+edildi, hepsi doğru eşleşti, "bezeler hazırlayın" gibi yanlış-pozitif
+riski taşıyan örnek doğru şekilde eşleşmedi (None döndü).
+
+Eşleşme bulunamazsa veya ikon dosyası eksikse ikon gösterilmiyor, hata
+vermiyor -- güvenli varsayılan.
+
+**Dosya durumu:** pages/1_Recete_Uretimi.py güncellendi;
+`assets/asama_ikonlari/` klasörü (20 PNG dosyası) eklenmeli.
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): İkon Yolu Düzeltildi (Klasör Yerine Düz assets/)
+
+Kullanıcının `git add` çıktısı gösterdi: `assets/asama_ikonlari` diye
+bir klasör hiç oluşturulmamış -- 20 ikon dosyası doğrudan `assets/`
+içine (alt klasörsüz) konmuş. Pathspec hatası TÜM `git add` komutunu
+iptal etmişti (üç dosya da hiç eklenmemişti).
+
+**Düzeltme:** Kod, klasöre uydurulmak yerine dosyaların GERÇEKTEN
+bulunduğu yere (`assets/{ikon_adi}.png`, düz) göre güncellendi --
+kullanıcının klasör açıp dosyaları taşımasına gerek kalmadı.
+
+**Dosya durumu:** pages/1_Recete_Uretimi.py güncellendi.
