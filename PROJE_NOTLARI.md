@@ -4684,3 +4684,31 @@ karıştırma).
 **Dosya durumu:** `asama_ikonlari.py` (yeni, paylaşımlı modül),
 `pages/1_Recete_Uretimi.py` (sadeleştirildi, artık bu modülü
 kullanıyor), `pages/5_Tarif_Kutuphanesi.py` güncellendi.
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): İkonlar Her Maddenin Altına Taşındı, Büyütüldü, Olumsuzluk Hatası Düzeltildi
+
+Kullanıcı ekran görüntüsüyle gösterdi: ikonlar tüm metnin ÜSTÜNDE tek
+sırada toplu duruyordu, hangi ikonun hangi maddeye ait olduğu belli
+değildi; ayrıca ikonlar çok küçüktü (56px).
+
+**Düzeltme:**
+- `hazirlik_talimati` artık SATIR SATIR işleniyor -- her satırın
+  (ör. "1. Soğanı rendeleyin...") HEMEN ALTINA sadece O SATIRDA geçen
+  ikon(lar) ekleniyor. Başlık satırlarında (ör. "Isıl İşlem") doğal
+  olarak hiç ikon çıkmıyor.
+- İkon boyutu 56px'ten 110px'e büyütüldü.
+
+**Test sırasında yakalanan gerçek bir hata:** "soğan doğranmış DEĞİL,
+rendelenmiş kullanılır" cümlesinde "doğranmış" kelimesi eşleşiyordu
+ama cümle asıl DOĞRAMAYI REDDEDİYORDU -- yanlış ikon gösterilirdi.
+Basit bir olumsuzluk kontrolü eklendi: eşleşen kelimenin hemen
+ardından "değil"/"yerine" geliyorsa o eşleşme iptal ediliyor. Tam bir
+dilbilgisi çözümü değil (ör. "değil" iki kelime sonra gelirse
+yakalanmaz) ama en sık görülen "X değil, Y" kalıbını kapsıyor.
+Kullanıcının gerçek örnek metniyle yeniden test edildi: doğrama artık
+doğru şekilde elendi, diğer tüm eşleşmeler (rendeleme, ezme, süzme,
+yoğurma, ızgara) doğru kaldı.
+
+**Dosya durumu:** `asama_ikonlari.py`, `pages/5_Tarif_Kutuphanesi.py`
+güncellendi.

@@ -44,13 +44,34 @@ def _ikon_yolu(ikon_adi):
     return yol if os.path.exists(yol) else None
 
 
+_OLUMSUZLUK_KELIMELERI = {"değil", "degil", "yerine"}
+
+
+def _kelime_eslesiyor_mu(kelimeler, indeks, kokler):
+    """Bir kelimenin bir kok listesiyle eslesip eslesmedigini kontrol
+    eder -- ama HEMEN ARDINDAN "degil"/"yerine" geliyorsa eslesmeyi
+    IPTAL eder (30 Agustos 2026: test sirasinda yakalandi -- "soğan
+    doğranmış DEĞİL, rendelenmiş kullanılır" cumlesinde "doğranmış"
+    eslesiyordu ama cumle asil DOGRAMAYI REDDEDIYOR, yanlis ikon
+    gosterirdi). Bu TAM bir dilbilgisi cozumu degil (ör. "degil" iki
+    kelime sonra gelirse yakalanmaz), ama en sik gorulen "X degil, Y"
+    kalibini kapsiyor."""
+    kelime = kelimeler[indeks]
+    if not any(kelime.startswith(kok) for kok in kokler):
+        return False
+    sonraki = kelimeler[indeks + 1].strip(",.;:") if indeks + 1 < len(kelimeler) else ""
+    if sonraki in _OLUMSUZLUK_KELIMELERI:
+        return False
+    return True
+
+
 def tek_ikon_bul(metin):
     """Kisa bir metinde (ör. Recete Uretimi'ndeki tek bir asama adi)
     ILK eslesen ikonun dosya yolunu dondurur, yoksa None."""
     kelimeler = metin.strip().lower().split()
     for ikon_adi, kokler in ASAMA_IKON_KOKLERI.items():
-        for kelime in kelimeler:
-            if any(kelime.startswith(kok) for kok in kokler):
+        for i in range(len(kelimeler)):
+            if _kelime_eslesiyor_mu(kelimeler, i, kokler):
                 yol = _ikon_yolu(ikon_adi)
                 if yol:
                     return yol
@@ -67,8 +88,8 @@ def tum_ikonlari_bul(metin):
     kelimeler = metin.strip().lower().split()
     bulunanlar = []
     for ikon_adi, kokler in ASAMA_IKON_KOKLERI.items():
-        for kelime in kelimeler:
-            if any(kelime.startswith(kok) for kok in kokler):
+        for i in range(len(kelimeler)):
+            if _kelime_eslesiyor_mu(kelimeler, i, kokler):
                 yol = _ikon_yolu(ikon_adi)
                 if yol and yol not in bulunanlar:
                     bulunanlar.append(yol)

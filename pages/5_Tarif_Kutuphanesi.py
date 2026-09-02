@@ -346,23 +346,24 @@ else:
 
 st.write("**Hazırlık talimatı**")
 if tarif["hazirlik_talimati"]:
-    # ELLI BESINCI DUZELTME (30 Agustos 2026): kullanici bu ikonlarin
-    # (ozellikle) Tarif Kutuphanesi'nde gorunmesini istedi. Burada
-    # Recete Uretimi'ndekinden FARKLI bir yaklasim gerekti -- orada
-    # her "asama"nin kisa, ayri bir adi var (tek tek eslestirme
-    # mantikli), ama burada TEK PARCA bir "hazirlik_talimati" metni var
-    # (yapilandirilmis asama listesi yok). Bu yuzden metin icinde GECEN
-    # TUM teknikler taranip, bulunanlarin hepsi kucuk bir sirada, talimat
-    # metninin USTUNDE "bu tarifte kullanilan teknikler" ozeti gibi
-    # gosteriliyor.
-    _bulunan_ikonlar = tum_ikonlari_bul(tarif["hazirlik_talimati"])
-    if _bulunan_ikonlar:
-        # st.columns() yerine st.image()'in LISTE destegi kullanildi --
-        # eleman sayisi tarife gore degisebiliyor (1'den 20'ye kadar),
-        # sabit sutun sayisiyla ("Admin butonu" hatasindaki gibi)
-        # sikisma/tasma riski almamak icin.
-        st.image(_bulunan_ikonlar, width=56)
-    st.write(tarif["hazirlik_talimati"])
+    # ELLI ALTINCI DUZELTME (30 Agustos 2026): kullanici "her madde
+    # kendi ikonunun ustunde/altinda olsun, hepsi bastan toplu degil"
+    # dedi -- hakliydi, oncekinde tum ikonlar metnin USTUNDE tek sirada
+    # topluydu. Simdi metin SATIR SATIR isleniyor, her satirin (ör.
+    # "1. Soğanı rendeleyin...") HEMEN ALTINA sadece O SATIRDA gecen
+    # ikon(lar) ekleniyor -- bir satirda birden fazla teknik geciyorsa
+    # (ör. "rendeleyin ... süzün") ikisi de gosteriliyor. Baslik/bos
+    # satirlarda (ör. "Isıl İşlem") dogal olarak hic ikon cikmiyor,
+    # cunku o satirda eslesen bir fiil yok. Ikon boyutu da (kullanici
+    # "cok kucuk, anlasilmiyor" dedi) 56px'ten 110px'e buyutuldu.
+    for _satir in tarif["hazirlik_talimati"].splitlines():
+        if _satir.strip():
+            st.write(_satir)
+            _satir_ikonlari = tum_ikonlari_bul(_satir)
+            if _satir_ikonlari:
+                st.image(_satir_ikonlari, width=110)
+        else:
+            st.write("")
 else:
     st.info(
         "Bu tarif için adım adım hazırlık talimatı henüz eklenmedi. "
