@@ -4712,3 +4712,35 @@ yoğurma, ızgara) doğru kaldı.
 
 **Dosya durumu:** `asama_ikonlari.py`, `pages/5_Tarif_Kutuphanesi.py`
 güncellendi.
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): İkonlarda Kalıntı Dama Deseni Tamamen Temizlendi, Boyut Büyütüldü (150px)
+
+Kullanıcı ekran görüntüsünde "Kıyma sotesi" ikonunun arka planında
+hafif bir dama deseni fark etti. İncelemede KÖK NEDEN bulundu: önceki
+şeffaflaştırma yöntemi (köşe/kenar örneklemesiyle "2 baskın ton"
+bulma) bazı görsellerde (kavurma, kızartma, karıştırma, marine_etme)
+dama deseninin GERÇEK ikinci tonunu (ör. 207 gri) hiç yakalayamıyordu
+-- sadece beyaza yakın tonu temizleyip diğerini opak bırakıyordu.
+
+**Kalıcı çözüm:** Yöntem tamamen basitleştirildi -- "2 ayrık ton
+kümeleme" yerine, TEK bir geniş kural kullanıldı: gri-tonlu (kanallar
+arası fark < 22) VE yeterince açık (parlaklık > 178) olan HER piksel
+şeffaf yapılıyor. Bu ikon setinin kendi renk paleti (rust/adaçayı/krem/
+lacivert) hiçbir yerde saf gri kullanmadığı için bu geniş kural, gerçek
+çizim içeriğine zarar vermeden hem kalın kare hem ince çizgi hem sıcak
+tonlu dama desenlerini kapsıyor.
+
+**Doğrulama:** Her 20 ikon için otomatik kontrol eklendi (kenar şeridi
+boyunca beyaza yapıştırılıp beyaz-dışı piksel oranı ölçülüyor) --
+tümü artık temiz. İki "false positive" (dinlendirme, izgara -- bunlar
+geniş banner formatında, içerik gerçekten kenara kadar uzanıyor, kalıntı
+değil) görsel olarak doğrulanıp normal kabul edildi. `rendeleme`
+ikonundaki rende delikleri de artık doğru şekilde şeffaf (bonus
+iyileştirme -- önceden opak beyazdı).
+
+**Ayrıca:** kullanıcı isteğiyle ikon boyutu 110px'ten 150px'e
+büyütüldü.
+
+**Dosya durumu:** `pages/5_Tarif_Kutuphanesi.py` güncellendi (boyut);
+20 ikon PNG'si YENİDEN üretilip değiştirildi (aynı dosya adlarıyla).
