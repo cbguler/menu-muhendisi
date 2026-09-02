@@ -4568,3 +4568,51 @@ daraltıldı -- artık sadece tek tek butonları eşleştiriyor, sarmalayıcı
 kutuyu (`nav_buton_satiri`) etkilemiyor.
 
 **Dosya durumu:** app.py güncellendi.
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Yıllık Menü'de Aynı Gün İçinde Benzer Yemek Tekrarı Engellendi (Cacık / Sumaklı Cacık Sorunu)
+
+Kullanıcı gerçek bir örnek fark etti: bir günde öğle "Cacık", akşam
+"Sumaklı Cacık" çıkmıştı -- aynı temel yemeğin iki varyantı aynı gün
+içinde.
+
+**Kök neden:** `uretim_algoritmasi.py`'deki Anayasa madde 2 (hafta içi
+tekrarsızlık) SADECE TAM İSİM eşleşmesine bakıyordu -- "Cacık" ≠
+"Sumaklı Cacık" olduğu için bu kontrolden geçiyorlardı. Aynı gün
+içinde benzer yemek türünü engelleyen hiçbir mekanizma yoktu.
+
+**Çözüm:** `_taban_kelime(ad)` adlı bir sezgisel (heuristic) fonksiyon
+eklendi -- Türkçe yemek isimlerinde genelde son kelime çekirdek isimdir
+("Sumaklı Cacık" → "cacık"), ama çorba/salata/tatlı/börek/kebap/köfte/
+dolma/pilav gibi çok genel bir sonekle bitenlerde (ör. "Mercimek
+Çorbası" ile "Ezogelin Çorbası" YANLIŞLIKLA aynı sayılmasın diye) son
+İKİ kelime birlikte kullanılıyor.
+
+Bu temel kelime, hem AYNI ÖĞÜN içindeki 3 tarif arasında (ör. I. grup
+bir fasulye yemeğiyle III. grup başka bir fasulye yemeği yan yana
+çıkmasın) hem de AYNI GÜNÜN öğle+akşam öğünleri arasında kontrol
+ediliyor. Farklı GÜNLERDE aynı temel türün tekrarına engel olunmuyor
+(küçük kütüphanede bu kadar ağır bir kısıt pratik olmazdı).
+
+**Önemli bir hata test sırasında yakalandı ve düzeltildi:** İlk
+sürümde, aday havuzu tükendiğinde (taban filtresinden sonra) sessizce
+filtresiz listeye dönen bir "güvenlik ağı" vardı -- bu, asıl kademeli
+gevşetme mekanizmasını (mevsim gevşet → hafta tekrarına izin ver →
+...) atlayıp gereksiz yere ERKEN taban tekrarına izin veriyordu. 200
+rastgele tohumla test edilirken bu tam olarak yakalandı (gün 2'de
+sistematik olarak Cacık+Sumaklı Cacık tekrar ediyordu). Güvenlik ağı
+kaldırıldı, boş havuz artık doğru şekilde `None` dönüp dış döngünün
+daha gevşek bir kademeye geçmesini sağlıyor.
+
+**Doğrulama:** 500 rastgele tohum × 7 gün (3500 gün) ve ayrıca 241
+tariflik gerçekçi boyutta bir havuzla test edildi -- 0 çakışma, 50
+hafta 0.14 saniyede üretildi (performans sorunu yok).
+
+**Dürüstçe belirtilmeli:** Bu TAM bir çözüm değil, bir SEZGİSEL
+yöntemdir -- 241 tariflik kütüphanenin tamamında elle doğrulanmadı.
+"İmam Bayıldı" gibi deyimsel isimlerde sezgi yanılabilir (ama bu tür
+isimler zaten başka hiçbir tarifle çakışmayacağı için risk düşük).
+Gerçek kullanımda yanlış pozitif/negatif fark edilirse
+`_GENERIK_YEMEK_TURU_SONEKLERI` listesi güncellenebilir.
+
+**Dosya durumu:** uretim_algoritmasi.py güncellendi.

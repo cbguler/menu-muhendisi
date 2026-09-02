@@ -40,6 +40,53 @@ TAMAMLAYICI = {
 }
 
 MEVSIMLER = ["kis", "ilkbahar", "yaz", "sonbahar"]
+
+# YIRMI BIRINCI DUZELTME (30 Agustos 2026): kullanicinin fark ettigi
+# gercek ornek -- bir gunde ogle "Cacık", aksam "Sumaklı Cacık" cikmisti.
+# Anayasa madde 2 (hafta ici tekrarsizlik) SADECE TAM ISIM eslesmesine
+# bakiyor -- "Cacık" != "Sumaklı Cacık" oldugu icin bu kontrolden
+# GECIYORLARDI. Asagidaki sezgisel fonksiyon, bir tarifin "temel yemek
+# turunu" bulmaya calisir ve AYNI GUN icinde bu temel turun tekrarini
+# engeller (bkz. hafta_olustur'daki kullanilan_gun_taban).
+#
+# DURUSTCE BELIRTILMELI: bu TAM/KESIN bir cozum degil, bir SEZGISEL
+# (heuristic) yontemdir -- 241 tariflik kutuphanenin tamaminda elle
+# dogrulanmadi. Turkce yemek isimlerinde COGUNLUKLA son kelime cekirdek
+# isimdir (sifat/tarif ONCE gelir: "Sumaklı Cacık" -> cekirdek "cacık"),
+# ama corba/salata/tatli/borek/kebap/kofte/dolma/pilav gibi COK GENEL bir
+# sonekle biten isimlerde SADECE son kelimeyi almak butun corbalari
+# (ör. "Mercimek Çorbası" ile "Ezogelin Çorbası") YANLISLIKLA ayni
+# sayardi -- bu durumda son IKI kelime birlikte kullanilir. "İmam
+# Bayıldı" gibi deyimsel (idiyomatik) isimlerde bu sezgi yanilabilir,
+# ama bu tur isimler zaten baska hicbir tarifle CAKISMAYACAGI icin
+# riski dusuk (yanlis pozitif degil, en kotu ihtimalle yanlis negatif --
+# yani nadir bir gercek benzerlik gozden kacabilir, ama YANLISTAN
+# YANLISA "farkli yemekleri ayni sayip" gereksiz kisitlama olusmaz).
+_GENERIK_YEMEK_TURU_SONEKLERI = {
+    "çorbası", "corbasi", "çorba", "corba",
+    "salatası", "salatasi", "salata",
+    "tatlısı", "tatlisi", "tatlı", "tatli",
+    "böreği", "boregi", "börek", "borek",
+    "kebabı", "kebabi", "kebap",
+    "köftesi", "koftesi", "köfte", "kofte",
+    "dolması", "dolmasi", "dolma",
+    "pilavı", "pilavi", "pilav",
+    "yemeği", "yemegi", "yemek",
+    "kavurma", "kavurması", "kavurmasi",
+    "güveç", "guvec", "güveci", "guveci",
+}
+
+
+def _taban_kelime(ad):
+    """Bir tarifin 'temel yemek turunu' bulmaya calisan basit bir sezgisel
+    yontem -- ust taraftaki nota bakiniz."""
+    kelimeler = ad.strip().lower().replace("'", "").split()
+    if not kelimeler:
+        return ad.strip().lower()
+    son = kelimeler[-1]
+    if son in _GENERIK_YEMEK_TURU_SONEKLERI and len(kelimeler) >= 2:
+        return " ".join(kelimeler[-2:])
+    return son
 # ON DOKUZUNCU DUZELTME (13 Agustos 2026, Oturum 11): temel 4 alanin
 # yanina, malzemeler tablosundaki 27 genisletilmis besin ogesi de
 # eklendi -- kullanicinin Yillik Menu'de bunlari da SECEREK
@@ -126,7 +173,8 @@ def _hedef_saglaniyor_mu(t1, t2, t3, hedef):
     return True
 
 
-def _aday_havuzu(havuz, mevsim, kullanilan_hafta, tekrara_izin_ver=False, mevsim_zorunlu=True):
+def _aday_havuzu(havuz, mevsim, kullanilan_hafta, tekrara_izin_ver=False, mevsim_zorunlu=True, kullanilan_gun_taban=None):
+    kullanilan_gun_taban = kullanilan_gun_taban or set()
     if tekrara_izin_ver:
         if mevsim_zorunlu:
             aday = [r for r in havuz if r["mevsim_etiketi"] in (mevsim, "yil_boyunca")]
@@ -134,13 +182,25 @@ def _aday_havuzu(havuz, mevsim, kullanilan_hafta, tekrara_izin_ver=False, mevsim
                 aday = list(havuz)
         else:
             aday = list(havuz)
-        return aday
-    if mevsim_zorunlu:
-        return [
+    elif mevsim_zorunlu:
+        aday = [
             r for r in havuz
             if r["ad"] not in kullanilan_hafta and r["mevsim_etiketi"] in (mevsim, "yil_boyunca")
         ]
-    return [r for r in havuz if r["ad"] not in kullanilan_hafta]
+    else:
+        aday = [r for r in havuz if r["ad"] not in kullanilan_hafta]
+    # YIRMI BIRINCI DUZELTME (30 Agustos 2026, DUZELTILDI): burada "taban
+    # filtresi bossa filtresiz listeye don" seklinde bir guvenlik agi
+    # OLMAMALI -- boyle bir sey ogun_olustur'un DIS kademeli gevsetme
+    # dongusunu (mevsim gevset -> hafta-tekrarina izin ver -> ...) atlayip
+    # DAHA ERKEN, gereksiz yere taban tekrarina izin verilmesine sebep
+    # oluyordu (test sirasinda yakalandi: Cacık+Sumaklı Cacık ayni gun
+    # tekrar CIKTI, cunku ilk denemede bu "yerel" fallback devreye girip
+    # dis dongunun daha iyi bir alternatif (ör. bir salata) bulma sansini
+    # hic denemeden yok ediyordu). Burada boş liste donmesi GEREKIYOR --
+    # _ogun_dene bunu None olarak yorumlayip ogun_olustur'un bir sonraki,
+    # daha gevsek kademesine gecmesini saglayacak.
+    return [r for r in aday if _taban_kelime(r["ad"]) not in kullanilan_gun_taban]
 
 
 def _grup3_tercih_sirasi(grup1_etiketler):
@@ -150,28 +210,45 @@ def _grup3_tercih_sirasi(grup1_etiketler):
     return []
 
 
-def _ogun_dene(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele, deneme_sayisi, tekrara_izin_ver, mevsim_zorunlu=True, hedef=None):
+def _ogun_dene(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele, deneme_sayisi, tekrara_izin_ver, mevsim_zorunlu=True, hedef=None, kullanilan_gun_taban=None):
     """Verilen esneklik seviyesinde ogun kombinasyonu aramaya calisir.
     UYUMSUZLUK (madde 11) HER ZAMAN uygulanir, gevsetilmez -- haftalik-
     tekrar, mevsim kisiti VE besin hedefi kademeli olarak gevsetilebilir."""
     for _ in range(deneme_sayisi):
-        aday1 = _aday_havuzu(grup1_havuz, mevsim, kullanilan_hafta, tekrara_izin_ver, mevsim_zorunlu)
-        aday2 = _aday_havuzu(grup2_havuz, mevsim, kullanilan_hafta, tekrara_izin_ver, mevsim_zorunlu)
-        aday3 = _aday_havuzu(grup3_havuz, mevsim, kullanilan_hafta, tekrara_izin_ver, mevsim_zorunlu)
+        aday1 = _aday_havuzu(grup1_havuz, mevsim, kullanilan_hafta, tekrara_izin_ver, mevsim_zorunlu, kullanilan_gun_taban)
+        aday2 = _aday_havuzu(grup2_havuz, mevsim, kullanilan_hafta, tekrara_izin_ver, mevsim_zorunlu, kullanilan_gun_taban)
+        aday3 = _aday_havuzu(grup3_havuz, mevsim, kullanilan_hafta, tekrara_izin_ver, mevsim_zorunlu, kullanilan_gun_taban)
         if not (aday1 and aday2 and aday3):
             return None
 
         t1 = rastgele.choice(aday1)
+        t1_taban = _taban_kelime(t1["ad"])
 
-        aday2_uyumlu = [t for t in aday2 if _uyumlu_mu(set(t1["etiketler"]) | set(t["etiketler"]))]
+        # YIRMI BIRINCI DUZELTME (DUZELTILDI): burada da "bossa filtresiz
+        # listeye don" YOK -- havuz tukenirse (aday2_taban_haric bos)
+        # FARKLI bir t1 denemek icin `continue` ile bir sonraki rastgele
+        # denemeye geciliyor (tipki asagidaki uyumsuzluk kontrolundeki
+        # `continue` gibi) -- butun deneme_sayisi (200) tukenirse zaten
+        # None donup ogun_olustur'un DAHA GEVSEK kademesine (mevsim/hafta
+        # tekrar) gecmesini saglar.
+        aday2_havuzu = [t for t in aday2 if _taban_kelime(t["ad"]) != t1_taban]
+        if not aday2_havuzu:
+            continue
+
+        aday2_uyumlu = [t for t in aday2_havuzu if _uyumlu_mu(set(t1["etiketler"]) | set(t["etiketler"]))]
         if not aday2_uyumlu:
             continue
         t2 = rastgele.choice(aday2_uyumlu)
+        t2_taban = _taban_kelime(t2["ad"])
 
         birlesik_12 = set(t1["etiketler"]) | set(t2["etiketler"])
         tercih_sirasi = _grup3_tercih_sirasi(t1["etiketler"])
 
-        aday3_uyumlu = [t for t in aday3 if _uyumlu_mu(birlesik_12 | set(t["etiketler"]))]
+        aday3_havuzu = [t for t in aday3 if _taban_kelime(t["ad"]) not in (t1_taban, t2_taban)]
+        if not aday3_havuzu:
+            continue
+
+        aday3_uyumlu = [t for t in aday3_havuzu if _uyumlu_mu(birlesik_12 | set(t["etiketler"]))]
         if not aday3_uyumlu:
             continue
 
@@ -195,14 +272,16 @@ def _ogun_dene(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, 
     return None
 
 
-def ogun_olustur(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele, hedef=None):
+def ogun_olustur(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele, hedef=None, kullanilan_gun_taban=None):
     """Tek bir ogun (Ogle veya Aksam) icin I+II+III grup tarifi secer.
     Kademeli esneme sirasi (UYUMSUZLUK/madde 11 hicbirinde gevsetilmez):
       1) mevsime uygun + hafta icinde tekrarsiz + besin hedefi icinde
       2) mevsim kisitini gevset + hala tekrarsiz + besin hedefi icinde
       3) tekrara da izin ver (mevsim gevsek) + besin hedefi icinde
       4) son care: besin hedefini de gevset (mevsim/tekrar gevsek kalir)
-    """
+    Bu 4 kademenin HICBIRINDE "ayni gun icinde ayni temel yemek turu"
+    (kullanilan_gun_taban) gevsetilmez -- sadece havuz TAMAMEN
+    tukenirse (bkz. _aday_havuzu/_ogun_dene ici fallback) devreye girer."""
     for tekrara_izin_ver, mevsim_zorunlu, bu_hedef in (
         (False, True, hedef),
         (False, False, hedef),
@@ -211,7 +290,7 @@ def ogun_olustur(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta
     ):
         sonuc = _ogun_dene(
             grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele,
-            200, tekrara_izin_ver, mevsim_zorunlu, bu_hedef,
+            200, tekrara_izin_ver, mevsim_zorunlu, bu_hedef, kullanilan_gun_taban,
         )
         if sonuc is not None:
             return sonuc
@@ -279,11 +358,24 @@ def hafta_olustur(tarifler, mevsim, rastgele, hedefler=None, gun_sayisi=7, gun_m
     for gun_no in range(1, gun_sayisi + 1):
         gun_mevsimi = gun_mevsimleri[gun_no - 1] if gun_mevsimleri else mevsim
         gun = {"gun": gun_no, "ogunler": {}}
+        # YIRMI BIRINCI DUZELTME (30 Agustos 2026): kullanilan_hafta
+        # (TAM isim, HAFTA capinda) DEGIL -- bu, TEMEL YEMEK TURU (bkz.
+        # _taban_kelime) icin, sadece BU GUNE ozel, her yeni gunde
+        # SIFIRLANAN ayri bir kume. Boylece "Cacık" (ogle) + "Sumaklı
+        # Cacık" (aksam) gibi bir gun icindeki benzer-yemek tekrari
+        # engellenir, ama farkli GUNLERDE ayni temel turun (ör. baska
+        # bir gun yine bir corba turu) cikmasina engel olunmaz -- kucuk
+        # kutuphanede o kadar agir bir kisit pratik olmazdi.
+        kullanilan_gun_taban = set()
         for ogun_adi in ("Öğle", "Akşam"):
             hedef = (hedefler or {}).get(ogun_adi)
-            t1, t2, t3 = ogun_olustur(grup1, grup2, grup3, gun_mevsimi, kullanilan_hafta, rastgele, hedef)
+            t1, t2, t3 = ogun_olustur(
+                grup1, grup2, grup3, gun_mevsimi, kullanilan_hafta, rastgele, hedef,
+                kullanilan_gun_taban,
+            )
             for t in (t1, t2, t3):
                 kullanilan_hafta.add(t["ad"])
+                kullanilan_gun_taban.add(_taban_kelime(t["ad"]))
             ogun_tarifleri = [t1["ad"], t2["ad"], t3["ad"]]
 
             if grup4:
@@ -291,6 +383,7 @@ def hafta_olustur(tarifler, mevsim, rastgele, hedefler=None, gun_sayisi=7, gun_m
                 t4 = _fast_food_sec(grup4, birlesik, rastgele)
                 if t4 is not None:
                     ogun_tarifleri.append(t4["ad"])
+                    kullanilan_gun_taban.add(_taban_kelime(t4["ad"]))
 
             gun["ogunler"][ogun_adi] = ogun_tarifleri
         hafta.append(gun)
