@@ -131,22 +131,41 @@ def calistir():
 
     basarili, hatali = 0, 0
     for t, mevcut_hash in islenecekler:
-        try:
-            ikonlar_by_satir = _tarif_siniflandir(client, t["hazirlik_talimati"])
-            supabase.table("receteler").update({
-                "hazirlik_ikonlari": {
-                    "hash": mevcut_hash,
-                    "ikonlar_by_satir": ikonlar_by_satir,
-                }
-            }).eq("id", t["id"]).execute()
-            basarili += 1
-            print(f"  OK: {t['ad']}")
-        except Exception as e:
-            hatali += 1
-            print(f"  HATA ({t['ad']}): {e}")
+        # Rate limit (429) hatalarina karsi otomatik yeniden deneme --
+        # kullanici testinde gorduk: ucretsiz katmanin dakikalik token
+        # limiti (TPM) arada asiliyor, bu NORMAL. 3 deneme, her seferinde
+        # daha uzun bekleme (10sn, 20sn, 30sn) -- boylece TEK bir
+        # calistirmada cogu gecici hata kendiliginden duzeliyor,
+        # kullanicinin scripti elle tekrar calistirmasina cok daha az
+        # ihtiyac kaliyor.
+        for deneme in range(3):
+            try:
+                ikonlar_by_satir = _tarif_siniflandir(client, t["hazirlik_talimati"])
+                supabase.table("receteler").update({
+                    "hazirlik_ikonlari": {
+                        "hash": mevcut_hash,
+                        "ikonlar_by_satir": ikonlar_by_satir,
+                    }
+                }).eq("id", t["id"]).execute()
+                basarili += 1
+                print(f"  OK: {t['ad']}")
+                break
+            except Exception as e:
+                rate_limit_mi = "rate_limit" in str(e) or "429" in str(e)
+                if rate_limit_mi and deneme < 2:
+                    bekleme = 10 * (deneme + 1)
+                    print(f"  BEKLENIYOR ({t['ad']}): rate limit, {bekleme}sn sonra tekrar denenecek...")
+                    time.sleep(bekleme)
+                    continue
+                hatali += 1
+                print(f"  HATA ({t['ad']}): {e}")
+                break
         time.sleep(0.3)  # Groq RPM limitine karsi hafif bir yavaslatma
 
     print(f"\nTamamlandi. Basarili: {basarili}, Hatali: {hatali}")
+    if hatali:
+        print("Hatali olanlar icin scripti TEKRAR calistirman yeterli -- "
+              "sadece onlar (hash uyusmadigi icin) yeniden denenecek.")
 
 
 if __name__ == "__main__":
