@@ -31,7 +31,7 @@ from db import get_supabase
 
 GECERLI_EYLEMLER = sorted(ASAMA_IKON_KOKLERI.keys())
 
-MODEL = "llama-3.3-70b-versatile"
+MODEL = "openai/gpt-oss-120b"  # llama-3.3-70b-versatile 16 Agustos 2026'da tamamen kaldirildi, Groq'un resmi onerisi bu
 
 SISTEM_PROMPTU = f"""Sen bir Turk yemek tarifi metnini analiz eden bir asistansin.
 Sana numaralandirilmis satirlar halinde bir tarifin "hazirlik talimati"
