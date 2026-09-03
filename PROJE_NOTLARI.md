@@ -5035,3 +5035,31 @@ yok / bayat önbellek) -- hepsi doğru davrandı.
 güncellendi (yeni `ikon_yolu_for_eylem` fonksiyonu),
 `pages/5_Tarif_Kutuphanesi.py` güncellendi (önbellek-öncelikli
 gösterim).
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): İkon Sınıflandırma Script'i Gruplu İşlemeye Geçirildi (Günlük Token Limiti Sorunu)
+
+İlk gerçek çalıştırmada iki farklı Groq limiti sırayla yakalandı:
+1. Dakikalık (TPM) limit -- otomatik yeniden deneme ile çözüldü.
+2. **Günlük (TPD) limit (200.000 token/gün)** -- 240 tariften sadece
+   128'i işlenebildi, gerisi güne kalan kotayı aştı.
+
+**Kök neden:** Her tarif için AYRI bir API çağrısı yapılıyordu, bu da
+(uzun) sistem promptunun 240 KEZ tekrar tekrar gönderilmesi demekti --
+günlük bütçenin büyük kısmı bu gereksiz tekrara gidiyordu. Groq'un
+"prompt caching" özelliği kontrol edildi ama bu modelde (gpt-oss-120b)
+DESTEKLENMİYOR (şu an sadece Kimi K2'de var).
+
+**Çözüm:** Script gruplu işlemeye geçirildi -- artık 6 tarif TEK
+istekte birlikte gönderiliyor (`GRUP_BOYUTU = 6`), sistem promptu
+240 kez değil ~40 kez gönderiliyor. Sahte (mock) bir çoklu-tarif
+yanıtıyla test edildi, doğru şekilde her tarifi kendi indeksine göre
+ayırıp ikon yollarını çözdüğü doğrulandı.
+
+**Not:** Eğer günlük limit yine dolarsa (büyük kütüphane ilk kez
+işlenirken olabilir), script zaten ertesi gün "kaldığı yerden devam"
+edecek şekilde tasarlı (hash bazlı artımlı işleme) -- sadece scripti
+tekrar çalıştırmak yeterli.
+
+**Dosya durumu:** `ikon_siniflandirma_calistir.py` güncellendi (gruplu
+işleme + otomatik yeniden deneme).

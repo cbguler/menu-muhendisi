@@ -12,6 +12,15 @@
 # cikinca script'i tekrar calistirmak sadece YENI/DEGISEN tarifleri
 # isler, hepsini bastan degil.
 #
+# GRUPLU ISLEME (30 Agustos 2026, gercek kullanimda TPD/gunluk token
+# limitine takilinca eklendi): her tarif icin AYRI bir API cagrisi
+# yapmak, ayni (uzun) sistem promptunu 240 KEZ tekrar tekrar
+# gonderiyordu -- gunluk token butcesinin cogunu bu tekrar israf
+# ediyordu. Groq'un "prompt caching" ozelligi bu modelde (gpt-oss-120b)
+# DESTEKLENMIYOR (sadece Kimi K2'de var), o yuzden bu israfi onlemenin
+# tek yolu: BIRDEN FAZLA tarifi TEK istekte gruplamak. Sistem promptu
+# artik 240 kez degil, 240/GRUP_BOYUTU kez gonderiliyor.
+#
 # CALISTIRMA: python ikon_siniflandirma_calistir.py
 # GEREKEN SIR: GROQ_API_KEY_IKON (Streamlit secrets'ta veya ortam
 # degiskeninde) -- TrendSurf'teki GROQ_API_KEY'den KASITLI OLARAK
@@ -32,12 +41,13 @@ from db import get_supabase
 GECERLI_EYLEMLER = sorted(ASAMA_IKON_KOKLERI.keys())
 
 MODEL = "openai/gpt-oss-120b"  # llama-3.3-70b-versatile 16 Agustos 2026'da tamamen kaldirildi, Groq'un resmi onerisi bu
+GRUP_BOYUTU = 6  # tek istekte kac tarif birlikte gonderilsin
 
 SISTEM_PROMPTU = f"""Sen bir Turk yemek tarifi metnini analiz eden bir asistansin.
-Sana numaralandirilmis satirlar halinde bir tarifin "hazirlik talimati"
-metni verilecek. Her satir icin, o satirda GERCEKTEN yapilmasi
-talimat edilen mutfak islemlerini asagidaki SABIT listeden secmen
-gerekiyor:
+Sana BIRDEN FAZLA tarifin "hazirlik talimati" metni, her biri kendi
+TARIF NUMARASI ve numaralandirilmis SATIRLARIYLA verilecek. Her tarifin
+her satiri icin, o satirda GERCEKTEN yapilmasi talimat edilen mutfak
+islemlerini asagidaki SABIT listeden secmen gerekiyor:
 
 {', '.join(GECERLI_EYLEMLER)}
 
@@ -59,47 +69,64 @@ KURALLAR (cok onemli, dikkatli ol):
    kelime uydurma.
 5. Bir satirda hicbir gercek mutfak islemi talimati yoksa (baslikler,
    malzeme listeleri, notlar, ozetler) bos liste dondur.
+6. Her tarifi BAGIMSIZ degerlendir -- bir tarifteki bir kelime baska
+   bir tarifin siniflandirmasini ETKILEMEMELI.
 
 SADECE gecerli JSON ile cevap ver, baska hicbir metin ekleme:
-{{"satirlar": [{{"index": 0, "eylemler": []}}, {{"index": 1, "eylemler": ["dograma"]}}, ...]}}
-"index" degerleri sana verilen satir numaralarina BIREBIR uymali."""
+{{"tarifler": [
+  {{"tarif_index": 0, "satirlar": [{{"index": 0, "eylemler": []}}, {{"index": 1, "eylemler": ["dograma"]}}]}},
+  {{"tarif_index": 1, "satirlar": [...]}}
+]}}
+"tarif_index" ve "index" degerleri sana verilenlerle BIREBIR uymali,
+her tarifin HER satiri icin bir giris olmali."""
 
 
 def _hazirlik_metni_hashle(metin):
     return hashlib.sha256(metin.encode("utf-8")).hexdigest()
 
 
-def _tarif_siniflandir(client, hazirlik_talimati):
-    satirlar = hazirlik_talimati.splitlines()
-    numarali_satirlar = "\n".join(f"{i}: {s}" for i, s in enumerate(satirlar))
+def _tarif_grubu_siniflandir(client, tarif_grubu):
+    """tarif_grubu: [{"satirlar": [...]}, ...] -- birden fazla tarifin
+    satirlari. Donus: HER tarif icin ikonlar_by_satir listesi (ayni
+    sirada)."""
+    parcalar = []
+    for i, tarif in enumerate(tarif_grubu):
+        numarali_satirlar = "\n".join(f"  {j}: {s}" for j, s in enumerate(tarif["satirlar"]))
+        parcalar.append(f"TARIF {i}:\n{numarali_satirlar}")
+    kullanici_mesaji = "\n\n".join(parcalar)
 
     yanit = client.chat.completions.create(
         model=MODEL,
         messages=[
             {"role": "system", "content": SISTEM_PROMPTU},
-            {"role": "user", "content": numarali_satirlar},
+            {"role": "user", "content": kullanici_mesaji},
         ],
         response_format={"type": "json_object"},
         temperature=0,
     )
     veri = json.loads(yanit.choices[0].message.content)
 
-    ikonlar_by_satir = [[] for _ in satirlar]
-    for satir_sonucu in veri.get("satirlar", []):
-        idx = satir_sonucu.get("index")
-        eylemler = satir_sonucu.get("eylemler", [])
-        if idx is None or not (0 <= idx < len(satirlar)):
+    sonuclar = [[[] for _ in tarif["satirlar"]] for tarif in tarif_grubu]
+    for tarif_sonucu in veri.get("tarifler", []):
+        t_idx = tarif_sonucu.get("tarif_index")
+        if t_idx is None or not (0 <= t_idx < len(tarif_grubu)):
             continue
-        ikon_yollari = []
-        for eylem in eylemler:
-            if eylem not in ASAMA_IKON_KOKLERI:
-                continue  # AI SABIT listenin disinda bir sey uydurduysa yok say
-            yol = ikon_yolu_for_eylem(eylem, satirlar[idx])
-            if yol and yol not in ikon_yollari:
-                ikon_yollari.append(yol)
-        ikonlar_by_satir[idx] = ikon_yollari
+        satirlar = tarif_grubu[t_idx]["satirlar"]
+        for satir_sonucu in tarif_sonucu.get("satirlar", []):
+            idx = satir_sonucu.get("index")
+            eylemler = satir_sonucu.get("eylemler", [])
+            if idx is None or not (0 <= idx < len(satirlar)):
+                continue
+            ikon_yollari = []
+            for eylem in eylemler:
+                if eylem not in ASAMA_IKON_KOKLERI:
+                    continue
+                yol = ikon_yolu_for_eylem(eylem, satirlar[idx])
+                if yol and yol not in ikon_yollari:
+                    ikon_yollari.append(yol)
+            sonuclar[t_idx][idx] = ikon_yollari
 
-    return ikonlar_by_satir
+    return sonuclar
 
 
 def calistir():
@@ -124,48 +151,53 @@ def calistir():
         mevcut_hash = _hazirlik_metni_hashle(t["hazirlik_talimati"])
         onceki = t.get("hazirlik_ikonlari") or {}
         if onceki.get("hash") != mevcut_hash:
-            islenecekler.append((t, mevcut_hash))
+            islenecekler.append({
+                "id": t["id"],
+                "ad": t["ad"],
+                "hash": mevcut_hash,
+                "satirlar": t["hazirlik_talimati"].splitlines(),
+            })
 
     print(f"Toplam {len(tarifler)} tarif, {len(islenecekler)} tanesi islenecek "
-          f"(yeni veya degismis).")
+          f"(yeni veya degismis). {GRUP_BOYUTU}'serli gruplar halinde gonderilecek.")
 
     basarili, hatali = 0, 0
-    for t, mevcut_hash in islenecekler:
-        # Rate limit (429) hatalarina karsi otomatik yeniden deneme --
-        # kullanici testinde gorduk: ucretsiz katmanin dakikalik token
-        # limiti (TPM) arada asiliyor, bu NORMAL. 3 deneme, her seferinde
-        # daha uzun bekleme (10sn, 20sn, 30sn) -- boylece TEK bir
-        # calistirmada cogu gecici hata kendiliginden duzeliyor,
-        # kullanicinin scripti elle tekrar calistirmasina cok daha az
-        # ihtiyac kaliyor.
+    for basi in range(0, len(islenecekler), GRUP_BOYUTU):
+        grup = islenecekler[basi:basi + GRUP_BOYUTU]
+        isimler = ", ".join(t["ad"] for t in grup)
+
         for deneme in range(3):
             try:
-                ikonlar_by_satir = _tarif_siniflandir(client, t["hazirlik_talimati"])
-                supabase.table("receteler").update({
-                    "hazirlik_ikonlari": {
-                        "hash": mevcut_hash,
-                        "ikonlar_by_satir": ikonlar_by_satir,
-                    }
-                }).eq("id", t["id"]).execute()
-                basarili += 1
-                print(f"  OK: {t['ad']}")
+                sonuclar = _tarif_grubu_siniflandir(client, grup)
+                for tarif, ikonlar_by_satir in zip(grup, sonuclar):
+                    supabase.table("receteler").update({
+                        "hazirlik_ikonlari": {
+                            "hash": tarif["hash"],
+                            "ikonlar_by_satir": ikonlar_by_satir,
+                        }
+                    }).eq("id", tarif["id"]).execute()
+                    basarili += 1
+                    print(f"  OK: {tarif['ad']}")
                 break
             except Exception as e:
                 rate_limit_mi = "rate_limit" in str(e) or "429" in str(e)
                 if rate_limit_mi and deneme < 2:
-                    bekleme = 10 * (deneme + 1)
-                    print(f"  BEKLENIYOR ({t['ad']}): rate limit, {bekleme}sn sonra tekrar denenecek...")
+                    bekleme = 15 * (deneme + 1)
+                    print(f"  BEKLENIYOR (grup: {isimler[:60]}...): rate limit, {bekleme}sn sonra tekrar denenecek...")
                     time.sleep(bekleme)
                     continue
-                hatali += 1
-                print(f"  HATA ({t['ad']}): {e}")
+                hatali += len(grup)
+                print(f"  HATA (grup: {isimler[:60]}...): {e}")
                 break
-        time.sleep(0.3)  # Groq RPM limitine karsi hafif bir yavaslatma
+        time.sleep(0.5)
 
     print(f"\nTamamlandi. Basarili: {basarili}, Hatali: {hatali}")
     if hatali:
         print("Hatali olanlar icin scripti TEKRAR calistirman yeterli -- "
               "sadece onlar (hash uyusmadigi icin) yeniden denenecek.")
+        print("Eger hata GUNLUK token limitiyle ilgiliyse (TPD), o gunku "
+              "kotanin dolmasi anlamina gelir -- ertesi gun tekrar "
+              "calistirinca kaldigi yerden devam eder.")
 
 
 if __name__ == "__main__":
