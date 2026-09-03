@@ -4838,3 +4838,46 @@ TEMİZ geçti (biri ayrıca görsel olarak da doğrulandı).
 `rendeleme_sogan.png`, `soyma_sogan.png` eklenmeli. Kod tarafı
 (`asama_ikonlari.py`) bir önceki oturumda zaten bu dosya adlarını en
 yüksek öncelikle arayacak şekilde hazırlanmıştı.
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Limon/Biber Varyantları Eklendi (2. Öncelik Kademesi)
+
+Kullanıcı soğan ikonlarını test ederken, veri analizindeki 2. öncelik
+kademesi (limon 10 tarif, biber 10 tarif -- patlıcan/havuçtan (7)
+belirgin önde) için hazırlık yapıldı.
+
+`_SPESIFIK_MALZEME_VARYANTLARI` listesine `limon` ve `biber` eklendi
+(soğandan SONRA, genel meyve/sebze düşüşünden ÖNCE kontrol ediliyor).
+`limon`, artık kendi özel girişi olduğu için genel `MEYVE_KOKLERI`
+listesinden çıkarıldı (fonksiyonel bir değişiklik değil, sadece
+tekrarı önlemek için).
+
+5 kademeli sistem test edildi: soğan → biber → limon → meyve (elma) →
+temel (domates) -- hepsi doğru sırayla eşleşti.
+
+Kullanıcıya 8 promptluk liste verildi (`limon_biber_ikon_prompt_
+listesi.md`).
+
+**Dosya durumu:** `asama_ikonlari.py` güncellendi;
+`limon_biber_ikon_prompt_listesi.md` (yeni) eklendi; kullanıcı 8 yeni
+PNG üretip gönderecek.
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): İkon Sırası Değiştirildi (Üstte), Boyut 220px'e Büyütüldü
+
+Kullanıcı üç şey bildirdi: (1) "soğanı doğrayın" satırında hâlâ domates
+ikonu çıkıyor, (2) resimler hâlâ küçük, (3) resimler metnin üstünde
+olsun istiyor.
+
+**(2) ve (3) düzeltildi:** Sıra değiştirildi (ikon artık metinden ÖNCE
+gösteriliyor), boyut 150px'ten 220px'e büyütüldü.
+
+**(1) için kod tarafında sorun bulunamadı** -- "Soğanı doğrayın"
+eşleştirme mantığı yeniden test edildi, doğru çalışıyor
+(`dograma_sogan.png` dönüyor). Kullanıcıya iki olası sebep söylendi:
+Streamlit Cloud deploy gecikmesi (push sonrası 1-2 dk sürebilir) veya
+Windows/Linux dosya adı büyük-küçük harf uyuşmazlığı. Kullanıcıdan
+yenileyip tekrar denemesi, hâlâ sorun varsa GitHub'daki gerçek dosya
+adını kontrol etmesi istendi.
+
+**Dosya durumu:** `pages/5_Tarif_Kutuphanesi.py` güncellendi.

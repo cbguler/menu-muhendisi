@@ -352,16 +352,16 @@ if tarif["hazirlik_talimati"]:
     # topluydu. Simdi metin SATIR SATIR isleniyor, her satirin (ör.
     # "1. Soğanı rendeleyin...") HEMEN ALTINA sadece O SATIRDA gecen
     # ikon(lar) ekleniyor -- bir satirda birden fazla teknik geciyorsa
-    # (ör. "rendeleyin ... süzün") ikisi de gosteriliyor. Baslik/bos
-    # satirlarda (ör. "Isıl İşlem") dogal olarak hic ikon cikmiyor,
-    # cunku o satirda eslesen bir fiil yok. Ikon boyutu da (kullanici
-    # "cok kucuk, anlasilmiyor" dedi) 56px'ten 110px'e buyutuldu.
+    # ALTMIS BIRINCI DUZELTME (30 Agustos 2026): kullanici -- (1) resim
+    # hala kucuk, (2) resim METNIN USTUNDE olsun (altinda degil) dedi.
+    # Sira degistirildi (ikon -> sonra metin), boyut 150px'ten 220px'e
+    # buyutuldu.
     for _satir in tarif["hazirlik_talimati"].splitlines():
         if _satir.strip():
-            st.write(_satir)
             _satir_ikonlari = tum_ikonlari_bul(_satir)
             if _satir_ikonlari:
-                st.image(_satir_ikonlari, width=150)
+                st.image(_satir_ikonlari, width=220)
+            st.write(_satir)
         else:
             st.write("")
 else:
