@@ -4881,3 +4881,47 @@ yenileyip tekrar denemesi, hâlâ sorun varsa GitHub'daki gerçek dosya
 adını kontrol etmesi istendi.
 
 **Dosya durumu:** `pages/5_Tarif_Kutuphanesi.py` güncellendi.
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Üç Gerçek Eşleştirme Hatası Bulundu ve Düzeltildi
+
+Kullanıcı gerçek bir bulgur pilavı tarifiyle test etti, üç sorun buldu:
+
+1. **"tuzla su" → yanlışlıkla baharatlama ikonu.** "Tuzla" kökü
+   "tuzlayın" (tuz ekleyin) fiilini yakalamak içindi ama "tuzla su"
+   (tuzlu su) tanımlayıcı ifadesini de yanlışlıkla yakalıyordu. Kök
+   kaldırıldı -- yanlış pozitif, kaçırılan doğru pozitiften daha
+   zararlı kabul edildi.
+2. **"Demlendirme" (pilavı ocaktan alıp dinlendirme) → çay demliği
+   ikonu.** Türkçe'de "demlendirme" hem çay/kahve hem pilav dinlendirme
+   anlamında kullanılıyor, ikinci anlam bu uygulamada çok daha yaygın.
+   `demle` kökü artık `dinlendirme` (kapaklı kase+saat) ikonuna
+   yönlendiriliyor, ayrı `demleme` (çaydanlık) girişi kaldırıldı.
+   (Düzeltme sırasında YANLIŞLIKLA oluşan bir "dinlendirme" kopya
+   anahtarı da fark edilip düzeltildi.)
+3. **Kavurma/haşlama ikonları çok spesifik.** Bu ikisi malzeme-duyarlı
+   4 işlemin dışında olduğu için hep AYNI sabit görüntüyü (belirsiz bir
+   karışım / yumurta kaynatma) gösteriyor, pilav gibi farklı bir şeye
+   uygulanınca "bu ne" izlenimi yaratıyor. Kullanıcıya bu ikisini HİÇBİR
+   ZAMAN belirli bir malzeme göstermeyecek, tamamen jenerik (yumurtasız
+   kaynayan su, tanımsız kavrulan karışım) şekilde YENİDEN üretmesi için
+   promptlar verildi (`kavurma_haslama_jenerik_prompt_listesi.md`) --
+   mevcut dosyaların üzerine yazılacak.
+
+Tüm düzeltmeler kullanıcının gerçek örnek metniyle yeniden test edildi.
+
+**Dosya durumu:** `asama_ikonlari.py` güncellendi;
+`kavurma_haslama_jenerik_prompt_listesi.md` (yeni) eklendi; kullanıcı
+`kavurma.png` ve `haslama.png`'yi yeniden üretip gönderecek.
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Kavurma/Haşlama Jenerik Versiyonları Teslim Alındı
+
+Kullanıcı kavurma.png ve haslama.png'nin jenerik (belirli bir malzeme
+göstermeyen) versiyonlarını gönderdi. İkisi de aynı yöntemle işlendi
+ve otomatik+görsel kontrolden TEMİZ geçti. Artık ikisi de belirsiz/
+jenerik bir kavrulma/kaynama dokusu gösteriyor, spesifik bir malzeme
+(yumurta, tanımsız et vb.) çağrıştırmıyor.
+
+**Dosya durumu:** `assets/kavurma.png` ve `assets/haslama.png`
+İÇERİKLERİ değiştirilmeli (aynı dosya adlarıyla üzerine yazılacak).
