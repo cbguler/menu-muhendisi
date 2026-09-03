@@ -360,7 +360,7 @@ if tarif["hazirlik_talimati"]:
         if _satir.strip():
             _satir_ikonlari = tum_ikonlari_bul(_satir)
             if _satir_ikonlari:
-                st.image(_satir_ikonlari, width=220)
+                st.image(_satir_ikonlari, width=330)
             st.write(_satir)
         else:
             st.write("")
