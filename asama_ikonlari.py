@@ -29,7 +29,18 @@ ASAMA_IKON_KOKLERI = {
     "kozleme": ["közle", "kozle"],
     "karistirma": ["karıştır", "karistir"],
     "cirpma": ["çırp", "cirp"],
-    "yogurma": ["yoğur", "yogur"],
+    # ALTMIS DORDUNCU DUZELTME (30 Agustos 2026): "yoğur" koku hem
+    # "yoğurmak" (hamur yoğurmak) FIILINE hem "yoğurt" (malzeme)
+    # ISMINE ait -- "yoğurdu" kelimesi Turkce'de HEM "yoğurt'u" HEM "o
+    # yogurdu" (gecmis zaman) anlamina gelebiliyor, YAZIM OLARAK BIREBIR
+    # AYNI (gercek bir dilsel belirsizlik, kural hatasi degil). Kisa
+    # "yoğur" koku yerine, tarif talimatlarinda fiilen kullanilan
+    # UZUN/SPESIFIK emir/ulac ekli formlar listelendi -- bunlar "yoğurt"
+    # isminin hicbir cekimiyle CAKISMIYOR.
+    "yogurma": [
+        "yoğurun", "yogurun", "yoğurup", "yogurup", "yoğurarak", "yogurarak",
+        "yoğurulmuş", "yogurulmus", "yoğuruyor", "yoguruyor",
+    ],
     "ezme": ["ez"],
     "suzme": ["süz", "suz"],
     "marine_etme": ["marine"],
