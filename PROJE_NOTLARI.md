@@ -5232,3 +5232,34 @@ güvenlik payı).
 
 **Dosya durumu:** `ikon_siniflandirma_calistir.py` güncellendi
 (`GRUP_BOYUTU = 8`, `max_tokens=3000`).
+
+
+### 3 Eylül 2026 — XII. Oturum (devam): Kendi Kendini Düzelten Grup Bölme Mekanizması Eklendi
+
+TPM düzeltmesinden sonra bazı gruplar (muhtemelen alışılmadık uzun
+`hazirlik_talimati` içeren tarifler) hâlâ "json_validate_failed" hatası
+verdi -- bu sefer `failed_generation` BOŞ, yani çıktı `max_tokens`
+sınırına yetişmeden kesiliyor, strict-mode yarım kalan JSON'u
+tamamlayamıyor.
+
+Sabit `GRUP_BOYUTU` değerini elle küçültmeye devam etmek yerine (sonu
+gelmeyen dene-yanıl döngüsü), script'e **kendi kendini düzelten** bir
+mekanizma eklendi: `_grup_isle()` fonksiyonu artık rate-limit dışı bir
+hata aldığında VE grupta birden fazla tarif varsa, grubu İKİYE BÖLÜP
+her yarıyı AYRI AYRI dener. Bir yarı yine başarısız olursa, o da
+kendini tekrar böler -- grup tek bir tarife inip o da başarısız
+olursa, o tarif GERÇEKTEN sorunludur ve kesin hatalı sayılır. Böylece
+tek bir aşırı uzun/sorunlu tarif, yanındaki 7 sağlam tarifi artık
+batırmıyor.
+
+Sahte (mock) bir Groq client ile test edildi: 8 tarifli bir grupta 1
+tanesi her zaman hata verecek şekilde kurgulandı, sonuç doğrulandı --
+7 tarif başarıyla kaydedildi, sadece 1 tanesi (gerçekten sorunlu olan)
+hatalı sayıldı, hiçbir sağlam tarif kaybolmadı.
+
+`max_tokens` ayrıca 3000'den 4000'e çıkarıldı (GRUP_BOYUTU=8 ile TPM
+bütçesinde yeterli pay var).
+
+**Dosya durumu:** `ikon_siniflandirma_calistir.py` güncellendi
+(`_grup_isle()` fonksiyonu eklendi, `calistir()` içindeki döngü buna
+göre sadeleştirildi, `max_tokens=4000`).

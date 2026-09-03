@@ -56,6 +56,16 @@
 # VE GRUP_BOYUTU 12'den 8'e dusuruldu (uzun tarifler icin ekstra
 # guvenlik payi).
 #
+# YETMIS DORDUNCU DUZELTME (3 Eylul 2026): TPM duzeltmesinden sonra
+# hala BAZI gruplar (muhtemelen alisilmadik uzun hazirlik_talimati
+# iceren tarifler) "json_validate_failed" (bos failed_generation --
+# cikti kesilip yarim kaldigi icin) hatasi verdi. Sabit GRUP_BOYUTU
+# degerini elle kucultmeye devam etmek yerine, script'e KENDI KENDINI
+# DUZELTEN bir mekanizma eklendi (_grup_isle): rate limit disi bir
+# hata alinirsa VE grupta birden fazla tarif varsa, grup IKIYE BOLUNUP
+# her yari AYRI AYRI denenir -- boylece tek bir sorunlu/uzun tarif,
+# yanindaki digerlerini batirmiyor. max_tokens da 4000'e cikarildi.
+#
 # CALISTIRMA: python ikon_siniflandirma_calistir.py
 # GEREKEN SIRLAR: GROQ_API_KEY_IKON, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
 
@@ -192,7 +202,7 @@ def _tarif_grubu_siniflandir(client, tarif_grubu):
             },
         },
         temperature=0,
-        max_tokens=3000,
+        max_tokens=4000,
     )
     veri = json.loads(yanit.choices[0].message.content)
 
@@ -217,6 +227,61 @@ def _tarif_grubu_siniflandir(client, tarif_grubu):
             sonuclar[t_idx][idx] = ikon_yollari
 
     return sonuclar
+
+
+def _grup_isle(client, supabase, grup):
+    """Bir tarif grubunu siniflandirip veritabanina kaydetmeyi dener.
+    (basarili_sayisi, hatali_sayisi) dondurur.
+
+    YETMIS DORDUNCU DUZELTME (3 Eylul 2026): rate limit DISINDA bir
+    hata alinirsa (ornegin bir tarifin hazirlik_talimati alisilmadik
+    uzun oldugu icin cikti max_tokens sinirina sigmiyor ve strict-mode
+    yarim kalan JSON'u reddediyor) VE grupta birden fazla tarif varsa,
+    grubu KENDI KENDINE IKIYE BOLUP her yariyi AYRI AYRI dener. Boylece
+    TEK bir sorunlu/asiri uzun tarif, ayni gruptaki digerlerinin de
+    hatali sayilmasina yol acmiyor -- script, sabit bir GRUP_BOYUTU
+    degerini elle ayarlamaya calismak yerine, hangi boyutun guvenli
+    oldugunu KENDISI bulur. Grup tek bir tarife inip o da basarisiz
+    olursa, o tarif GERCEKTEN sorunludur -- kesin hatali sayilir."""
+    isimler = ", ".join(t["ad"] for t in grup)
+
+    for deneme in range(3):
+        try:
+            sonuclar = _tarif_grubu_siniflandir(client, grup)
+            basarili = 0
+            for tarif, ikonlar_by_satir in zip(grup, sonuclar):
+                guncelleme = supabase.table("receteler").update({
+                    "hazirlik_ikonlari": {
+                        "hash": tarif["hash"],
+                        "ikonlar_by_satir": ikonlar_by_satir,
+                    }
+                }).eq("id", tarif["id"]).execute()
+                if not guncelleme.data:
+                    raise RuntimeError(
+                        f"Guncelleme 0 satir etkiledi (RLS engelliyor olabilir): {tarif['ad']}"
+                    )
+                basarili += 1
+                print(f"  OK: {tarif['ad']}")
+            return basarili, 0
+        except Exception as e:
+            rate_limit_mi = "rate_limit" in str(e) or "429" in str(e)
+            if rate_limit_mi and deneme < 2:
+                bekleme = 15 * (deneme + 1)
+                print(f"  BEKLENIYOR (grup: {isimler[:60]}...): rate limit, {bekleme}sn sonra tekrar denenecek...")
+                time.sleep(bekleme)
+                continue
+            if not rate_limit_mi and len(grup) > 1:
+                orta = len(grup) // 2
+                print(f"  BOLUNUYOR (grup: {isimler[:60]}...): {e}")
+                print(f"    -> {len(grup)} tarif ikiye bolunup ayri ayri denenecek "
+                      f"({orta} + {len(grup) - orta})")
+                b1, h1 = _grup_isle(client, supabase, grup[:orta])
+                time.sleep(0.3)
+                b2, h2 = _grup_isle(client, supabase, grup[orta:])
+                return b1 + b2, h1 + h2
+            print(f"  HATA ({isimler[:60]}...): {e}")
+            return 0, len(grup)
+    return 0, len(grup)
 
 
 def calistir():
@@ -263,35 +328,9 @@ def calistir():
     basarili, hatali = 0, 0
     for basi in range(0, len(islenecekler), GRUP_BOYUTU):
         grup = islenecekler[basi:basi + GRUP_BOYUTU]
-        isimler = ", ".join(t["ad"] for t in grup)
-
-        for deneme in range(3):
-            try:
-                sonuclar = _tarif_grubu_siniflandir(client, grup)
-                for tarif, ikonlar_by_satir in zip(grup, sonuclar):
-                    guncelleme = supabase.table("receteler").update({
-                        "hazirlik_ikonlari": {
-                            "hash": tarif["hash"],
-                            "ikonlar_by_satir": ikonlar_by_satir,
-                        }
-                    }).eq("id", tarif["id"]).execute()
-                    if not guncelleme.data:
-                        raise RuntimeError(
-                            f"Guncelleme 0 satir etkiledi (RLS engelliyor olabilir): {tarif['ad']}"
-                        )
-                    basarili += 1
-                    print(f"  OK: {tarif['ad']}")
-                break
-            except Exception as e:
-                rate_limit_mi = "rate_limit" in str(e) or "429" in str(e)
-                if rate_limit_mi and deneme < 2:
-                    bekleme = 15 * (deneme + 1)
-                    print(f"  BEKLENIYOR (grup: {isimler[:60]}...): rate limit, {bekleme}sn sonra tekrar denenecek...")
-                    time.sleep(bekleme)
-                    continue
-                hatali += len(grup)
-                print(f"  HATA (grup: {isimler[:60]}...): {e}")
-                break
+        b, h = _grup_isle(client, supabase, grup)
+        basarili += b
+        hatali += h
         time.sleep(0.5)
 
     print(f"\nTamamlandi. Basarili: {basarili}, Hatali: {hatali}")
