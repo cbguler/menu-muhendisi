@@ -4793,3 +4793,48 @@ farkı var, kullanıcıya bildirildi.
 `rendeleme_meyve.png`, `soyma_meyve.png` eklenmeli. Kod tarafında
 (`asama_ikonlari.py`) zaten bu dosya adlarını arayacak şekilde
 hazırdı (bir önceki oturumda eklendi).
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Gerçek Veriyle Malzeme Önceliklendirmesi — Soğan #1 Çıktı, Kod Genelleştirildi
+
+Kullanıcı `malzeme_sikligi_analiz.sql` sorgusunu çalıştırıp gerçek
+sonucu paylaştı. Sonuç net: **soğan, doğrama/dilim/rende/soy
+adımlarında EN BASKIN malzeme -- 78 farklı tarifte geçiyor (kütüphanenin
+~%32'si!), 2. sıradaki domatesten (11 tarif) 7 KAT fazla.** Diğerleri
+(limon 10, biber 10, patlıcan/havuç 7) çok daha küçük kaldı. İlginç bir
+yan bulgu: mevcut "dilimleme" ikonunun gösterdiği salatalık gerçek
+verilerde 0 kez çıktı -- şimdilik dokunulmadı (kapsam büyütülmedi),
+ama not düşüldü.
+
+**Kod genelleştirildi:** Önceki "_meyve" varyantı özel-durum mantığı,
+ÖNCELİK SIRALI, genişletilebilir bir sisteme dönüştürüldü
+(`_SPESIFIK_MALZEME_VARYANTLARI` listesi) -- yeni bir malzeme
+eklenince (ör. ileride limon/biber) sadece listeye bir satır eklemek
+yeterli, başka hiçbir yer değişmiyor. Öncelik sırası: özel malzeme
+(soğan) → genel meyve → temel (sebze) versiyon. Test edildi: "Soğanları
+doğrayın" → `dograma_sogan.png`, "Elmaları doğrayın" → `dograma_meyve.png`,
+"Domatesleri doğrayın" → `dograma.png` (hepsi doğru ayrıldı).
+
+Kullanıcıya 4 soğan varyantı ikonu için Gemini promptları verildi
+(`sogan_ikon_prompt_listesi.md`).
+
+**Not (kullanıcıdan):** tarif sayısı arttıkça bu SQL analizi tekrar
+çalıştırılmalı -- `malzeme_sikligi_analiz.sql` bu amaçla saklanmalı.
+
+**Dosya durumu:** `asama_ikonlari.py` güncellendi;
+`sogan_ikon_prompt_listesi.md` (yeni) eklendi; kullanıcı 4 yeni PNG
+üretip gönderecek (`dograma_sogan.png`, `dilimleme_sogan.png`,
+`rendeleme_sogan.png`, `soyma_sogan.png`).
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): 4 Soğan Varyantı İkonu Teslim Alındı ve İşlendi
+
+Kullanıcı doğrama/dilimleme/rendeleme/soyma için soğan ile üretilmiş 4
+ikon gönderdi (veri analizinde en baskın malzeme çıkmıştı -- 78 tarif).
+Hepsi aynı sağlamlaştırılmış yöntemle işlendi, otomatik kontrolden
+TEMİZ geçti (biri ayrıca görsel olarak da doğrulandı).
+
+**Dosya durumu:** `assets/dograma_sogan.png`, `dilimleme_sogan.png`,
+`rendeleme_sogan.png`, `soyma_sogan.png` eklenmeli. Kod tarafı
+(`asama_ikonlari.py`) bir önceki oturumda zaten bu dosya adlarını en
+yüksek öncelikle arayacak şekilde hazırlanmıştı.

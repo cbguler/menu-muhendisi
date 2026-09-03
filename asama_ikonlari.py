@@ -47,13 +47,27 @@ def _ikon_yolu(ikon_adi):
 # ELLI YEDINCI DUZELTME (30 Agustos 2026): kullanici gercek bir ornek
 # fark etti -- "şeftalileri ... dilimleyin" yazan bir tarifte, dilimleme
 # ikonu bir SALATALIK gosteriyordu (ikonun icine gomulu sabit malzeme
-# ile tarifteki gercek malzeme uyusmuyordu, "sacma" durdugu soylendi).
-# Malzeme-turune EN COK duyarli 4 hazirlik islemi (dograma/dilimleme/
-# rendeleme/soyma -- bunlarda spesifik bir sebze/meyve GORSEL OLARAK
-# baskin) icin birer "_meyve" varyanti eklendi. Metinde bir meyve adi
-# geciyorsa bu varyant (dosya varsa) tercih ediliyor, yoksa mevcut
-# (sebze) versiyonuna sessizce geri donuluyor -- boylece meyve
-# ikonlari henuz eklenmemisse hicbir sey bozulmaz.
+# ile tarifteki gercek malzeme uyusmuyordu). Malzeme-turune EN COK
+# duyarli 4 hazirlik islemi (dograma/dilimleme/rendeleme/soyma) icin
+# oncelik sirali, GENISLETILEBILIR bir malzeme-varyanti sistemi
+# kuruldu.
+#
+# ELLI DOKUZUNCU DUZELTME (30 Agustos 2026): kullanici gercek veriyle
+# (241 tariflik kutuphanede SQL sorgusuyla) dogruladi -- SOGAN, doğrama/
+# dilim/rende/soy adimlarinda EN BASKIN malzeme (78 farkli tarifte
+# geciyor -- 2. siradaki domatesten 7 KAT fazla). Bu yuzden "soğan"
+# genel meyve/sebze ayriminin ONUNE gecen, EN YUKSEK ONCELIKLI ozel
+# bir varyant olarak eklendi.
+#
+# _SPESIFIK_MALZEME_VARYANTLARI: (kok listesi, dosya soneki) ciftlerinin
+# ONCELIK SIRALI listesi -- yeni bir malzeme icin ikon eklendiginde
+# buraya sadece bir satir eklemek yeterli, baska hicbir yer
+# degismiyor. Bir eslesme bulunur ama karsilik gelen dosya HENUZ YOKSA
+# bir sonraki (daha genel) secene sessizce gecilir.
+_SPESIFIK_MALZEME_VARYANTLARI = [
+    (["soğan", "sogan"], "sogan"),
+]
+
 MEYVE_KOKLERI = [
     "elma", "armut", "şeftali", "seftali", "kayısı", "kayisi", "erik",
     "çilek", "cilek", "muz", "portakal", "mandalina", "limon", "greyfurt",
@@ -62,23 +76,28 @@ MEYVE_KOKLERI = [
     "ahududu", "mersin",
 ]
 
-_MEYVE_VARYANTLI_ISLEMLER = {"dograma", "dilimleme", "rendeleme", "soyma"}
+_MALZEME_DUYARLI_ISLEMLER = {"dograma", "dilimleme", "rendeleme", "soyma"}
 
 
-def _metin_meyve_iceriyor_mu(kelimeler):
-    return any(
-        any(kelime.startswith(kok) for kok in MEYVE_KOKLERI)
-        for kelime in kelimeler
-    )
+def _kelimelerde_kok_var_mi(kelimeler, kokler):
+    return any(any(kelime.startswith(kok) for kok in kokler) for kelime in kelimeler)
 
 
 def _ikon_adini_coz(ikon_adi, kelimeler):
-    """dograma/dilimleme/rendeleme/soyma icin, AYNI metinde bir meyve
-    adi geciyorsa "_meyve" varyantini (dosyasi varsa) tercih eder."""
-    if ikon_adi in _MEYVE_VARYANTLI_ISLEMLER and _metin_meyve_iceriyor_mu(kelimeler):
-        meyve_yolu = _ikon_yolu(f"{ikon_adi}_meyve")
-        if meyve_yolu:
-            return meyve_yolu
+    """dograma/dilimleme/rendeleme/soyma icin, AYNI metinde ozel bir
+    malzeme (ör. soğan) geciyorsa o varyanti (dosyasi varsa) tercih
+    eder; yoksa genel meyve varyantina, o da yoksa temel (sebze)
+    versiyona duser."""
+    if ikon_adi in _MALZEME_DUYARLI_ISLEMLER:
+        for kokler, sonek in _SPESIFIK_MALZEME_VARYANTLARI:
+            if _kelimelerde_kok_var_mi(kelimeler, kokler):
+                yol = _ikon_yolu(f"{ikon_adi}_{sonek}")
+                if yol:
+                    return yol
+        if _kelimelerde_kok_var_mi(kelimeler, MEYVE_KOKLERI):
+            meyve_yolu = _ikon_yolu(f"{ikon_adi}_meyve")
+            if meyve_yolu:
+                return meyve_yolu
     return _ikon_yolu(ikon_adi)
 
 
