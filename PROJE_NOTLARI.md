@@ -4744,3 +4744,33 @@ büyütüldü.
 
 **Dosya durumu:** `pages/5_Tarif_Kutuphanesi.py` güncellendi (boyut);
 20 ikon PNG'si YENİDEN üretilip değiştirildi (aynı dosya adlarıyla).
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Malzeme-Türüne Duyarlı İkon Varyantları (Meyve/Sebze) Eklendi
+
+Kullanıcı gerçek bir örnek fark etti: "şeftalileri ... dilimleyin"
+yazan bir tarifte, dilimleme ikonu bir SALATALIK gösteriyordu --
+ikonun içine gömülü sabit malzeme ile tarifteki gerçek malzeme
+uyuşmuyordu.
+
+**Çözüm:** Malzeme türüne EN ÇOK duyarlı 4 hazırlık işlemi (doğrama/
+dilimleme/rendeleme/soyma -- bunlarda spesifik bir sebze/meyve GÖRSEL
+OLARAK baskın) için birer "_meyve" varyantı tasarlandı (elma ile,
+jenerik "meyve" sembolü olarak). Kullanıcıya bu 4 ikon için Gemini
+promptları verildi (`meyve_ikon_prompt_listesi.md`).
+
+**Eşleştirme mantığı güncellendi:** Metinde bir meyve adı (elma,
+şeftali, armut, çilek vb. -- 30 kelimelik bir liste) geçiyorsa VE
+eşleşen işlem bu 4'ten biriyse, `{işlem}_meyve.png` (varsa) tercih
+ediliyor, yoksa mevcut (sebze) versiyonuna sessizce geri dönülüyor --
+kullanıcı meyve ikonlarını henüz eklememiş olsa bile hiçbir şey
+bozulmuyor.
+
+Test edildi: "Şeftalileri ... dilimleyin" → `dilimleme_meyve.png`,
+"Domatesleri dilimleyin" → `dilimleme.png` (doğru ayrım yapıldı).
+
+**Dosya durumu:** `asama_ikonlari.py` güncellendi;
+`meyve_ikon_prompt_listesi.md` (yeni, referans dosyası) eklendi;
+kullanıcı 4 yeni PNG üretip gönderecek
+(`dograma_meyve.png`, `dilimleme_meyve.png`, `rendeleme_meyve.png`,
+`soyma_meyve.png`).

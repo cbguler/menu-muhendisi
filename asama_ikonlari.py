@@ -44,6 +44,44 @@ def _ikon_yolu(ikon_adi):
     return yol if os.path.exists(yol) else None
 
 
+# ELLI YEDINCI DUZELTME (30 Agustos 2026): kullanici gercek bir ornek
+# fark etti -- "şeftalileri ... dilimleyin" yazan bir tarifte, dilimleme
+# ikonu bir SALATALIK gosteriyordu (ikonun icine gomulu sabit malzeme
+# ile tarifteki gercek malzeme uyusmuyordu, "sacma" durdugu soylendi).
+# Malzeme-turune EN COK duyarli 4 hazirlik islemi (dograma/dilimleme/
+# rendeleme/soyma -- bunlarda spesifik bir sebze/meyve GORSEL OLARAK
+# baskin) icin birer "_meyve" varyanti eklendi. Metinde bir meyve adi
+# geciyorsa bu varyant (dosya varsa) tercih ediliyor, yoksa mevcut
+# (sebze) versiyonuna sessizce geri donuluyor -- boylece meyve
+# ikonlari henuz eklenmemisse hicbir sey bozulmaz.
+MEYVE_KOKLERI = [
+    "elma", "armut", "şeftali", "seftali", "kayısı", "kayisi", "erik",
+    "çilek", "cilek", "muz", "portakal", "mandalina", "limon", "greyfurt",
+    "üzüm", "uzum", "kiraz", "vişne", "visne", "karpuz", "kavun", "incir",
+    "nar", "ananas", "kivi", "ayva", "dut", "böğürtlen", "bogurtlen",
+    "ahududu", "mersin",
+]
+
+_MEYVE_VARYANTLI_ISLEMLER = {"dograma", "dilimleme", "rendeleme", "soyma"}
+
+
+def _metin_meyve_iceriyor_mu(kelimeler):
+    return any(
+        any(kelime.startswith(kok) for kok in MEYVE_KOKLERI)
+        for kelime in kelimeler
+    )
+
+
+def _ikon_adini_coz(ikon_adi, kelimeler):
+    """dograma/dilimleme/rendeleme/soyma icin, AYNI metinde bir meyve
+    adi geciyorsa "_meyve" varyantini (dosyasi varsa) tercih eder."""
+    if ikon_adi in _MEYVE_VARYANTLI_ISLEMLER and _metin_meyve_iceriyor_mu(kelimeler):
+        meyve_yolu = _ikon_yolu(f"{ikon_adi}_meyve")
+        if meyve_yolu:
+            return meyve_yolu
+    return _ikon_yolu(ikon_adi)
+
+
 _OLUMSUZLUK_KELIMELERI = {"değil", "degil", "yerine"}
 
 
@@ -72,7 +110,7 @@ def tek_ikon_bul(metin):
     for ikon_adi, kokler in ASAMA_IKON_KOKLERI.items():
         for i in range(len(kelimeler)):
             if _kelime_eslesiyor_mu(kelimeler, i, kokler):
-                yol = _ikon_yolu(ikon_adi)
+                yol = _ikon_adini_coz(ikon_adi, kelimeler)
                 if yol:
                     return yol
     return None
@@ -90,7 +128,7 @@ def tum_ikonlari_bul(metin):
     for ikon_adi, kokler in ASAMA_IKON_KOKLERI.items():
         for i in range(len(kelimeler)):
             if _kelime_eslesiyor_mu(kelimeler, i, kokler):
-                yol = _ikon_yolu(ikon_adi)
+                yol = _ikon_adini_coz(ikon_adi, kelimeler)
                 if yol and yol not in bulunanlar:
                     bulunanlar.append(yol)
                 break
