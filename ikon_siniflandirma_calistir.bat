@@ -1,14 +1,13 @@
 @echo off
-echo Gemini ve Supabase paketleri kontrol ediliyor / kuruluyor...
-pip install google-genai --quiet
+echo Groq ve Supabase paketleri kontrol ediliyor / kuruluyor...
+pip install groq --quiet
 pip install supabase --quiet
 
-if "%GEMINI_API_KEY%"=="" (
+if "%GROQ_API_KEY_IKON%"=="" (
     echo.
-    echo HATA: GEMINI_API_KEY bulunamadi.
-    echo aistudio.google.com'dan ucretsiz bir anahtar al, sonra
-    echo "setx GEMINI_API_KEY <anahtarin>" komutunu BIR KEZ calistirip,
-    echo terminali kapatip yeniden acman gerekiyor.
+    echo HATA: GROQ_API_KEY_IKON bulunamadi.
+    echo Once "setx GROQ_API_KEY_IKON <anahtarin>" komutunu BIR KEZ
+    echo calistirip, terminali kapatip yeniden acman gerekiyor.
     pause
     exit /b 1
 )
@@ -35,8 +34,7 @@ if "%SUPABASE_SERVICE_ROLE_KEY%"=="" (
 )
 
 echo.
-echo Siniflandirma basliyor -- Gemini'nin ucretsiz katmani cok daha
-echo yuksek limitli oldugu icin muhtemelen tek calistirmada bitecek...
+echo Siniflandirma basliyor (kucuk model, llama-3.1-8b-instant)...
 echo.
 
 python ikon_siniflandirma_calistir.py

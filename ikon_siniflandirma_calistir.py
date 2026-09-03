@@ -8,25 +8,24 @@
 #
 # ARTIMLI CALISIR: sadece hazirlik_ikonlari BOS olan VEYA
 # hazirlik_talimati DEGISMIS (hash uyusmuyor) tarifleri isler. Zaten
-# islenmis, degismemis tarifler ATLANIR -- kutuphane 241'den 1000'e
-# cikinca script'i tekrar calistirmak sadece YENI/DEGISEN tarifleri
-# isler, hepsini bastan degil.
+# islenmis, degismemis tarifler ATLANIR.
 #
 # GRUPLU ISLEME: her tarif icin AYRI bir API cagrisi yapmak, ayni
 # (uzun) sistem promptunu tekrar tekrar gonderip token israf ediyordu
 # -- birden fazla tarif TEK istekte gruplaniyor.
 #
-# ALTMIS DOKUZUNCU DUZELTME (30 Agustos 2026): Groq'un GUNLUK (TPD)
-# token limiti (200.000/gun, gpt-oss-120b icin) 240 tariflik bu isi
-# GUNLERCE surecek hale getiriyordu. Kullanici ucretli bir cozum
-# istemedi -- arastirma sonucu Google Gemini API'nin ucretsiz
-# katmaninin (Gemini 2.0 Flash-Lite: dakikada 1.000.000 token, gunde
-# 1.500 istek, KREDI KARTI GEREKTIRMIYOR) bu is icin COK daha uygun
-# oldugu bulundu. Script Groq'tan Gemini'ye tasindi.
+# YETMISINCI DUZELTME (30 Agustos 2026): Gemini denendi ama Google'in
+# 23 Mart 2026'dan itibaren YENI hesaplar icin zorunlu kildigi en az
+# 10$'lik "prepay" sarti (kullanicinin "ucretli cozum istemiyorum"
+# karariyla celisiyor) yuzunden vazgecildi. Groq'a geri donuldu, ama
+# BUYUK model (openai/gpt-oss-120b) yerine KUCUK model
+# (llama-3.1-8b-instant) kullaniliyor -- arastirma gosterdi ki kucuk
+# modellerde SERT bir GUNLUK TOKEN (TPD) duvari yok, sadece dakikalik
+# token + gunluk ISTEK SAYISI siniri var; bizim ihtiyacimiz (~20 istek)
+# bu sinirin cok altinda kaliyor.
 #
 # CALISTIRMA: python ikon_siniflandirma_calistir.py
-# GEREKEN SIRLAR: GEMINI_API_KEY (aistudio.google.com'dan, ucretsiz),
-# SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
+# GEREKEN SIRLAR: GROQ_API_KEY_IKON, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
 
 import hashlib
 import json
@@ -34,15 +33,14 @@ import os
 import sys
 import time
 
-from google import genai
-from google.genai import types
+from groq import Groq
 
 from asama_ikonlari import ASAMA_IKON_KOKLERI, ikon_yolu_for_eylem
 from supabase import create_client
 
 GECERLI_EYLEMLER = sorted(ASAMA_IKON_KOKLERI.keys())
 
-MODEL = "gemini-2.5-flash-lite"  # 2.0-flash-lite kaldirildi, 3.5-flash-lite "prepayment credits" hatasi verdi -- 2.5-flash-lite birden fazla kaynakta ucretsiz olarak dogrulandi
+MODEL = "llama-3.1-8b-instant"  # kucuk model -- sert gunluk TOKEN duvari yok (sadece dakikalik token + gunluk istek sayisi siniri)
 GRUP_BOYUTU = 12  # tek istekte kac tarif birlikte gonderilsin
 
 SISTEM_PROMPTU = f"""Sen bir Turk yemek tarifi metnini analiz eden bir asistansin.
@@ -97,17 +95,17 @@ def _tarif_grubu_siniflandir(client, tarif_grubu):
         parcalar.append(f"TARIF {i}:\n{numarali_satirlar}")
     kullanici_mesaji = "\n\n".join(parcalar)
 
-    yanit = client.models.generate_content(
+    yanit = client.chat.completions.create(
         model=MODEL,
-        contents=kullanici_mesaji,
-        config=types.GenerateContentConfig(
-            system_instruction=SISTEM_PROMPTU,
-            temperature=0,
-            max_output_tokens=8000,
-            response_mime_type="application/json",
-        ),
+        messages=[
+            {"role": "system", "content": SISTEM_PROMPTU},
+            {"role": "user", "content": kullanici_mesaji},
+        ],
+        response_format={"type": "json_object"},
+        temperature=0,
+        max_tokens=8000,
     )
-    veri = json.loads(yanit.text)
+    veri = json.loads(yanit.choices[0].message.content)
 
     sonuclar = [[[] for _ in tarif["satirlar"]] for tarif in tarif_grubu]
     for tarif_sonucu in veri.get("tarifler", []):
@@ -133,24 +131,18 @@ def _tarif_grubu_siniflandir(client, tarif_grubu):
 
 
 def calistir():
-    api_key = os.environ.get("GEMINI_API_KEY")
+    api_key = os.environ.get("GROQ_API_KEY_IKON")
     if not api_key:
-        print("HATA: GEMINI_API_KEY ortam degiskeni/sir bulunamadi.")
-        print("aistudio.google.com'dan ucretsiz bir anahtar alip")
-        print('"setx GEMINI_API_KEY <anahtarin>" ile kaydet, terminali')
-        print("kapatip yeniden ac.")
+        print("HATA: GROQ_API_KEY_IKON ortam degiskeni/sir bulunamadi.")
         sys.exit(1)
 
     supabase_url = os.environ.get("SUPABASE_URL")
     supabase_service_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
     if not supabase_url or not supabase_service_key:
         print("HATA: SUPABASE_URL ve/veya SUPABASE_SERVICE_ROLE_KEY bulunamadi.")
-        print("Supabase projenin Settings -> API sayfasindan 'Project URL' ve")
-        print("'service_role' anahtarini al (ANON anahtari DEGIL -- service_role,")
-        print("RLS'i atlar, cok gizli tut, hicbir zaman istemci tarafinda kullanma).")
         sys.exit(1)
 
-    client = genai.Client(api_key=api_key)
+    client = Groq(api_key=api_key)
     supabase = create_client(supabase_url, supabase_service_key)
 
     tarifler = (
@@ -191,11 +183,6 @@ def calistir():
                             "ikonlar_by_satir": ikonlar_by_satir,
                         }
                     }).eq("id", tarif["id"]).execute()
-                    # gecen sefer "OK" yazdi ama HICBIR SEY yazilmamisti
-                    # (RLS sessizce 0 satirla sonuclaniyordu, hata
-                    # FIRLATMIYORDU). Donen veri GERCEKTEN bos mu kontrol
-                    # ediliyor -- boyleyse bunu SESSIZ BASARI degil, ACIK
-                    # HATA olarak isliyoruz.
                     if not guncelleme.data:
                         raise RuntimeError(
                             f"Guncelleme 0 satir etkiledi (RLS engelliyor olabilir): {tarif['ad']}"
@@ -205,15 +192,15 @@ def calistir():
                 break
             except Exception as e:
                 hata_metni = str(e)
-                # Gemini'nin kota/rate-limit hatalari genelde
-                # "RESOURCE_EXHAUSTED" veya "429" iceriyor -- kisa bir
-                # yeniden deneme (Gemini'de gunluk limit Groq'taki kadar
-                # sert degil, dakikalik/istek bazli olma ihtimali daha
-                # yuksek, bu yuzden TPD icin ozel bir "hemen dur" mantigina
-                # burada gerek yok, kisa retry yeterli).
+                if "tokens per day" in hata_metni or "TPD" in hata_metni:
+                    print(f"\nGUNLUK TOKEN KOTASI DOLDU (grup: {isimler[:60]}...).")
+                    print(hata_metni)
+                    print(f"\nSu ana kadar basarili: {basarili}. Kalan tarifler "
+                          "sonra scripti tekrar calistirinca islenecek.")
+                    return
                 gecici_hata_mi = (
-                    "RESOURCE_EXHAUSTED" in hata_metni or "429" in hata_metni
-                    or "rate limit" in hata_metni.lower()
+                    "rate_limit" in hata_metni or "429" in hata_metni
+                    or "json_validate_failed" in hata_metni
                 )
                 if gecici_hata_mi and deneme < 2:
                     bekleme = 15 * (deneme + 1)

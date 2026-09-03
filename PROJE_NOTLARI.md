@@ -5125,3 +5125,27 @@ Sahte (mock) bir yanıtla test edildi, doğru çalıştığı doğrulandı.
 
 **Dosya durumu:** `ikon_siniflandirma_calistir.py` ve
 `ikon_siniflandirma_calistir.bat` tamamen güncellendi.
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Gemini Denemesi Sonlandırıldı (Google $10 Prepay Şartı), Groq'ta Küçük Modele Geçildi
+
+Gemini denemesi sırasında sırayla üç model adı denendi
+(gemini-2.0-flash-lite → 404 kaldırılmış; gemini-3.5-flash-lite →
+"prepayment credits depleted"; gemini-2.5-flash-lite → "no longer
+available to new users"). Araştırma gerçek sebebi ortaya çıkardı:
+**Google, 23 Mart 2026'dan itibaren YENİ hesaplar için Gemini API
+kullanımından önce en az 10$'lık zorunlu bir "prepay" şartı
+getirmiş** -- kullanıcının yeni açtığı Gmail hesabı bu kapsama giriyor.
+Bu bir kod hatası değil, Google'ın güncel politikası, ve kullanıcının
+"ücretli çözüm istemiyorum" kararıyla doğrudan çelişiyor.
+
+**Karar:** Gemini'den vazgeçildi, Groq'a geri dönüldü -- ama BÜYÜK
+model (`openai/gpt-oss-120b`, sert 200.000/gün TOKEN duvarı olan)
+yerine KÜÇÜK model (`llama-3.1-8b-instant`) kullanılıyor. Araştırma
+gösterdi ki küçük modellerde bu kadar sert bir günlük TOKEN limiti
+yok, sadece dakikalık token + günlük İSTEK SAYISI sınırı var --
+bizim ihtiyacımız (~20 istek/gün) bunun çok altında kalıyor.
+
+**Dosya durumu:** `ikon_siniflandirma_calistir.py` ve `.bat` dosyası
+Groq'a (küçük modelle) geri döndürüldü. `GEMINI_API_KEY` artık
+kullanılmıyor (isterse silinebilir, zararı yok).
