@@ -4945,3 +4945,25 @@ resmi destek. Sabit 260px genişlik korundu (dar sütunlarda taşma
 riskini önlemek için).
 
 **Dosya durumu:** `pages/5_Tarif_Kutuphanesi.py` güncellendi.
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Gerçek Kök Neden Bulundu — "SÜRE ÖZETİ" Satırı Yanlışlıkla İkon Tetikliyordu
+
+Kullanıcı ısrarla "aynı resim tekrar ediyor" dedi, sert yenileme/reboot
+sonuç vermedi -- SQL ile GERÇEK `hazirlik_talimati` metni çekildi
+(teshis_hazirlik_metni.sql). Kök neden netleşti: ikon hiç "kaymamış",
+GERÇEKTEN ikinci bir eşleşme vardı -- `"**SÜRE ÖZETİ:** ... (pişme +
+demlenme) ..."` satırı bir TALİMAT değil, bir ÖZET/SÜRE cümlesi, ama
+içinde "demlenme" kelimesi geçtiği için dinlendirme ikonunu (yanlışlıkla)
+tetikliyordu.
+
+**Çözüm:** Tüm 241 tarifte AYNI şablon kullanıldığı doğrulandı
+(`**Hazırlık...**`, `**Isıl İşlem**`, `**PARALEL YAPILABİLİRLİK:**`,
+`**SÜRE ÖZETİ:**` hep aynı kalın başlıklarla başlıyor) -- bu
+özet/başlık satırları artık ikon eşleştirmesinden TAMAMEN hariç
+tutuluyor (metin yine gösteriliyor, sadece ikon aranmıyor). Kullanıcının
+gerçek metniyle yeniden test edildi: doğru satırlar (dograma_sogan,
+kavurma+haslama, dinlendirme) doğru eşleşti, özet satırları doğru
+şekilde atlandı.
+
+**Dosya durumu:** `pages/5_Tarif_Kutuphanesi.py` güncellendi.

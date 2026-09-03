@@ -362,9 +362,25 @@ if tarif["hazirlik_talimati"]:
     # gercekci olarak en fazla birkac (2-4) ikon cikiyor (tum_ikonlari_bul
     # artik SATIR bazinda calisiyor, tum metin degil) -- bu yuzden
     # "Admin butonu" hatasindaki gibi asiri sikisma riski yok.
+    # ALTMIS UCUNCU DUZELTME (30 Agustos 2026): kullaniciyla birlikte
+    # SQL uzerinden GERCEK metni cektik -- ikon "kaymiyordu", GERCEKTEN
+    # ikinci bir eslesme vardi: "**SÜRE ÖZETİ:** ... (pişme + demlenme)
+    # ..." satiri bir TALIMAT DEGIL, bir OZET/SURE cumlesi, ama icinde
+    # "demlenme" gectigi icin dinlendirme ikonunu YINE (yanlislikla)
+    # tetikliyordu. Butun tariflerde AYNI sablon kullanildigi icin
+    # (Hazırlık/Isıl İşlem basliklari + PARALEL YAPILABİLİRLİK + SÜRE
+    # ÖZETİ hep ayni kalin basliklarla basliyor) bu OZET/BASLIK
+    # satirlari ikon eslestirmesinden TAMAMEN haric tutuluyor -- metin
+    # yine gosteriliyor, sadece ikon aranmiyor.
+    _IKON_HARIC_SATIR_BASLANGICLARI = (
+        "**hazırlık", "**isıl işlem", "**paralel yapılabilirlik",
+        "**süre özeti",
+    )
     for _satir in tarif["hazirlik_talimati"].splitlines():
         if _satir.strip():
-            _satir_ikonlari = tum_ikonlari_bul(_satir)
+            _satir_kucuk = _satir.strip().lower()
+            _ozet_satiri_mi = _satir_kucuk.startswith(_IKON_HARIC_SATIR_BASLANGICLARI)
+            _satir_ikonlari = [] if _ozet_satiri_mi else tum_ikonlari_bul(_satir)
             if _satir_ikonlari:
                 _ikon_kolonlari = st.columns(
                     len(_satir_ikonlari), gap="medium", vertical_alignment="bottom"
