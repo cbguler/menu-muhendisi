@@ -4967,3 +4967,71 @@ kavurma+haslama, dinlendirme) doğru eşleşti, özet satırları doğru
 şekilde atlandı.
 
 **Dosya durumu:** `pages/5_Tarif_Kutuphanesi.py` güncellendi.
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): AI Tabanlı İkon Sınıflandırmasına Geçiş Mimarisi Kuruldu
+
+Kullanıcı, kelime-kökü eşleştirmesinin (yoğur/yoğurt es-sesliliği,
+"SÜRE ÖZETİ" satırında yanlış eşleşme, "salatalık"→"salatalığı" ünsüz
+yumuşaması nedeniyle SQL analizinin kör kalması gibi tekrar eden gerçek
+hatalar) yeterince güvenilir olmadığına karar verdi. Karar: 241 (ve
+büyüyen) kütüphane tarifini BİR KEZ (ve metin değiştiğinde tekrar) bir
+yapay zeka geçişiyle satır satır sınıflandırıp SONUCU veritabanında
+saklama mimarisine geçildi.
+
+**Ölçeklenebilirlik sorusu (kullanıcı sordu):** kütüphane 241'den
+1000'e çıkınca ne olacak? Cevap: mimari İNCELEMELİ (incremental)
+tasarlandı -- her tarifte bir `hash` (hazirlik_talimati metninin
+SHA-256 özeti) saklanıyor, script SADECE hash'i uyuşmayan (yeni veya
+düzenlenmiş) tarifleri işliyor. Zaten sınıflandırılmış, değişmemiş
+tarifler asla yeniden işlenmiyor -- 1000'e çıkınca sadece YENİ ~759
+tarif işlenir.
+
+**Groq hesap izolasyonu sorusu (kullanıcı sordu):** TrendSurf'teki
+mevcut Groq anahtarını kullanmak rate limit çakışmasına yol açar mı?
+Groq'un resmi belgelerinden doğrulandı: "Rate limits apply at the
+organization level, not individual users" -- yani AYNI hesapta yeni
+bir anahtar oluşturmak İZOLASYON SAĞLAMAZ (limit hesap bazında
+havuzlanıyor, anahtar bazında değil). Kullanıcı bu yüzden TAMAMEN AYRI
+bir Groq hesabı (farklı e-posta) açmaya karar verdi -- `GROQ_API_KEY_IKON`
+adıyla, TrendSurf'ün `GROQ_API_KEY`'inden ayrı bir sır olarak
+saklanacak.
+
+**Mimari tasarım:**
+- `receteler.hazirlik_ikonlari` (yeni JSONB sütun, migration 76):
+  `{"hash": "...", "ikonlar_by_satir": [[...], [...], ...]}`
+- `ikon_siniflandirma_calistir.py` (yeni script): Groq'a
+  (`llama-3.3-70b-versatile`) her tarifin hazırlık talimatını
+  numaralandırılmış satırlar halinde gönderir, HER satır için hangi
+  SABIT eylem(ler)in (dograma/kavurma/vb.) geçtiğini JSON olarak ister.
+  Başlık/özet satırlarını (SÜRE ÖZETİ vb.) ve yoğur/yoğurt gibi
+  es-seslileri doğru ayırt etmesi için promptta açıkça uyarılıyor.
+- **Hibrit tasarım (önemli):** AI SADECE hangi eylemin geçtiğini
+  belirliyor -- HANGİ MALZEME VARYANTININ (soğan/limon/biber/meyve/
+  temel) gösterileceğine hâlâ MEVCUT, KANITLANMIŞ öncelik-çözme kodu
+  (`asama_ikonlari.ikon_yolu_for_eylem`, yeni eklenen ince bir sarmalayıcı)
+  karar veriyor -- bu kod hiç hatalı çıkmamıştı, sadece eylem-tespiti
+  güvenilirdi, o yüzden AI'nin işini SADECE o kısımla sınırladık.
+- `pages/5_Tarif_Kutuphanesi.py`: önbellek (hash eşleşiyorsa) TERCİH
+  EDİLİYOR, yoksa (henüz sınıflandırılmamış tarifler için) eski
+  kelime-kökü yöntemine SESSİZCE geri dönülüyor -- hiçbir tarif
+  ikonsuz kalmıyor.
+
+Üç senaryo simüle edilerek test edildi (geçerli önbellek / önbellek
+yok / bayat önbellek) -- hepsi doğru davrandı.
+
+**Kullanıcının yapması gerekenler:**
+1. Yeni Groq hesabı + API anahtarı, `GROQ_API_KEY_IKON` olarak
+   Streamlit Cloud sırlarına eklenmeli.
+2. `requirements.txt`'e `groq` paketi eklenmeli (bu depo bende yok,
+   kontrol edilmeli).
+3. Migration 76 çalıştırılmalı.
+4. `python ikon_siniflandirma_calistir.py` çalıştırılmalı (ilk
+   seferde tüm 241 tarifi işler, sonraki seferlerde sadece
+   yeni/değişenleri).
+
+**Dosya durumu:** `sql/76_hazirlik_ikonlari_ekle.sql` (yeni),
+`ikon_siniflandirma_calistir.py` (yeni), `asama_ikonlari.py`
+güncellendi (yeni `ikon_yolu_for_eylem` fonksiyonu),
+`pages/5_Tarif_Kutuphanesi.py` güncellendi (önbellek-öncelikli
+gösterim).

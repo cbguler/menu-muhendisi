@@ -11,6 +11,8 @@
 # besin/maliyet toplamlarini carpar. Glisemik indeks bir oran oldugu
 # icin olceklenmez (porsiyon sayisindan bagimsizdir).
 
+import hashlib
+
 import streamlit as st
 
 # NOT (12 Agustos 2026, Oturum 11): logo artik burada AYRICA gosterilmiyor -- app.py'deki ozel menu satirinin icine tasindi, orada zaten her sayfa gecisinde render ediliyor. Burada tekrar cagirmak cift logoya yol acardi.
@@ -68,7 +70,7 @@ def _tarif_kutuphanesi_detayli_getir():
     grup_by_kategori = {k["id"]: k["sira"] for k in kategoriler}
 
     receteler = _sayfalayarak_getir(lambda: supabase.table("receteler")
-        .select("id, ad, mutfak_kategori_id, mevsim_etiketi, ozel_etiketler, bolge, hazirlik_talimati")
+        .select("id, ad, mutfak_kategori_id, mevsim_etiketi, ozel_etiketler, bolge, hazirlik_talimati, hazirlik_ikonlari")
         .is_("isletme_id", "null")
     )
 
@@ -147,6 +149,7 @@ def _tarif_kutuphanesi_detayli_getir():
             "bolge": r["bolge"] or "Genel",
             "mevsim_etiketi": r["mevsim_etiketi"] or "yil_boyunca",
             "hazirlik_talimati": r["hazirlik_talimati"],
+            "hazirlik_ikonlari": r.get("hazirlik_ikonlari"),
             "malzemeler": sorted(malzeme_listesi, key=lambda x: -x["miktar_gram"]),
             "kalori": kalori, "protein": protein, "yag": yag, "karbonhidrat": karbonhidrat,
             "gi": gi, "maliyet_eur": maliyet_eur, "tam_fiyatli": tam_fiyatli,
@@ -346,41 +349,34 @@ else:
 
 st.write("**Hazırlık talimatı**")
 if tarif["hazirlik_talimati"]:
-    # ELLI ALTINCI DUZELTME (30 Agustos 2026): kullanici "her madde
-    # kendi ikonunun ustunde/altinda olsun, hepsi bastan toplu degil"
-    # dedi -- hakliydi, oncekinde tum ikonlar metnin USTUNDE tek sirada
-    # topluydu. Simdi metin SATIR SATIR isleniyor, her satirin (ör.
-    # "1. Soğanı rendeleyin...") HEMEN ALTINA sadece O SATIRDA gecen
-    # ikon(lar) ekleniyor -- bir satirda birden fazla teknik geciyorsa
-    # ALTMIS IKINCI DUZELTME (30 Agustos 2026): kullanici birden fazla
-    # ikon yan yana geldiginde aralarinin dar oldugunu ve alt kenarlarinin
-    # hizasiz durdugunu belirtti (kaynagi: farkli gorsellerin dogal
-    # en-boy oranlari farkli, ayni genislikte bile farkli yukseklikte
-    # cikiyorlar). st.image()'in LISTE modu yerine, Streamlit'in
-    # BELGELENMIS `gap` ve `vertical_alignment="bottom"` destegine sahip
-    # st.columns() kullanildi -- CSS hack DEGIL, resmi API. Bir satirda
-    # gercekci olarak en fazla birkac (2-4) ikon cikiyor (tum_ikonlari_bul
-    # artik SATIR bazinda calisiyor, tum metin degil) -- bu yuzden
-    # "Admin butonu" hatasindaki gibi asiri sikisma riski yok.
-    # ALTMIS UCUNCU DUZELTME (30 Agustos 2026): kullaniciyla birlikte
-    # SQL uzerinden GERCEK metni cektik -- ikon "kaymiyordu", GERCEKTEN
-    # ikinci bir eslesme vardi: "**SÜRE ÖZETİ:** ... (pişme + demlenme)
-    # ..." satiri bir TALIMAT DEGIL, bir OZET/SURE cumlesi, ama icinde
-    # "demlenme" gectigi icin dinlendirme ikonunu YINE (yanlislikla)
-    # tetikliyordu. Butun tariflerde AYNI sablon kullanildigi icin
-    # (Hazırlık/Isıl İşlem basliklari + PARALEL YAPILABİLİRLİK + SÜRE
-    # ÖZETİ hep ayni kalin basliklarla basliyor) bu OZET/BASLIK
-    # satirlari ikon eslestirmesinden TAMAMEN haric tutuluyor -- metin
-    # yine gosteriliyor, sadece ikon aranmiyor.
+    # ALTMIS BESINCI DUZELTME (30 Agustos 2026): kelime-koku eslestirmesi
+    # (asama_ikonlari.py) tekrar tekrar gercek hatalar cikardi (yoğur/
+    # yoğurt es-sesliligi, "SÜRE ÖZETİ" satirinda yanlis eslesme, "Kavurma
+    # ve Kaynatma" gibi bilesik basliklar). Bunlarin KOKU, Turkce'nin ek
+    # yapisinin basit kelime-koku eslestirmesiyle guvenilir sekilde
+    # cozulememesi. Artik `ikon_siniflandirma_calistir.py` scripti ile
+    # BIR KEZ (ve tarif metni degistiginde tekrar) yapay zeka ile
+    # siniflandirilip `hazirlik_ikonlari` sutununda ONBELLEGE ALINMIS
+    # sonuc TERCIH EDILIYOR -- hash uyusuyorsa. Henuz siniflandirilmamis
+    # (ör. yeni eklenmis, script henuz calistirilmamis) tarifler icin
+    # eski kelime-koku yontemine SESSIZCE geri donuluyor -- hicbir tarif
+    # ikon'suz kalmiyor, sadece daha az guvenilir bir kaynaktan geliyor.
+    _hazirlik_ikonlari = tarif.get("hazirlik_ikonlari") or {}
+    _mevcut_hash = hashlib.sha256(tarif["hazirlik_talimati"].encode("utf-8")).hexdigest()
+    _onbellek_gecerli = _hazirlik_ikonlari.get("hash") == _mevcut_hash
+    _onbellek_satirlari = _hazirlik_ikonlari.get("ikonlar_by_satir", [])
+
     _IKON_HARIC_SATIR_BASLANGICLARI = (
         "**hazırlık", "**isıl işlem", "**paralel yapılabilirlik",
         "**süre özeti",
     )
-    for _satir in tarif["hazirlik_talimati"].splitlines():
+    for _i, _satir in enumerate(tarif["hazirlik_talimati"].splitlines()):
         if _satir.strip():
-            _satir_kucuk = _satir.strip().lower()
-            _ozet_satiri_mi = _satir_kucuk.startswith(_IKON_HARIC_SATIR_BASLANGICLARI)
-            _satir_ikonlari = [] if _ozet_satiri_mi else tum_ikonlari_bul(_satir)
+            if _onbellek_gecerli and _i < len(_onbellek_satirlari):
+                _satir_ikonlari = _onbellek_satirlari[_i]
+            else:
+                _ozet_satiri_mi = _satir.strip().lower().startswith(_IKON_HARIC_SATIR_BASLANGICLARI)
+                _satir_ikonlari = [] if _ozet_satiri_mi else tum_ikonlari_bul(_satir)
             if _satir_ikonlari:
                 _ikon_kolonlari = st.columns(
                     len(_satir_ikonlari), gap="medium", vertical_alignment="bottom"

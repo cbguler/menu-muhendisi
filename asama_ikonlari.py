@@ -137,6 +137,17 @@ def _kelime_eslesiyor_mu(kelimeler, indeks, kokler):
     return True
 
 
+def ikon_yolu_for_eylem(eylem_adi, satir):
+    """DISARIDAN (ör. AI siniflandirma script'inden) bilinen bir eylem
+    adi (ör. "dograma") ve o eylemin gectigi satir metni verildiginde,
+    MEVCUT malzeme-onceligi mantigini (soğan > limon > biber > meyve >
+    temel) kullanarak en uygun ikonun dosya yolunu dondurur. Eylemin
+    KENDISINI tespit etmez (bu, AI siniflandirmasinin isi) -- sadece
+    HANGI VARYANTIN gosterilecegine karar verir."""
+    kelimeler = satir.strip().lower().split()
+    return _ikon_adini_coz(eylem_adi, kelimeler)
+
+
 def tek_ikon_bul(metin):
     """Kisa bir metinde (ör. Recete Uretimi'ndeki tek bir asama adi)
     ILK eslesen ikonun dosya yolunu dondurur, yoksa None."""
