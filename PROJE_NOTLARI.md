@@ -5063,3 +5063,34 @@ tekrar çalıştırmak yeterli.
 
 **Dosya durumu:** `ikon_siniflandirma_calistir.py` güncellendi (gruplu
 işleme + otomatik yeniden deneme).
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Sessiz Yazma Başarısızlığı Bulundu — RLS, service_role Anahtarı Gerektiriyordu
+
+Kullanıcı haklı bir şüpheyle SQL üzerinden doğrudan kontrol etti:
+script "OK" yazdığı halde `hazirlik_ikonlari` veritabanında GERÇEKTEN
+`null` kalıyordu. Kök neden: script, `db.py`'nin `get_supabase()`
+fonksiyonunu kullanıyordu -- bu, uygulamanın RLS'e tabi (muhtemelen
+anon) anahtarını kullanıyor. RLS, bu script'in güncellemesini HATA
+VERMEDEN sessizce 0 satırla sonuçlandırıyordu.
+
+**Çözüm:**
+- Script artık `db.py`'yi hiç kullanmıyor -- RLS'i atlayan
+  `service_role` anahtarıyla DOĞRUDAN bağlanıyor (`SUPABASE_URL` +
+  `SUPABASE_SERVICE_ROLE_KEY`, yeni iki ortam değişkeni). Bu ayrıca
+  önceki `extra_streamlit_components` bağımlılık sorununu da tamamen
+  ortadan kaldırdı.
+- Her güncellemeden sonra dönen veri GERÇEKTEN boş mu kontrol
+  ediliyor -- böyle bir şey bir daha "sessiz başarı" olarak
+  geçmeyecek, açık bir hata olarak görünecek.
+- `.bat` dosyası bu 2 yeni ortam değişkenini de kontrol edip yoksa
+  açık talimat veriyor.
+
+**ÖNEMLİ UYARI (kullanıcıya iletildi):** `service_role` anahtarı
+RLS'i TAMAMEN atlar -- normal `anon` anahtarından çok daha güçlü ve
+gizli tutulmalı, hiçbir zaman istemci tarafı (tarayıcı) koduna
+girmemeli. Sadece bu tür güvenilir, arka planda çalışan bakım
+script'lerinde kullanılmalı.
+
+**Dosya durumu:** `ikon_siniflandirma_calistir.py` ve
+`ikon_siniflandirma_calistir.bat` güncellendi.

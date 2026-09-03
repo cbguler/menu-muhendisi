@@ -36,7 +36,7 @@ import time
 from groq import Groq
 
 from asama_ikonlari import ASAMA_IKON_KOKLERI, ikon_yolu_for_eylem
-from db import get_supabase
+from supabase import create_client
 
 GECERLI_EYLEMLER = sorted(ASAMA_IKON_KOKLERI.keys())
 
@@ -135,8 +135,26 @@ def calistir():
         print("HATA: GROQ_API_KEY_IKON ortam degiskeni/sir bulunamadi.")
         sys.exit(1)
 
+    # ALTMIS ALTINCI DUZELTME (30 Agustos 2026): db.py'nin get_supabase()
+    # fonksiyonu, uygulamanin KENDI (RLS'e tabi, muhtemelen anon/genel)
+    # anahtarini kullaniyor -- bu script "OK" yazdi ama veritabanina HICBIR
+    # SEY yazilmadigi kullaniciyla birlikte SQL ile dogrulandi (RLS,
+    # guncellemeyi HATA VERMEDEN sessizce 0 satirla sonuclandiriyordu).
+    # Bu YONETIMSEL/ARKA PLAN script'i oldugu icin RLS'i ATLAYAN
+    # service_role anahtariyla DOGRUDAN baglaniyoruz -- db.py'ye hic
+    # ihtiyac yok (bu ayrica gecen oturumdaki extra_streamlit_components
+    # bagimliligi sorununu da ortadan kaldiriyor).
+    supabase_url = os.environ.get("SUPABASE_URL")
+    supabase_service_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+    if not supabase_url or not supabase_service_key:
+        print("HATA: SUPABASE_URL ve/veya SUPABASE_SERVICE_ROLE_KEY bulunamadi.")
+        print("Supabase projenin Settings -> API sayfasindan 'Project URL' ve")
+        print("'service_role' anahtarini al (ANON anahtari DEGIL -- service_role,")
+        print("RLS'i atlar, cok gizli tut, hicbir zaman istemci tarafinda kullanma).")
+        sys.exit(1)
+
     client = Groq(api_key=api_key)
-    supabase = get_supabase()
+    supabase = create_client(supabase_url, supabase_service_key)
 
     tarifler = (
         supabase.table("receteler")
@@ -170,12 +188,21 @@ def calistir():
             try:
                 sonuclar = _tarif_grubu_siniflandir(client, grup)
                 for tarif, ikonlar_by_satir in zip(grup, sonuclar):
-                    supabase.table("receteler").update({
+                    guncelleme = supabase.table("receteler").update({
                         "hazirlik_ikonlari": {
                             "hash": tarif["hash"],
                             "ikonlar_by_satir": ikonlar_by_satir,
                         }
                     }).eq("id", tarif["id"]).execute()
+                    # ALTMIS ALTINCI DUZELTME: gecen sefer "OK" yazdi ama
+                    # HICBIR SEY yazilmamisti (RLS sessizce 0 satirla
+                    # sonuclaniyordu, hata FIRLATMIYORDU). Artik donen
+                    # veri GERCEKTEN bos mu kontrol ediliyor -- boyleyse
+                    # bunu SESSIZ BASARI degil, ACIK HATA olarak isliyoruz.
+                    if not guncelleme.data:
+                        raise RuntimeError(
+                            f"Guncelleme 0 satir etkiledi (RLS engelliyor olabilir): {tarif['ad']}"
+                        )
                     basarili += 1
                     print(f"  OK: {tarif['ad']}")
                 break
