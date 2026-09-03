@@ -33,9 +33,8 @@ ASAMA_IKON_KOKLERI = {
     "ezme": ["ez"],
     "suzme": ["süz", "suz"],
     "marine_etme": ["marine"],
-    "dinlendirme": ["dinlen"],
-    "demleme": ["demle"],
-    "baharatlama": ["baharatla", "tuzla", "tatlandır", "tatlandir"],
+    "dinlendirme": ["dinlen", "demle"],
+    "baharatlama": ["baharatla", "tatlandır", "tatlandir"],
 }
 
 
@@ -66,11 +65,16 @@ def _ikon_yolu(ikon_adi):
 # bir sonraki (daha genel) secene sessizce gecilir.
 _SPESIFIK_MALZEME_VARYANTLARI = [
     (["soğan", "sogan"], "sogan"),
+    # ALTMISINCI DUZELTME (30 Agustos 2026): veri analizinde sogandan
+    # sonra en sik gecen 2. tur malzemeler -- limon (10 tarif) ve biber
+    # (10 tarif), patlican/havuctan (7 tarif) belirgin sekilde onde.
+    (["limon"], "limon"),
+    (["biber"], "biber"),
 ]
 
 MEYVE_KOKLERI = [
     "elma", "armut", "şeftali", "seftali", "kayısı", "kayisi", "erik",
-    "çilek", "cilek", "muz", "portakal", "mandalina", "limon", "greyfurt",
+    "çilek", "cilek", "muz", "portakal", "mandalina", "greyfurt",
     "üzüm", "uzum", "kiraz", "vişne", "visne", "karpuz", "kavun", "incir",
     "nar", "ananas", "kivi", "ayva", "dut", "böğürtlen", "bogurtlen",
     "ahududu", "mersin",

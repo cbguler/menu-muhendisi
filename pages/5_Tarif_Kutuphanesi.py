@@ -352,15 +352,26 @@ if tarif["hazirlik_talimati"]:
     # topluydu. Simdi metin SATIR SATIR isleniyor, her satirin (ör.
     # "1. Soğanı rendeleyin...") HEMEN ALTINA sadece O SATIRDA gecen
     # ikon(lar) ekleniyor -- bir satirda birden fazla teknik geciyorsa
-    # ALTMIS BIRINCI DUZELTME (30 Agustos 2026): kullanici -- (1) resim
-    # hala kucuk, (2) resim METNIN USTUNDE olsun (altinda degil) dedi.
-    # Sira degistirildi (ikon -> sonra metin), boyut 150px'ten 220px'e
-    # buyutuldu.
+    # ALTMIS IKINCI DUZELTME (30 Agustos 2026): kullanici birden fazla
+    # ikon yan yana geldiginde aralarinin dar oldugunu ve alt kenarlarinin
+    # hizasiz durdugunu belirtti (kaynagi: farkli gorsellerin dogal
+    # en-boy oranlari farkli, ayni genislikte bile farkli yukseklikte
+    # cikiyorlar). st.image()'in LISTE modu yerine, Streamlit'in
+    # BELGELENMIS `gap` ve `vertical_alignment="bottom"` destegine sahip
+    # st.columns() kullanildi -- CSS hack DEGIL, resmi API. Bir satirda
+    # gercekci olarak en fazla birkac (2-4) ikon cikiyor (tum_ikonlari_bul
+    # artik SATIR bazinda calisiyor, tum metin degil) -- bu yuzden
+    # "Admin butonu" hatasindaki gibi asiri sikisma riski yok.
     for _satir in tarif["hazirlik_talimati"].splitlines():
         if _satir.strip():
             _satir_ikonlari = tum_ikonlari_bul(_satir)
             if _satir_ikonlari:
-                st.image(_satir_ikonlari, width=330)
+                _ikon_kolonlari = st.columns(
+                    len(_satir_ikonlari), gap="medium", vertical_alignment="bottom"
+                )
+                for _kolon, _ikon_yolu in zip(_ikon_kolonlari, _satir_ikonlari):
+                    with _kolon:
+                        st.image(_ikon_yolu, width=260)
             st.write(_satir)
         else:
             st.write("")

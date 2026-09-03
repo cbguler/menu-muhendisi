@@ -4925,3 +4925,23 @@ jenerik bir kavrulma/kaynama dokusu gösteriyor, spesifik bir malzeme
 
 **Dosya durumu:** `assets/kavurma.png` ve `assets/haslama.png`
 İÇERİKLERİ değiştirilmeli (aynı dosya adlarıyla üzerine yazılacak).
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): İkon Aralığı/Hizalama Düzeltildi + "tuzla" Fix'inin Deploy Edilmediği Fark Edildi
+
+Kullanıcı: kavurma/haşlama artık doğru (jenerik) ama üçüncü bir ikon
+(baharatlama) hâlâ hatalı çıkıyor -- bu, `asama_ikonlari.py`'deki
+"tuzla" düzeltmesinin BİR ÖNCEKİ commit'e (sadece kavurma.png/
+haslama.png içeriyordu) dahil edilmediğini gösteriyor. Kullanıcıya
+hatırlatıldı, `asama_ikonlari.py` de eklenmeli.
+
+**Aralık/hizalama:** Birden fazla ikon yan yana geldiğinde aralarının
+dar olduğu ve alt kenarlarının hizasız durduğu bildirildi (farklı
+görsellerin doğal en-boy oranları farklı olduğu için aynı genişlikte
+bile farklı yükseklikte çıkıyorlardı). `st.image(liste)` yerine
+Streamlit'in BELGELENMİŞ `st.columns(..., gap="medium",
+vertical_alignment="bottom")` API'si kullanıldı -- CSS hack değil,
+resmi destek. Sabit 260px genişlik korundu (dar sütunlarda taşma
+riskini önlemek için).
+
+**Dosya durumu:** `pages/5_Tarif_Kutuphanesi.py` güncellendi.
