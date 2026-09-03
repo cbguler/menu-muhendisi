@@ -80,6 +80,23 @@
 # oluyor, bosa harcanan "basarisiz ilk deneme" tokenleri byuk olcude
 # ortadan kalkiyor, ayni gunluk kota ile daha fazla tarif islenebiliyor.
 #
+# YETMIS ALTINCI DUZELTME (3 Eylul 2026): Groq'un kendi "Logs" sayfasi
+# (console.groq.com/dashboard/usage) indirilip 888 gercek istek kaydi
+# analiz edildi. Sonuc carpici: BUGUN openai/gpt-oss-20b icin 23
+# basarili cagri TOPLAM 113.837 token harcarken, 24 basarisiz
+# (json_validate_failed) cagri TOPLAM 166.931 token harcamis --
+# basarisiz denemeler basarililardan DAHA FAZLA gunluk kota yiyormus.
+# Basarisiz cagrilarin ORTALAMA cikti tokeni ~4025 -- tam olarak eski
+# max_tokens=4000 sinirina denk geliyor: model ciktiyi bitiremeden
+# kesiliyor, JSON yarim kaliyor, strict mod reddediyor, ama o ana kadar
+# uretilen ~4000 token ZATEN HARCANMIS oluyor. Yani "basarisiz olursa
+# bol" stratejisi dogruydu ama HER basarisizlik neredeyse tam bir
+# max_tokens degeri kadar bosa gidiyordu. Cozum: max_tokens 5500'e
+# cikarildi (cogu deneme artik ilk seferde TAMAMLANIP basariya
+# donusuyor, bosa kesilme cok azaliyor) ve GRUP_BOYUTU 4'ten 3'e
+# dusuruldu (TPM 8000 tavaninda daha fazla guvenlik payi birakmak
+# icin -- prompt + max_tokens toplami hala rahatca sigiyor).
+#
 # CALISTIRMA: python ikon_siniflandirma_calistir.py
 # GEREKEN SIRLAR: GROQ_API_KEY_IKON, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
 
@@ -97,7 +114,7 @@ from supabase import create_client
 GECERLI_EYLEMLER = sorted(ASAMA_IKON_KOKLERI.keys())
 
 MODEL = "openai/gpt-oss-20b"  # llama-3.1-8b-instant 16 Agustos 2026'da kapatildi (bkz. YETMIS BIRINCI DUZELTME). Bu modelin gunluk 200K TOKEN (TPD) duvari var -- yavas ilerleyecek, gunluk kota dolunca ertesi gun devam eder.
-GRUP_BOYUTU = 4  # tek istekte kac tarif birlikte gonderilsin (bkz. YETMIS BESINCI DUZELTME -- gercek calistirmada 8'lik gruplarin cogu bolunmek zorunda kaliyordu, bu da her seferinde bosa token harciyordu)
+GRUP_BOYUTU = 3  # tek istekte kac tarif birlikte gonderilsin (bkz. YETMIS ALTINCI DUZELTME -- Groq loglari, basarisiz denemelerin basarililardan DAHA FAZLA token yedigini gosterdi)
 
 SISTEM_PROMPTU = f"""Sen bir Turk yemek tarifi metnini analiz eden bir asistansin.
 Sana BIRDEN FAZLA tarifin "hazirlik talimati" metni, her biri kendi
@@ -216,7 +233,7 @@ def _tarif_grubu_siniflandir(client, tarif_grubu):
             },
         },
         temperature=0,
-        max_tokens=4000,
+        max_tokens=5500,
     )
     veri = json.loads(yanit.choices[0].message.content)
 

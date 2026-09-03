@@ -5291,3 +5291,35 @@ tarif işlenebilecek.
 
 **Dosya durumu:** `ikon_siniflandirma_calistir.py` güncellendi
 (`GRUP_BOYUTU = 4`).
+
+
+### 3 Eylül 2026 — XII. Oturum (devam): Groq Logs Analizi — Başarısız Denemeler Kotanın Çoğunu Yiyordu
+
+Bahri, Groq konsolunun "Dashboard → Logs" sayfasını indirdi (888 gerçek
+istek kaydı). Bu kayıtlar ayrıştırılıp analiz edildi -- sonuç çarpıcı:
+
+| Durum | Çağrı | Toplam Token |
+|---|---|---|
+| Başarılı (200) | 23 | 113.837 |
+| Başarısız (400, json_validate_failed) | 24 | **166.931** |
+
+Başarısız denemeler başarılılardan DAHA FAZLA token harcamış.
+Başarısız çağrıların ortalama çıktısı ~4025 token -- tam olarak o
+sıradaki `max_tokens=4000` sınırına denk geliyor: model çıktıyı
+bitiremeden kesiliyor, JSON yarım kalıyor, strict mod reddediyor, ama
+üretilen ~4000 token zaten harcanmış oluyor.
+
+**Çözüm:** `max_tokens` 5500'e çıkarıldı (çoğu deneme artık ilk
+seferde TAMAMLANIP başarıya dönüşecek, boşa kesilme büyük ölçüde
+azalacak), `GRUP_BOYUTU` 4'ten 3'e düşürüldü (TPM tavanında daha
+fazla güvenlik payı).
+
+**Gerçekçi zaman beklentisi:** Bugün toplam ~41 tarif başarıyla
+işlendi (2 ayrı çalıştırmada 40 + 1), bu da `openai/gpt-oss-20b`'nin
+günlük 200K kotasının neredeyse tamamını tüketti. Bu oranla (~40
+tarif/gün) kalan ~149 tarif için yaklaşık 4 gün daha gerekebilir.
+Yapılan optimizasyon bu oranı bir miktar iyileştirebilir ama kesin
+rakam veremiyoruz -- gerçek sonucu yarınki çalıştırma gösterecek.
+
+**Dosya durumu:** `ikon_siniflandirma_calistir.py` güncellendi
+(`GRUP_BOYUTU = 3`, `max_tokens=5500`).
