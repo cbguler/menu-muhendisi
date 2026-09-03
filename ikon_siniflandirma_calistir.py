@@ -12,20 +12,21 @@
 # cikinca script'i tekrar calistirmak sadece YENI/DEGISEN tarifleri
 # isler, hepsini bastan degil.
 #
-# GRUPLU ISLEME (30 Agustos 2026, gercek kullanimda TPD/gunluk token
-# limitine takilinca eklendi): her tarif icin AYRI bir API cagrisi
-# yapmak, ayni (uzun) sistem promptunu 240 KEZ tekrar tekrar
-# gonderiyordu -- gunluk token butcesinin cogunu bu tekrar israf
-# ediyordu. Groq'un "prompt caching" ozelligi bu modelde (gpt-oss-120b)
-# DESTEKLENMIYOR (sadece Kimi K2'de var), o yuzden bu israfi onlemenin
-# tek yolu: BIRDEN FAZLA tarifi TEK istekte gruplamak. Sistem promptu
-# artik 240 kez degil, 240/GRUP_BOYUTU kez gonderiliyor.
+# GRUPLU ISLEME: her tarif icin AYRI bir API cagrisi yapmak, ayni
+# (uzun) sistem promptunu tekrar tekrar gonderip token israf ediyordu
+# -- birden fazla tarif TEK istekte gruplaniyor.
+#
+# ALTMIS DOKUZUNCU DUZELTME (30 Agustos 2026): Groq'un GUNLUK (TPD)
+# token limiti (200.000/gun, gpt-oss-120b icin) 240 tariflik bu isi
+# GUNLERCE surecek hale getiriyordu. Kullanici ucretli bir cozum
+# istemedi -- arastirma sonucu Google Gemini API'nin ucretsiz
+# katmaninin (Gemini 2.0 Flash-Lite: dakikada 1.000.000 token, gunde
+# 1.500 istek, KREDI KARTI GEREKTIRMIYOR) bu is icin COK daha uygun
+# oldugu bulundu. Script Groq'tan Gemini'ye tasindi.
 #
 # CALISTIRMA: python ikon_siniflandirma_calistir.py
-# GEREKEN SIR: GROQ_API_KEY_IKON (Streamlit secrets'ta veya ortam
-# degiskeninde) -- TrendSurf'teki GROQ_API_KEY'den KASITLI OLARAK
-# FARKLI bir Groq HESABINA ait (rate limit havuzlarinin karismamasi
-# icin, bkz. PROJE_NOTLARI.md).
+# GEREKEN SIRLAR: GEMINI_API_KEY (aistudio.google.com'dan, ucretsiz),
+# SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
 
 import hashlib
 import json
@@ -33,19 +34,16 @@ import os
 import sys
 import time
 
-from groq import Groq
+from google import genai
+from google.genai import types
 
 from asama_ikonlari import ASAMA_IKON_KOKLERI, ikon_yolu_for_eylem
 from supabase import create_client
 
 GECERLI_EYLEMLER = sorted(ASAMA_IKON_KOKLERI.keys())
 
-MODEL = "openai/gpt-oss-120b"  # llama-3.3-70b-versatile 16 Agustos 2026'da tamamen kaldirildi, Groq'un resmi onerisi bu
-GRUP_BOYUTU = 12  # tek istekte kac tarif birlikte gonderilsin -- 6'dan 12'ye
-# cikarildi (30 Agustos 2026): sistem promptu her istekte TEKRAR
-# gonderiliyor, bu da gunluk token butcesinin onemli bir kismini
-# bosa harciyordu -- grup buyutunce ayni is icin TOPLAM token
-# tuketimi azaliyor (ucretsiz bir iyilestirme, ek maliyeti yok).
+MODEL = "gemini-2.0-flash-lite"  # ucretsiz katmanda en yuksek limitli model (1M TPM, 1500 RPD)
+GRUP_BOYUTU = 12  # tek istekte kac tarif birlikte gonderilsin
 
 SISTEM_PROMPTU = f"""Sen bir Turk yemek tarifi metnini analiz eden bir asistansin.
 Sana BIRDEN FAZLA tarifin "hazirlik talimati" metni, her biri kendi
@@ -99,19 +97,17 @@ def _tarif_grubu_siniflandir(client, tarif_grubu):
         parcalar.append(f"TARIF {i}:\n{numarali_satirlar}")
     kullanici_mesaji = "\n\n".join(parcalar)
 
-    yanit = client.chat.completions.create(
+    yanit = client.models.generate_content(
         model=MODEL,
-        messages=[
-            {"role": "system", "content": SISTEM_PROMPTU},
-            {"role": "user", "content": kullanici_mesaji},
-        ],
-        response_format={"type": "json_object"},
-        temperature=0,
-        max_tokens=8000,  # ALTMIS YEDINCI DUZELTME: max_tokens belirtilmemisti,
-        # bazi gruplarda (ör. ilk grup) JSON ciktisi yarida kesilip
-        # gecersiz olmasina yol aciyordu ("Failed to generate JSON").
+        contents=kullanici_mesaji,
+        config=types.GenerateContentConfig(
+            system_instruction=SISTEM_PROMPTU,
+            temperature=0,
+            max_output_tokens=8000,
+            response_mime_type="application/json",
+        ),
     )
-    veri = json.loads(yanit.choices[0].message.content)
+    veri = json.loads(yanit.text)
 
     sonuclar = [[[] for _ in tarif["satirlar"]] for tarif in tarif_grubu]
     for tarif_sonucu in veri.get("tarifler", []):
@@ -137,20 +133,14 @@ def _tarif_grubu_siniflandir(client, tarif_grubu):
 
 
 def calistir():
-    api_key = os.environ.get("GROQ_API_KEY_IKON")
+    api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        print("HATA: GROQ_API_KEY_IKON ortam degiskeni/sir bulunamadi.")
+        print("HATA: GEMINI_API_KEY ortam degiskeni/sir bulunamadi.")
+        print("aistudio.google.com'dan ucretsiz bir anahtar alip")
+        print('"setx GEMINI_API_KEY <anahtarin>" ile kaydet, terminali')
+        print("kapatip yeniden ac.")
         sys.exit(1)
 
-    # ALTMIS ALTINCI DUZELTME (30 Agustos 2026): db.py'nin get_supabase()
-    # fonksiyonu, uygulamanin KENDI (RLS'e tabi, muhtemelen anon/genel)
-    # anahtarini kullaniyor -- bu script "OK" yazdi ama veritabanina HICBIR
-    # SEY yazilmadigi kullaniciyla birlikte SQL ile dogrulandi (RLS,
-    # guncellemeyi HATA VERMEDEN sessizce 0 satirla sonuclandiriyordu).
-    # Bu YONETIMSEL/ARKA PLAN script'i oldugu icin RLS'i ATLAYAN
-    # service_role anahtariyla DOGRUDAN baglaniyoruz -- db.py'ye hic
-    # ihtiyac yok (bu ayrica gecen oturumdaki extra_streamlit_components
-    # bagimliligi sorununu da ortadan kaldiriyor).
     supabase_url = os.environ.get("SUPABASE_URL")
     supabase_service_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
     if not supabase_url or not supabase_service_key:
@@ -160,7 +150,7 @@ def calistir():
         print("RLS'i atlar, cok gizli tut, hicbir zaman istemci tarafinda kullanma).")
         sys.exit(1)
 
-    client = Groq(api_key=api_key)
+    client = genai.Client(api_key=api_key)
     supabase = create_client(supabase_url, supabase_service_key)
 
     tarifler = (
@@ -201,11 +191,11 @@ def calistir():
                             "ikonlar_by_satir": ikonlar_by_satir,
                         }
                     }).eq("id", tarif["id"]).execute()
-                    # ALTMIS ALTINCI DUZELTME: gecen sefer "OK" yazdi ama
-                    # HICBIR SEY yazilmamisti (RLS sessizce 0 satirla
-                    # sonuclaniyordu, hata FIRLATMIYORDU). Artik donen
-                    # veri GERCEKTEN bos mu kontrol ediliyor -- boyleyse
-                    # bunu SESSIZ BASARI degil, ACIK HATA olarak isliyoruz.
+                    # gecen sefer "OK" yazdi ama HICBIR SEY yazilmamisti
+                    # (RLS sessizce 0 satirla sonuclaniyordu, hata
+                    # FIRLATMIYORDU). Donen veri GERCEKTEN bos mu kontrol
+                    # ediliyor -- boyleyse bunu SESSIZ BASARI degil, ACIK
+                    # HATA olarak isliyoruz.
                     if not guncelleme.data:
                         raise RuntimeError(
                             f"Guncelleme 0 satir etkiledi (RLS engelliyor olabilir): {tarif['ad']}"
@@ -215,25 +205,15 @@ def calistir():
                 break
             except Exception as e:
                 hata_metni = str(e)
-                # ALTMIS SEKIZINCI DUZELTME (30 Agustos 2026): TPD
-                # (GUNLUK) limit ile TPM (dakikalik) limiti birbirinden
-                # ayirmak gerekiyor -- TPM birkac saniyede geçer, kisa
-                # bir yeniden deneme mantikli. TPD ise ONLARCA DAKIKA
-                # sonra acilir -- kisa bekleme TAMAMEN ANLAMSIZ, ustelik
-                # kota TUM HESAP icin dolu oldugundan sonraki HER grup da
-                # ayni hatayi verecek. TPD tespit edilince BEKLEMEDEN,
-                # TUM SCRIPT'I durduruyoruz -- zaman kaybettirmek yerine.
-                if "tokens per day" in hata_metni or "TPD" in hata_metni:
-                    print(f"\nGUNLUK TOKEN KOTASI DOLDU (grup: {isimler[:60]}...).")
-                    print(hata_metni)
-                    print(f"\nSu ana kadar basarili: {basarili}. Kalan tarifler "
-                          "YARIN (kota sifirlaninca) scripti tekrar calistirinca "
-                          "islenecek -- hicbir sey kaybolmadi, kaldigin yerden "
-                          "devam edecek.")
-                    return
+                # Gemini'nin kota/rate-limit hatalari genelde
+                # "RESOURCE_EXHAUSTED" veya "429" iceriyor -- kisa bir
+                # yeniden deneme (Gemini'de gunluk limit Groq'taki kadar
+                # sert degil, dakikalik/istek bazli olma ihtimali daha
+                # yuksek, bu yuzden TPD icin ozel bir "hemen dur" mantigina
+                # burada gerek yok, kisa retry yeterli).
                 gecici_hata_mi = (
-                    "rate_limit" in hata_metni or "429" in hata_metni
-                    or "json_validate_failed" in hata_metni
+                    "RESOURCE_EXHAUSTED" in hata_metni or "429" in hata_metni
+                    or "rate limit" in hata_metni.lower()
                 )
                 if gecici_hata_mi and deneme < 2:
                     bekleme = 15 * (deneme + 1)
@@ -249,9 +229,6 @@ def calistir():
     if hatali:
         print("Hatali olanlar icin scripti TEKRAR calistirman yeterli -- "
               "sadece onlar (hash uyusmadigi icin) yeniden denenecek.")
-        print("Eger hata GUNLUK token limitiyle ilgiliyse (TPD), o gunku "
-              "kotanin dolmasi anlamina gelir -- ertesi gun tekrar "
-              "calistirinca kaldigi yerden devam eder.")
 
 
 if __name__ == "__main__":

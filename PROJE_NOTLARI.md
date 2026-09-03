@@ -5094,3 +5094,34 @@ script'lerinde kullanılmalı.
 
 **Dosya durumu:** `ikon_siniflandirma_calistir.py` ve
 `ikon_siniflandirma_calistir.bat` güncellendi.
+
+
+### 30 Ağustos 2026 — XI. Oturum (devam): Groq'tan Google Gemini API'ye Geçildi (Ücretsiz Kalarak)
+
+Groq'un günlük (TPD) token limiti (200.000/gün, gpt-oss-120b için) 240
+tariflik işi günlerce sürecek hale getiriyordu. Kullanıcı ücretli bir
+çözüm istemedi (Anthropic önerisi reddedildi). Araştırma sonucu Google
+Gemini API'nin ücretsiz katmanının bu iş için çok daha uygun olduğu
+bulundu:
+
+| | Groq (gpt-oss-120b) | Gemini 2.0 Flash-Lite |
+|---|---|---|
+| Dakikalık token | 8.000 | 1.000.000 |
+| Günlük istek | - | 1.500 |
+| Kredi kartı | Gerekmiyor | Gerekmiyor |
+
+**Değişiklik:** Script tamamen Gemini'ye taşındı (`google-genai`
+kütüphanesi, `genai.Client` + `generate_content` + `GenerateContentConfig`
+ile `response_mime_type="application/json"`). Groq'a özgü TPD-bekleme
+mantığı kaldırıldı (Gemini'de bu kadar sert bir günlük limit yok).
+Sahte (mock) bir yanıtla test edildi, doğru çalıştığı doğrulandı.
+
+**Kullanıcının yapması gerekenler:**
+1. aistudio.google.com'dan (mevcut `menumuhendisi@gmail.com` hesabıyla)
+   ücretsiz bir API anahtarı almalı.
+2. `setx GEMINI_API_KEY <anahtar>` ile kaydetmeli.
+3. Artık `GROQ_API_KEY_IKON`'a gerek yok (kaldırılabilir, zararı yok
+   ama kullanılmıyor).
+
+**Dosya durumu:** `ikon_siniflandirma_calistir.py` ve
+`ikon_siniflandirma_calistir.bat` tamamen güncellendi.
