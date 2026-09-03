@@ -41,7 +41,11 @@ from supabase import create_client
 GECERLI_EYLEMLER = sorted(ASAMA_IKON_KOKLERI.keys())
 
 MODEL = "openai/gpt-oss-120b"  # llama-3.3-70b-versatile 16 Agustos 2026'da tamamen kaldirildi, Groq'un resmi onerisi bu
-GRUP_BOYUTU = 6  # tek istekte kac tarif birlikte gonderilsin
+GRUP_BOYUTU = 12  # tek istekte kac tarif birlikte gonderilsin -- 6'dan 12'ye
+# cikarildi (30 Agustos 2026): sistem promptu her istekte TEKRAR
+# gonderiliyor, bu da gunluk token butcesinin onemli bir kismini
+# bosa harciyordu -- grup buyutunce ayni is icin TOPLAM token
+# tuketimi azaliyor (ucretsiz bir iyilestirme, ek maliyeti yok).
 
 SISTEM_PROMPTU = f"""Sen bir Turk yemek tarifi metnini analiz eden bir asistansin.
 Sana BIRDEN FAZLA tarifin "hazirlik talimati" metni, her biri kendi
@@ -103,6 +107,9 @@ def _tarif_grubu_siniflandir(client, tarif_grubu):
         ],
         response_format={"type": "json_object"},
         temperature=0,
+        max_tokens=8000,  # ALTMIS YEDINCI DUZELTME: max_tokens belirtilmemisti,
+        # bazi gruplarda (ör. ilk grup) JSON ciktisi yarida kesilip
+        # gecersiz olmasina yol aciyordu ("Failed to generate JSON").
     )
     veri = json.loads(yanit.choices[0].message.content)
 
@@ -207,8 +214,28 @@ def calistir():
                     print(f"  OK: {tarif['ad']}")
                 break
             except Exception as e:
-                rate_limit_mi = "rate_limit" in str(e) or "429" in str(e)
-                if rate_limit_mi and deneme < 2:
+                hata_metni = str(e)
+                # ALTMIS SEKIZINCI DUZELTME (30 Agustos 2026): TPD
+                # (GUNLUK) limit ile TPM (dakikalik) limiti birbirinden
+                # ayirmak gerekiyor -- TPM birkac saniyede geçer, kisa
+                # bir yeniden deneme mantikli. TPD ise ONLARCA DAKIKA
+                # sonra acilir -- kisa bekleme TAMAMEN ANLAMSIZ, ustelik
+                # kota TUM HESAP icin dolu oldugundan sonraki HER grup da
+                # ayni hatayi verecek. TPD tespit edilince BEKLEMEDEN,
+                # TUM SCRIPT'I durduruyoruz -- zaman kaybettirmek yerine.
+                if "tokens per day" in hata_metni or "TPD" in hata_metni:
+                    print(f"\nGUNLUK TOKEN KOTASI DOLDU (grup: {isimler[:60]}...).")
+                    print(hata_metni)
+                    print(f"\nSu ana kadar basarili: {basarili}. Kalan tarifler "
+                          "YARIN (kota sifirlaninca) scripti tekrar calistirinca "
+                          "islenecek -- hicbir sey kaybolmadi, kaldigin yerden "
+                          "devam edecek.")
+                    return
+                gecici_hata_mi = (
+                    "rate_limit" in hata_metni or "429" in hata_metni
+                    or "json_validate_failed" in hata_metni
+                )
+                if gecici_hata_mi and deneme < 2:
                     bekleme = 15 * (deneme + 1)
                     print(f"  BEKLENIYOR (grup: {isimler[:60]}...): rate limit, {bekleme}sn sonra tekrar denenecek...")
                     time.sleep(bekleme)
