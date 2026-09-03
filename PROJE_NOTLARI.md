@@ -5149,3 +5149,33 @@ bizim ihtiyacımız (~20 istek/gün) bunun çok altında kalıyor.
 **Dosya durumu:** `ikon_siniflandirma_calistir.py` ve `.bat` dosyası
 Groq'a (küçük modelle) geri döndürüldü. `GEMINI_API_KEY` artık
 kullanılmıyor (isterse silinebilir, zararı yok).
+
+
+### 3 Eylül 2026 — XII. Oturum: llama-3.1-8b-instant Kapatıldı, openai/gpt-oss-20b'ye Geçildi
+
+Script çalıştırıldığında 210/210 "model_not_found" (404) hatası
+alındı. Araştırma: Groq, llama-3.1-8b-instant ve llama-3.3-70b-versatile'ı
+17 Haziran 2026'da kullanımdan kaldırmayı duyurmuş, 16 Ağustos 2026'da
+tamamen kapatmış -- artık hiçbir şekilde erişilemiyor.
+
+Groq'un resmi rate-limits sayfası (console.groq.com/docs/rate-limits)
+doğrudan kontrol edildi: ücretsiz katmanda openai/gpt-oss-20b,
+openai/gpt-oss-120b, qwen/qwen3.6-27b, qwen/qwen3.8-27b hepsi
+BİREBİR AYNI limitlere sahip (30 RPM, 1K RPD, 8K TPM, 200K TPD).
+llama-3.1-8b-instant'ın sahip olduğu ayrıcalıklı (sert günlük TOKEN
+duvarı olmayan) yapı gibi bir alternatif artık YOK.
+
+**Karar:** `openai/gpt-oss-20b`'ye geçildi. İşlem YAVAŞ olacak (günlük
+200K TPD kotası dolunca ertesi gün kaldığı yerden devam eder) ama
+script zaten artımlı (hash bazlı) olduğu için sorunsuz çalışır --
+kullanıcının sadece `.bat`'ı her gün tekrar çalıştırması yeterli.
+
+`groq/compound-mini` (agentic, günlük token limiti belirtilmemiş,
+ama 250 RPD ve yerleşik web arama/kod çalıştırma araçları var --
+basit metin sınıflandırma için öngörülemez olabilir) alternatif olarak
+değerlendirildi ama kullanıcı riske girmeden gpt-oss-20b ile devam
+etmeyi tercih etti.
+
+**Dosya durumu:** `ikon_siniflandirma_calistir.py` (MODEL sabiti
+`openai/gpt-oss-20b` olarak güncellendi) ve
+`ikon_siniflandirma_calistir.bat` (durum mesajı güncellendi).
