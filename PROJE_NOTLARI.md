@@ -5213,3 +5213,22 @@ test edilmedi -- kullanıcı çalıştırıp sonucu paylaşacak.
 (`YANIT_SEMASI` eklendi, `_tarif_grubu_siniflandir`'daki
 `response_format` strict şemaya geçti). `.bat` dosyasında değişiklik
 yok.
+
+
+### 3 Eylül 2026 — XII. Oturum (devam): TPM Limiti Aşıldı — max_tokens=8000 Kotanın Tamamını Yiyordu
+
+Strict-mode düzeltmesinden hemen sonra yeni bir hata çıktı: "Request
+too large ... TPM: Limit 8000, Requested 10272". Hesap açık:
+10272 = 2272 (gerçek prompt token'ı) + 8000 (kodda sabit yazılı
+`max_tokens` değeri). `max_tokens=8000` tek başına 8000 TPM kotasının
+TAMAMINI harcıyordu -- en ufak bir prompt eklenince sınır aşılıyordu.
+12 tarifin sınıflandırma çıktısı (sadece index + kısa eylem
+etiketleri) gerçekte bu kadar tokene hiçbir zaman ihtiyaç duymuyor.
+
+**Çözüm:** `max_tokens` 8000'den 3000'e düşürüldü (çıktı için
+fazlasıyla yeterli, TPM'de prompt için ~5000 token pay bırakıyor).
+Ayrıca `GRUP_BOYUTU` 12'den 8'e düşürüldü (uzun tarifler için ekstra
+güvenlik payı).
+
+**Dosya durumu:** `ikon_siniflandirma_calistir.py` güncellendi
+(`GRUP_BOYUTU = 8`, `max_tokens=3000`).

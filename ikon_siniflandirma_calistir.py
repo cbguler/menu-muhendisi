@@ -44,6 +44,18 @@
 # artik token seviyesinde semaya ZORLANIYOR, semaya uymayan/bozuk JSON
 # uretmesi TEKNIK OLARAK IMKANSIZ hale geldi.
 #
+# YETMIS UCUNCU DUZELTME (3 Eylul 2026): strict-mode duzeltmesinden
+# sonra farkli bir hata cikti: "Request too large ... TPM: Limit 8000,
+# Requested 10272". Matematik acik: 10272 = 2272 (gercek prompt) + 8000
+# (bizim kodda sabit yazili max_tokens degeri). Yani max_tokens=8000
+# TEK BASINA 8000 TPM kotasinin TAMAMINI harciyordu -- ufak bir prompt
+# bile eklense siniri asiyordu. 12 tarifin siniflandirma ciktisi
+# (sadece index + kisa eylem etiketleri) gercekte 8000 tokene hicbir
+# zaman ihtiyac duymuyor. Cozum: max_tokens 3000'e dusuruldu (cikti
+# icin fazlasiyla yeterli, TPM'de prompt icin ~5000 token pay birakiyor)
+# VE GRUP_BOYUTU 12'den 8'e dusuruldu (uzun tarifler icin ekstra
+# guvenlik payi).
+#
 # CALISTIRMA: python ikon_siniflandirma_calistir.py
 # GEREKEN SIRLAR: GROQ_API_KEY_IKON, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
 
@@ -61,7 +73,7 @@ from supabase import create_client
 GECERLI_EYLEMLER = sorted(ASAMA_IKON_KOKLERI.keys())
 
 MODEL = "openai/gpt-oss-20b"  # llama-3.1-8b-instant 16 Agustos 2026'da kapatildi (bkz. YETMIS BIRINCI DUZELTME). Bu modelin gunluk 200K TOKEN (TPD) duvari var -- yavas ilerleyecek, gunluk kota dolunca ertesi gun devam eder.
-GRUP_BOYUTU = 12  # tek istekte kac tarif birlikte gonderilsin
+GRUP_BOYUTU = 8  # tek istekte kac tarif birlikte gonderilsin (12'den 8'e dusuruldu, bkz. YETMIS UCUNCU DUZELTME)
 
 SISTEM_PROMPTU = f"""Sen bir Turk yemek tarifi metnini analiz eden bir asistansin.
 Sana BIRDEN FAZLA tarifin "hazirlik talimati" metni, her biri kendi
@@ -180,7 +192,7 @@ def _tarif_grubu_siniflandir(client, tarif_grubu):
             },
         },
         temperature=0,
-        max_tokens=8000,
+        max_tokens=3000,
     )
     veri = json.loads(yanit.choices[0].message.content)
 
