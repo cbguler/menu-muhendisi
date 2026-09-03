@@ -42,7 +42,7 @@ from supabase import create_client
 
 GECERLI_EYLEMLER = sorted(ASAMA_IKON_KOKLERI.keys())
 
-MODEL = "gemini-3.5-flash-lite"  # gemini-2.0-flash-lite kaldirildi (30 Agustos 2026), Google'in onerisi bu
+MODEL = "gemini-2.5-flash-lite"  # 2.0-flash-lite kaldirildi, 3.5-flash-lite "prepayment credits" hatasi verdi -- 2.5-flash-lite birden fazla kaynakta ucretsiz olarak dogrulandi
 GRUP_BOYUTU = 12  # tek istekte kac tarif birlikte gonderilsin
 
 SISTEM_PROMPTU = f"""Sen bir Turk yemek tarifi metnini analiz eden bir asistansin.
