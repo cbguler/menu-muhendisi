@@ -34,7 +34,7 @@ if "%SUPABASE_SERVICE_ROLE_KEY%"=="" (
 )
 
 echo.
-echo Siniflandirma basliyor (kucuk model, llama-3.1-8b-instant)...
+echo Siniflandirma basliyor (openai/gpt-oss-20b -- gunluk 200K token limiti var, yavas ilerleyebilir)...
 echo.
 
 python ikon_siniflandirma_calistir.py

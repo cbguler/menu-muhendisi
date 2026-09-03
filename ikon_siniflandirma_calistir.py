@@ -17,12 +17,23 @@
 # YETMISINCI DUZELTME (30 Agustos 2026): Gemini denendi ama Google'in
 # 23 Mart 2026'dan itibaren YENI hesaplar icin zorunlu kildigi en az
 # 10$'lik "prepay" sarti (kullanicinin "ucretli cozum istemiyorum"
-# karariyla celisiyor) yuzunden vazgecildi. Groq'a geri donuldu, ama
-# BUYUK model (openai/gpt-oss-120b) yerine KUCUK model
-# (llama-3.1-8b-instant) kullaniliyor -- arastirma gosterdi ki kucuk
-# modellerde SERT bir GUNLUK TOKEN (TPD) duvari yok, sadece dakikalik
-# token + gunluk ISTEK SAYISI siniri var; bizim ihtiyacimiz (~20 istek)
-# bu sinirin cok altinda kaliyor.
+# karariyla celisiyor) yuzunden vazgecildi. Groq'a geri donuldu, kucuk
+# model (llama-3.1-8b-instant) kullanildi.
+#
+# YETMIS BIRINCI DUZELTME (3 Eylul 2026): llama-3.1-8b-instant
+# calisirken 210/210 "model_not_found" (404) hatasi alindi. Arastirma
+# gosterdi: Groq bu modeli (ve llama-3.3-70b-versatile'i) 17 Haziran
+# 2026'da kullanimdan kaldirmayi duyurmus, 16 Agustos 2026'da TAMAMEN
+# kapatmis -- artik hicbir sekilde erisilemiyor. Groq'un resmi rate-
+# limits sayfasi DOGRUDAN kontrol edildi: onerilen yerine gecen model
+# openai/gpt-oss-20b'ye gecildi, ANCAK durum llama-3.1-8b-instant'taki
+# kadar iyi degil -- bu model, zaten reddettigimiz gpt-oss-120b ile
+# BIREBIR AYNI limitlere sahip (30 RPM, 1K RPD, 8K TPM, 200K TPD).
+# Groq'un ucretsiz katmaninda bunun disinda daha yuksek limitli genel
+# amacli bir model YOK (qwen3.6-27b / qwen3.8-27b de ayni 200K TPD).
+# Yani islem YAVAS olacak (gunluk kota bitince ertesi gun kaldigi
+# yerden devam edecek) ama script zaten artimli oldugu icin bu
+# sorunsuz calisir -- sadece .bat'i her gun tekrar calistirmak yeterli.
 #
 # CALISTIRMA: python ikon_siniflandirma_calistir.py
 # GEREKEN SIRLAR: GROQ_API_KEY_IKON, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
@@ -40,7 +51,7 @@ from supabase import create_client
 
 GECERLI_EYLEMLER = sorted(ASAMA_IKON_KOKLERI.keys())
 
-MODEL = "llama-3.1-8b-instant"  # kucuk model -- sert gunluk TOKEN duvari yok (sadece dakikalik token + gunluk istek sayisi siniri)
+MODEL = "openai/gpt-oss-20b"  # llama-3.1-8b-instant 16 Agustos 2026'da kapatildi (bkz. YETMIS BIRINCI DUZELTME). Bu modelin gunluk 200K TOKEN (TPD) duvari var -- yavas ilerleyecek, gunluk kota dolunca ertesi gun devam eder.
 GRUP_BOYUTU = 12  # tek istekte kac tarif birlikte gonderilsin
 
 SISTEM_PROMPTU = f"""Sen bir Turk yemek tarifi metnini analiz eden bir asistansin.
@@ -140,6 +151,9 @@ def calistir():
     supabase_service_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
     if not supabase_url or not supabase_service_key:
         print("HATA: SUPABASE_URL ve/veya SUPABASE_SERVICE_ROLE_KEY bulunamadi.")
+        print("Supabase projenin Settings -> API sayfasindan 'Project URL' ve")
+        print("'service_role' anahtarini al (ANON anahtari DEGIL -- service_role,")
+        print("RLS'i atlar, cok gizli tut, hicbir zaman istemci tarafinda kullanma).")
         sys.exit(1)
 
     client = Groq(api_key=api_key)
@@ -191,18 +205,8 @@ def calistir():
                     print(f"  OK: {tarif['ad']}")
                 break
             except Exception as e:
-                hata_metni = str(e)
-                if "tokens per day" in hata_metni or "TPD" in hata_metni:
-                    print(f"\nGUNLUK TOKEN KOTASI DOLDU (grup: {isimler[:60]}...).")
-                    print(hata_metni)
-                    print(f"\nSu ana kadar basarili: {basarili}. Kalan tarifler "
-                          "sonra scripti tekrar calistirinca islenecek.")
-                    return
-                gecici_hata_mi = (
-                    "rate_limit" in hata_metni or "429" in hata_metni
-                    or "json_validate_failed" in hata_metni
-                )
-                if gecici_hata_mi and deneme < 2:
+                rate_limit_mi = "rate_limit" in str(e) or "429" in str(e)
+                if rate_limit_mi and deneme < 2:
                     bekleme = 15 * (deneme + 1)
                     print(f"  BEKLENIYOR (grup: {isimler[:60]}...): rate limit, {bekleme}sn sonra tekrar denenecek...")
                     time.sleep(bekleme)
@@ -216,6 +220,9 @@ def calistir():
     if hatali:
         print("Hatali olanlar icin scripti TEKRAR calistirman yeterli -- "
               "sadece onlar (hash uyusmadigi icin) yeniden denenecek.")
+        print("Eger hata GUNLUK token limitiyle ilgiliyse (TPD), o gunku "
+              "kotanin dolmasi anlamina gelir -- ertesi gun tekrar "
+              "calistirinca kaldigi yerden devam eder.")
 
 
 if __name__ == "__main__":
