@@ -5323,3 +5323,23 @@ rakam veremiyoruz -- gerçek sonucu yarınki çalıştırma gösterecek.
 
 **Dosya durumu:** `ikon_siniflandirma_calistir.py` güncellendi
 (`GRUP_BOYUTU = 3`, `max_tokens=5500`).
+
+
+### 3 Eylül 2026 — XII. Oturum (devam): Limon/Biber İkonları Teslim Edildi
+
+Bahri, 30 Ağustos'ta verilen `limon_biber_ikon_prompt_listesi.md`'deki
+8 promptu Gemini'de üretip gönderdi (8 JPG, 2048x2048, dama desenli
+sahte şeffaflık). Soğan ikonlarında kullanılan, otomatik doğrulamalı
+`seffaflastir_v3` fonksiyonu (gri_tolerans=22, parlaklik_esigi=178)
+aynen uygulandı -- 8/8 ikon "TEMIZ" olarak doğrulandı (kenar şeridinde
+%1'in altında beyaz-dışı piksel kaldı), görsel kontrolde de illüstrasyon
+detayları (limon dilimi çizgileri, rende delikleri) zarar görmemiş.
+
+`asama_ikonlari.py` zaten bu 8 dosya için hazırdı (30 Ağustos'ta
+öncelik sıralaması kodlanmıştı) -- kod tarafında değişiklik gerekmedi,
+sadece PNG'lerin `assets/` klasörüne eklenmesi yeterli.
+
+**Dosya durumu:** 8 yeni PNG teslim edildi
+(`dograma_limon.png`, `dilimleme_limon.png`, `rendeleme_limon.png`,
+`soyma_limon.png`, `dograma_biber.png`, `dilimleme_biber.png`,
+`rendeleme_biber.png`, `soyma_biber.png`).
