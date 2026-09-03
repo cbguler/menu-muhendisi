@@ -5263,3 +5263,31 @@ bütçesinde yeterli pay var).
 **Dosya durumu:** `ikon_siniflandirma_calistir.py` güncellendi
 (`_grup_isle()` fonksiyonu eklendi, `calistir()` içindeki döngü buna
 göre sadeleştirildi, `max_tokens=4000`).
+
+
+### 3 Eylül 2026 — XII. Oturum (devam): İlk Gerçek Çalıştırma Sonucu — 40 Başarılı, 150 Hatalı (Günlük Kota Doldu)
+
+İlk uçtan uca gerçek çalıştırma: **40 başarılı, 150 hatalı**. Önemli:
+kalan TÜM hatalar artık `json_validate_failed` değil, gerçek günlük
+TPD kotası (`Limit 200000, Used ~197000+`) -- yani kod artık doğru
+çalışıyor, tek sınır Groq'un ücretsiz katman kotası. Başarısız 150
+tarif kaydedilmediği için hash'leri eski kaldı, script tekrar
+çalıştırıldığında OTOMATİK olarak yeniden denenecekler (veri kaybı
+yok).
+
+**Yeni gözlem:** TPD hata mesajları "Please try again in 4m19s" gibi
+birkaç dakikalık bekleme süreleri gösterdi -- bu, günlük kotanın sabit
+"gece yarısı sıfırlanır" değil, KAYAN 24 saatlik pencere olduğunu
+gösteriyor. Yani tam bir gün beklemeye gerek olmayabilir, bir süre
+sonra (30-60 dk) tekrar denemek işe yarayabilir.
+
+**Optimizasyon:** Gerçek sonuçlar incelendi -- GRUP_BOYUTU=8 ile
+grupların büyük çoğunluğu ilk denemede başarısız olup 4'e bölünmek
+zorunda kalıyordu. Başarısız her deneme de gerçek token harcıyor
+(bölünmeden önceki "boşuna" deneme dahil), bu da günlük kotayı hızla
+tüketiyordu. `GRUP_BOYUTU` doğrudan 4'e düşürüldü -- böylece çoğu
+grup ilk denemede başarılı olacak, aynı günlük kota ile daha fazla
+tarif işlenebilecek.
+
+**Dosya durumu:** `ikon_siniflandirma_calistir.py` güncellendi
+(`GRUP_BOYUTU = 4`).

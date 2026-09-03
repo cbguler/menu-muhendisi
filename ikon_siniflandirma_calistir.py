@@ -66,6 +66,20 @@
 # her yari AYRI AYRI denenir -- boylece tek bir sorunlu/uzun tarif,
 # yanindaki digerlerini batirmiyor. max_tokens da 4000'e cikarildi.
 #
+# YETMIS BESINCI DUZELTME (3 Eylul 2026): Gercek calistirma sonuclari
+# incelendi -- GRUP_BOYUTU=8 ile gruplarin BUYUK COGUNLUGU ilk denemede
+# basarisiz olup 4'e (bazen 2'ye) bolunmek zorunda kaliyordu. Basarisiz
+# her deneme de GERCEK TOKEN HARCIYOR (girdi + kesilen cikti) -- yani
+# "once 8'i dene, basarisiz ol, sonra bol" adimi her seferinde bosa
+# gunluk kota tuketiyordu. Ayrica ayni calistirmada TPD hatasinin
+# "Please try again in 4m19s" gibi birkac dakikalik bekleme sureleri
+# gosterdigi goruldu -- bu, gunluk kotanin sabit "gece yarisi sifirlanir"
+# degil, KAYAN 24 SAATLIK PENCERE oldugunu gosteriyor (24 saat once
+# harcanan tokenler zamanla kendiliginden acilir). Cozum: GRUP_BOYUTU
+# dogrudan 4'e dusuruldu -- boylece cogu grup ilk denemede basarili
+# oluyor, bosa harcanan "basarisiz ilk deneme" tokenleri byuk olcude
+# ortadan kalkiyor, ayni gunluk kota ile daha fazla tarif islenebiliyor.
+#
 # CALISTIRMA: python ikon_siniflandirma_calistir.py
 # GEREKEN SIRLAR: GROQ_API_KEY_IKON, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
 
@@ -83,7 +97,7 @@ from supabase import create_client
 GECERLI_EYLEMLER = sorted(ASAMA_IKON_KOKLERI.keys())
 
 MODEL = "openai/gpt-oss-20b"  # llama-3.1-8b-instant 16 Agustos 2026'da kapatildi (bkz. YETMIS BIRINCI DUZELTME). Bu modelin gunluk 200K TOKEN (TPD) duvari var -- yavas ilerleyecek, gunluk kota dolunca ertesi gun devam eder.
-GRUP_BOYUTU = 8  # tek istekte kac tarif birlikte gonderilsin (12'den 8'e dusuruldu, bkz. YETMIS UCUNCU DUZELTME)
+GRUP_BOYUTU = 4  # tek istekte kac tarif birlikte gonderilsin (bkz. YETMIS BESINCI DUZELTME -- gercek calistirmada 8'lik gruplarin cogu bolunmek zorunda kaliyordu, bu da her seferinde bosa token harciyordu)
 
 SISTEM_PROMPTU = f"""Sen bir Turk yemek tarifi metnini analiz eden bir asistansin.
 Sana BIRDEN FAZLA tarifin "hazirlik talimati" metni, her biri kendi
