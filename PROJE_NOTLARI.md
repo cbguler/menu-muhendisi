@@ -5179,3 +5179,37 @@ etmeyi tercih etti.
 **Dosya durumu:** `ikon_siniflandirma_calistir.py` (MODEL sabiti
 `openai/gpt-oss-20b` olarak güncellendi) ve
 `ikon_siniflandirma_calistir.bat` (durum mesajı güncellendi).
+
+
+### 3 Eylül 2026 — XII. Oturum (devam): gpt-oss-20b Bozuk JSON Üretiyordu, Groq Structured Outputs (strict:true) ile Çözüldü
+
+İlk çalıştırmada `openai/gpt-oss-20b`, 12 tarifi tek istekte
+gruplarken iki farklı hata verdi: (1) `json_validate_failed` -- modelin
+ürettiği JSON'da tarif objeleri düzgün `{}` ile sarılmamış, iç içe
+yapı bozuk çıkıyordu; (2) `'str' object has no attribute 'get'` --
+script'in kendi ayrıştırma kodu, "tarifler" listesindeki bir girdinin
+dict değil düz string olduğu bir durumda çöktü.
+
+**Kök sebep:** `response_format={"type": "json_object"}` modu sadece
+"geçerli JSON üret" garantisi veriyor, iç içe ŞEMAYA uyma garantisi
+vermiyor -- küçük model (20b) karmaşık iç içe yapıyı (12 tarif ×
+değişken satır sayısı) tutarlı üretemiyor.
+
+**Çözüm:** Groq'un resmi "Structured Outputs" belgesi kontrol edildi:
+`openai/gpt-oss-20b`, `strict: true` (kısıtlanmış decoding) modunu
+DESTEKLEYEN modeller arasında. Bu modda model token seviyesinde
+şemaya zorlanıyor -- Groq'un kendi ifadesiyle "asla hatalı JSON
+üretemez, şemaya %100 uyar". Script'e tam JSON şeması eklendi
+(`YANIT_SEMASI` -- tüm alanlar `required`, tüm objelerde
+`additionalProperties: false`, "eylemler" listesi GECERLI_EYLEMLER
+enum'una kısıtlandı) ve `response_format` bu şemayla `strict: true`
+kullanacak şekilde güncellendi.
+
+Yerel olarak sahte (stub) modüllerle içe aktarma testi yapıldı, şema
+doğru inşa edildiği doğrulandı. Gerçek Groq API çağrısıyla henüz
+test edilmedi -- kullanıcı çalıştırıp sonucu paylaşacak.
+
+**Dosya durumu:** `ikon_siniflandirma_calistir.py` güncellendi
+(`YANIT_SEMASI` eklendi, `_tarif_grubu_siniflandir`'daki
+`response_format` strict şemaya geçti). `.bat` dosyasında değişiklik
+yok.

@@ -35,6 +35,15 @@
 # yerden devam edecek) ama script zaten artimli oldugu icin bu
 # sorunsuz calisir -- sadece .bat'i her gun tekrar calistirmak yeterli.
 #
+# YETMIS IKINCI DUZELTME (3 Eylul 2026): gpt-oss-20b, 12 tarifi tek
+# istekte gruplarken "json_object" modunda iç içe JSON yapisini sik sik
+# bozuyordu (bazen bir tarif objesi hic {} ile sarilmadan diziye
+# ekleniyordu, bazen "tarifler" listesi icinde dict yerine duz string
+# donuyordu). Groq'un "Structured Outputs" (strict: true, kisitlanmis
+# decoding) ozelligine gecildi -- gpt-oss-20b bunu destekliyor, model
+# artik token seviyesinde semaya ZORLANIYOR, semaya uymayan/bozuk JSON
+# uretmesi TEKNIK OLARAK IMKANSIZ hale geldi.
+#
 # CALISTIRMA: python ikon_siniflandirma_calistir.py
 # GEREKEN SIRLAR: GROQ_API_KEY_IKON, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
 
@@ -96,6 +105,56 @@ def _hazirlik_metni_hashle(metin):
     return hashlib.sha256(metin.encode("utf-8")).hexdigest()
 
 
+# YETMIS IKINCI DUZELTME (3 Eylul 2026): "json_object" modu, kucuk model
+# (gpt-oss-20b) 12 tarifi tek istekte gruplarken iç içe yapıyı sık sık
+# bozuyordu (kapanmamis {} , bazen "tarifler" listesi icinde dict yerine
+# duz string donduruyordu -- 'str' object has no attribute 'get' hatasi
+# BUNDAN kaynaklaniyordu). Groq'un resmi "Structured Outputs" belgesi
+# dogrudan kontrol edildi: gpt-oss-20b, "strict: true" (kisitlanmis
+# decoding) modunu DESTEKLIYOR -- bu modda model token seviyesinde
+# semaya ZORLANIYOR, asla semaya uymayan/bozuk JSON uretemiyor. Asagidaki
+# sema, yukaridaki JSON formatini BIREBIR tanimliyor (tum alanlar
+# 'required', tum objelerde 'additionalProperties: false' -- strict
+# modun zorunlu kildigi kurallar).
+_EYLEM_SATIR_SEMASI = {
+    "type": "object",
+    "properties": {
+        "index": {"type": "integer"},
+        "eylemler": {
+            "type": "array",
+            "items": {"type": "string", "enum": GECERLI_EYLEMLER},
+        },
+    },
+    "required": ["index", "eylemler"],
+    "additionalProperties": False,
+}
+
+_TARIF_SEMASI = {
+    "type": "object",
+    "properties": {
+        "tarif_index": {"type": "integer"},
+        "satirlar": {
+            "type": "array",
+            "items": _EYLEM_SATIR_SEMASI,
+        },
+    },
+    "required": ["tarif_index", "satirlar"],
+    "additionalProperties": False,
+}
+
+YANIT_SEMASI = {
+    "type": "object",
+    "properties": {
+        "tarifler": {
+            "type": "array",
+            "items": _TARIF_SEMASI,
+        },
+    },
+    "required": ["tarifler"],
+    "additionalProperties": False,
+}
+
+
 def _tarif_grubu_siniflandir(client, tarif_grubu):
     """tarif_grubu: [{"satirlar": [...]}, ...] -- birden fazla tarifin
     satirlari. Donus: HER tarif icin ikonlar_by_satir listesi (ayni
@@ -112,7 +171,14 @@ def _tarif_grubu_siniflandir(client, tarif_grubu):
             {"role": "system", "content": SISTEM_PROMPTU},
             {"role": "user", "content": kullanici_mesaji},
         ],
-        response_format={"type": "json_object"},
+        response_format={
+            "type": "json_schema",
+            "json_schema": {
+                "name": "tarif_siniflandirma",
+                "strict": True,
+                "schema": YANIT_SEMASI,
+            },
+        },
         temperature=0,
         max_tokens=8000,
     )
