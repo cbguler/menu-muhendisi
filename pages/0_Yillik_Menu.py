@@ -938,6 +938,7 @@ def _yillik_menu_tasarim_stilini_uygula():
     .omgo-veri-tablo td { padding: 3px 0; }
     .omgo-veri-tablo td:last-child { text-align: right; font-weight: 500; }
     .omgo-veri-bolum { font-family: Inter, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #C88A2E; margin: 10px 0 3px; }
+    .omgo-hedef-araligi { font-size: 10.5px; opacity: 0.65; font-style: italic; }
     .omgo-ogun-baslik-buyuk { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 700; text-align: center; color: #C88A2E; margin: 14px 0 8px; text-transform: uppercase; letter-spacing: 0.02em; }
     .omgo-hedef-rozet { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px; margin-top: 6px; }
     .omgo-maliyet-baslik { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 700; color: #7A531C; margin: 0 0 6px; }
@@ -1025,7 +1026,7 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
         etiket = _BESIN_ETIKET.get(anahtar, anahtar)
         return etiket.split(" (")[0].replace("Vitamin ", "")
 
-    def _tablo_satirlari_yaz(anahtarlar, t):
+    def _tablo_satirlari_yaz(anahtarlar, t, ogun_hedefleri=None):
         """Satirlari yazar, en az bir GERCEK deger yazilip yazilmadigini
         (True/False) dondurur -- YIRMI YEDINCI DUZELTME (13 Agustos 2026):
         kullanici, bir kategoride HIC veri olmadiginda basligin altinin
@@ -1034,13 +1035,22 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
         belirli besin ogeleri icin katalogumuzda henuz veri OLMAMASI --
         SQL ile dogrulandi, ör. 564 malzemeden sadece 68'inde Vitamin C
         var). Artik veri yoksa acikca "Bu degerler icin veri yok" notu
-        gosteriliyor, sessiz bosluk birakilmiyor."""
+        gosteriliyor, sessiz bosluk birakilmiyor.
+
+        YETMIS SEKIZINCI DUZELTME (3 Eylul 2026): ogun_hedefleri verilirse
+        (anahtar -> (alt, ust)), her satirin yanina -- varsa -- hedef
+        araligi da yaziliyor, boylece deger ve hedef bir arada gorulebiliyor."""
+        ogun_hedefleri = ogun_hedefleri or {}
         satirlar = []
         for anahtar in anahtarlar:
             deger = t.get(anahtar)
             if deger is None:
                 continue
-            satirlar.append(f"<tr><td>{_kisa_ad(anahtar)}</td><td>{_deger_formatla(deger)} {_birim_al(anahtar)}</td></tr>")
+            aralik = ogun_hedefleri.get(anahtar)
+            hedef_metni = f" <span class='omgo-hedef-araligi'>({aralik[0]}–{aralik[1]})</span>" if aralik else ""
+            satirlar.append(
+                f"<tr><td>{_kisa_ad(anahtar)}</td><td>{_deger_formatla(deger)} {_birim_al(anahtar)}{hedef_metni}</td></tr>"
+            )
         if satirlar:
             st.markdown("<table class='omgo-veri-tablo'>" + "".join(satirlar) + "</table>", unsafe_allow_html=True)
             return True
@@ -1101,7 +1111,30 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
             # bu, hedeflenen_ek_anahtarlar tablosunu da otomatik olarak
             # dogru hale getiriyor, cunku hedef araliklari da 1 porsiyon
             # baz alinarak kalibre edilmisti (bkz. OTUZ IKINCI DUZELTME).
-            PORSIYON_STANDART = 10
+            #
+            # YETMIS SEKIZINCI DUZELTME (3 Eylul 2026): PORSIYON_STANDART
+            # artik sabit 10 DEGIL -- isletmenin kendi varsayilani
+            # (isletmeler.standart_uretim_porsiyonu, bkz. 78 numarali
+            # migration) kullaniliyor, ve bu pop-up'ta GECICI olarak
+            # (sadece bu goruntuleme icin, kalici degil) degistirilebiliyor.
+            _isletme_porsiyon_bilgi = (
+                supabase.table("isletmeler")
+                .select("standart_uretim_porsiyonu")
+                .eq("id", st.session_state.isletme_id)
+                .single()
+                .execute()
+            ).data or {}
+            _varsayilan_porsiyon = _isletme_porsiyon_bilgi.get("standart_uretim_porsiyonu") or 10
+            _porsiyon_key = f"gecici_porsiyon_{card_id}"
+            PORSIYON_STANDART = st.number_input(
+                "Maliyet hesabı için porsiyon sayısı",
+                min_value=1, max_value=10000,
+                value=st.session_state.get(_porsiyon_key, _varsayilan_porsiyon),
+                step=1, key=_porsiyon_key,
+                help="Bu sadece bu görüntüleme için geçerli -- işletmenin "
+                     "varsayılanını değiştirmez. Varsayılanı değiştirmek "
+                     "için Abonelik sayfasına bak.",
+            )
             OLCEKLENECEK_ALANLAR = ["maliyet_eur"]
 
             for ogun_adi, tarif_adlari in gun["ogunler"].items():
@@ -1117,20 +1150,34 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                     "margin-top:-6px; margin-bottom:8px;'>(besin değerleri 1 porsiyon için)</div>",
                     unsafe_allow_html=True,
                 )
+
+                # YETMIS SEKIZINCI DUZELTME (3 Eylul 2026): kullanicinin
+                # istegiyle -- "Hedeflenen Degerler" basligi HER SEYIN
+                # USTUNE alindi, VE artik SADECE ek besin ogelerini degil
+                # TEMEL 5'i de (kalori/protein/yag/karbonhidrat/GI) icine
+                # aliyor -- bunlar icin de ogun bazli hedef araligi
+                # tanimlanabiliyor, o yuzden ayni "hedeflenen" mantigina
+                # dahil edilmeleri dogru. Her satirda deger + (varsa)
+                # hedef araligi yan yana gosteriliyor.
+                _ogun_hedefleri = (hedefler or {}).get(ogun_adi) or {}
+
+                def _hedef_metni(anahtar):
+                    aralik = _ogun_hedefleri.get(anahtar)
+                    return f" <span class='omgo-hedef-araligi'>({aralik[0]}–{aralik[1]})</span>" if aralik else ""
+
+                st.markdown("<div class='omgo-veri-bolum'>Hedeflenen Değerler</div>", unsafe_allow_html=True)
                 st.markdown(
                     "<table class='omgo-veri-tablo'>"
-                    f"<tr><td>Kalori</td><td>{round(t['kalori'])} kcal</td></tr>"
-                    f"<tr><td>Protein</td><td>{round(t['protein'])} g</td></tr>"
-                    f"<tr><td>Yağ</td><td>{round(t['yag'])} g</td></tr>"
-                    f"<tr><td>Karbonhidrat</td><td>{round(t['karbonhidrat'])} g</td></tr>"
-                    f"<tr><td>Glisemik İndeks</td><td>{gi_metin}</td></tr>"
+                    f"<tr><td>Kalori</td><td>{round(t['kalori'])} kcal{_hedef_metni('kalori')}</td></tr>"
+                    f"<tr><td>Protein</td><td>{round(t['protein'])} g{_hedef_metni('protein')}</td></tr>"
+                    f"<tr><td>Yağ</td><td>{round(t['yag'])} g{_hedef_metni('yag')}</td></tr>"
+                    f"<tr><td>Karbonhidrat</td><td>{round(t['karbonhidrat'])} g{_hedef_metni('karbonhidrat')}</td></tr>"
+                    f"<tr><td>Glisemik İndeks</td><td>{gi_metin}{_hedef_metni('gi')}</td></tr>"
                     "</table>",
                     unsafe_allow_html=True,
                 )
-
                 if hedeflenen_ek_anahtarlar:
-                    st.markdown("<div class='omgo-veri-bolum'>Hedeflenen Değerler</div>", unsafe_allow_html=True)
-                    _tablo_satirlari_yaz(hedeflenen_ek_anahtarlar, t)
+                    _tablo_satirlari_yaz(hedeflenen_ek_anahtarlar, t, _ogun_hedefleri)
 
                 # OTUZ BESINCI DUZELTME (13 Agustos 2026, Oturum 11):
                 # kullanicinin istegiyle -- Alerjen maliyetle ilgili
