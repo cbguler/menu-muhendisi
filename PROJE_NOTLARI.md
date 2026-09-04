@@ -5336,3 +5336,60 @@ kaybı yok.
 
 İlerleme: Gün 1 ~41 tarif, Gün 2 43 tarif (israfsız). Kalan 106 tarif
 için tahmini ~2-3 gün daha.
+
+
+### 3 Eylül 2026 — XII. Oturum (devam): Fire Oranı Bug'ı Bulundu ve Düzeltildi
+
+Satınalma listesi tasarımı sırasında Bahri, FİRE ORANI'nın maliyet
+hesaplarında hiç kullanılmadığını fark etti. İnceleme, malzeme
+maliyetinin İKİ AYRI yerde, iki farklı şekilde hesaplandığını ortaya
+çıkardı (TrendSurf'teki "Optima Skor'un 5 kopyası" sorununun aynısı):
+
+1. SQL view `recete_guncel_maliyet` (Reçete Üretimi sayfasının okuduğu)
+2. `5_Tarif_Kutuphanesi.py` içinde canlı Python hesaplaması
+
+İkisi de `miktar_gram / 1000 * fiyat` formülünü kullanıyordu -- fire
+oranı (soyma/ayıklama kaybı) hiç yoktu, yani TÜM tarif maliyetleri
+(fire oranı > 0 olan malzemeler için) olduğundan düşük görünüyordu.
+
+**Düzeltme:** Her iki yerde de `brüt_miktar = net_miktar / (1 - fire_orani)`
+formülü uygulandı (77 numaralı migration + Python patch). Kalori/besin
+değeri hesaplarına DOKUNULMADI -- fire oranı satınalma/maliyet
+kavramı, beslenme kavramı değil. Formül python'da birim testlerle
+(fire=0, None, %10, %50, aşırı değer) doğrulandı.
+
+Gerçek sütun adları (`information_schema.columns` sorgusuyla
+doğrulandı, tahmin edilmedi): `fire_orani`, `bozulma_suresi`,
+`kategori_id`. Bu veriler satınalma listesi tasarımına da işlendi.
+
+**Dosya durumu:** `5_Tarif_Kutuphanesi.py` güncellendi (fire_orani
+select + hesaplama), `77_recete_guncel_maliyet_fire_orani.sql` yeni
+migration olarak eklendi, `satinalma_listesi_tasarim.md` doğrulanmış
+sütun adlarıyla güncellendi. `1_Recete_Uretimi.py`'ye DOKUNULMADI --
+view'dan okuduğu için otomatik düzelecek.
+
+**DİKKAT:** Migration çalıştırılınca TÜM mevcut tarif maliyetleri
+(fire oranı > 0 olan malzemeleri içerenler) YÜKSELECEK -- bu beklenen
+ve doğru bir değişiklik, hata değil. Fiyat gösteren ekranlarda ani bir
+artış görülürse şaşırma.
+
+
+### 3 Eylül 2026 — XII. Oturum (devam): Fire Oranı Bug'ının Üçüncü (ve gerçek son) Kopyası Bulundu
+
+Tam proje zip'i incelenince, `pages/0_Yillik_Menu.py`'de AYNI hatalı
+formülün (`miktar_gram / 1000 * fiyat`, fire oranı yok) İKİ AYRI kopyası
+daha olduğu görüldü (satır ~443 ve ~609 -- muhtemelen "ada göre" ve
+"reçete id'sine göre" gruplama için ayrı yazılmış iki fonksiyon).
+Yani toplamda maliyet hesaplaması ÜÇ farklı yerde duplike edilmişti:
+SQL view, Tarif Kütüphanesi, Yıllık Menü (×2). Hepsi aynı fire_orani
+formülüyle düzeltildi, ikisi de otomatik doğrulamayla (tam 2+2 kez
+uygulandı mı kontrolü) teyit edildi.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` güncellendi (select
+ifadelerine `fire_orani` eklendi, her iki maliyet toplama bloğuna
+brüt miktar formülü uygulandı).
+
+**Ders:** Bu proje ikinci kez aynı "aynı formülün birden fazla kopyası"
+sorununu yaşadı (ilki TrendSurf'teki Optima Skor). Gelecekte maliyet
+hesaplaması TEK bir paylaşılan fonksiyona/SQL view'a taşınmalı --
+şimdilik üç kopya da senkron ama bu kırılgan bir durum.

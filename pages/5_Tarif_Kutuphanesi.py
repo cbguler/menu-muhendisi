@@ -77,7 +77,7 @@ def _tarif_kutuphanesi_detayli_getir():
     malzeme_kalemleri = _sayfalayarak_getir(lambda: supabase.table("recete_malzemeleri")
         .select(
             "recete_id, malzeme_id, miktar_gram, "
-            "malzemeler(ad, kalori, protein, yag, karbonhidrat, glisemik_indeks)"
+            "malzemeler(ad, kalori, protein, yag, karbonhidrat, glisemik_indeks, fire_orani)"
         )
     )
 
@@ -135,7 +135,17 @@ def _tarif_kutuphanesi_detayli_getir():
                 if m.get("ad"):
                     eksik_malzemeler.add(m["ad"])
             else:
-                maliyet_eur += (kalem["miktar_gram"] / 1000.0) * fiyat
+                # YETMIS YEDINCI DUZELTME (3 Eylul 2026): fire orani
+                # (soyma/ayiklama kaybi) hesaba katiliyor -- net miktar
+                # degil, gercekte satin alinmasi gereken BRUT miktar
+                # fiyatlandiriliyor. SQL view (recete_guncel_maliyet)
+                # ile AYNI formul -- iki hesaplama yolu artik tutarli.
+                fire_orani = m.get("fire_orani") or 0
+                brut_miktar_gram = (
+                    kalem["miktar_gram"] / (1 - fire_orani)
+                    if fire_orani < 1 else kalem["miktar_gram"]
+                )
+                maliyet_eur += (brut_miktar_gram / 1000.0) * fiyat
             alerjenler |= alerjen_by_malzeme.get(malzeme_id, set())
 
             malzeme_listesi.append({"ad": m.get("ad") or "?", "miktar_gram": kalem["miktar_gram"]})
