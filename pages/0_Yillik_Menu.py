@@ -371,7 +371,7 @@ def _tarif_detaylarini_getir(isletme_id):
         lambda: supabase.table("recete_malzemeleri")
         .select(
             "recete_id, malzeme_id, miktar_gram, "
-            "malzemeler(ad, kalori, protein, yag, karbonhidrat, glisemik_indeks, "
+            "malzemeler(ad, kalori, protein, yag, karbonhidrat, glisemik_indeks, fire_orani, "
             + ", ".join(_GENISLETILMIS_KOLONLAR) + ")"
         )
     )
@@ -440,7 +440,16 @@ def _tarif_detaylarini_getir(isletme_id):
             if malzeme_adi:
                 girdi["eksik_malzemeler"].add(malzeme_adi)
         else:
-            girdi["maliyet_eur"] += (kalem["miktar_gram"] / 1000.0) * fiyat
+            # YETMIS YEDINCI DUZELTME (3 Eylul 2026): fire orani (soyma/
+            # ayiklama kaybi) hesaba katiliyor -- 5_Tarif_Kutuphanesi.py
+            # ve recete_guncel_maliyet SQL view ile AYNI formul, ucu
+            # hesaplama yolu artik tutarli.
+            fire_orani = m.get("fire_orani") or 0
+            brut_miktar_gram = (
+                kalem["miktar_gram"] / (1 - fire_orani)
+                if fire_orani < 1 else kalem["miktar_gram"]
+            )
+            girdi["maliyet_eur"] += (brut_miktar_gram / 1000.0) * fiyat
         girdi["alerjenler"] |= alerjen_by_malzeme.get(malzeme_id, set())
 
     sonuc = {}
@@ -546,7 +555,7 @@ def _isletme_receteler_ve_detay_getir(isletme_id):
         lambda: supabase.table("recete_malzemeleri")
         .select(
             "recete_id, malzeme_id, miktar_gram, "
-            "malzemeler(ad, kalori, protein, yag, karbonhidrat, glisemik_indeks, "
+            "malzemeler(ad, kalori, protein, yag, karbonhidrat, glisemik_indeks, fire_orani, "
             + ", ".join(_GENISLETILMIS_KOLONLAR) + ")"
         )
         .in_("recete_id", list(id_to_ad.keys()))
@@ -606,7 +615,16 @@ def _isletme_receteler_ve_detay_getir(isletme_id):
             if malzeme_adi:
                 girdi["eksik_malzemeler"].add(malzeme_adi)
         else:
-            girdi["maliyet_eur"] += (kalem["miktar_gram"] / 1000.0) * fiyat
+            # YETMIS YEDINCI DUZELTME (3 Eylul 2026): fire orani (soyma/
+            # ayiklama kaybi) hesaba katiliyor -- 5_Tarif_Kutuphanesi.py
+            # ve recete_guncel_maliyet SQL view ile AYNI formul, ucu
+            # hesaplama yolu artik tutarli.
+            fire_orani = m.get("fire_orani") or 0
+            brut_miktar_gram = (
+                kalem["miktar_gram"] / (1 - fire_orani)
+                if fire_orani < 1 else kalem["miktar_gram"]
+            )
+            girdi["maliyet_eur"] += (brut_miktar_gram / 1000.0) * fiyat
         girdi["alerjenler"] |= alerjen_by_malzeme.get(malzeme_id, set())
 
     tarif_listesi = []
