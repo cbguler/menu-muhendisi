@@ -5515,3 +5515,58 @@ yorumlarındaki 2-3 tarihi referans bilerek dokunulmadı).
 değiştirildi (tek yer, `pages/0_Yillik_Menu.py`). Not: CSS zaten
 `text-transform: uppercase` uyguluyor, ekranda görünüş değişmedi ama
 kaynak metin artık istenen ifadeyle birebir uyuşuyor.
+
+
+### 3 Eylül 2026 — XII. Oturum (devam): Porsiyon Profili Seçimi Sayfa Seviyesine Taşındı
+
+Doğrulandı: önceki "HEDEFLENEN BESİN DEĞERLERİ" ve "Aylık Menü"
+değişiklikleri zaten başarıyla yayınlanmış (git sıkıntısı sahte
+alarmmış -- önceki deneme aslında başarılıydı, tekrar deneme "no
+changes" görmüştü çünkü zaten günceldi).
+
+Bahri'nin yeni talebi: pop-up'taki "Maliyet hesabı için porsiyon
+profili" seçimi HER pop-up'ta ayrı ayrı sorulmak yerine, sayfanın en
+üstünde (Yıl/Ay seçicilerinin yanına) TEK bir yerden yapılsın, tüm
+günler için geçerli olsun. Uygulandı: seçim artık sayfa seviyesinde
+(`st.columns([1, 1, 1.6, 1.4])`, üçüncü sütun), seçilen değer
+`st.session_state["secili_porsiyon_sayisi"]`'ye yazılıyor, pop-up
+fonksiyonu (`_gun_popup_govdesini_ciz`) bunu oradan okuyor. Pop-up
+içindeki eski selectbox tamamen kaldırıldı.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` güncellendi.
+
+
+### 3 Eylül 2026 — XII. Oturum Sonu: Yarın İçin Fikir — Profillere Besin Hedefi de Eklensin
+
+Bahri'nin oturum sonunda bıraktığı, henüz UYGULANMAMIŞ bir sonraki
+adım fikri: bugün kurulan "porsiyon profilleri" sistemi (Abonelik
+sayfası, isletme_porsiyon_profilleri tablosu) sadece porsiyon
+sayısını tutuyor -- bunu GENİŞLETİP her profile kendi HEDEFLENEN BESİN
+DEĞERLERİ setini de eklemek istiyor.
+
+**Gerekçe/senaryo:** Bir işletmenin (yemek fabrikası) birden fazla
+MÜŞTERİ TİPİ olabilir -- ör. 1. müşteri hastane, 2. müşteri spor
+salonu, 3. müşteri ilkokul, 4. müşteri huzur evi, 5. müşteri tatil
+köyü. Bunların besin hedefleri (kalori/protein/sodyum/vb. aralıkları)
+KÖKTEN farklı olmalı (ör. spor salonu yüksek protein, hastane
+muhtemelen düşük sodyum vb.). Şu an "Öğün başına besin hedefi uygula"
+her Aylık Menü üretiminde ELLE, sıfırdan giriliyor -- profil bazlı
+olursa, bir profil (ör. "Huzur Evi") seçildiğinde o profile ÖNCEDEN
+kaydedilmiş hedef aralıkları OTOMATİK gelmeli.
+
+**Muhtemel kapsam (yarın netleştirilecek, bugün TARTIŞILMADI):**
+- `isletme_porsiyon_profilleri` tablosu genişletilebilir (belki adı da
+  "isletme_musteri_profilleri" gibi bir şeye dönüşür, porsiyon+hedef
+  ikisini birden taşıyan bir "müşteri profili" kavramına evrilir).
+- Hedef aralıkları JSONB olarak profile bağlı saklanabilir (mevcut
+  "hedefler" yapısına benzer: {besin_ogesi: [alt, ust]}).
+- Abonelik sayfasında profil düzenlenirken hedef girişi de yapılabilir
+  hale gelmeli (muhtemelen mevcut "Öğün başına besin hedefi" UI'ının
+  bir kısmı oraya taşınacak/kopyalanacak).
+- Aylık Menü sayfasında bir profil seçildiğinde, o profilin kayıtlı
+  hedefleri otomatik yüklenmeli (kullanıcı sıfırdan girmek zorunda
+  kalmamalı, ama muhtemelen yine de o an için geçici override
+  edilebilmeli -- bu netleşecek).
+
+Bu, henüz TASARLANMADI -- sadece fikir olarak not edildi, yarın
+birlikte tartışılıp kapsam belirlenecek.
