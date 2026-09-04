@@ -146,12 +146,12 @@ _BESIN_ARALIK = {anahtar: (minv, maxv, def_alt, def_ust) for anahtar, _, minv, m
 # ayni isim, kolon adiyla anahtar birebir ayni secildi)
 _GENISLETILMIS_KOLONLAR = [a for a, *_ in TUM_BESIN_ALANLARI if a not in ("kalori", "protein", "yag", "karbonhidrat", "gi")]
 
-st.set_page_config(page_title="Yıllık Menü", page_icon="assets/favicon.png", layout="wide")
+st.set_page_config(page_title="Aylık Menü", page_icon="assets/favicon.png", layout="wide")
 
 supabase = get_supabase()
 oturumu_uygula(supabase)
 
-st.title("Yıllık Menü Üretim Motoru")
+st.title("Aylık Menü Üretim Motoru")
 st.caption(
     "Türk mutfağı tarif kütüphanesinden, anayasa kurallarına uygun "
     "(madde 8, 11, 13) örnek haftalık menü üretir. İlk sürüm — kişisel "
@@ -1168,7 +1168,7 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                     aralik = _ogun_hedefleri.get(anahtar)
                     return f" <span class='omgo-hedef-araligi'>({aralik[0]}–{aralik[1]})</span>" if aralik else ""
 
-                st.markdown("<div class='omgo-veri-bolum'>Hedeflenen Değerler</div>", unsafe_allow_html=True)
+                st.markdown("<div class='omgo-veri-bolum'>HEDEFLENEN BESİN DEĞERLERİ</div>", unsafe_allow_html=True)
                 st.markdown(
                     "<table class='omgo-veri-tablo'>"
                     f"<tr><td>Kalori</td><td>{round(t['kalori'])} kcal{_hedef_metni('kalori')}</td></tr>"
@@ -1200,11 +1200,17 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                 # tasarlandi -- bu yuzden hedef kontrolu OLCEKLENMEMIS
                 # t_ham ile yapiliyor, ekranda gosterilen 10-porsiyonluk
                 # t degil.
+                #
+                # SEKSENINCI DUZELTME (3 Eylul 2026): Bahri'nin acik ve
+                # kesin talebiyle -- "Hedef dışı" etiketi ARTIK HICBIR
+                # YERDE musteriye gosterilmiyor. Hedefte olan ogunler
+                # icin olumlu "Hedefte" rozeti hala gosteriliyor; hedef
+                # disi kalan durumlarda ise SESSIZCE hicbir rozet
+                # gosterilmiyor (algoritmanin ic sinirini musteriye
+                # aciklayan alarm-gibi bir etiket yerine).
                 hedefte = _hedefte_mi(ogun_adi, t_ham, hedefler)
                 if hedefte is True:
                     st.markdown("<span class='omgo-hedef-rozet omgo-hedefte'>Hedefte</span>", unsafe_allow_html=True)
-                elif hedefte is False:
-                    st.markdown("<span class='omgo-hedef-rozet omgo-hedefdisi'>Hedef dışı</span>", unsafe_allow_html=True)
 
                 with st.container(key=f"maliyetkutu_{card_id}_{ogun_adi}"):
                     st.markdown(
@@ -1338,7 +1344,7 @@ def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
     gerekmiyor, sadece ekrandakiyle bire bir eslesen bir gorunum."""
     wb = Workbook()
     ws = wb.active
-    ws.title = "Yıllık Menü"
+    ws.title = "Aylık Menü"
 
     yazi_tipi = "Arial"
     baslik_yazi = Font(name=yazi_tipi, bold=True, color="FFFFFF")
@@ -1383,7 +1389,10 @@ def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
                 deger = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
             elif etiket == "Hedef Durumu":
                 hedefte = _hedefte_mi(ogun_adi, t_ham, hedefler)
-                deger = {True: "Hedefte", False: "Hedef dışı", None: "-"}[hedefte]
+                # SEKSENINCI DUZELTME (3 Eylul 2026): "Hedef dışı" metni
+                # buradan da kaldirildi -- pop-up'taki degisiklikle
+                # tutarli olsun diye (bkz. yukarida).
+                deger = "Hedefte" if hedefte is True else "-"
             else:  # Maliyet
                 if not fiyat_verisi_var:
                     deger = "-"

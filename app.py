@@ -673,7 +673,7 @@ def kontrol_paneli_sayfasi():
         )
         st.caption(
             "Özel reçetelerini sadece sen görürsün, başka işletmeler "
-            "erişemez. Bu reçeteler, aşağıdaki \"Yıllık Menü\" bölümündeki "
+            "erişemez. Bu reçeteler, aşağıdaki \"Aylık Menü\" bölümündeki "
             "241 tariflik genel Türk mutfağı kütüphanesinden AYRIDIR — "
             "hazır olduğunda aynı sayfanın en altındaki \"Satışa Açma\" "
             "bölümünden satışa sunabilirsin."
@@ -714,8 +714,8 @@ def kontrol_paneli_sayfasi():
 
     st.divider()
 
-    # ---- 4) Yıllık Menü ----
-    st.header("Yıllık Menü")
+    # ---- 4) Aylık Menü ----
+    st.header("Aylık Menü")
     _gorsel_varsa_goster("tanitim_yillik_menu.png", use_container_width=True)
     st.write(
         "241 tariflik genel bir Türk mutfağı kütüphanesinden (7 coğrafi "
@@ -755,7 +755,7 @@ def kontrol_paneli_sayfasi():
 # ---------------------------------------------------------------------
 
 kontrol_sayfasi = st.Page(kontrol_paneli_sayfasi, title="Ana Sayfa", default=True)
-yillik_menu_sayfasi = st.Page("pages/0_Yillik_Menu.py", title="Yıllık Menü")
+yillik_menu_sayfasi = st.Page("pages/0_Yillik_Menu.py", title="Aylık Menü")
 recete_uretimi_sayfasi = st.Page("pages/1_Recete_Uretimi.py", title="Reçete Üretimi")
 # OTUZ SEKIZINCI DUZELTME (24 Agustos 2026): "Ozel Menu Uretimi" ayri bir
 # sayfa olmaktan cikarildi -- kullanici talebiyle Recete Uretimi'nin

@@ -5476,3 +5476,42 @@ profilli durumlar).
 **Dosya durumu:** `79_isletme_porsiyon_profilleri.sql` (yeni),
 `pages/0_Yillik_Menu.py` güncellendi (selectbox), `pages/6_Abonelik.py`
 güncellendi (profil yönetimi bölümü eklendi).
+
+
+### 3 Eylül 2026 — XII. Oturum (devam): "Hedef Dışı" Kaldırıldı + "Yıllık Menü" → "Aylık Menü"
+
+**"Hedef dışı" (madde 5, kesin talep):** Bahri'nin önceki oturumda
+belirttiği ama bu oturumda henüz uygulanmamış olan talebi, ekran
+görüntüsüyle tekrar net bir şekilde iletildi. Algoritma tarafında
+"her zaman hedefte" garantisi hâlâ verilemez (241 tarifle bazı sıkı
+hedef kombinasyonları gerçekten imkânsız olabilir), AMA müşteri
+tarafında bu iç sınırı ifşa eden alarm-gibi etiket tamamen kaldırıldı:
+- Pop-up'ta: hedefteyse "Hedefte" rozeti hâlâ gösteriliyor, hedef
+  dışıysa HİÇBİR rozet gösterilmiyor (sessiz, alarm yok).
+- Excel dışa aktarımda ("Hedef Durumu" sütunu): aynı mantık, "Hedef
+  dışı" yerine "-" yazılıyor.
+
+Bu SADECE görüntüleme değişikliği -- üretim algoritmasının kendisi
+(uretim_algoritmasi.py) DOKUNULMADI, hâlâ 4 kademeli gevşetme
+kullanıyor. İleride (ayrı bir oturumda) algoritmanın deneme sayısını
+artırıp gerçek "hedef dışı" oranını azaltmak hâlâ gündemde, ama bu
+ARTIK müşteriye görünen acil bir sorun değil.
+
+**"Yıllık Menü" → "Aylık Menü" (isim değişikliği):** Dosya adı
+(`pages/0_Yillik_Menu.py`) DEĞİŞTİRİLMEDİ (Streamlit nav sırasını/
+linklerini bozma riski) -- sadece görünen metin güncellendi: nav
+başlığı (`st.Page(title=...)`), sayfa başlığı, tarayıcı sekmesi
+başlığı, Excel dışa aktarım sayfa adı, ve Abonelik/app.py'deki 6
+referans metni. Toplam 12 yer güncellendi, hepsi doğrulandı (kod
+yorumlarındaki 2-3 tarihi referans bilerek dokunulmadı).
+
+**Dosya durumu:** `app.py`, `pages/0_Yillik_Menu.py`,
+`pages/6_Abonelik.py` güncellendi.
+
+
+### 3 Eylül 2026 — XII. Oturum (devam): Pop-up Başlık Metni Güncellendi
+
+"Hedeflenen Değerler" başlığı "HEDEFLENEN BESİN DEĞERLERİ" olarak
+değiştirildi (tek yer, `pages/0_Yillik_Menu.py`). Not: CSS zaten
+`text-transform: uppercase` uyguluyor, ekranda görünüş değişmedi ama
+kaynak metin artık istenen ifadeyle birebir uyuşuyor.

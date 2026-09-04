@@ -71,7 +71,7 @@ with st.form("isletme_bilgi_formu"):
         "boş bırakırsan hiçbir şey eklenmez.",
     )
     st.caption(
-        "İşletme adı, Yıllık Menü sayfasındaki işletmenin kendi özel "
+        "İşletme adı, Aylık Menü sayfasındaki işletmenin kendi özel "
         "menüsünü dahil etme butonunun üzerinde görünür."
     )
     yeni_adres = st.text_area(
@@ -147,7 +147,7 @@ st.subheader("İşletme Maliyet Ayarları")
 st.caption(
     "Bu ayarlar Reçete Üretimi sayfasında değil buradadır, çünkü tek "
     "bir reçeteye değil işletmenin TÜM reçetelerine birden uygulanır -- "
-    "hem kendi oluşturduğun özel reçetelere, hem de Yıllık Menü "
+    "hem kendi oluşturduğun özel reçetelere, hem de Aylık Menü "
     "sayfasındaki hazır 241 tariflik kütüphaneden ürettiğin menülere. "
     "Malzeme maliyetleri (fiyatlar) zaten sistemde ayrı olarak "
     "tutuluyor, burada SADECE enerji ve işçilik birim fiyatları var. "
@@ -214,11 +214,11 @@ st.divider()
 # ---------------------------------------------------------------------
 st.subheader("Porsiyon Profilleri")
 st.caption(
-    "Yıllık Menü sayfasındaki maliyet hesabı bu porsiyon sayılarını "
+    "Aylık Menü sayfasındaki maliyet hesabı bu porsiyon sayılarını "
     "kullanır. Tek bir müşterin/tipik üretim miktarın varsa tek satır "
     "yeterli. Birden fazla müşteriye farklı porsiyon sayılarıyla "
     "üretim yapıyorsan (ör. bir yemek fabrikası), her müşteri için "
-    "ayrı bir satır ekleyebilirsin -- Yıllık Menü'de hangisini "
+    "ayrı bir satır ekleyebilirsin -- Aylık Menü'de hangisini "
     "görüntülemek istediğini seçebileceksin."
 )
 
