@@ -76,21 +76,48 @@ yüksek olduğunda kararı insana bırakmasını sağlar (ör. ihtiyaç 80g ama
 en küçük pratik birim 500g ise, %84 fazlalık — muhtemelen zaten evde/
 depoda vardır, tekrar almaya gerek olmayabilir).
 
-## Açık Kalan Tek Nokta (uygulama aşamasında netleşecek)
+## Açık Kalan Tek Nokta — GÜNCELLEME: Çözüldü, Daha İyi Bir Temel Bulundu
 
-Malzeme tablosundaki mevcut kategori alanının gerçek değerlerini
-(hangi kategori adları var, kaç tanesi bozulabilir/dayanıklı sayılmalı)
-göremediğim için, günlük/haftalık eşlemesini uygulamaya geçerken
-senden gerçek kategori listesini isteyeceğim ve eşlemeyi birlikte
-teyit edeceğiz. Bu, tahmine dayalı yanlış sınıflandırma riskini
-ortadan kaldırır.
+`kaynak_duzeltilmis_v29.xlsx` incelendi. Malzeme tablosunda kategori
+alanının yanında, çok daha kesin iki sütun daha var:
+`BOZULMA SÜRESİ (gün)` ve `FİRE ORANI %`. Kategori tahmini yerine
+**doğrudan bu ölçülmüş veriyi** kullanmak çok daha sağlam bir temel.
+
+**Nihai kural:** `BOZULMA SÜRESİ <= 7 gün → Günlük`,
+`BOZULMA SÜRESİ > 7 gün → Haftalık`. Malzemenin kendi değeri boşsa,
+kategorisinin medyan değerine göre karar verilir (yedek/fallback).
+
+Kategori medyanları (572 gerçek malzeme satırı üzerinden hesaplandı):
+
+| Kategori | Medyan Bozulma (gün) | Varsayılan |
+|---|---|---|
+| Et ve Et Ürünleri | 3 | Günlük |
+| Balık ve Su Ürünleri | 2 | Günlük |
+| Sebze ve Sebze Ürünleri | 7 | Günlük |
+| Meyve ve Meyve Ürünleri | 7 | Günlük |
+| Soslar, Pastalar ve Fondlar | 7 | Günlük |
+| Süt ve Süt Ürünleri | 15 | Haftalık |
+| Yumurta ve Yumurta Ürünleri | 15 | Haftalık |
+| Tahıllar, Baharatlar, Konserveler, Yağlar, Kuru Meyve/Bakliyat, vb. | 180–730 | Haftalık |
+
+**Dikkat — iki kategoride hiç veri yok:** "GELENEKSEL GIDALAR" (39
+malzeme) ve "ÖZEL BESLENME AMAÇLI GIDALAR" (5 malzeme) — bu 44
+malzemenin ne kendi bozulma süresi ne de yaslanacak bir kategori
+medyanı var. Bunlar listede rastgele bir tahmine zorlanmayıp **"Bilinmiyor
+— kontrol gerekli"** olarak ayrı gösterilecek.
+
+**Cevaplanması gereken yeni bir soru:** `FİRE ORANI %` (hazırlık/ayıklama
+kaybı) zaten tariflerin maliyet hesabına dahil mi, yoksa satınalma
+miktarı hesaplanırken ayrıca mı uygulanmalı? Bunu bilmeden çift sayım
+ya da eksik sayım riski var — uygulamaya geçmeden netleştirilmeli.
 
 ## Sıradaki Adım
 
-1. Malzeme tablosundaki kategori alanının adını ve gerçek değerlerini
-   paylaşman (ör. bir SQL sorgusu çıktısı veya Excel'deki sütun).
-2. Kategori → Günlük/Haftalık eşlemesini birlikte teyit etmek.
-3. `satinalma_devreden_stok` tablosu için migration yazılması.
+1. `FİRE ORANI` sorusunun netleştirilmesi (yukarıda).
+2. `satinalma_devreden_stok` tablosu için migration yazılması.
+3. Malzeme tablosuna `BOZULMA SÜRESİ` ve `FİRE ORANI` verisinin (Excel'den)
+   veritabanına aktarılıp aktarılmadığının doğrulanması — yoksa bu da
+   ayrı bir senkronizasyon adımı gerektirir.
 4. Yıllık Menü sayfasına "Satınalma Listesi" sekmesi eklenmesi.
 5. Toplama + yuvarlama + devreden stok mantığının yazılıp, birkaç
    gerçek hafta üzerinde test edilmesi (özellikle çok tarifte geçen
