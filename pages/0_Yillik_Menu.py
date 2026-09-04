@@ -785,13 +785,36 @@ for t in tarifler:
         t2[kolon] = b.get(kolon)
     tarifler_zengin.append(t2)
 
-sol, sag, _bos = st.columns([1, 1, 3])
+sol, sag, sag2, _bos = st.columns([1, 1, 1.6, 1.4])
 with sol:
     yil_secimi = st.number_input(
         "Yıl", min_value=2024, max_value=2035, value=datetime.date.today().year, step=1,
     )
 with sag:
     ay_secimi = st.selectbox("Ay", AYLAR_SIRALI)
+with sag2:
+    # SEKSEN BIRINCI DUZELTME (3 Eylul 2026): porsiyon profili secimi
+    # pop-up'tan buraya (Yıl/Ay'ın yanina) tasindi -- Bahri'nin talebi,
+    # boylece her pop-up'ta ayri ayri secmek yerine bir kez secilip TUM
+    # gunler icin gecerli oluyor. Secilen deger session_state'e yazilir,
+    # pop-up (_gun_popup_govdesini_ciz) oradan okur.
+    _porsiyon_profilleri_sayfa = (
+        supabase.table("isletme_porsiyon_profilleri")
+        .select("ad, porsiyon_sayisi")
+        .eq("isletme_id", st.session_state.isletme_id)
+        .order("sira")
+        .execute()
+    ).data or [{"ad": "Standart", "porsiyon_sayisi": 10}]
+    _profil_etiketleri_sayfa = [f"{p['ad']} ({p['porsiyon_sayisi']} porsiyon)" for p in _porsiyon_profilleri_sayfa]
+    _sayfa_secili_index = st.selectbox(
+        "Maliyet hesabı için porsiyon profili",
+        options=range(len(_profil_etiketleri_sayfa)),
+        format_func=lambda i: _profil_etiketleri_sayfa[i],
+        key="sayfa_porsiyon_profili_secimi",
+        help="Profilleri eklemek/düzenlemek için Abonelik sayfasındaki "
+             "\"Porsiyon Profilleri\" bölümüne bak.",
+    )
+    st.session_state["secili_porsiyon_sayisi"] = _porsiyon_profilleri_sayfa[_sayfa_secili_index]["porsiyon_sayisi"]
 
 besin_hedefi_kullan = st.checkbox("Öğün başına besin hedefi uygula (opsiyonel)")
 
@@ -1112,32 +1135,13 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
             # dogru hale getiriyor, cunku hedef araliklari da 1 porsiyon
             # baz alinarak kalibre edilmisti (bkz. OTUZ IKINCI DUZELTME).
             #
-            # YETMIS DOKUZUNCU DUZELTME (3 Eylul 2026): serbest bir sayi
-            # kutusu (78 numarali migration, TEK sayilik varsayilan)
-            # YETERSIZDI -- Bahri'nin belirttigi gercek durum: bir
-            # isletme (ör. bir yemek fabrikasi) AYNI ANDA birden fazla
-            # musteriye FARKLI porsiyon sayilariyla uretim yapabilir.
-            # Bunun yerine Abonelik sayfasinda yonetilen "porsiyon
-            # profilleri" (bkz. 79 numarali migration) arasindan SECIM
-            # yapiliyor -- tek profili olan isletmeler icin bu tek
-            # secenekli, sorunsuz calisan bir acilir liste olur.
-            _porsiyon_profilleri = (
-                supabase.table("isletme_porsiyon_profilleri")
-                .select("ad, porsiyon_sayisi")
-                .eq("isletme_id", st.session_state.isletme_id)
-                .order("sira")
-                .execute()
-            ).data or [{"ad": "Standart", "porsiyon_sayisi": 10}]
-            _profil_etiketleri = [f"{p['ad']} ({p['porsiyon_sayisi']} porsiyon)" for p in _porsiyon_profilleri]
-            _secili_profil_index = st.selectbox(
-                "Maliyet hesabı için porsiyon profili",
-                options=range(len(_profil_etiketleri)),
-                format_func=lambda i: _profil_etiketleri[i],
-                key=f"secili_porsiyon_profili_{card_id}",
-                help="Profilleri eklemek/düzenlemek için Abonelik sayfasındaki "
-                     "\"Porsiyon Profilleri\" bölümüne bak.",
-            )
-            PORSIYON_STANDART = _porsiyon_profilleri[_secili_profil_index]["porsiyon_sayisi"]
+            # SEKSEN BIRINCI DUZELTME (3 Eylul 2026): porsiyon profili
+            # secimi pop-up'tan sayfa seviyesine (Yıl/Ay'ın yanina)
+            # tasindi -- boylece HER pop-up'ta ayri ayri secmek yerine
+            # bir kez secilip TUM gunler icin gecerli oluyor. Secim,
+            # sayfanin en ustunde (bkz. asagida "sag2" sutunu) yapiliyor
+            # ve st.session_state uzerinden buraya ulasiyor.
+            PORSIYON_STANDART = st.session_state.get("secili_porsiyon_sayisi", 10)
             OLCEKLENECEK_ALANLAR = ["maliyet_eur"]
 
             for ogun_adi, tarif_adlari in gun["ogunler"].items():
