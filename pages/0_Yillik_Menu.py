@@ -1112,29 +1112,32 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
             # dogru hale getiriyor, cunku hedef araliklari da 1 porsiyon
             # baz alinarak kalibre edilmisti (bkz. OTUZ IKINCI DUZELTME).
             #
-            # YETMIS SEKIZINCI DUZELTME (3 Eylul 2026): PORSIYON_STANDART
-            # artik sabit 10 DEGIL -- isletmenin kendi varsayilani
-            # (isletmeler.standart_uretim_porsiyonu, bkz. 78 numarali
-            # migration) kullaniliyor, ve bu pop-up'ta GECICI olarak
-            # (sadece bu goruntuleme icin, kalici degil) degistirilebiliyor.
-            _isletme_porsiyon_bilgi = (
-                supabase.table("isletmeler")
-                .select("standart_uretim_porsiyonu")
-                .eq("id", st.session_state.isletme_id)
-                .single()
+            # YETMIS DOKUZUNCU DUZELTME (3 Eylul 2026): serbest bir sayi
+            # kutusu (78 numarali migration, TEK sayilik varsayilan)
+            # YETERSIZDI -- Bahri'nin belirttigi gercek durum: bir
+            # isletme (ör. bir yemek fabrikasi) AYNI ANDA birden fazla
+            # musteriye FARKLI porsiyon sayilariyla uretim yapabilir.
+            # Bunun yerine Abonelik sayfasinda yonetilen "porsiyon
+            # profilleri" (bkz. 79 numarali migration) arasindan SECIM
+            # yapiliyor -- tek profili olan isletmeler icin bu tek
+            # secenekli, sorunsuz calisan bir acilir liste olur.
+            _porsiyon_profilleri = (
+                supabase.table("isletme_porsiyon_profilleri")
+                .select("ad, porsiyon_sayisi")
+                .eq("isletme_id", st.session_state.isletme_id)
+                .order("sira")
                 .execute()
-            ).data or {}
-            _varsayilan_porsiyon = _isletme_porsiyon_bilgi.get("standart_uretim_porsiyonu") or 10
-            _porsiyon_key = f"gecici_porsiyon_{card_id}"
-            PORSIYON_STANDART = st.number_input(
-                "Maliyet hesabı için porsiyon sayısı",
-                min_value=1, max_value=10000,
-                value=st.session_state.get(_porsiyon_key, _varsayilan_porsiyon),
-                step=1, key=_porsiyon_key,
-                help="Bu sadece bu görüntüleme için geçerli -- işletmenin "
-                     "varsayılanını değiştirmez. Varsayılanı değiştirmek "
-                     "için Abonelik sayfasına bak.",
+            ).data or [{"ad": "Standart", "porsiyon_sayisi": 10}]
+            _profil_etiketleri = [f"{p['ad']} ({p['porsiyon_sayisi']} porsiyon)" for p in _porsiyon_profilleri]
+            _secili_profil_index = st.selectbox(
+                "Maliyet hesabı için porsiyon profili",
+                options=range(len(_profil_etiketleri)),
+                format_func=lambda i: _profil_etiketleri[i],
+                key=f"secili_porsiyon_profili_{card_id}",
+                help="Profilleri eklemek/düzenlemek için Abonelik sayfasındaki "
+                     "\"Porsiyon Profilleri\" bölümüne bak.",
             )
+            PORSIYON_STANDART = _porsiyon_profilleri[_secili_profil_index]["porsiyon_sayisi"]
             OLCEKLENECEK_ALANLAR = ["maliyet_eur"]
 
             for ogun_adi, tarif_adlari in gun["ogunler"].items():

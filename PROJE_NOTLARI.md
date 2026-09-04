@@ -5393,3 +5393,86 @@ brüt miktar formülü uygulandı).
 sorununu yaşadı (ilki TrendSurf'teki Optima Skor). Gelecekte maliyet
 hesaplaması TEK bir paylaşılan fonksiyona/SQL view'a taşınmalı --
 şimdilik üç kopya da senkron ama bu kırılgan bir durum.
+
+
+### 3 Eylül 2026 — XII. Oturum (devam): Porsiyon Ayarı + Pop-up Düzeni (Madde 3+4)
+
+**Porsiyon ayarı (madde 3):** `PORSIYON_STANDART = 10` sabiti kaldırıldı.
+Yeni `isletmeler.standart_uretim_porsiyonu` sütunu (78 numarali migration,
+varsayılan 10, geriye dönük kırılma yok) her işletmenin kendi tipik
+üretim parti büyüklüğünü tutuyor. Yıllık Menü pop-up'ında bu değer bir
+`st.number_input` ile GEÇİCİ olarak (sadece o görüntüleme için, kalıcı
+değil) değiştirilebiliyor. NOT: bu, `receteler.porsiyon_sayisi` (75
+numaralı migration, tarif oluşturma anındaki sabit 10) ile KARIŞTIRILMADI
+-- ayrı, bilinçli olarak korunan bir kavram.
+
+**Pop-up düzeni (madde 4):** "Hedeflenen Değerler" başlığı her şeyin
+üstüne alındı VE artık sadece ek besin ögelerini değil, TEMEL 5'i de
+(Kalori/Protein/Yağ/Karbonhidrat/GI) kapsıyor -- her satırda değer,
+varsa hedef aralığıyla birlikte gösteriliyor (`_tablo_satirlari_yaz`
+fonksiyonuna isteğe bağlı `ogun_hedefleri` parametresi eklendi, tek
+çağrı yeri güncellendi). Maliyet hesabı zaten (ve hâlâ) bu ayarlanabilir
+porsiyon değerini kullanıyor.
+
+Mantık (hedef aralığı formatlama) sahte veriyle izole test edildi,
+doğru çalıştığı doğrulandı.
+
+**Dosya durumu:** `78_isletme_standart_uretim_porsiyonu.sql` (yeni),
+`pages/0_Yillik_Menu.py` güncellendi.
+
+**Bekleyen (bu oturumda ELE ALINMADI, ayrı konular):**
+- Madde 1: limon/biber ikonları + soğan rendeleme ikonu (havuca
+  benziyor) + VE/VEYA sınıflandırma sorunu -- ciddi, sistemik, ayrı
+  bir denetim gerektiriyor.
+- Madde 2: Satınalma + depolama modülü tasarımı devam ediyor
+  (satinalma_listesi_tasarim.md).
+- Madde 5: "Hedef dışı" rozetinin tamamen kaldırılması -- algoritma
+  incelendi (4 kademeli gevşetme zaten var, en son besin hedefini de
+  gevşetiyor), ama 241 tarifle bazı sıkı hedef kombinasyonlarında
+  gerçekten imkânsız olabilir -- "her zaman hedefte" garantisi
+  verilemez, admin'e uyarı olarak gösterme önerildi, henüz
+  uygulanmadı.
+- Madde 6: 241 tarif genişletmeye devam edilmedi.
+
+
+### 3 Eylül 2026 — XII. Oturum (devam): Porsiyon Ayarı Yeniden Tasarlandı — Çoklu Profil Sistemi
+
+Deploy sonrası hata alındı (`_gun_popup_govdesini_ciz`, satır 1125,
+`APIError`) -- sebep: 78 numaralı migration (isletmeler.standart_uretim_
+porsiyonu sütunu) Supabase'de çalıştırılmadan Python kodu deploy
+edilmişti.
+
+Ama bu hatayı çözerken Bahri daha temel bir sorun fark etti: **TEK bir
+"standart porsiyon" sayısı yetersiz**. Bir işletme (ör. bir yemek
+fabrikası) aynı anda birden fazla müşteriye, HER BİRİNE FARKLI porsiyon
+sayısıyla (ör. Müşteri A: 100, Müşteri B: 30, Müşteri C: 75) üretim
+yapabilir. Bu yüzden 78 numaralı migration'ın tek-sütun yaklaşımı
+tamamen terk edildi, yerine **çoklu porsiyon profili** sistemi kuruldu:
+
+- Yeni tablo: `isletme_porsiyon_profilleri` (isletme_id, ad,
+  porsiyon_sayisi, sıra). RLS, `isletme_maliyet_ayarlari` ile AYNI
+  desen (`auth_isletme_id()`).
+- 79 numaralı migration, HER mevcut işletme için otomatik bir
+  "Standart" (10 porsiyon) profil oluşturuyor VE 78'in eklediği
+  (muhtemelen hiç çalıştırılmamış) sütunu güvenle temizliyor.
+- **Abonelik sayfası:** "Porsiyon Profilleri" bölümü eklendi --
+  `st.data_editor` ile satır ekleme/silme/düzenleme (tablo gibi,
+  spreadsheet deneyimi). Tek müşterili işletmeler tek satır görür,
+  hiçbir ekstra karmaşıklık yaşamaz.
+- **Yıllık Menü pop-up'ı:** serbest sayı kutusu yerine, işletmenin
+  kayıtlı profillerinden birini seçen bir açılır liste (ör. "Müşteri A
+  (100 porsiyon)") -- maliyet o profilin porsiyon sayısına göre
+  hesaplanıyor.
+
+Etiket/index eşleşme mantığı izole test edildi (tek profilli ve çok
+profilli durumlar).
+
+**ÖNEMLİ DEPLOY SIRASI (geçen seferki hatanın tekrarını önlemek için):**
+1. ÖNCE `79_isletme_porsiyon_profilleri.sql`'i Supabase'de çalıştır
+   (78'i hiç çalıştırmadıysan sorun değil, 79 zaten onu temizliyor).
+2. SONRA `pages/0_Yillik_Menu.py` ve `pages/6_Abonelik.py`'yi deploy et.
+   Bu sırayı tersine çevirirsen aynı hatayı tekrar alırsın.
+
+**Dosya durumu:** `79_isletme_porsiyon_profilleri.sql` (yeni),
+`pages/0_Yillik_Menu.py` güncellendi (selectbox), `pages/6_Abonelik.py`
+güncellendi (profil yönetimi bölümü eklendi).

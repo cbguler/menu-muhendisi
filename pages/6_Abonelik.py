@@ -16,6 +16,7 @@
 # eklenecek.
 
 import streamlit as st
+import pandas as pd
 
 # NOT (12 Agustos 2026, Oturum 11): logo artik burada AYRICA gosterilmiyor -- app.py'deki ozel menu satirinin icine tasindi, orada zaten her sayfa gecisinde render ediliyor. Burada tekrar cagirmak cift logoya yol acardi.
 
@@ -196,6 +197,100 @@ with st.form("maliyet_ayarlari_formu"):
             }
         ).eq("isletme_id", isletme_id).execute()
         st.success("Kaydedildi -- tüm reçetelerin maliyeti güncellendi.")
+        st.rerun()
+
+st.divider()
+
+# ---------------------------------------------------------------------
+# PORSIYON PROFİLLERİ (3 Eylül 2026 eklendi, 79 numarali migration).
+# Yillik Menu pop-up'inin maliyet hesabi icin kullanilan porsiyon
+# sayilari BURADA yonetiliyor -- Bahri'nin belirttigi gercek durum:
+# bir isletme (ör. bir yemek fabrikasi) AYNI ANDA birden fazla
+# musteriye, HER BIRINE FARKLI porsiyon sayisiyla uretim yapabilir
+# (ör. Musteri A: 100, Musteri B: 30, Musteri C: 75). Tek bir sayi bu
+# durumu temsil edemezdi (bkz. 78 numarali migration'in supurulmesi).
+# Tek musterili isletmeler icin sistem otomatik TEK bir "Standart"
+# profil olusturur -- bu isletmeler hicbir ekstra karmasiklik gormez.
+# ---------------------------------------------------------------------
+st.subheader("Porsiyon Profilleri")
+st.caption(
+    "Yıllık Menü sayfasındaki maliyet hesabı bu porsiyon sayılarını "
+    "kullanır. Tek bir müşterin/tipik üretim miktarın varsa tek satır "
+    "yeterli. Birden fazla müşteriye farklı porsiyon sayılarıyla "
+    "üretim yapıyorsan (ör. bir yemek fabrikası), her müşteri için "
+    "ayrı bir satır ekleyebilirsin -- Yıllık Menü'de hangisini "
+    "görüntülemek istediğini seçebileceksin."
+)
+
+profil_sonuc = (
+    supabase.table("isletme_porsiyon_profilleri")
+    .select("*")
+    .eq("isletme_id", isletme_id)
+    .order("sira")
+    .execute()
+)
+porsiyon_profilleri = profil_sonuc.data or []
+
+if not porsiyon_profilleri:
+    # Guvenlik agi -- 79 numarali migration zaten her isletme icin bir
+    # "Standart" profil olusturuyor, ama migration'dan SONRA olusan bir
+    # isletme buraya bos gelebilir, o durumda burada olusturulur.
+    yeni_profil = (
+        supabase.table("isletme_porsiyon_profilleri")
+        .insert({"isletme_id": isletme_id, "ad": "Standart", "porsiyon_sayisi": 10, "sira": 0})
+        .execute()
+    )
+    porsiyon_profilleri = yeni_profil.data
+
+_profil_df = pd.DataFrame([
+    {"id": p["id"], "Ad": p["ad"], "Porsiyon Sayısı": p["porsiyon_sayisi"]}
+    for p in porsiyon_profilleri
+])
+
+_duzenlenmis_df = st.data_editor(
+    _profil_df,
+    column_config={
+        "id": None,
+        "Ad": st.column_config.TextColumn(required=True),
+        "Porsiyon Sayısı": st.column_config.NumberColumn(min_value=1, step=1, required=True),
+    },
+    num_rows="dynamic",
+    hide_index=True,
+    key="porsiyon_profil_editor",
+    use_container_width=True,
+)
+
+if st.button("Porsiyon profillerini kaydet"):
+    _gecerli_mi = True
+    if len(_duzenlenmis_df) == 0:
+        st.error("En az bir profil olmalı.")
+        _gecerli_mi = False
+    elif _duzenlenmis_df["Ad"].isna().any() or _duzenlenmis_df["Porsiyon Sayısı"].isna().any():
+        st.error("Tüm satırlarda Ad ve Porsiyon Sayısı dolu olmalı.")
+        _gecerli_mi = False
+
+    if _gecerli_mi:
+        _eski_idler = {p["id"] for p in porsiyon_profilleri}
+        _yeni_idler = {i for i in _duzenlenmis_df["id"] if pd.notna(i)}
+        for _silinecek_id in _eski_idler - _yeni_idler:
+            supabase.table("isletme_porsiyon_profilleri").delete().eq("id", _silinecek_id).execute()
+
+        for _sira, (_, _satir) in enumerate(_duzenlenmis_df.iterrows()):
+            if pd.isna(_satir["id"]):
+                supabase.table("isletme_porsiyon_profilleri").insert({
+                    "isletme_id": isletme_id,
+                    "ad": _satir["Ad"],
+                    "porsiyon_sayisi": int(_satir["Porsiyon Sayısı"]),
+                    "sira": _sira,
+                }).execute()
+            else:
+                supabase.table("isletme_porsiyon_profilleri").update({
+                    "ad": _satir["Ad"],
+                    "porsiyon_sayisi": int(_satir["Porsiyon Sayısı"]),
+                    "sira": _sira,
+                }).eq("id", _satir["id"]).execute()
+
+        st.success("Porsiyon profilleri kaydedildi.")
         st.rerun()
 
 st.divider()
