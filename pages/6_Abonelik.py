@@ -18,6 +18,8 @@
 import streamlit as st
 import pandas as pd
 
+from besin_sabitleri import TUM_BESIN_ALANLARI, BESIN_ETIKET, BESIN_ARALIK
+
 # NOT (12 Agustos 2026, Oturum 11): logo artik burada AYRICA gosterilmiyor -- app.py'deki ozel menu satirinin icine tasindi, orada zaten her sayfa gecisinde render ediliyor. Burada tekrar cagirmak cift logoya yol acardi.
 
 from db import get_supabase, oturumu_uygula, cerez_yoneticisi
@@ -291,6 +293,100 @@ if st.button("Porsiyon profillerini kaydet"):
                 }).eq("id", _satir["id"]).execute()
 
         st.success("Porsiyon profilleri kaydedildi.")
+        st.rerun()
+
+# ---------------------------------------------------------------------
+# PROFİL BAŞINA BESİN HEDEFLERİ (4 Eylül 2026 eklendi, 80 numarali
+# migration). Bahri'nin senaryosu: bir isletmenin (yemek fabrikasi)
+# farkli musteri TIPLERI olabilir -- hastane, spor salonu, ilkokul,
+# huzur evi, tatil koyu -- her birinin besin hedefi KOKTEN farkli
+# olmali. Burada SECILEN profile hedef kaydedilir; Aylik Menu
+# sayfasinda o profil secildiginde bu hedefler OTOMATIK yuklenir.
+# ---------------------------------------------------------------------
+st.markdown("##### Profil Başına Besin Hedefleri")
+st.caption(
+    "Yukarıdaki profillerden birini seç ve o profile özel besin hedefi "
+    "aralıkları tanımla (ör. \"Huzur Evi\" için düşük sodyum, \"Spor "
+    "Salonu\" için yüksek protein). Aylık Menü sayfasında bu profili "
+    "seçtiğinde buradaki hedefler otomatik yüklenir -- ihtiyaç halinde "
+    "o an için yine değiştirebilirsin."
+)
+
+# porsiyon_profilleri degiskeni yukarida (kaydetmeden ONCEKI liste)
+# zaten mevcut -- ama kullanici az once yeni bir profil eklediyse
+# rerun sonrasi taze veriyle calismak icin tekrar cekiyoruz.
+_hedef_profil_listesi = (
+    supabase.table("isletme_porsiyon_profilleri")
+    .select("*")
+    .eq("isletme_id", isletme_id)
+    .order("sira")
+    .execute()
+).data or []
+
+if _hedef_profil_listesi:
+    _hedef_profil_etiketleri = [f"{p['ad']} ({p['porsiyon_sayisi']} porsiyon)" for p in _hedef_profil_listesi]
+    _hedef_secili_index = st.selectbox(
+        "Hangi profilin hedeflerini düzenliyorsun?",
+        options=range(len(_hedef_profil_etiketleri)),
+        format_func=lambda i: _hedef_profil_etiketleri[i],
+        key="hedef_duzenleme_profil_secimi",
+    )
+    _secili_hedef_profili = _hedef_profil_listesi[_hedef_secili_index]
+    _profil_id = _secili_hedef_profili["id"]
+    _kayitli_hedefler = _secili_hedef_profili.get("hedefler") or {}
+
+    # SEKSEN IKINCI DUZELTME (4 Eylul 2026): bu sayfadaki widget'lar,
+    # Aylik Menu sayfasindaki ("Öğle_kalori_alt" gibi) ANAHTARLARLA
+    # KESINLIKLE CAKISMAMALI -- Streamlit session_state SAYFALAR ARASI
+    # PAYLASILIYOR, ayni key kullanilsaydi bir profilin hedefini
+    # duzenlemek, Aylik Menu'deki O ANKI uretim hedefini SESSIZCE
+    # degistirebilirdi. Bu yuzden HER key'e "abn_{profil_id}_" onekini
+    # ekliyoruz -- hem sayfalar arasi hem PROFILLER ARASI carpismayi
+    # onluyor.
+    _anahtar_on_eki = f"abn_{_profil_id}_"
+
+    _profil_secili_anahtarlar = sorted(
+        {anahtar for ogun in _kayitli_hedefler.values() for anahtar in ogun}
+    ) or ["kalori", "protein", "yag", "karbonhidrat", "gi"]
+
+    _secili_besin_anahtarlari_abn = st.multiselect(
+        "Hedeflenecek besin değerleri",
+        options=[anahtar for anahtar, *_ in TUM_BESIN_ALANLARI],
+        default=_profil_secili_anahtarlar,
+        format_func=lambda a: BESIN_ETIKET[a],
+        key=f"{_anahtar_on_eki}secili_besin_anahtarlari",
+    )
+
+    _yeni_hedefler = {}
+    for _ogun_adi in ("Öğle", "Akşam"):
+        with st.expander(f"{_ogun_adi} hedefleri", expanded=False):
+            _yeni_hedefler[_ogun_adi] = {}
+            if not _secili_besin_anahtarlari_abn:
+                st.caption("Yukarıdan en az bir besin değeri seçmelisin.")
+            for _anahtar in _secili_besin_anahtarlari_abn:
+                _etiket = BESIN_ETIKET[_anahtar]
+                _minv, _maxv, _def_alt, _def_ust = (float(x) for x in BESIN_ARALIK[_anahtar])
+                _kayitli_aralik = _kayitli_hedefler.get(_ogun_adi, {}).get(_anahtar)
+                if _kayitli_aralik:
+                    _def_alt, _def_ust = float(_kayitli_aralik[0]), float(_kayitli_aralik[1])
+                _c1, _c2 = st.columns(2)
+                with _c1:
+                    _alt = st.number_input(
+                        f"{_etiket} — min", min_value=_minv, max_value=_maxv,
+                        value=_def_alt, key=f"{_anahtar_on_eki}{_ogun_adi}_{_anahtar}_alt",
+                    )
+                with _c2:
+                    _ust = st.number_input(
+                        f"{_etiket} — maks", min_value=_minv, max_value=_maxv,
+                        value=_def_ust, key=f"{_anahtar_on_eki}{_ogun_adi}_{_anahtar}_ust",
+                    )
+                _yeni_hedefler[_ogun_adi][_anahtar] = [_alt, _ust]
+
+    if st.button("Bu profilin besin hedeflerini kaydet", key=f"{_anahtar_on_eki}kaydet"):
+        supabase.table("isletme_porsiyon_profilleri").update(
+            {"hedefler": _yeni_hedefler if _secili_besin_anahtarlari_abn else None}
+        ).eq("id", _profil_id).execute()
+        st.success(f"\"{_secili_hedef_profili['ad']}\" profilinin besin hedefleri kaydedildi.")
         st.rerun()
 
 st.divider()

@@ -17,6 +17,7 @@ from openpyxl.utils import get_column_letter
 # NOT (12 Agustos 2026, Oturum 11): logo artik burada AYRICA gosterilmiyor -- app.py'deki ozel menu satirinin icine tasindi, orada zaten her sayfa gecisinde render ediliyor. Burada tekrar cagirmak cift logoya yol acardi.
 
 from db import get_supabase, oturumu_uygula
+from besin_sabitleri import TUM_BESIN_ALANLARI, BESIN_ETIKET, BESIN_ARALIK
 from uretim_algoritmasi import hafta_olustur
 
 MEVSIM_AYLARI = {
@@ -84,64 +85,6 @@ def _tarih_mevsimi(tarih):
 # hali" mantigiyla, TEK BIR OGUN icin makul bir baslangic noktasi olarak
 # secildi -- kesin bilimsel bir tavsiye degil, kullanici kendi mutfagina
 # gore ayarlayabilir.
-TUM_BESIN_ALANLARI = [
-    # NOT: Streamlit'in number_input'u min/maks/varsayilan degerlerin
-    # HEPSININ AYNI TIPTE (ya hep int ya hep float) olmasini zorunlu
-    # kilar -- aksi halde StreamlitMixedNumericTypesError firlatir.
-    # Bu yuzden HER satirda tum 4 deger (min, maks, def_alt, def_ust)
-    # BILINCLI OLARAK float yaziliyor, tam sayi gibi gorunse bile.
-    #
-    # OTUZ IKINCI DUZELTME (13 Agustos 2026, Oturum 11): kullanicinin
-    # "neredeyse hicbir ogun hedefte cikmiyor" bildirimi uzerine, TUM
-    # varsayilan def_alt/def_ust degerleri GERCEK veriye gore yeniden
-    # kalibre edildi. Yontem: kalibrasyon_besin_dagilimi.sql ile TUM
-    # tariflerin (564 malzeme, tam veri) GERCEK TEK TARIF medyan/p90
-    # degerleri olculdu; bir ogun ~3 tarifin (ana+yardimci+tamamlayici)
-    # toplami oldugu icin "3 x medyan" o besin ogesi icin TIPIK bir
-    # ogun degeri olarak kullanildi, def_alt/def_ust bu tipik degerin
-    # etrafinda MAKUL bir bant (cogu gercek ogunun sigabilecegi) olacak
-    # sekilde ayarlandi. Ozellikle Sodyum/Fosfor/Potasyum/Kalsiyum/Iyot
-    # onceki tahmini araliklarin COK UZERINDE, Vitamin D/B7 ise COK
-    # ALTINDA cikiyordu -- kullanicinin gelecekte hastane/huzurevi/okul
-    # gibi COK SAYIDA besin ogesini AYNI ANDA hedefleyecegi kurumsal
-    # kullanim senaryolari icin altyapinin saglam kalmasi amaciyla,
-    # TUM 27 alan (sadece sorun cikaranlar degil) gercek veriyle
-    # yeniden dogrulanip guncellendi.
-    ("kalori", "Kalori (kcal)", 0.0, 3000.0, 900.0, 1200.0),
-    ("protein", "Protein (g)", 0.0, 150.0, 20.0, 60.0),
-    ("yag", "Yağ (g)", 0.0, 120.0, 10.0, 55.0),
-    ("karbonhidrat", "Karbonhidrat (g)", 0.0, 300.0, 40.0, 120.0),
-    ("gi", "Glisemik İndeks", 0.0, 100.0, 0.0, 70.0),
-    ("sodyum_mg", "Sodyum (mg)", 0.0, 8000.0, 800.0, 5000.0),
-    ("lif_g", "Lif (g)", 0.0, 30.0, 3.0, 10.0),
-    ("seker_g", "Şeker (g)", 0.0, 80.0, 0.0, 25.0),
-    ("doymus_yag_g", "Doymuş Yağ (g)", 0.0, 50.0, 0.0, 20.0),
-    ("vitamin_a_mcg", "Vitamin A (mcg)", 0.0, 2000.0, 50.0, 400.0),
-    ("vitamin_b1_mg", "Vitamin B1 — Tiamin (mg)", 0.0, 3.0, 0.1, 0.6),
-    ("vitamin_b2_mg", "Vitamin B2 — Riboflavin (mg)", 0.0, 3.0, 0.1, 1.0),
-    ("vitamin_b3_mg", "Vitamin B3 — Niasin (mg)", 0.0, 30.0, 1.0, 12.0),
-    ("vitamin_b5_mg", "Vitamin B5 — Pantotenik Asit (mg)", 0.0, 12.0, 0.3, 3.0),
-    ("vitamin_b6_mg", "Vitamin B6 (mg)", 0.0, 4.0, 0.1, 1.2),
-    ("vitamin_b7_mcg", "Vitamin B7 — Biyotin (mcg)", 0.0, 60.0, 0.0, 8.0),
-    ("vitamin_b9_mcg", "Vitamin B9 — Folat (mcg)", 0.0, 800.0, 20.0, 200.0),
-    ("vitamin_b12_mcg", "Vitamin B12 (mcg)", 0.0, 40.0, 0.0, 3.0),
-    ("vitamin_c_mg", "Vitamin C (mg)", 0.0, 250.0, 5.0, 80.0),
-    ("vitamin_d_mcg", "Vitamin D (mcg)", 0.0, 15.0, 0.0, 3.0),
-    ("vitamin_e_mg", "Vitamin E (mg)", 0.0, 35.0, 1.0, 6.0),
-    ("vitamin_k_mcg", "Vitamin K (mcg)", 0.0, 1800.0, 2.0, 150.0),
-    ("kalsiyum_mg", "Kalsiyum (mg)", 0.0, 1500.0, 50.0, 600.0),
-    ("demir_mg", "Demir (mg)", 0.0, 35.0, 1.0, 8.0),
-    ("magnezyum_mg", "Magnezyum (mg)", 0.0, 700.0, 30.0, 180.0),
-    ("potasyum_mg", "Potasyum (mg)", 0.0, 5000.0, 300.0, 2500.0),
-    ("cinko_mg", "Çinko (mg)", 0.0, 25.0, 1.0, 8.0),
-    ("fosfor_mg", "Fosfor (mg)", 0.0, 3000.0, 100.0, 900.0),
-    ("bakir_mg", "Bakır (mg)", 0.0, 5.0, 0.05, 0.8),
-    ("manganez_mg", "Manganez (mg)", 0.0, 12.0, 0.1, 2.0),
-    ("selenyum_mcg", "Selenyum (mcg)", 0.0, 180.0, 5.0, 40.0),
-    ("iyot_mcg", "İyot (mcg)", 0.0, 800.0, 10.0, 500.0),
-]
-_BESIN_ETIKET = {anahtar: etiket for anahtar, etiket, *_ in TUM_BESIN_ALANLARI}
-_BESIN_ARALIK = {anahtar: (minv, maxv, def_alt, def_ust) for anahtar, _, minv, maxv, def_alt, def_ust in TUM_BESIN_ALANLARI}
 # malzemeler tablosundaki kolon adlari (5 temel alan disindakiler icin
 # ayni isim, kolon adiyla anahtar birebir ayni secildi)
 _GENISLETILMIS_KOLONLAR = [a for a, *_ in TUM_BESIN_ALANLARI if a not in ("kalori", "protein", "yag", "karbonhidrat", "gi")]
@@ -798,13 +741,21 @@ with sag2:
     # boylece her pop-up'ta ayri ayri secmek yerine bir kez secilip TUM
     # gunler icin gecerli oluyor. Secilen deger session_state'e yazilir,
     # pop-up (_gun_popup_govdesini_ciz) oradan okur.
+    #
+    # SEKSEN IKINCI DUZELTME (4 Eylul 2026): profil artik sadece
+    # porsiyon degil, kendi besin hedeflerini de tasiyabiliyor (bkz. 80
+    # numarali migration, Abonelik sayfasindaki "Profil Basina Besin
+    # Hedefleri" bolumu). Profil DEGISTIRILDIGINDE, o profilin kayitli
+    # hedefleri asagidaki "Ogun basina besin hedefi" widget'larina
+    # OTOMATIK yukleniyor -- kullanici hala isterse o an icin
+    # degistirebilir, ama baslangic noktasi artik dogru kurumdan geliyor.
     _porsiyon_profilleri_sayfa = (
         supabase.table("isletme_porsiyon_profilleri")
-        .select("ad, porsiyon_sayisi")
+        .select("id, ad, porsiyon_sayisi, hedefler")
         .eq("isletme_id", st.session_state.isletme_id)
         .order("sira")
         .execute()
-    ).data or [{"ad": "Standart", "porsiyon_sayisi": 10}]
+    ).data or [{"id": None, "ad": "Standart", "porsiyon_sayisi": 10, "hedefler": None}]
     _profil_etiketleri_sayfa = [f"{p['ad']} ({p['porsiyon_sayisi']} porsiyon)" for p in _porsiyon_profilleri_sayfa]
     _sayfa_secili_index = st.selectbox(
         "Maliyet hesabı için porsiyon profili",
@@ -814,9 +765,31 @@ with sag2:
         help="Profilleri eklemek/düzenlemek için Abonelik sayfasındaki "
              "\"Porsiyon Profilleri\" bölümüne bak.",
     )
-    st.session_state["secili_porsiyon_sayisi"] = _porsiyon_profilleri_sayfa[_sayfa_secili_index]["porsiyon_sayisi"]
+    _secili_sayfa_profili = _porsiyon_profilleri_sayfa[_sayfa_secili_index]
+    st.session_state["secili_porsiyon_sayisi"] = _secili_sayfa_profili["porsiyon_sayisi"]
 
-besin_hedefi_kullan = st.checkbox("Öğün başına besin hedefi uygula (opsiyonel)")
+    # Profil DEGISTI mi kontrol et -- degistiyse hedef widget'larinin
+    # session_state'ini bu profilin kayitli hedefleriyle ONCEDEN
+    # doldur (widget'lar HENUZ olusturulmadi, asagida olusturulacak --
+    # Streamlit'te bir widget'in key'i session_state'te zaten varsa
+    # value= parametresi yok sayilir, o yuzden bu ON-DOLDURMA'nin
+    # widget'lardan ONCE calismasi sart).
+    if st.session_state.get("_onceki_profil_id_aylik_menu") != _secili_sayfa_profili["id"]:
+        st.session_state["_onceki_profil_id_aylik_menu"] = _secili_sayfa_profili["id"]
+        _profil_hedefleri = _secili_sayfa_profili.get("hedefler") or {}
+        if _profil_hedefleri:
+            st.session_state["besin_hedefi_kullan"] = True
+            st.session_state["yillik_menu_secili_besin_anahtarlari"] = sorted(
+                {anahtar for ogun in _profil_hedefleri.values() for anahtar in ogun}
+            )
+            for _ogun_adi, _degerler in _profil_hedefleri.items():
+                for _anahtar, _aralik in _degerler.items():
+                    st.session_state[f"{_ogun_adi}_{_anahtar}_alt"] = float(_aralik[0])
+                    st.session_state[f"{_ogun_adi}_{_anahtar}_ust"] = float(_aralik[1])
+
+besin_hedefi_kullan = st.checkbox(
+    "Öğün başına besin hedefi uygula (opsiyonel)", key="besin_hedefi_kullan",
+)
 
 hedefler = None
 if besin_hedefi_kullan:
@@ -829,7 +802,7 @@ if besin_hedefi_kullan:
         "Hedeflenecek besin değerleri",
         options=[anahtar for anahtar, *_ in TUM_BESIN_ALANLARI],
         default=["kalori", "protein", "yag", "karbonhidrat", "gi"],
-        format_func=lambda a: _BESIN_ETIKET[a],
+        format_func=lambda a: BESIN_ETIKET[a],
         key="yillik_menu_secili_besin_anahtarlari",
     )
     hedefler = {}
@@ -839,13 +812,13 @@ if besin_hedefi_kullan:
             if not secili_besin_anahtarlari:
                 st.caption("Yukarıdan en az bir besin değeri seçmelisin.")
             for anahtar in secili_besin_anahtarlari:
-                etiket = _BESIN_ETIKET[anahtar]
+                etiket = BESIN_ETIKET[anahtar]
                 # (float(...) burada bilinçli bir guvenlik agi: TUM_BESIN_ALANLARI'na
                 # ileride eklenecek bir satirda min/maks/varsayilan turleri
                 # yanlislikla karisik (int+float) yazilirsa bile, number_input
                 # yine de tek tip float alacak -- StreamlitMixedNumericTypesError
                 # bir daha tekrarlanmasin diye.)
-                minv, maxv, def_alt, def_ust = (float(x) for x in _BESIN_ARALIK[anahtar])
+                minv, maxv, def_alt, def_ust = (float(x) for x in BESIN_ARALIK[anahtar])
                 c1, c2 = st.columns(2)
                 with c1:
                     alt = st.number_input(
@@ -1040,13 +1013,13 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
         return f"{deger:.2f}" if deger < 5 else f"{round(deger)}"
 
     def _birim_al(anahtar):
-        etiket = _BESIN_ETIKET.get(anahtar, "")
+        etiket = BESIN_ETIKET.get(anahtar, "")
         if "(" in etiket:
             return etiket[etiket.rfind("(") + 1: etiket.rfind(")")]
         return ""
 
     def _kisa_ad(anahtar):
-        etiket = _BESIN_ETIKET.get(anahtar, anahtar)
+        etiket = BESIN_ETIKET.get(anahtar, anahtar)
         return etiket.split(" (")[0].replace("Vitamin ", "")
 
     def _tablo_satirlari_yaz(anahtarlar, t, ogun_hedefleri=None):

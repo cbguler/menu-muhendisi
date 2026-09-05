@@ -5570,3 +5570,56 @@ kaydedilmiş hedef aralıkları OTOMATİK gelmeli.
 
 Bu, henüz TASARLANMADI -- sadece fikir olarak not edildi, yarın
 birlikte tartışılıp kapsam belirlenecek.
+
+
+### 3 Eylül 2026 — XII. Oturum Sonu: 79 Numaralı Migration Yeniden Çalıştırılabilir Yapıldı
+
+Bahri 79'u çalıştırınca "relation isletme_porsiyon_profilleri already
+exists" hatası aldı -- CREATE TABLE satırında "IF NOT EXISTS" yoktu,
+tablo muhtemelen ilk denemede zaten başarıyla oluşmuştu. Aynı sorun
+CREATE POLICY satırında da vardı.
+
+`79_isletme_porsiyon_profilleri_v2.sql` oluşturuldu -- tamamen
+yeniden-çalıştırılabilir (idempotent): her satır "zaten yapılmışsa
+atla" mantığında. Ne kadarı zaten başarıyla tamamlanmış olursa olsun
+güvenle çalıştırılabilir, eksik kalanı tamamlar. Bahri bunu
+çalıştıracak (henüz çalıştırmadı, oturum burada bitti).
+
+
+### 4 Eylül 2026 — XIII. Oturum: Profil Başına Besin Hedefleri Kuruldu
+
+Dün geceki fikir uygulandı: porsiyon profilleri artık kendi besin
+hedefi setlerini de taşıyabiliyor. Senaryo: bir işletmenin (yemek
+fabrikası) farklı müşteri tipleri olabilir (hastane, spor salonu,
+ilkokul, huzur evi, tatil köyü) -- her birinin besin hedefi kökten
+farklı olmalı.
+
+**Yapılanlar:**
+1. **`besin_sabitleri.py`** (yeni paylaşılan modül): `TUM_BESIN_ALANLARI`
+   / `BESIN_ETIKET` / `BESIN_ARALIK` (27 besin öğesi, min/maks/varsayılan
+   aralıkları) `0_Yillik_Menu.py`'den buraya taşındı -- Abonelik
+   sayfasının da aynı listeye ihtiyacı vardı, iki kopya tutmak yerine
+   (Optima Skor / fire oranı derslerinden) tek kaynağa indirgendi.
+2. **80 numaralı migration:** `isletme_porsiyon_profilleri` tablosuna
+   `hedefler` (JSONB) sütunu eklendi -- mevcut Python `hedefler` dict
+   yapısıyla birebir aynı format (`{"Öğle": {"kalori": [900,1200]}, ...}`).
+3. **Abonelik sayfası:** "Profil Başına Besin Hedefleri" bölümü eklendi
+   -- bir profil seçilip, hangi besin değerlerinin hedefleneceği ve
+   öğün başına min/maks aralıkları girilip o profile kaydediliyor.
+   ÖNEMLİ: widget key'lerine `abn_{profil_id}_` öneki eklendi --
+   Streamlit session_state SAYFALAR ARASI paylaşıldığı için, bu önek
+   olmadan burada bir profili düzenlemek Aylık Menü'deki o anki
+   üretim hedefini sessizce değiştirebilirdi.
+4. **Aylık Menü sayfası:** porsiyon profili seçimi değiştiğinde, o
+   profilin kayıtlı hedefleri "Öğün başına besin hedefi" widget'larına
+   OTOMATİK yükleniyor (session_state ön-doldurma, widget'lar
+   oluşturulmadan önce). Kullanıcı yine de o an için değiştirebilir.
+
+Profil-değişimi mantığı sahte (mock) session_state ile izole test
+edildi -- iki farklı profil (Huzur Evi: düşük sodyum, Spor Salonu:
+yüksek protein) doğru şekilde birbirinden bağımsız yükleniyor,
+aynı profili tekrar seçmek gereksiz tekrar yazma yapmıyor.
+
+**Dosya durumu:** `besin_sabitleri.py` (yeni),
+`sql/80_isletme_porsiyon_profilleri_hedefler.sql` (yeni),
+`pages/0_Yillik_Menu.py` güncellendi, `pages/6_Abonelik.py` güncellendi.
