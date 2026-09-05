@@ -19,7 +19,7 @@ from openpyxl.utils import get_column_letter
 
 from db import get_supabase, oturumu_uygula
 from besin_sabitleri import TUM_BESIN_ALANLARI, BESIN_ETIKET, BESIN_ARALIK, kanonik_sirala
-from uretim_algoritmasi import hafta_olustur
+from uretim_algoritmasi import hafta_olustur, ogun_olustur, _taban_kelime, _hedef_mesafesi, _fast_food_sec
 
 MEVSIM_AYLARI = {
     "kis": ["Aralık", "Ocak", "Şubat"],
@@ -729,7 +729,7 @@ for t in tarifler:
         t2[kolon] = b.get(kolon)
     tarifler_zengin.append(t2)
 
-sol, sag, sag2, _bos = st.columns([1, 1, 1.6, 1.4])
+sol, sag, sag2, sag3 = st.columns([1, 1, 1.4, 1.6])
 with sol:
     yil_secimi = st.number_input(
         "Yıl", min_value=2024, max_value=2035, value=datetime.date.today().year, step=1,
@@ -767,7 +767,51 @@ with sag2:
              "\"Porsiyon Profilleri\" bölümüne bak.",
     )
     _secili_sayfa_profili = _porsiyon_profilleri_sayfa[_sayfa_secili_index]
+    st.session_state["secili_porsiyon_profil_id"] = _secili_sayfa_profili["id"]
     st.session_state["secili_porsiyon_sayisi"] = _secili_sayfa_profili["porsiyon_sayisi"]
+
+with sag3:
+    # DOKSAN UCUNCU DUZELTME (4 Eylul 2026): Bahri'nin talebi -- daha
+    # once KAYDEDILMIS aylik menuleri (bkz. 81 numarali migration),
+    # secili PROFILE gore listeleyip geri YUKLEYEBILME. Secilince
+    # yillik_menu_aylik/yillik_menu_hedefler dogrudan degistirilip
+    # rerun ediliyor -- boylece ayni sayfanin ALTINDAKI goruntuleme/
+    # Excel/kaydet mantigi HICBIR DEGISIKLIK gerektirmeden calisir.
+    _kayitli_menuler = []
+    if _secili_sayfa_profili["id"]:
+        _kayitli_menuler = (
+            supabase.table("kayitli_aylik_menuler")
+            .select("id, yil, ay, menu_verisi")
+            .eq("isletme_id", st.session_state.isletme_id)
+            .eq("porsiyon_profil_id", _secili_sayfa_profili["id"])
+            .order("yil", desc=True)
+            .execute()
+        ).data or []
+
+    if _kayitli_menuler:
+        _kayitli_etiketler = ["— Seç —"] + [f"{m['ay']} {m['yil']}" for m in _kayitli_menuler]
+        _kayitli_secim = st.selectbox(
+            "Bu Profil için Kayıtlı Aylık Menüler",
+            options=_kayitli_etiketler,
+            key=f"kayitli_menu_secimi_{_secili_sayfa_profili['id']}",
+        )
+        if _kayitli_secim != "— Seç —":
+            _secilen_kayit = _kayitli_menuler[_kayitli_etiketler.index(_kayitli_secim) - 1]
+            _onceki_yuklenen = st.session_state.get("_yuklenen_kayitli_menu_id")
+            if _onceki_yuklenen != _secilen_kayit["id"]:
+                st.session_state["_yuklenen_kayitli_menu_id"] = _secilen_kayit["id"]
+                st.session_state["yillik_menu_aylik"] = {
+                    "ay": _secilen_kayit["ay"], "yil": _secilen_kayit["yil"],
+                    "haftalar": _secilen_kayit["menu_verisi"]["haftalar"], "gecmis_ay_mi": False,
+                }
+                # NOT: buradaki "hedefler" (sayfa degiskeni) HENUZ
+                # tanimlanmadi -- "Ogun basina besin hedefi" bolumu bu
+                # noktadan SONRA calisiyor. Onun yerine profilin HAM
+                # verisini (ayni kaynak) dogrudan kullaniyoruz.
+                st.session_state["yillik_menu_hedefler"] = _secili_sayfa_profili.get("hedefler")
+                st.rerun()
+    else:
+        st.caption("Bu profil için henüz kaydedilmiş aylık menü yok.")
 
     # Profil DEGISTI mi VEYA ayni profilin KAYITLI HEDEFLERI DEGISTI mi
     # kontrol et -- hedef widget'larinin session_state'ini bu profilin
@@ -1369,9 +1413,77 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
 
             st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
             with st.container(key=f"cevir_{card_id}"):
-                if st.button("◤ Günlük menüye dön", key=f"btn_cevir2_{card_id}", use_container_width=True):
-                    st.session_state[yuz_key] = "on"
-                    st.rerun()
+                # DOKSAN IKINCI DUZELTME (4 Eylul 2026): Bahri'nin talebi --
+                # eski tek "Gunluk menuye don" dugmesi, "Tekrar Dene" +
+                # "Devam Et" ikilisine cevrildi. "Tekrar Dene" SADECE bu
+                # GUNU (Ogle+Aksam) yeniden uretir -- haftanin DIGER 6
+                # gunune DOKUNMAZ, onlarin kullandigi tarifleri "kullanilmis"
+                # sayarak cakismayi engeller. Otomatik olarak 15 farkli
+                # rastgele deneme yapip HEDEFE EN YAKIN olani secer (kullanicinin
+                # her tikta manuel karar vermesi istenmedi -- "otomatik
+                # birkac kez dene" secildi).
+                _tekrar_dene_col, _devam_et_col = st.columns(2)
+                with _tekrar_dene_col:
+                    if st.button("🔄 Tekrar Dene", key=f"btn_tekrar_dene_{card_id}", use_container_width=True):
+                        with st.spinner("Bu gün yeniden deneniyor..."):
+                            _grup1 = [t for t in tarifler_zengin if t["grup"] == 1]
+                            _grup2 = [t for t in tarifler_zengin if t["grup"] == 2]
+                            _grup3 = [t for t in tarifler_zengin if t["grup"] == 3]
+                            _grup4 = [t for t in tarifler_zengin if t["grup"] == 4]
+
+                            # Haftanin DIGER gunlerinde kullanilan TAM
+                            # tarif adlarini topla -- bu gunu YENIDEN
+                            # uretirken bunlarla CAKISMAMASI icin.
+                            _kullanilan_hafta_disarida = set()
+                            for _gun2 in (hafta or []):
+                                if _gun2 is gun:
+                                    continue
+                                for _tarif_adlari2 in (_gun2.get("ogunler") or {}).values():
+                                    for _ad in (_tarif_adlari2 or []):
+                                        _kullanilan_hafta_disarida.add(_ad)
+
+                            _gun_mevsimi = _tarih_mevsimi(gun["tarih"]) if gun.get("tarih") else None
+
+                            _en_iyi_ogunler = None
+                            _en_iyi_mesafe = None
+                            for _deneme in range(15):
+                                _rastgele_deneme = random.Random()
+                                _kullanilan_hafta_deneme = set(_kullanilan_hafta_disarida)
+                                _kullanilan_gun_taban_deneme = set()
+                                _yeni_ogunler = {}
+                                _toplam_mesafe = 0.0
+                                for _ogun_adi2 in ("Öğle", "Akşam"):
+                                    _hedef2 = (hedefler or {}).get(_ogun_adi2)
+                                    _t1n, _t2n, _t3n = ogun_olustur(
+                                        _grup1, _grup2, _grup3, _gun_mevsimi,
+                                        _kullanilan_hafta_deneme, _rastgele_deneme,
+                                        _hedef2, _kullanilan_gun_taban_deneme,
+                                    )
+                                    for _tn in (_t1n, _t2n, _t3n):
+                                        _kullanilan_hafta_deneme.add(_tn["ad"])
+                                        _kullanilan_gun_taban_deneme.add(_taban_kelime(_tn["ad"]))
+                                    _ogun_tarif_adlari = [_t1n["ad"], _t2n["ad"], _t3n["ad"]]
+                                    if _grup4:
+                                        _birlesik = set(_t1n["etiketler"]) | set(_t2n["etiketler"]) | set(_t3n["etiketler"])
+                                        _t4n = _fast_food_sec(_grup4, _birlesik, _rastgele_deneme)
+                                        if _t4n is not None:
+                                            _ogun_tarif_adlari.append(_t4n["ad"])
+                                            _kullanilan_gun_taban_deneme.add(_taban_kelime(_t4n["ad"]))
+                                    _yeni_ogunler[_ogun_adi2] = _ogun_tarif_adlari
+                                    _toplam_mesafe += _hedef_mesafesi(_t1n, _t2n, _t3n, _hedef2)
+
+                                if _en_iyi_mesafe is None or _toplam_mesafe < _en_iyi_mesafe:
+                                    _en_iyi_mesafe = _toplam_mesafe
+                                    _en_iyi_ogunler = _yeni_ogunler
+                                if _en_iyi_mesafe == 0:
+                                    break  # tam hedefte -- daha fazla denemeye gerek yok
+
+                            gun["ogunler"] = _en_iyi_ogunler
+                        st.rerun()
+                with _devam_et_col:
+                    if st.button("✓ Devam Et", key=f"btn_cevir2_{card_id}", use_container_width=True):
+                        st.session_state[yuz_key] = "on"
+                        st.rerun()
 
 
 @st.dialog("Günün Menüsü")
@@ -1562,6 +1674,59 @@ if aylik:
             "değildir, sadece sistemin o dönem için ne önerdiğine dair "
             "bir örnektir."
         )
+
+    # DOKSAN UCUNCU DUZELTME (4 Eylul 2026): "Aylık Menüyü Kaydet" --
+    # Bahri'nin karari: SADECE TUM gunler hedefteyse (ya da hic hedef
+    # tanimlanmamissa -- o zaman zaten ihlal edilecek bir sey yok)
+    # aktif olsun, degilse uyari versin VE kaydetmeyi ENGELLESIN.
+    _hedef_disi_gunler = []
+    if kayitli_hedefler:
+        for _hafta in aylik["haftalar"]:
+            for _gun in _hafta:
+                for _ogun_adi, _tarif_adlari in (_gun.get("ogunler") or {}).items():
+                    _t_ham = _ogun_toplami(_tarif_adlari, detay)
+                    _hedefte_sonuc, _ = _hedefte_mi(_ogun_adi, _t_ham, kayitli_hedefler, _hafta, detay)
+                    if _hedefte_sonuc is False:
+                        _hedef_disi_gunler.append(f"{_gun.get('tarih')} ({_ogun_adi})" if _gun.get("tarih") else f"Gün {_gun.get('gun')} ({_ogun_adi})")
+
+    _secili_profil_id_kaydet = st.session_state.get("secili_porsiyon_profil_id")
+
+    st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+    if _hedef_disi_gunler:
+        st.warning(
+            f"Bu ayı kaydetmeden önce hedef dışı kalan {len(_hedef_disi_gunler)} "
+            f"öğün var, bunları \"Tekrar Dene\" ile düzeltmen gerekiyor: "
+            + ", ".join(_hedef_disi_gunler[:8])
+            + (" ..." if len(_hedef_disi_gunler) > 8 else "")
+        )
+        st.button("Aylık Menüyü Kaydet", disabled=True, key="btn_aylik_kaydet_disabled")
+    elif not _secili_profil_id_kaydet:
+        st.button("Aylık Menüyü Kaydet", disabled=True, key="btn_aylik_kaydet_disabled",
+                   help="Önce yukarıdan bir porsiyon profili seç.")
+    else:
+        if st.button("💾 Aylık Menüyü Kaydet", key="btn_aylik_kaydet", type="primary"):
+            _mevcut_kayit = (
+                supabase.table("kayitli_aylik_menuler")
+                .select("id")
+                .eq("isletme_id", st.session_state.isletme_id)
+                .eq("porsiyon_profil_id", _secili_profil_id_kaydet)
+                .eq("yil", aylik["yil"])
+                .eq("ay", aylik["ay"])
+                .execute()
+            ).data
+            _kayit_govdesi = {
+                "isletme_id": st.session_state.isletme_id,
+                "porsiyon_profil_id": _secili_profil_id_kaydet,
+                "yil": aylik["yil"],
+                "ay": aylik["ay"],
+                "menu_verisi": {"haftalar": aylik["haftalar"]},
+            }
+            if _mevcut_kayit:
+                supabase.table("kayitli_aylik_menuler").update(_kayit_govdesi).eq("id", _mevcut_kayit[0]["id"]).execute()
+                st.success(f"\"{aylik['ay']} {aylik['yil']}\" güncellenerek kaydedildi (önceki kayıt üzerine yazıldı).")
+            else:
+                supabase.table("kayitli_aylik_menuler").insert(_kayit_govdesi).execute()
+                st.success(f"\"{aylik['ay']} {aylik['yil']}\" kaydedildi.")
 
     excel_verisi = _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, kayitli_hedefler)
     # OTUZ DORDUNCU DUZELTME (24 Agustos 2026): kod incelemesinde bulundu --
