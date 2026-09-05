@@ -10,6 +10,8 @@ import io
 import json
 import random
 
+import pandas as pd
+
 import streamlit as st
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
@@ -1580,71 +1582,72 @@ def _gun_popup_dialog(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_me
 
 
 def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, hafta_no):
-    """Haftayi GUN BASINA BIR KART olarak render eder -- kullanicinin
-    onayladigi mockup tasarimina gore (bkz. tasarim_onizleme.html), ama
-    YIRMI UCUNCU DUZELTME (13 Agustos 2026) ile ARTIK POP-UP tabanli:
-    ızgaradaki kart HER ZAMAN kapali/sabit boyutta kalir (gun adi +
-    tarih + 2 nokta) -- baslik tiklaninca, Streamlit'in yerlesik
-    st.dialog() bileseniyle GERCEK bir pop-up penceresi acilir. Pop-up
-    icinde ON YUZ (yemek listeleri, GERCEK st.page_link ile) / ARKA
-    YUZ (besin/maliyet/hedef verileri) arasinda "cevirme" animasyonlu
-    gecis yapilabilir (bkz. _gun_popup_govdesini_ciz).
-
-    NOT (13 Agustos 2026): kendi insa edilmis (position:fixed backdrop)
-    pop-up denemesi kullanici tarafindan BEGENILMEDI -- st.dialog'a
-    GERI DONULDU. Kullaniciya acikca belirtilen kisit hala gecerli:
-    st.dialog'un kendi cercevesi (baslik cubugu, X butonu) benim
-    kontrolumde degil, bu yuzden "kartin TAMAMI donmesi" (baslik dahil,
-    Streamlit'in kendi dialog kutusu HARIC) tam olarak saglanamiyor --
-    sadece benim ciz digim ic kisim (baslik + govde, bkz.
-    _gun_popup_govdesini_ciz) doner."""
+    """Haftayi bir HAFTA icinde GUN BASINA BIR SATIR olan GERCEK bir
+    tabloda gosterir (sutun basliklariyla: Gün | Tarih) -- YUZ BIRINCI
+    DUZELTME (4 Eylul 2026): Bahri iki kez ("kartlar arasi bosluklari
+    sikistirdik ama hala tablo gibi degil" / "sutun baslikları da
+    olsun") geri bildirimde bulununca, kart-tabanli goruntuden GERCEK
+    bir st.dataframe tablosuna gecildi -- Streamlit'in row-selection
+    ozelligi (on_select="rerun", selection_mode="single-row",
+    Streamlit 1.35+'da mevcut, resmi API'den dogrulandi) kullanilarak
+    bir SATIRA tiklandiginda o gunun pop-up'i aciliyor -- eski
+    st.dialog() tabanli pop-up (bkz. _gun_popup_dialog) HICBIR
+    DEGISIKLIK olmadan aynen kullaniliyor, SADECE onu tetikleyen
+    arayuz kart yerine tablo satiri oldu."""
     _yillik_menu_tasarim_stilini_uygula()
 
     GUN_ADLARI = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"]
 
     card_idler = [f"{ay_adi}-{hafta_no}-{gun['gun']}" for gun in hafta]
+    satirlar = []
+    for gun in hafta:
+        tarih = gun.get("tarih")
+        if tarih is not None:
+            satirlar.append({"Gün": GUN_ADLARI[tarih.weekday()], "Tarih": f"{tarih.day} {AYLAR_SIRALI[tarih.month - 1]}"})
+        else:
+            satirlar.append({"Gün": f"Gün {gun['gun']}", "Tarih": ""})
 
-    kolonlar = st.columns(len(hafta), gap="small")
-    for i, (kolon, gun) in enumerate(zip(kolonlar, hafta)):
-        with kolon:
-            card_id = card_idler[i]
+    tablo_key = f"hafta_tablosu_{ay_adi}_{hafta_no}"
+    st.dataframe(
+        pd.DataFrame(satirlar),
+        hide_index=True,
+        use_container_width=True,
+        on_select="rerun",
+        selection_mode="single-row",
+        key=tablo_key,
+    )
 
-            tarih = gun.get("tarih")
-            if tarih is not None:
-                gun_adi_gercek = GUN_ADLARI[tarih.weekday()]
-                hafta_sonu_mu = tarih.weekday() >= 5
-                tarih_metni = f"{tarih.day} {AYLAR_SIRALI[tarih.month - 1]}"
-            else:
-                gun_adi_gercek = f"Gün {gun['gun']}"
-                hafta_sonu_mu = False
-                tarih_metni = ""
+    secim = st.session_state.get(tablo_key, {}).get("selection", {}).get("rows", [])
+    if secim:
+        secili_index = secim[0]
+        # YUZ IKINCI DUZELTME (4 Eylul 2026): st.dataframe'in secim
+        # durumu, bir dugme tikinin AKSINE, KALICIDIR -- kullanici
+        # pop-up'i Streamlit'in kendi X dugmesiyle KAPATSA BILE, o satir
+        # "secili" olarak KALIR. Bu yuzden HAM secime dogrudan gore
+        # pop-up acmak, HER YENIDEN CALISTIRMADA pop-up'i tekrar tekrar
+        # ACARDI (kullanici kapatamazdi). Bunun yerine, SADECE YENI bir
+        # secim olayinda (bir onceki calistirmadan FARKLI) bayrak
+        # ayarlaniyor -- eski dugme-tabanli tetikleyicinin "tek seferlik
+        # ates etme" davranisini taklit ediyor.
+        secim_imzasi = (tablo_key, secili_index)
+        if st.session_state.get("_son_tablo_secimi") != secim_imzasi:
+            st.session_state["_son_tablo_secimi"] = secim_imzasi
+            st.session_state["yillik_menu_popup_gun_id"] = card_idler[secili_index]
+            # YUZUNCU DUZELTME (4 Eylul 2026): pop-up dogrudan "arka"
+            # (besin/maliyet/hedef detaylari) ile aciliyor -- tek yuzlu
+            # deneyim.
+            st.session_state["yillik_menu_popup_yuz"] = "arka"
 
-            kart_sinifi = f"kart_{'hs_' if hafta_sonu_mu else ''}{card_id}"
-            baslik_metni = f"{gun_adi_gercek}\n{tarih_metni}" if tarih_metni else gun_adi_gercek
-
-            with st.container(key=kart_sinifi):
-                with st.container(key=f"baslik_{card_id}"):
-                    if st.button(baslik_metni, key=f"btn_baslik_{card_id}", use_container_width=True):
-                        st.session_state["yillik_menu_popup_gun_id"] = card_id
-                        # YUZUNCU DUZELTME (4 Eylul 2026): Bahri'nin talebi
-                        # -- pop-up ARTIK "on" (sadece tarif adlari) ile
-                        # DEGIL, dogrudan "arka" (besin/maliyet/hedef
-                        # detaylari) ile aciliyor -- tek yuzlu bir pop-up
-                        # deneyimi. Tarif adlarina erismek icin ("◤ Tarif
-                        # adlarini gor" gibi bir dugme) arka yuzde hala
-                        # mevcut -- bkz. asagida.
-                        st.session_state["yillik_menu_popup_yuz"] = "arka"
-                        st.rerun()
-                st.markdown(
-                    "<div style='padding:2px 10px 6px; display:flex; gap:5px;'>"
-                    "<span style='width:7px;height:7px;border-radius:50%;background:#C88A2E;display:inline-block;'></span>"
-                    "<span style='width:7px;height:7px;border-radius:50%;background:#2E4057;display:inline-block;'></span>"
-                    "</div>",
-                    unsafe_allow_html=True,
-                )
-
-            if st.session_state.get("yillik_menu_popup_gun_id") == card_id:
-                _gun_popup_dialog(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni, hafta)
+    if st.session_state.get("yillik_menu_popup_gun_id") in card_idler:
+        _secili_gun_index = card_idler.index(st.session_state["yillik_menu_popup_gun_id"])
+        gun = hafta[_secili_gun_index]
+        card_id = card_idler[_secili_gun_index]
+        tarih = gun.get("tarih")
+        if tarih is not None:
+            baslik_metni = f"{GUN_ADLARI[tarih.weekday()]}\n{tarih.day} {AYLAR_SIRALI[tarih.month - 1]}"
+        else:
+            baslik_metni = f"Gün {gun['gun']}"
+        _gun_popup_dialog(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni, hafta)
 
 
 def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
