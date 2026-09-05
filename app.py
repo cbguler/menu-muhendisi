@@ -755,7 +755,7 @@ def kontrol_paneli_sayfasi():
 # ---------------------------------------------------------------------
 
 kontrol_sayfasi = st.Page(kontrol_paneli_sayfasi, title="Ana Sayfa", default=True)
-yillik_menu_sayfasi = st.Page("pages/0_Yillik_Menu.py", title="Aylık Menü")
+yillik_menu_sayfasi = st.Page("pages/0_Yillik_Menu.py", title="Aylık Menü", url_path="Aylik_Menu")
 recete_uretimi_sayfasi = st.Page("pages/1_Recete_Uretimi.py", title="Reçete Üretimi")
 # OTUZ SEKIZINCI DUZELTME (24 Agustos 2026): "Ozel Menu Uretimi" ayri bir
 # sayfa olmaktan cikarildi -- kullanici talebiyle Recete Uretimi'nin
@@ -854,7 +854,7 @@ st.markdown(
     ".st-key-masaustu_nav, .st-key-mobil_nav {"
     "  position: fixed; left: 0; right: 0; z-index: 999999;"
     "  background-color: var(--background-color, #ffffff);"
-    "  padding: 0.4rem 1rem;"
+    "  padding: 0.15rem 1rem;"
     "  box-shadow: 0 2px 6px rgba(0,0,0,0.15);"
     "  border-bottom: 1px solid rgba(0,0,0,0.08);"
     "}"
@@ -947,8 +947,16 @@ st.markdown(
     # logo (144px) artik ACIKCA satirin en uzun elemani -- yukseklik
     # artik COK daha ongorulebilir: ~154px (logo+yazi satiri) + ~50px
     # (buton satiri) + ~15px (padding) = ~220px.
-    ".ust_menu_bosluk_masaustu { height: 220px; }"
-    ".ust_menu_bosluk_mobil { height: 100px; }"
+    # YUZUNCU DUZELTME (4 Eylul 2026): Bahri "ust kisim cok genisledi,
+    # alt/asil islem alanina az yer kaliyor" dedi -- LOGO'nun kendisine
+    # (144px/72px, min-height) DOKUNULMADI, sadece CEVRESINDEKI padding
+    # daraltildi: dis kapsayici 0.4rem->0.15rem, logo+yazi satiri ic
+    # padding'i 0.3rem->0.1rem. Tahmini toplam kazanc ~15-20px --
+    # bosluk yukseklikleri buna gore asagi cekildi. ONCEKI TUM
+    # denemelerde oldugu gibi bu YINE DE TAHMINI bir deger, gercek
+    # tarayicida piksel farki kalirsa ince ayar gerekebilir.
+    ".ust_menu_bosluk_masaustu { height: 200px; }"
+    ".ust_menu_bosluk_mobil { height: 90px; }"
     "@media (min-width: 768px) { .ust_menu_bosluk_mobil { display: none !important; } }"
     "@media (max-width: 767px) { .ust_menu_bosluk_masaustu { display: none !important; } }"
     # YIRMI BIRINCI DUZELTME (13 Agustos 2026, Oturum 11): kullanici
@@ -1058,7 +1066,7 @@ with st.container(key="masaustu_nav"):
     # yaziyi ise `width:100%; text-align:center` ile TUM SATIRIN
     # ORTASINA (logonun konumundan BAGIMSIZ) yerlestirdik.
     st.markdown(
-        "<div style='position:relative; min-height:144px; padding:0.3rem 0;'>"
+        "<div style='position:relative; min-height:144px; padding:0.1rem 0;'>"
         f"<img src='data:image/png;base64,{_logo_b64}' style='width:144px; height:auto; "
         "position:absolute; left:0; top:50%; transform:translateY(-50%);'/>"
         "<div style='width:100%; text-align:center;'>"

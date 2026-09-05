@@ -21,6 +21,28 @@ from db import get_supabase, oturumu_uygula
 from besin_sabitleri import TUM_BESIN_ALANLARI, BESIN_ETIKET, BESIN_ARALIK, kanonik_sirala
 from uretim_algoritmasi import hafta_olustur, ogun_olustur, _taban_kelime, _hedef_mesafesi, _fast_food_sec
 
+# DOKSAN ALTINCI DUZELTME (4 Eylul 2026): TEMEL_5 dosyanin EN BASINA
+# tasindi -- daha once _gun_popup_govdesini_ciz'in icinde (cok asagida)
+# tanimliydi, TUM kullanim yerlerinden ONCE gelmesi gerekiyordu.
+TEMEL_5 = {"kalori", "protein", "yag", "karbonhidrat", "gi"}
+
+# DOKSAN ALTINCI DUZELTME DENEMESI (4 Eylul 2026, GERI ALINDI): Bahri,
+# Kasım ayı üretiminde 84 öğünün 74'ünün (%88!) hedef dışı çıktığını
+# bildirdi. Ilk teorim: uretim SADECE TEMEL_5'i hedeflemeli, genisletilmis
+# 22 oge sadece haftalik ortalamayla (uretimden SONRA) kontrol edilmeli
+# -- boylece uretim "gercekci olmayan" 27-eszamanli hedefle
+# ugrasmayi biraksin. BU TEORI 10 farkli tohumla test edildi VE YANLIS
+# CIKTI: TEMEL_5-only uretim, TAM hedefli uretimden DAHA KOTU sonuc
+# verdi (%85.7 hedef disi, TAM hedefli %50.7'ye karsi) -- yani
+# genisletilmis ogeleri uretim sirasinda TAMAMEN gormezden gelmek,
+# onlari (kismen de olsa) hedeflemekten DAHA KOTU. Degisiklik bu
+# yuzden GERI ALINDI, uretim hala TAM hedefi kullaniyor. Asil %88
+# sorunu HALA COZULMEDI -- gercek sebep muhtemelen 27 eszamanli
+# hedefin GERCEKTEN cok zor olmasi + uretim algoritmasinin bunu
+# HAFTALIK bazda degil hala TEK OGUN bazinda optimize etmesi -- bu,
+# tek-ogun uretiminin dogasi geregi COZMESI ZOR bir sorun, ayri ve
+# daha derin bir tasarim calismasi gerektiriyor.
+
 MEVSIM_AYLARI = {
     "kis": ["Aralık", "Ocak", "Şubat"],
     "ilkbahar": ["Mart", "Nisan", "Mayıs"],
@@ -954,11 +976,40 @@ if st.button("Ay için menü üret", type="primary"):
 RENKLER = {1: "#D85A30", 2: "#639922", 3: "#1D9E75"}
 
 
-# SEKSEN DOKUZUNCU DUZELTME (4 Eylul 2026): TEMEL_5 artik modul
-# seviyesinde -- hem _gun_popup_govdesini_ciz'in gorunum tablosu hem
-# _hedefte_mi'nin hedef kontrolu ayni sabiti paylasiyor (eskiden
-# fonksiyon icinde tanimliydi, _hedefte_mi'ye ERISILEMIYORDU).
-TEMEL_5 = {"kalori", "protein", "yag", "karbonhidrat", "gi"}
+# (TEMEL_5 artik dosyanin en basinda tanimli -- uretim cagrisindan
+# ONCE gelmesi gerekiyordu, bkz. DOKSAN ALTINCI DUZELTME.)
+
+
+def _hedef_disi_liste_metni(kayitlar, yil_secimi, ay_secimi):
+    """YUZUNCU DUZELTME (4 Eylul 2026): Bahri'nin talebi -- tarih formati
+    ISO (2026-12-01) DEGIL Turkce olsun, VE zaten SEÇILI olan ay (ör.
+    Aralık) icin sadece GUN NUMARASI yeterli (ay/yil tekrar tekrar
+    yazilmasin) -- SADECE secili ay DISINDAKI gunler icin ay/yil
+    belirtilsin, VE ardisik ayni-ay/yil gunler TEK BIR onek altinda
+    gruplansin (ör. "2027 Ocak 1 (Öğle), 2 (Öğle), 3 (Akşam)").
+
+    kayitlar: [(tarih:date|None, ogun_adi:str), ...]"""
+    parcalar = []
+    onceki_baglam = None
+    for tarih, ogun_adi in kayitlar:
+        if tarih is None:
+            parcalar.append(f"(tarihsiz, {ogun_adi})")
+            onceki_baglam = "BILINMIYOR"
+            continue
+        secili_ay_mi = tarih.year == yil_secimi and AYLAR_SIRALI[tarih.month - 1] == ay_secimi
+        if secili_ay_mi:
+            baglam = "SECILI"
+            onek = ""
+        else:
+            baglam = (tarih.year, tarih.month)
+            ay_adi = AYLAR_SIRALI[tarih.month - 1]
+            onek = f"{tarih.year} {ay_adi} " if tarih.year != yil_secimi else f"{ay_adi} "
+        if baglam != onceki_baglam:
+            parcalar.append(f"{onek}{tarih.day} ({ogun_adi})")
+        else:
+            parcalar.append(f"{tarih.day} ({ogun_adi})")
+        onceki_baglam = baglam
+    return ", ".join(parcalar)
 
 
 def _haftalik_ortalama(ogun_adi, anahtar, hafta, detay):
@@ -1035,14 +1086,14 @@ def _yillik_menu_tasarim_stilini_uygula():
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
     [data-testid='stPageLink'] p { white-space: normal !important; word-break: break-word !important; }
-    div[class*="st-key-kart_"] { background: #EDE6D6; border-radius: 14px; box-shadow: 0 8px 24px rgba(43,35,32,0.10), 0 1px 2px rgba(43,35,32,0.08); padding: 0 0 14px; margin-bottom: 4px; overflow: hidden; }
+    div[class*="st-key-kart_"] { background: #EDE6D6; border-radius: 10px; box-shadow: 0 4px 12px rgba(43,35,32,0.10), 0 1px 2px rgba(43,35,32,0.08); padding: 0 0 4px; margin-bottom: 2px; overflow: hidden; }
     div[class*="st-key-kart_hs_"] { background: #F2CFA0; border: 2px solid #C88A2E; }
-    div[class*="st-key-kartarka_"] { background: #3D2A3B; border-radius: 14px; box-shadow: 0 8px 24px rgba(43,35,32,0.18); padding: 0 0 14px; margin-bottom: 4px; overflow: hidden; }
+    div[class*="st-key-kartarka_"] { background: #3D2A3B; border-radius: 10px; box-shadow: 0 4px 12px rgba(43,35,32,0.18); padding: 0 0 4px; margin-bottom: 2px; overflow: hidden; }
     div[class*="st-key-kartarka_"] * { color: #EDE6D6 !important; }
-    div[class*="st-key-baslik_"] button { width: 100%; background: transparent !important; border: none !important; border-bottom: 2px solid #C88A2E !important; border-radius: 0 !important; padding: 14px 16px 10px !important; text-align: left !important; box-shadow: none !important; white-space: pre-line !important; line-height: 1.35 !important; }
-    div[class*="st-key-baslik_"] button p { font-family: 'Fraunces', serif !important; font-size: 19px !important; font-weight: 600 !important; color: #2B2320 !important; white-space: pre-line !important; line-height: 1.35 !important; }
-    @media (max-width: 700px) { div[class*="st-key-baslik_"] button p { font-size: 11px !important; line-height: 1.25 !important; } div[class*="st-key-baslik_"] button { padding: 8px 6px 6px !important; } }
-    @media (max-width: 480px) { div[class*="st-key-baslik_"] button p { font-size: 9.5px !important; } }
+    div[class*="st-key-baslik_"] button { width: 100%; background: transparent !important; border: none !important; border-bottom: 2px solid #C88A2E !important; border-radius: 0 !important; padding: 8px 10px 6px !important; text-align: left !important; box-shadow: none !important; white-space: pre-line !important; line-height: 1.2 !important; }
+    div[class*="st-key-baslik_"] button p { font-family: 'Fraunces', serif !important; font-size: 15px !important; font-weight: 600 !important; color: #2B2320 !important; white-space: pre-line !important; line-height: 1.2 !important; }
+    @media (max-width: 700px) { div[class*="st-key-baslik_"] button p { font-size: 10px !important; line-height: 1.15 !important; } div[class*="st-key-baslik_"] button { padding: 5px 4px 4px !important; } }
+    @media (max-width: 480px) { div[class*="st-key-baslik_"] button p { font-size: 8.5px !important; } }
     /* YIRMI SEKIZINCI DUZELTME (13 Agustos 2026, Oturum 11): kullanici,
     mobil VE TABLET genislikte kartlarin (hem hafta gunu hem bolge menu
     kartlari) esit-sabit sutun sayisina sikisip metnin kelime ortasindan
@@ -1575,12 +1626,19 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
                 with st.container(key=f"baslik_{card_id}"):
                     if st.button(baslik_metni, key=f"btn_baslik_{card_id}", use_container_width=True):
                         st.session_state["yillik_menu_popup_gun_id"] = card_id
-                        st.session_state["yillik_menu_popup_yuz"] = "on"
+                        # YUZUNCU DUZELTME (4 Eylul 2026): Bahri'nin talebi
+                        # -- pop-up ARTIK "on" (sadece tarif adlari) ile
+                        # DEGIL, dogrudan "arka" (besin/maliyet/hedef
+                        # detaylari) ile aciliyor -- tek yuzlu bir pop-up
+                        # deneyimi. Tarif adlarina erismek icin ("◤ Tarif
+                        # adlarini gor" gibi bir dugme) arka yuzde hala
+                        # mevcut -- bkz. asagida.
+                        st.session_state["yillik_menu_popup_yuz"] = "arka"
                         st.rerun()
                 st.markdown(
-                    "<div style='padding:6px 16px 12px; display:flex; gap:5px;'>"
-                    "<span style='width:8px;height:8px;border-radius:50%;background:#C88A2E;display:inline-block;'></span>"
-                    "<span style='width:8px;height:8px;border-radius:50%;background:#2E4057;display:inline-block;'></span>"
+                    "<div style='padding:2px 10px 6px; display:flex; gap:5px;'>"
+                    "<span style='width:7px;height:7px;border-radius:50%;background:#C88A2E;display:inline-block;'></span>"
+                    "<span style='width:7px;height:7px;border-radius:50%;background:#2E4057;display:inline-block;'></span>"
                     "</div>",
                     unsafe_allow_html=True,
                 )
@@ -1716,7 +1774,13 @@ if aylik:
     # Bahri'nin karari: SADECE TUM gunler hedefteyse (ya da hic hedef
     # tanimlanmamissa -- o zaman zaten ihlal edilecek bir sey yok)
     # aktif olsun, degilse uyari versin VE kaydetmeyi ENGELLESIN.
-    _hedef_disi_gunler = []
+    #
+    # YUZUNCU DUZELTME (4 Eylul 2026): tarihler artik HAM (tarih,
+    # ogun_adi) ikilisi olarak toplanıyor -- eskiden burada dogrudan
+    # ISO bicimli (2026-12-01) metin string'i olusturuluyordu, Bahri'nin
+    # istedigi Turkce/gruplu bicimlendirme (bkz. _hedef_disi_liste_metni)
+    # HAM veriye ihtiyac duyuyor.
+    _hedef_disi_kayitlar = []
     if kayitli_hedefler:
         for _hafta in aylik["haftalar"]:
             for _gun in _hafta:
@@ -1724,17 +1788,21 @@ if aylik:
                     _t_ham = _ogun_toplami(_tarif_adlari, detay)
                     _hedefte_sonuc, _ = _hedefte_mi(_ogun_adi, _t_ham, kayitli_hedefler, _hafta, detay)
                     if _hedefte_sonuc is False:
-                        _hedef_disi_gunler.append(f"{_gun.get('tarih')} ({_ogun_adi})" if _gun.get("tarih") else f"Gün {_gun.get('gun')} ({_ogun_adi})")
+                        _hedef_disi_kayitlar.append((_gun.get("tarih"), _ogun_adi))
 
     _secili_profil_id_kaydet = st.session_state.get("secili_porsiyon_profil_id")
 
     st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
-    if _hedef_disi_gunler:
+    if _hedef_disi_kayitlar:
         st.warning(
-            f"Bu ayı kaydetmeden önce hedef dışı kalan {len(_hedef_disi_gunler)} "
-            f"öğün var, bunları \"Tekrar Dene\" ile düzeltmen gerekiyor: "
-            + ", ".join(_hedef_disi_gunler[:8])
-            + (" ..." if len(_hedef_disi_gunler) > 8 else "")
+            f"Bu ayı kaydetmeden önce hedef dışı kalan {len(_hedef_disi_kayitlar)} "
+            "öğünü \"Tekrar Dene\" butonu ile uygulamanın yaratacağı yeni öğünler "
+            "ile gözden geçir, ve eğer limit aşımları tolerans dahilinde ise "
+            "\"Devam Et\" butonu ile kabul et. Tüm hedef dışı günleri bitirince "
+            "\"Aylık Menüyü Kaydet\" butonu ile bu ayın menüsünü kaydedersen, "
+            "herhangi bir zamanda yeniden ulaşabilirsin.\n\n"
+            + _hedef_disi_liste_metni(_hedef_disi_kayitlar[:16], yil_secimi, ay_secimi)
+            + (" ..." if len(_hedef_disi_kayitlar) > 16 else "")
         )
         st.button("Aylık Menüyü Kaydet", disabled=True, key="btn_aylik_kaydet_disabled")
     elif not _secili_profil_id_kaydet:
@@ -1797,6 +1865,16 @@ if aylik:
     )
 
     for i, hafta in enumerate(aylik["haftalar"], start=1):
-        st.markdown(f"**{aylik['ay']} — {i}. Hafta**")
+        st.markdown(
+            f"<div style='font-weight:700; margin:10px 0 4px; font-size:14px;'>"
+            f"{aylik['ay']} — {i}. Hafta</div>",
+            unsafe_allow_html=True,
+        )
         _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, kayitli_hedefler, aylik["ay"], i)
-        st.divider()
+        # YUZUNCU DUZELTME (4 Eylul 2026): Bahri'nin "aralarda cok bosluk
+        # var" gozlemi uzerine -- st.divider() (kalin, buyuk dikey bosluklu
+        # bir cizgi) yerine COK INCE, DUSUK-MARJINLI ozel bir cizgi.
+        st.markdown(
+            "<hr style='margin:6px 0 10px; border:none; border-top:1px solid #DDD6C4;'>",
+            unsafe_allow_html=True,
+        )
