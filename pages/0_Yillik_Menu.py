@@ -910,16 +910,66 @@ if st.button("Ay için menü üret", type="primary"):
 RENKLER = {1: "#D85A30", 2: "#639922", 3: "#1D9E75"}
 
 
-def _hedefte_mi(ogun_adi, t, hedefler):
-    if not hedefler or ogun_adi not in hedefler:
+# SEKSEN DOKUZUNCU DUZELTME (4 Eylul 2026): TEMEL_5 artik modul
+# seviyesinde -- hem _gun_popup_govdesini_ciz'in gorunum tablosu hem
+# _hedefte_mi'nin hedef kontrolu ayni sabiti paylasiyor (eskiden
+# fonksiyon icinde tanimliydi, _hedefte_mi'ye ERISILEMIYORDU).
+TEMEL_5 = {"kalori", "protein", "yag", "karbonhidrat", "gi"}
+
+
+def _haftalik_ortalama(ogun_adi, anahtar, hafta, detay):
+    """Bir haftadaki (7 gun) TUM gunlerin, belirtilen ogun+besin ogesi
+    icin ORTALAMASINI hesaplar. SEKSEN DOKUZUNCU DUZELTME (4 Eylul
+    2026): TEMEL_5 disindaki (vitamin/mineral/vb., 22 oge) besin
+    hedefleri artik TEK OGUN bazinda degil, HAFTALIK ORTALAMA bazinda
+    kontrol ediliyor -- Bahri'nin de belirttigi gibi hicbir gercek
+    yemek, 27 farkli besin ogesini AYNI ANDA dar bir araliga oturtamiyor
+    (gercek diyetisyenler de mikro besinleri haftalik/aylik dengeler,
+    tek ogun bazinda degil) -- 241 tariflik kutuphaneyle bunu HER
+    OGUNDE tutturmaya calismak matematiksel olarak asiri kisitlayiciydi."""
+    degerler = []
+    for gun2 in hafta:
+        tarif_adlari = (gun2.get("ogunler") or {}).get(ogun_adi)
+        if not tarif_adlari:
+            continue
+        t2 = _ogun_toplami(tarif_adlari, detay)
+        deger = t2.get(anahtar)
+        if deger is not None:
+            degerler.append(deger)
+    if not degerler:
         return None
+    return sum(degerler) / len(degerler)
+
+
+def _hedefte_mi(ogun_adi, t, hedefler, hafta=None, detay=None):
+    """TEMEL_5 (kalori/protein/yag/karbonhidrat/gi) HALA TEK OGUN (gun)
+    bazinda sikica kontrol ediliyor -- bunlar ana/hemen-belirgin
+    degerler, gun gun sapma onemli. TEMEL_5 DISINDAKI ogeler ise (hafta
+    ve detay parametreleri verilmisse) HAFTALIK ORTALAMA uzerinden
+    kontrol ediliyor (bkz. _haftalik_ortalama). hafta/detay verilmezse
+    (ör. eski cagri yerleri, ya da haftalik baglam mevcut degilse) TUM
+    anahtarlar eskisi gibi TEK OGUN bazinda kontrol edilir -- geriye
+    donuk uyumluluk.
+
+    SEKSEN DOKUZUNCU DUZELTME (4 Eylul 2026): donus degeri artik
+    (True/False/None, basarisiz_olan_anahtar_listesi) ikilisi --
+    Bahri'nin talebi: "Hedef dışı" yazisinin yaninda HANGI besin
+    ogesinin hedef disi oldugu da gosterilsin."""
+    if not hedefler or ogun_adi not in hedefler:
+        return None, []
+    basarisiz = []
     for anahtar, (alt, ust) in hedefler[ogun_adi].items():
-        deger = t.get(anahtar)
+        if anahtar in TEMEL_5 or hafta is None or detay is None:
+            deger = t.get(anahtar)
+        else:
+            deger = _haftalik_ortalama(ogun_adi, anahtar, hafta, detay)
         if deger is None:
             continue
         if not (alt <= deger <= ust):
-            return False
-    return True
+            basarisiz.append(anahtar)
+    if basarisiz:
+        return False, basarisiz
+    return True, []
 
 
 def _yillik_menu_tasarim_stilini_uygula():
@@ -1003,7 +1053,7 @@ def _yillik_menu_tasarim_stilini_uygula():
     css_temiz = "\n".join(satir.lstrip() for satir in css_govdesi.split("\n"))
     st.markdown(css_temiz, unsafe_allow_html=True)
 
-def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni):
+def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni, hafta=None):
     """Pop-up icindeki TUM GORUNUR KARTI (baslik + on yuz YA DA arka
     yuz icerigi BIRLIKTE, TEK bir kapsayici icinde) cizer. YIRMI
     DORDUNCU DUZELTME (13 Agustos 2026): kullanici "sadece yazilar
@@ -1028,7 +1078,7 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
     # kullanicinin O AN hedefledigi ek besin ogeleri gosteriliyor;
     # ayrica "tum besin degerlerini gor" ile 32 ogenin tamami (Vitamin/
     # Mineral gruplarina ayrilmis) acilip kapatilabiliyor.
-    TEMEL_5 = {"kalori", "protein", "yag", "karbonhidrat", "gi"}
+    # (TEMEL_5 artik modul seviyesinde tanimli, bkz. dosya basi.)
     VITAMIN_ANAHTARLARI = [
         "vitamin_a_mcg", "vitamin_b1_mg", "vitamin_b2_mg", "vitamin_b3_mg",
         "vitamin_b5_mg", "vitamin_b6_mg", "vitamin_b7_mcg", "vitamin_b9_mcg",
@@ -1219,11 +1269,21 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                 # kullanilan hedeften FARKLI olabiliyor -- bkz. SEKSEN
                 # BESINCI DUZELTME notlari) rozet SESSIZCE gizlendigi
                 # icin GEC fark etti ve rozetin GERI GELMESINI istedi.
-                hedefte = _hedefte_mi(ogun_adi, t_ham, hedefler)
+                #
+                # SEKSEN DOKUZUNCU DUZELTME (4 Eylul 2026): Bahri'nin
+                # talebi -- "Hedef dışı" yazisinin yaninda HANGI besin
+                # ogesinin (ör. B12) hedef disi oldugu da gosteriliyor.
+                # Ayrica TEMEL_5 disindaki ogeler artik HAFTALIK
+                # ORTALAMA uzerinden kontrol ediliyor (bkz. _hedefte_mi).
+                hedefte, basarisiz_anahtarlar = _hedefte_mi(ogun_adi, t_ham, hedefler, hafta, detay)
                 if hedefte is True:
                     st.markdown("<span class='omgo-hedef-rozet omgo-hedefte'>Hedefte</span>", unsafe_allow_html=True)
                 elif hedefte is False:
-                    st.markdown("<span class='omgo-hedef-rozet omgo-hedefdisi'>Hedef dışı</span>", unsafe_allow_html=True)
+                    _basarisiz_etiketler = ", ".join(BESIN_ETIKET.get(a, a) for a in basarisiz_anahtarlar)
+                    st.markdown(
+                        f"<span class='omgo-hedef-rozet omgo-hedefdisi'>Hedef dışı: {_basarisiz_etiketler}</span>",
+                        unsafe_allow_html=True,
+                    )
 
                 with st.container(key=f"maliyetkutu_{card_id}_{ogun_adi}"):
                     st.markdown(
@@ -1285,8 +1345,8 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
 
 
 @st.dialog("Günün Menüsü")
-def _gun_popup_dialog(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni):
-    _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni)
+def _gun_popup_dialog(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni, hafta=None):
+    _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni, hafta)
 
 
 def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, hafta_no):
@@ -1347,7 +1407,7 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
                 )
 
             if st.session_state.get("yillik_menu_popup_gun_id") == card_id:
-                _gun_popup_dialog(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni)
+                _gun_popup_dialog(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni, hafta)
 
 
 def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
@@ -1401,7 +1461,7 @@ def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
             elif etiket == "Alerjen":
                 deger = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
             elif etiket == "Hedef Durumu":
-                hedefte = _hedefte_mi(ogun_adi, t_ham, hedefler)
+                hedefte, _ = _hedefte_mi(ogun_adi, t_ham, hedefler, hafta, detay)
                 # SEKSEN ALTINCI DUZELTME (4 Eylul 2026): pop-up'taki
                 # degisiklikle tutarli olsun diye "Hedef dışı" burada da
                 # geri getirildi (bkz. yukaridaki not).
