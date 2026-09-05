@@ -1018,6 +1018,15 @@ def _yillik_menu_tasarim_stilini_uygula():
     .omgo-veri-tablo td:last-child { text-align: right; font-weight: 500; }
     .omgo-veri-bolum { font-family: Inter, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #C88A2E; margin: 10px 0 3px; }
     .omgo-hedef-araligi { font-size: 10.5px; opacity: 0.65; font-style: italic; }
+    /* DOKSANINCI DUZELTME (4 Eylul 2026): hedef disi kalan tablo
+       satirlari icin -- Bahri'nin talebi: sadece rozette degil, ASIL
+       TABLODA da hangi satir(lar) oldugu belirgin olsun. Acik pembe/
+       kirmizi arka plan + koyu kirmizi, KALIN metin -- koyu popup
+       zemininde bile okunabilirlik garantili olsun diye duz kirmizi
+       YAZI RENGI yerine bilincli olarak acik arka plan + koyu metin
+       tercih edildi. */
+    .omgo-satir-hedefdisi td { background: #E8B4B8 !important; color: #7A1F2B !important; font-weight: 700; }
+    .omgo-satir-hedefdisi .omgo-hedef-araligi { color: #7A1F2B !important; opacity: 0.85; }
     .omgo-ogun-baslik-buyuk { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 700; text-align: center; color: #C88A2E; margin: 14px 0 8px; text-transform: uppercase; letter-spacing: 0.02em; }
     .omgo-hedef-rozet { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px; margin-top: 6px; }
     .omgo-maliyet-baslik { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 700; color: #7A531C; margin: 0 0 6px; }
@@ -1105,7 +1114,7 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
         etiket = BESIN_ETIKET.get(anahtar, anahtar)
         return etiket.split(" (")[0].replace("Vitamin ", "")
 
-    def _tablo_satirlari_yaz(anahtarlar, t, ogun_hedefleri=None):
+    def _tablo_satirlari_yaz(anahtarlar, t, ogun_hedefleri=None, basarisiz_anahtarlar=None):
         """Satirlari yazar, en az bir GERCEK deger yazilip yazilmadigini
         (True/False) dondurur -- YIRMI YEDINCI DUZELTME (13 Agustos 2026):
         kullanici, bir kategoride HIC veri olmadiginda basligin altinin
@@ -1118,8 +1127,14 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
 
         YETMIS SEKIZINCI DUZELTME (3 Eylul 2026): ogun_hedefleri verilirse
         (anahtar -> (alt, ust)), her satirin yanina -- varsa -- hedef
-        araligi da yaziliyor, boylece deger ve hedef bir arada gorulebiliyor."""
+        araligi da yaziliyor, boylece deger ve hedef bir arada gorulebiliyor.
+
+        DOKSANINCI DUZELTME (4 Eylul 2026): basarisiz_anahtarlar verilirse,
+        o listede olan satirlar 'omgo-satir-hedefdisi' sinifiyla KIRMIZI
+        vurgulanıyor -- Bahri'nin talebi: sadece rozette degil, ASIL
+        TABLODA da hangi satirin hedef disi oldugu belirgin olsun."""
         ogun_hedefleri = ogun_hedefleri or {}
+        basarisiz_anahtarlar = basarisiz_anahtarlar or []
         satirlar = []
         for anahtar in anahtarlar:
             deger = t.get(anahtar)
@@ -1127,8 +1142,9 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                 continue
             aralik = ogun_hedefleri.get(anahtar)
             hedef_metni = f" <span class='omgo-hedef-araligi'>({aralik[0]}–{aralik[1]})</span>" if aralik else ""
+            satir_sinifi = " class='omgo-satir-hedefdisi'" if anahtar in basarisiz_anahtarlar else ""
             satirlar.append(
-                f"<tr><td>{_kisa_ad(anahtar)}</td><td>{_deger_formatla(deger)} {_birim_al(anahtar)}{hedef_metni}</td></tr>"
+                f"<tr{satir_sinifi}><td>{_kisa_ad(anahtar)}</td><td>{_deger_formatla(deger)} {_birim_al(anahtar)}{hedef_metni}</td></tr>"
             )
         if satirlar:
             st.markdown("<table class='omgo-veri-tablo'>" + "".join(satirlar) + "</table>", unsafe_allow_html=True)
@@ -1214,6 +1230,17 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                     unsafe_allow_html=True,
                 )
 
+                # DOKSANINCI DUZELTME (4 Eylul 2026): hedefte/basarisiz_anahtarlar
+                # artik BURADA (tablo cizilmeden ONCE) hesaplaniyor -- Bahri'nin
+                # talebi: sadece "Hedef dışı: X, Y" rozetinde degil, ASIL
+                # TABLODA da hedef disi kalan satirlar (ör. Protein, Glisemik
+                # İndeks) KIRMIZI ile belirgin gosterilsin. Ayni hesaplama
+                # asagidaki rozette de TEKRAR KULLANILIYOR (iki kez hesaplamiyoruz).
+                hedefte, basarisiz_anahtarlar = _hedefte_mi(ogun_adi, t_ham, hedefler, hafta, detay)
+
+                def _satir_sinifi(anahtar):
+                    return " class='omgo-satir-hedefdisi'" if anahtar in basarisiz_anahtarlar else ""
+
                 # YETMIS SEKIZINCI DUZELTME (3 Eylul 2026): kullanicinin
                 # istegiyle -- "Hedeflenen Degerler" basligi HER SEYIN
                 # USTUNE alindi, VE artik SADECE ek besin ogelerini degil
@@ -1231,16 +1258,16 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                 st.markdown("<div class='omgo-veri-bolum'>HEDEFLENEN BESİN DEĞERLERİ</div>", unsafe_allow_html=True)
                 st.markdown(
                     "<table class='omgo-veri-tablo'>"
-                    f"<tr><td>Kalori</td><td>{round(t['kalori'])} kcal{_hedef_metni('kalori')}</td></tr>"
-                    f"<tr><td>Protein</td><td>{round(t['protein'])} g{_hedef_metni('protein')}</td></tr>"
-                    f"<tr><td>Yağ</td><td>{round(t['yag'])} g{_hedef_metni('yag')}</td></tr>"
-                    f"<tr><td>Karbonhidrat</td><td>{round(t['karbonhidrat'])} g{_hedef_metni('karbonhidrat')}</td></tr>"
-                    f"<tr><td>Glisemik İndeks</td><td>{gi_metin}{_hedef_metni('gi')}</td></tr>"
+                    f"<tr{_satir_sinifi('kalori')}><td>Kalori</td><td>{round(t['kalori'])} kcal{_hedef_metni('kalori')}</td></tr>"
+                    f"<tr{_satir_sinifi('protein')}><td>Protein</td><td>{round(t['protein'])} g{_hedef_metni('protein')}</td></tr>"
+                    f"<tr{_satir_sinifi('yag')}><td>Yağ</td><td>{round(t['yag'])} g{_hedef_metni('yag')}</td></tr>"
+                    f"<tr{_satir_sinifi('karbonhidrat')}><td>Karbonhidrat</td><td>{round(t['karbonhidrat'])} g{_hedef_metni('karbonhidrat')}</td></tr>"
+                    f"<tr{_satir_sinifi('gi')}><td>Glisemik İndeks</td><td>{gi_metin}{_hedef_metni('gi')}</td></tr>"
                     "</table>",
                     unsafe_allow_html=True,
                 )
                 if hedeflenen_ek_anahtarlar:
-                    _tablo_satirlari_yaz(hedeflenen_ek_anahtarlar, t, _ogun_hedefleri)
+                    _tablo_satirlari_yaz(hedeflenen_ek_anahtarlar, t, _ogun_hedefleri, basarisiz_anahtarlar)
 
                 # OTUZ BESINCI DUZELTME (13 Agustos 2026, Oturum 11):
                 # kullanicinin istegiyle -- Alerjen maliyetle ilgili
@@ -1275,7 +1302,8 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                 # ogesinin (ör. B12) hedef disi oldugu da gosteriliyor.
                 # Ayrica TEMEL_5 disindaki ogeler artik HAFTALIK
                 # ORTALAMA uzerinden kontrol ediliyor (bkz. _hedefte_mi).
-                hedefte, basarisiz_anahtarlar = _hedefte_mi(ogun_adi, t_ham, hedefler, hafta, detay)
+                # (hedefte/basarisiz_anahtarlar YUKARIDA, tablo cizilmeden
+                # once zaten hesaplandi -- burada TEKRAR hesaplamiyoruz.)
                 if hedefte is True:
                     st.markdown("<span class='omgo-hedef-rozet omgo-hedefte'>Hedefte</span>", unsafe_allow_html=True)
                 elif hedefte is False:
