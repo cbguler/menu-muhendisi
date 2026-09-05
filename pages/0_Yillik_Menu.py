@@ -1020,13 +1020,15 @@ def _yillik_menu_tasarim_stilini_uygula():
     .omgo-hedef-araligi { font-size: 10.5px; opacity: 0.65; font-style: italic; }
     /* DOKSANINCI DUZELTME (4 Eylul 2026): hedef disi kalan tablo
        satirlari icin -- Bahri'nin talebi: sadece rozette degil, ASIL
-       TABLODA da hangi satir(lar) oldugu belirgin olsun. Acik pembe/
-       kirmizi arka plan + koyu kirmizi, KALIN metin -- koyu popup
-       zemininde bile okunabilirlik garantili olsun diye duz kirmizi
-       YAZI RENGI yerine bilincli olarak acik arka plan + koyu metin
-       tercih edildi. */
-    .omgo-satir-hedefdisi td { background: #E8B4B8 !important; color: #7A1F2B !important; font-weight: 700; }
-    .omgo-satir-hedefdisi .omgo-hedef-araligi { color: #7A1F2B !important; opacity: 0.85; }
+       TABLODA da hangi satir(lar) oldugu belirgin olsun.
+       DOKSAN BIRINCI DUZELTME (4 Eylul 2026): ilk secilen acik pembe
+       Bahri'ye uymadi -- uygulamanin ZATEN kullandigi "Hedef dışı"
+       rozet rengiyle (rgba(166,71,47,...) kiremit/pas tonu) AYNI
+       renk ailesine gecildi, boylece rozet ve tablo satiri tutarli
+       (ayni "hedef disi" dili) gorunuyor -- koyu popup zemininde
+       okunabilirlik icin acik krem renkli (#FDF6EC) metinle. */
+    .omgo-satir-hedefdisi td { background: #A6472F !important; color: #FDF6EC !important; font-weight: 700; }
+    .omgo-satir-hedefdisi .omgo-hedef-araligi { color: #FDF6EC !important; opacity: 0.85; }
     .omgo-ogun-baslik-buyuk { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 700; text-align: center; color: #C88A2E; margin: 14px 0 8px; text-transform: uppercase; letter-spacing: 0.02em; }
     .omgo-hedef-rozet { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px; margin-top: 6px; }
     .omgo-maliyet-baslik { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 700; color: #7A531C; margin: 0 0 6px; }
