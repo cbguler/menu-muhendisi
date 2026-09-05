@@ -1268,7 +1268,7 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                 for alan in OLCEKLENECEK_ALANLAR:
                     if t.get(alan) is not None:
                         t[alan] = t[alan] * PORSIYON_STANDART
-                gi_metin = f"{round(t['gi'])}" if t["gi"] is not None else "-"
+                gi_metin = f"{t['gi']:.1f}" if t["gi"] is not None else "-"
                 st.markdown(f"<div class='omgo-ogun-baslik-buyuk'>{ogun_adi.upper()} YEMEĞİ</div>", unsafe_allow_html=True)
                 st.markdown(
                     "<div style='text-align:center; font-size:11px; opacity:0.7; "
@@ -1302,12 +1302,23 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                     return f" <span class='omgo-hedef-araligi'>({aralik[0]}–{aralik[1]})</span>" if aralik else ""
 
                 st.markdown("<div class='omgo-veri-bolum'>HEDEFLENEN BESİN DEĞERLERİ</div>", unsafe_allow_html=True)
+                # DOKSAN DORDUNCU DUZELTME (4 Eylul 2026): Bahri, "Yağ: 40 g,
+                # hedef 10.0-40.0" GORUNDUGU HALDE "hedef dışı" isaretlendigini
+                # gordu -- "imkansiz matematik hatasi" sandi. Gercek sebep:
+                # round() TAM SAYIYA yuvarliyordu (ör. gercek deger 40.4 iken
+                # "40" gosteriliyordu), ama kontrol ROUNDLANMAMIS gercek
+                # degeri kullaniyor -- 40.4 > 40.0 oldugu icin DOGRU sekilde
+                # hedef disi sayiliyordu, sadece GORUNTUDE bu fark
+                # SAKLANIYORDU. Artik TUM TEMEL_5 degerleri 1 ondalik
+                # hassasiyetle gosteriliyor -- kontrolle GORUNEN deger
+                # birebir tutarli, boyle bir "gorsel paradoks" bir daha
+                # olusmuyor.
                 st.markdown(
                     "<table class='omgo-veri-tablo'>"
-                    f"<tr{_satir_sinifi('kalori')}><td>Kalori</td><td>{round(t['kalori'])} kcal{_hedef_metni('kalori')}</td></tr>"
-                    f"<tr{_satir_sinifi('protein')}><td>Protein</td><td>{round(t['protein'])} g{_hedef_metni('protein')}</td></tr>"
-                    f"<tr{_satir_sinifi('yag')}><td>Yağ</td><td>{round(t['yag'])} g{_hedef_metni('yag')}</td></tr>"
-                    f"<tr{_satir_sinifi('karbonhidrat')}><td>Karbonhidrat</td><td>{round(t['karbonhidrat'])} g{_hedef_metni('karbonhidrat')}</td></tr>"
+                    f"<tr{_satir_sinifi('kalori')}><td>Kalori</td><td>{t['kalori']:.1f} kcal{_hedef_metni('kalori')}</td></tr>"
+                    f"<tr{_satir_sinifi('protein')}><td>Protein</td><td>{t['protein']:.1f} g{_hedef_metni('protein')}</td></tr>"
+                    f"<tr{_satir_sinifi('yag')}><td>Yağ</td><td>{t['yag']:.1f} g{_hedef_metni('yag')}</td></tr>"
+                    f"<tr{_satir_sinifi('karbonhidrat')}><td>Karbonhidrat</td><td>{t['karbonhidrat']:.1f} g{_hedef_metni('karbonhidrat')}</td></tr>"
                     f"<tr{_satir_sinifi('gi')}><td>Glisemik İndeks</td><td>{gi_metin}{_hedef_metni('gi')}</td></tr>"
                     "</table>",
                     unsafe_allow_html=True,
@@ -1415,71 +1426,97 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
             with st.container(key=f"cevir_{card_id}"):
                 # DOKSAN IKINCI DUZELTME (4 Eylul 2026): Bahri'nin talebi --
                 # eski tek "Gunluk menuye don" dugmesi, "Tekrar Dene" +
-                # "Devam Et" ikilisine cevrildi. "Tekrar Dene" SADECE bu
-                # GUNU (Ogle+Aksam) yeniden uretir -- haftanin DIGER 6
-                # gunune DOKUNMAZ, onlarin kullandigi tarifleri "kullanilmis"
-                # sayarak cakismayi engeller. Otomatik olarak 15 farkli
-                # rastgele deneme yapip HEDEFE EN YAKIN olani secer (kullanicinin
-                # her tikta manuel karar vermesi istenmedi -- "otomatik
-                # birkac kez dene" secildi).
+                # "Devam Et" ikilisine cevrildi.
+                #
+                # DOKSAN BESINCI DUZELTME (4 Eylul 2026): Bahri iki sorun
+                # bildirdi -- (1) "Tekrar Dene" HER IKI ogunu (Ogle+Aksam)
+                # birden yeniden uretiyordu, bu yuzden ZATEN hedefte olan
+                # ogun BOZULABILIYORDU; (2) defalarca manuel tiklamaya
+                # ragmen duzelmiyordu -- (1)'in DOGRUDAN sonucu: her
+                # tiklamada iyi olan da yeniden karistigi icin "duzelt-
+                # bozdur" dongusune giriyordu. Cozum: artik SADECE
+                # GERCEKTEN hedef disi olan ogun(ler) yeniden uretiliyor,
+                # hedefteki ogun(ler)e HIC DOKUNULMUYOR. Ayrica tek ogun
+                # basina otomatik deneme sayisi 15'ten 30'a cikarildi
+                # (artik ayni anda IKI degil TEK ogun uretildigi icin
+                # ayni sure butcesiyle daha fazla deneme sigar).
                 _tekrar_dene_col, _devam_et_col = st.columns(2)
                 with _tekrar_dene_col:
                     if st.button("🔄 Tekrar Dene", key=f"btn_tekrar_dene_{card_id}", use_container_width=True):
-                        with st.spinner("Bu gün yeniden deneniyor..."):
-                            _grup1 = [t for t in tarifler_zengin if t["grup"] == 1]
-                            _grup2 = [t for t in tarifler_zengin if t["grup"] == 2]
-                            _grup3 = [t for t in tarifler_zengin if t["grup"] == 3]
-                            _grup4 = [t for t in tarifler_zengin if t["grup"] == 4]
+                        _yeniden_uretilecek_ogunler = []
+                        for _ogun_adi_kontrol, _tarif_adlari_kontrol in (gun.get("ogunler") or {}).items():
+                            _t_ham_kontrol = _ogun_toplami(_tarif_adlari_kontrol, detay)
+                            _hedefte_kontrol, _ = _hedefte_mi(_ogun_adi_kontrol, _t_ham_kontrol, hedefler, hafta, detay)
+                            if _hedefte_kontrol is False:
+                                _yeniden_uretilecek_ogunler.append(_ogun_adi_kontrol)
 
-                            # Haftanin DIGER gunlerinde kullanilan TAM
-                            # tarif adlarini topla -- bu gunu YENIDEN
-                            # uretirken bunlarla CAKISMAMASI icin.
-                            _kullanilan_hafta_disarida = set()
-                            for _gun2 in (hafta or []):
-                                if _gun2 is gun:
-                                    continue
-                                for _tarif_adlari2 in (_gun2.get("ogunler") or {}).values():
+                        if not _yeniden_uretilecek_ogunler:
+                            st.info("Bu günde hedef dışı bir öğün yok -- yeniden üretilecek bir şey bulunamadı.")
+                        else:
+                            with st.spinner("Sorunlu öğün(ler) yeniden deneniyor..."):
+                                _grup1 = [t for t in tarifler_zengin if t["grup"] == 1]
+                                _grup2 = [t for t in tarifler_zengin if t["grup"] == 2]
+                                _grup3 = [t for t in tarifler_zengin if t["grup"] == 3]
+                                _grup4 = [t for t in tarifler_zengin if t["grup"] == 4]
+                                _gun_mevsimi = _tarih_mevsimi(gun["tarih"]) if gun.get("tarih") else None
+
+                                # DEGISMEYECEK (hedefte olan) ogunlerin +
+                                # haftanin DIGER gunlerinin kullandigi TUM
+                                # tarifleri "kullanilmis" say -- yeniden
+                                # uretilen ogun bunlarla CAKISMASIN.
+                                _kullanilan_hafta_disarida = set()
+                                for _gun2 in (hafta or []):
+                                    for _ogun_adi2, _tarif_adlari2 in (_gun2.get("ogunler") or {}).items():
+                                        if _gun2 is gun and _ogun_adi2 in _yeniden_uretilecek_ogunler:
+                                            continue
+                                        for _ad in (_tarif_adlari2 or []):
+                                            _kullanilan_hafta_disarida.add(_ad)
+
+                                _kullanilan_gun_taban_disarida = set()
+                                for _ogun_adi2, _tarif_adlari2 in (gun.get("ogunler") or {}).items():
+                                    if _ogun_adi2 in _yeniden_uretilecek_ogunler:
+                                        continue
                                     for _ad in (_tarif_adlari2 or []):
-                                        _kullanilan_hafta_disarida.add(_ad)
+                                        _kullanilan_gun_taban_disarida.add(_taban_kelime(_ad))
 
-                            _gun_mevsimi = _tarih_mevsimi(gun["tarih"]) if gun.get("tarih") else None
+                                for _ogun_adi_hedef in _yeniden_uretilecek_ogunler:
+                                    _hedef2 = (hedefler or {}).get(_ogun_adi_hedef)
+                                    _en_iyi_uclu = None
+                                    _en_iyi_mesafe = None
+                                    for _deneme in range(30):
+                                        _rastgele_deneme = random.Random()
+                                        _kullanilan_hafta_deneme = set(_kullanilan_hafta_disarida)
+                                        _kullanilan_gun_taban_deneme = set(_kullanilan_gun_taban_disarida)
+                                        _t1n, _t2n, _t3n = ogun_olustur(
+                                            _grup1, _grup2, _grup3, _gun_mevsimi,
+                                            _kullanilan_hafta_deneme, _rastgele_deneme,
+                                            _hedef2, _kullanilan_gun_taban_deneme,
+                                        )
+                                        _mesafe = _hedef_mesafesi(_t1n, _t2n, _t3n, _hedef2)
+                                        if _en_iyi_mesafe is None or _mesafe < _en_iyi_mesafe:
+                                            _en_iyi_mesafe = _mesafe
+                                            _en_iyi_uclu = (_t1n, _t2n, _t3n)
+                                        if _en_iyi_mesafe == 0:
+                                            break
 
-                            _en_iyi_ogunler = None
-                            _en_iyi_mesafe = None
-                            for _deneme in range(15):
-                                _rastgele_deneme = random.Random()
-                                _kullanilan_hafta_deneme = set(_kullanilan_hafta_disarida)
-                                _kullanilan_gun_taban_deneme = set()
-                                _yeni_ogunler = {}
-                                _toplam_mesafe = 0.0
-                                for _ogun_adi2 in ("Öğle", "Akşam"):
-                                    _hedef2 = (hedefler or {}).get(_ogun_adi2)
-                                    _t1n, _t2n, _t3n = ogun_olustur(
-                                        _grup1, _grup2, _grup3, _gun_mevsimi,
-                                        _kullanilan_hafta_deneme, _rastgele_deneme,
-                                        _hedef2, _kullanilan_gun_taban_deneme,
-                                    )
-                                    for _tn in (_t1n, _t2n, _t3n):
-                                        _kullanilan_hafta_deneme.add(_tn["ad"])
-                                        _kullanilan_gun_taban_deneme.add(_taban_kelime(_tn["ad"]))
-                                    _ogun_tarif_adlari = [_t1n["ad"], _t2n["ad"], _t3n["ad"]]
+                                    _t1b, _t2b, _t3b = _en_iyi_uclu
+                                    _yeni_tarif_adlari = [_t1b["ad"], _t2b["ad"], _t3b["ad"]]
                                     if _grup4:
-                                        _birlesik = set(_t1n["etiketler"]) | set(_t2n["etiketler"]) | set(_t3n["etiketler"])
-                                        _t4n = _fast_food_sec(_grup4, _birlesik, _rastgele_deneme)
-                                        if _t4n is not None:
-                                            _ogun_tarif_adlari.append(_t4n["ad"])
-                                            _kullanilan_gun_taban_deneme.add(_taban_kelime(_t4n["ad"]))
-                                    _yeni_ogunler[_ogun_adi2] = _ogun_tarif_adlari
-                                    _toplam_mesafe += _hedef_mesafesi(_t1n, _t2n, _t3n, _hedef2)
+                                        _birlesik = set(_t1b["etiketler"]) | set(_t2b["etiketler"]) | set(_t3b["etiketler"])
+                                        _t4b = _fast_food_sec(_grup4, _birlesik, random.Random())
+                                        if _t4b is not None:
+                                            _yeni_tarif_adlari.append(_t4b["ad"])
 
-                                if _en_iyi_mesafe is None or _toplam_mesafe < _en_iyi_mesafe:
-                                    _en_iyi_mesafe = _toplam_mesafe
-                                    _en_iyi_ogunler = _yeni_ogunler
-                                if _en_iyi_mesafe == 0:
-                                    break  # tam hedefte -- daha fazla denemeye gerek yok
-
-                            gun["ogunler"] = _en_iyi_ogunler
-                        st.rerun()
+                                    gun["ogunler"][_ogun_adi_hedef] = _yeni_tarif_adlari
+                                    # Ayni gun icinde BASKA bir ogun de
+                                    # yeniden uretilecekse, bu YENI secilenler
+                                    # de "kullanilmis" sayilmali (ör. hem
+                                    # Ogle hem Aksam hedef disiysa, ikisi
+                                    # ayni tarifi SECMESIN).
+                                    for _ad in _yeni_tarif_adlari:
+                                        _kullanilan_hafta_disarida.add(_ad)
+                                        _kullanilan_gun_taban_disarida.add(_taban_kelime(_ad))
+                            st.rerun()
                 with _devam_et_col:
                     if st.button("✓ Devam Et", key=f"btn_cevir2_{card_id}", use_container_width=True):
                         st.session_state[yuz_key] = "on"
