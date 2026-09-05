@@ -164,13 +164,49 @@ def _hedef_saglaniyor_mu(t1, t2, t3, hedef):
     if not hedef:
         return True
     besin = ogun_besin_toplami(t1, t2, t3)
+    return _besin_hedefte_mi(besin, hedef)
+
+
+def _besin_hedefte_mi(besin, hedef):
+    if not hedef:
+        return True
     for anahtar, (alt, ust) in hedef.items():
         deger = besin.get(anahtar)
         if deger is None:
-            continue  # degerlendirilemiyor (ör. karbonhidratsiz ogunde gi) -- serbest birak
+            continue
         if not (alt <= deger <= ust):
             return False
     return True
+
+
+def _hedef_mesafesi(t1, t2, t3, hedef):
+    """SEKSEN YEDINCI DUZELTME (4 Eylul 2026): hedef TAM saglanmadiginda
+    NE KADAR uzakta oldugunu olcer -- 0.0 ise tam hedefte demektir,
+    buyudukce o kadar uzak demektir. Her anahtar icin araligin disinda
+    kalinan miktar, o anahtarin ARALIK GENISLIGINE bolunerek normalize
+    edilir -- boylece kalori (yuzlerce birim) gibi buyuk olcekli bir
+    anahtar, gram cinsinden kucuk anahtarlari otomatik olarak golgede
+    birakmaz. hedef bos/None ise her zaman 0.0 (hicbir sey aranmiyor)."""
+    if not hedef:
+        return 0.0
+    besin = ogun_besin_toplami(t1, t2, t3)
+    return _besin_mesafesi(besin, hedef)
+
+
+def _besin_mesafesi(besin, hedef):
+    if not hedef:
+        return 0.0
+    toplam_mesafe = 0.0
+    for anahtar, (alt, ust) in hedef.items():
+        deger = besin.get(anahtar)
+        if deger is None:
+            continue
+        genislik = (ust - alt) or 1.0
+        if deger < alt:
+            toplam_mesafe += (alt - deger) / genislik
+        elif deger > ust:
+            toplam_mesafe += (deger - ust) / genislik
+    return toplam_mesafe
 
 
 def _aday_havuzu(havuz, mevsim, kullanilan_hafta, tekrara_izin_ver=False, mevsim_zorunlu=True, kullanilan_gun_taban=None):
@@ -213,63 +249,95 @@ def _grup3_tercih_sirasi(grup1_etiketler):
 def _ogun_dene(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele, deneme_sayisi, tekrara_izin_ver, mevsim_zorunlu=True, hedef=None, kullanilan_gun_taban=None):
     """Verilen esneklik seviyesinde ogun kombinasyonu aramaya calisir.
     UYUMSUZLUK (madde 11) HER ZAMAN uygulanir, gevsetilmez -- haftalik-
-    tekrar, mevsim kisiti VE besin hedefi kademeli olarak gevsetilebilir."""
-    for _ in range(deneme_sayisi):
-        aday1 = _aday_havuzu(grup1_havuz, mevsim, kullanilan_hafta, tekrara_izin_ver, mevsim_zorunlu, kullanilan_gun_taban)
-        aday2 = _aday_havuzu(grup2_havuz, mevsim, kullanilan_hafta, tekrara_izin_ver, mevsim_zorunlu, kullanilan_gun_taban)
-        aday3 = _aday_havuzu(grup3_havuz, mevsim, kullanilan_hafta, tekrara_izin_ver, mevsim_zorunlu, kullanilan_gun_taban)
-        if not (aday1 and aday2 and aday3):
-            return None
+    tekrar, mevsim kisiti kademeli olarak gevsetilebilir (hedef ARTIK
+    hicbir kademede tamamen birakilmiyor, bkz. asagida).
 
-        t1 = rastgele.choice(aday1)
+    SEKSEN YEDINCI DUZELTME (4 Eylul 2026): Bahri'nin kesin talebi --
+    "Hedef Dışı" sonucu kabul edilemez, algoritma alternatif denemeye
+    devam etmeli. Iki degisiklik:
+    1) (t1, t2) taramasi ARTIK rastgele.choice ile TEKRARLI/ COPYA
+       DUSEBILEN bir ornekleme DEGIL -- KARISTIRILMIS listeler uzerinde
+       SISTEMLI dolasiyor, ayni butce ile CIDDI olcude daha fazla
+       FARKLI kombinasyon fiilen deneniyor (eskiden ayni cift birden
+       fazla kez rastgele secilip butceyi bosa harcayabiliyordu).
+    2) Fonksiyon artik (tam_sonuc, en_iyi_yakin_sonuc) ikilisi donduruyor:
+       - tam_sonuc: hedefi TAM saglayan uclu, yoksa None.
+       - en_iyi_yakin_sonuc: uyumluluk kurallarina uyan (uyumsuzluk
+         DAHIL) VE hedefe EN YAKIN uclu -- tam bir eslesme yoksa bile
+         cagiran taraf bunu "en iyi ihtimal" olarak kullanabilir. Bu,
+         eski "hicbir sey bulunamazsa TAMAMEN rastgele ve uyumsuzluk-
+         KONTROLSUZ sec" son-care davranisinin YERINI ALIYOR.
+    """
+    aday1_ham = _aday_havuzu(grup1_havuz, mevsim, kullanilan_hafta, tekrara_izin_ver, mevsim_zorunlu, kullanilan_gun_taban)
+    aday2_ham = _aday_havuzu(grup2_havuz, mevsim, kullanilan_hafta, tekrara_izin_ver, mevsim_zorunlu, kullanilan_gun_taban)
+    aday3_ham = _aday_havuzu(grup3_havuz, mevsim, kullanilan_hafta, tekrara_izin_ver, mevsim_zorunlu, kullanilan_gun_taban)
+    if not (aday1_ham and aday2_ham and aday3_ham):
+        return None, None
+
+    aday1_karisik = list(aday1_ham)
+    rastgele.shuffle(aday1_karisik)
+
+    en_iyi_mesafe = None
+    en_iyi_uclu = None
+    degerlendirilen = 0  # (t1,t2,t3) UCLU sayisi -- havuz buyuklugunden
+    # BAGIMSIZ kesin bir tavan (SEKSEN SEKIZINCI DUZELTME, 4 Eylul 2026:
+    # onceki versiyon (t1,t2) CIFT sayisini sayiyordu, ama her cift ic
+    # ice TUM aday3_uyumlu'yu (80'e kadar) tarayabiliyordu -- gercekci
+    # buyuk havuzlarda VE gercekten imkansiz bir hedefte, toplam
+    # degerlendirme onbinlere/yuzbinlere cikip performansi ciddi
+    # olcude yavaslatiyordu (test sirasinda zaman asimina UGRADI).
+    # Simdi UCLU sayisi dogrudan sayiliyor, deneme_sayisi'ni asinca
+    # HEMEN duruyor -- havuz ne kadar buyuk olursa olsun ayni sabit
+    # maliyet tavanini garanti ediyor.
+
+    for t1 in aday1_karisik:
         t1_taban = _taban_kelime(t1["ad"])
-
-        # YIRMI BIRINCI DUZELTME (DUZELTILDI): burada da "bossa filtresiz
-        # listeye don" YOK -- havuz tukenirse (aday2_taban_haric bos)
-        # FARKLI bir t1 denemek icin `continue` ile bir sonraki rastgele
-        # denemeye geciliyor (tipki asagidaki uyumsuzluk kontrolundeki
-        # `continue` gibi) -- butun deneme_sayisi (200) tukenirse zaten
-        # None donup ogun_olustur'un DAHA GEVSEK kademesine (mevsim/hafta
-        # tekrar) gecmesini saglar.
-        aday2_havuzu = [t for t in aday2 if _taban_kelime(t["ad"]) != t1_taban]
+        aday2_havuzu = [t for t in aday2_ham if _taban_kelime(t["ad"]) != t1_taban]
         if not aday2_havuzu:
             continue
-
         aday2_uyumlu = [t for t in aday2_havuzu if _uyumlu_mu(set(t1["etiketler"]) | set(t["etiketler"]))]
         if not aday2_uyumlu:
             continue
-        t2 = rastgele.choice(aday2_uyumlu)
-        t2_taban = _taban_kelime(t2["ad"])
+        aday2_karisik = list(aday2_uyumlu)
+        rastgele.shuffle(aday2_karisik)
 
-        birlesik_12 = set(t1["etiketler"]) | set(t2["etiketler"])
-        tercih_sirasi = _grup3_tercih_sirasi(t1["etiketler"])
+        for t2 in aday2_karisik:
+            t2_taban = _taban_kelime(t2["ad"])
+            birlesik_12 = set(t1["etiketler"]) | set(t2["etiketler"])
+            tercih_sirasi = _grup3_tercih_sirasi(t1["etiketler"])
 
-        aday3_havuzu = [t for t in aday3 if _taban_kelime(t["ad"]) not in (t1_taban, t2_taban)]
-        if not aday3_havuzu:
-            continue
-
-        aday3_uyumlu = [t for t in aday3_havuzu if _uyumlu_mu(birlesik_12 | set(t["etiketler"]))]
-        if not aday3_uyumlu:
-            continue
-
-        # Once tamamlayici tercihe uyan adaylar arasindan hedefe uyani ara;
-        # bulunamazsa tum uyumlu adaylara genislet.
-        tercih_edilenler = []
-        for tercih_etiket in tercih_sirasi:
-            tercih_edilenler = [t for t in aday3_uyumlu if tercih_etiket in t["etiketler"]]
-            if tercih_edilenler:
-                break
-
-        for aday_listesi in (tercih_edilenler, aday3_uyumlu):
-            if not aday_listesi:
+            aday3_havuzu = [t for t in aday3_ham if _taban_kelime(t["ad"]) not in (t1_taban, t2_taban)]
+            if not aday3_havuzu:
                 continue
-            karisik = list(aday_listesi)
-            rastgele.shuffle(karisik)
-            for t3 in karisik:
-                if _hedef_saglaniyor_mu(t1, t2, t3, hedef):
-                    return t1, t2, t3
-            break  # tercih edilenlerde hicbiri hedefe uymadi, tekrar deneme dongusune don
-    return None
+            aday3_uyumlu = [t for t in aday3_havuzu if _uyumlu_mu(birlesik_12 | set(t["etiketler"]))]
+            if not aday3_uyumlu:
+                continue
+
+            tercih_edilenler = []
+            for tercih_etiket in tercih_sirasi:
+                tercih_edilenler = [t for t in aday3_uyumlu if tercih_etiket in t["etiketler"]]
+                if tercih_edilenler:
+                    break
+
+            for aday_listesi in (tercih_edilenler, aday3_uyumlu):
+                if not aday_listesi:
+                    continue
+                karisik = list(aday_listesi)
+                rastgele.shuffle(karisik)
+                for t3 in karisik:
+                    degerlendirilen += 1
+                    besin = ogun_besin_toplami(t1, t2, t3)
+                    if _besin_hedefte_mi(besin, hedef):
+                        return (t1, t2, t3), (t1, t2, t3)
+                    mesafe = _besin_mesafesi(besin, hedef)
+                    if en_iyi_mesafe is None or mesafe < en_iyi_mesafe:
+                        en_iyi_mesafe = mesafe
+                        en_iyi_uclu = (t1, t2, t3)
+                    if degerlendirilen >= deneme_sayisi:
+                        return None, en_iyi_uclu
+                break  # tercih edilenlerde hicbiri hedefe uymadi, tekrar deneme dongusune don
+
+    return None, en_iyi_uclu
 
 
 def ogun_olustur(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele, hedef=None, kullanilan_gun_taban=None):
@@ -278,26 +346,49 @@ def ogun_olustur(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta
       1) mevsime uygun + hafta icinde tekrarsiz + besin hedefi icinde
       2) mevsim kisitini gevset + hala tekrarsiz + besin hedefi icinde
       3) tekrara da izin ver (mevsim gevsek) + besin hedefi icinde
-      4) son care: besin hedefini de gevset (mevsim/tekrar gevsek kalir)
-    Bu 4 kademenin HICBIRINDE "ayni gun icinde ayni temel yemek turu"
+    Bu 3 kademenin HICBIRINDE "ayni gun icinde ayni temel yemek turu"
     (kullanilan_gun_taban) gevsetilmez -- sadece havuz TAMAMEN
-    tukenirse (bkz. _aday_havuzu/_ogun_dene ici fallback) devreye girer."""
-    for tekrara_izin_ver, mevsim_zorunlu, bu_hedef in (
-        (False, True, hedef),
-        (False, False, hedef),
-        (True, False, hedef),
-        (True, False, None),
-    ):
-        sonuc = _ogun_dene(
-            grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele,
-            200, tekrara_izin_ver, mevsim_zorunlu, bu_hedef, kullanilan_gun_taban,
-        )
-        if sonuc is not None:
-            return sonuc
+    tukenirse (bkz. _aday_havuzu/_ogun_dene ici fallback) devreye girer.
 
-    # Buraya kadar gelinmesi cok olasi degil (uyumsuzluk kurallarini
-    # saglayan hicbir ucteli bulunamadi demektir) -- yine de programin
-    # cokmemesi icin en gevsek secimi yapiyoruz, ama bunu acikca isaretliyoruz.
+    SEKSEN YEDINCI DUZELTME (4 Eylul 2026): Bahri'nin kesin talebi
+    uzerine -- "Hedef Dışı" ARTIK hicbir kademede kabul edilmiyor.
+    Eskiden 4. (son) kademe hedefi TAMAMEN birakip (hedef=None) rastgele
+    seciyordu -- bu KALDIRILDI. Artik hedef HICBIR kademede birakilmiyor;
+    3 kademe de deneme sayisi ciddi olcude ARTIRILDI (200 -> 1500/1500/
+    2500) VE her kademe, tam eslesme bulunamazsa kendi EN YAKIN uyumlu
+    secenegini bildiriyor (bkz. _ogun_dene). Kademeler arasinda en iyi
+    (hedefe en yakin) secenek TUM kademeler arasindan karsilastirilip
+    kullaniliyor -- yani en gevsek kademe bile UYUMSUZLUK kurallarina
+    uyan ve MUMKUN OLDUGUNCA hedefe yakin bir secim yapiyor, tamamen
+    rastgele/kontrolsuz bir secim ARTIK YOK."""
+    en_iyi_genel_uclu = None
+    en_iyi_genel_mesafe = None
+
+    for tekrara_izin_ver, mevsim_zorunlu, deneme_sayisi in (
+        (False, True, 1500),
+        (False, False, 1500),
+        (True, False, 2500),
+    ):
+        tam_sonuc, en_iyi_yakin = _ogun_dene(
+            grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele,
+            deneme_sayisi, tekrara_izin_ver, mevsim_zorunlu, hedef, kullanilan_gun_taban,
+        )
+        if tam_sonuc is not None:
+            return tam_sonuc
+        if en_iyi_yakin is not None:
+            mesafe = _hedef_mesafesi(*en_iyi_yakin, hedef)
+            if en_iyi_genel_mesafe is None or mesafe < en_iyi_genel_mesafe:
+                en_iyi_genel_mesafe = mesafe
+                en_iyi_genel_uclu = en_iyi_yakin
+
+    if en_iyi_genel_uclu is not None:
+        return en_iyi_genel_uclu
+
+    # Buraya kadar gelinmesi COK OLASI DEGIL (uyumsuzluk kurallarini
+    # saglayan TEK BIR uclu bile bulunamadi demektir -- ör. bir havuz
+    # tamamen bos). Programin cokmemesi icin en gevsek secim yapiliyor,
+    # ama bu artik SADECE havuzlar gercekten calisamaz durumdaysa
+    # tetiklenir, hedefe uyup uymamasi sorunundan dolayi degil.
     return (
         rastgele.choice(grup1_havuz),
         rastgele.choice(grup2_havuz),
