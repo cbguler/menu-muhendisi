@@ -798,50 +798,67 @@ with sag2:
                     st.session_state[f"{_ogun_adi}_{_anahtar}_alt"] = float(_aralik[0])
                     st.session_state[f"{_ogun_adi}_{_anahtar}_ust"] = float(_aralik[1])
 
-besin_hedefi_kullan = st.checkbox(
-    "Öğün başına besin hedefi uygula (opsiyonel)", key="besin_hedefi_kullan",
-)
+# SEKSEN BESINCI DUZELTME (4 Eylul 2026): Bahri'nin talebi -- secili
+# profilin ZATEN kayitli besin hedefleri varsa, "Ogun basina besin
+# hedefi uygula" sorusu/arayuzu HIC gosterilmiyor, hedefler sessizce
+# otomatik uygulaniyor. Sadece profilin HIC hedefi yoksa (ör. "Standart"
+# gibi genel amacli bir profil), eskisi gibi manuel/gecici bir hedef
+# girme secenegi sunuluyor.
+_profil_kayitli_hedefleri = _secili_sayfa_profili.get("hedefler") or {}
 
 hedefler = None
-if besin_hedefi_kullan:
-    st.caption(
-        "Önce hangi besin değerlerini hedeflemek istediğini seç (kalori "
-        "gibi temel değerler varsayılan olarak seçili) — sadece seçtiklerin "
-        "için aşağıda min/maks aralığı gösterilecek."
+if _profil_kayitli_hedefleri:
+    st.info(
+        f"\"{_secili_sayfa_profili['ad']}\" profili için besin hedefleri "
+        "zaten tanımlı, bu üretimde otomatik uygulanacak. Değiştirmek "
+        "istersen Abonelik sayfasındaki \"Profil Başına Besin "
+        "Hedefleri\" bölümüne bak."
     )
-    secili_besin_anahtarlari = st.multiselect(
-        "Hedeflenecek besin değerleri",
-        options=[anahtar for anahtar, *_ in TUM_BESIN_ALANLARI],
-        default=["kalori", "protein", "yag", "karbonhidrat", "gi"],
-        format_func=lambda a: BESIN_ETIKET[a],
-        key="yillik_menu_secili_besin_anahtarlari",
+    hedefler = _profil_kayitli_hedefleri
+else:
+    besin_hedefi_kullan = st.checkbox(
+        "Öğün başına besin hedefi uygula (opsiyonel)", key="besin_hedefi_kullan",
     )
-    hedefler = {}
-    for ogun_adi in ("Öğle", "Akşam"):
-        with st.expander(f"{ogun_adi} hedefleri", expanded=False):
-            hedefler[ogun_adi] = {}
-            if not secili_besin_anahtarlari:
-                st.caption("Yukarıdan en az bir besin değeri seçmelisin.")
-            for anahtar in secili_besin_anahtarlari:
-                etiket = BESIN_ETIKET[anahtar]
-                # (float(...) burada bilinçli bir guvenlik agi: TUM_BESIN_ALANLARI'na
-                # ileride eklenecek bir satirda min/maks/varsayilan turleri
-                # yanlislikla karisik (int+float) yazilirsa bile, number_input
-                # yine de tek tip float alacak -- StreamlitMixedNumericTypesError
-                # bir daha tekrarlanmasin diye.)
-                minv, maxv, def_alt, def_ust = (float(x) for x in BESIN_ARALIK[anahtar])
-                c1, c2 = st.columns(2)
-                with c1:
-                    alt = st.number_input(
-                        f"{etiket} — min", min_value=minv, max_value=maxv,
-                        value=def_alt, key=f"{ogun_adi}_{anahtar}_alt",
-                    )
-                with c2:
-                    ust = st.number_input(
-                        f"{etiket} — maks", min_value=minv, max_value=maxv,
-                        value=def_ust, key=f"{ogun_adi}_{anahtar}_ust",
-                    )
-                hedefler[ogun_adi][anahtar] = (alt, ust)
+
+    if besin_hedefi_kullan:
+        st.caption(
+            "Önce hangi besin değerlerini hedeflemek istediğini seç (kalori "
+            "gibi temel değerler varsayılan olarak seçili) — sadece seçtiklerin "
+            "için aşağıda min/maks aralığı gösterilecek."
+        )
+        secili_besin_anahtarlari = st.multiselect(
+            "Hedeflenecek besin değerleri",
+            options=[anahtar for anahtar, *_ in TUM_BESIN_ALANLARI],
+            default=["kalori", "protein", "yag", "karbonhidrat", "gi"],
+            format_func=lambda a: BESIN_ETIKET[a],
+            key="yillik_menu_secili_besin_anahtarlari",
+        )
+        hedefler = {}
+        for ogun_adi in ("Öğle", "Akşam"):
+            with st.expander(f"{ogun_adi} hedefleri", expanded=False):
+                hedefler[ogun_adi] = {}
+                if not secili_besin_anahtarlari:
+                    st.caption("Yukarıdan en az bir besin değeri seçmelisin.")
+                for anahtar in secili_besin_anahtarlari:
+                    etiket = BESIN_ETIKET[anahtar]
+                    # (float(...) burada bilinçli bir guvenlik agi: TUM_BESIN_ALANLARI'na
+                    # ileride eklenecek bir satirda min/maks/varsayilan turleri
+                    # yanlislikla karisik (int+float) yazilirsa bile, number_input
+                    # yine de tek tip float alacak -- StreamlitMixedNumericTypesError
+                    # bir daha tekrarlanmasin diye.)
+                    minv, maxv, def_alt, def_ust = (float(x) for x in BESIN_ARALIK[anahtar])
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        alt = st.number_input(
+                            f"{etiket} — min", min_value=minv, max_value=maxv,
+                            value=def_alt, key=f"{ogun_adi}_{anahtar}_alt",
+                        )
+                    with c2:
+                        ust = st.number_input(
+                            f"{etiket} — maks", min_value=minv, max_value=maxv,
+                            value=def_ust, key=f"{ogun_adi}_{anahtar}_ust",
+                        )
+                    hedefler[ogun_adi][anahtar] = (alt, ust)
 
 if hedefler and secili_bolgeler and len(tarifler) < 60:
     st.caption(
@@ -852,25 +869,30 @@ if hedefler and secili_bolgeler and len(tarifler) < 60:
     )
 
 if st.button("Ay için menü üret", type="primary"):
-    gercek_haftalar = _ay_gercek_haftalari(yil_secimi, ay_secimi)
-    haftalar = []
-    for hafta_tarihleri in gercek_haftalar:
-        # Deterministik tohum: haftanin Pazartesi gununun takvim sirasina
-        # (toordinal) gore -- ayni yil+hafta her zaman ayni sonucu verir,
-        # eski "ay_index*10+hafta_no" semasi gercek haftalar ay sinirini
-        # astigi icin artik anlamli degildi.
-        tohum = hafta_tarihleri[0].toordinal()
-        rastgele = random.Random(tohum)
-        gun_mevsimleri = [_tarih_mevsimi(t) for t in hafta_tarihleri]
-        hafta = hafta_olustur(
-            tarifler_zengin, None, rastgele, hedefler=hedefler,
-            gun_mevsimleri=gun_mevsimleri,
-        )
-        # Ekranda gercek tarih/hafta gunu adi gosterebilmek icin, o gunun
-        # gercek datetime.date'ini de tasiyoruz.
-        for gun, tarih in zip(hafta, hafta_tarihleri):
-            gun["tarih"] = tarih
-        haftalar.append(hafta)
+    # SEKSEN BESINCI DUZELTME (4 Eylul 2026): uretim uzun surebiliyor
+    # (bircok hafta, her biri icin cok sayida deneme) -- Bahri, bu
+    # sure boyunca ekranin "donmus" gibi gorunmesinden rahatsiz oldu.
+    # st.spinner ile aciken bir "uretiliyor" gostergesi eklendi.
+    with st.spinner("Menü üretiliyor, lütfen bekleyin..."):
+        gercek_haftalar = _ay_gercek_haftalari(yil_secimi, ay_secimi)
+        haftalar = []
+        for hafta_tarihleri in gercek_haftalar:
+            # Deterministik tohum: haftanin Pazartesi gununun takvim sirasina
+            # (toordinal) gore -- ayni yil+hafta her zaman ayni sonucu verir,
+            # eski "ay_index*10+hafta_no" semasi gercek haftalar ay sinirini
+            # astigi icin artik anlamli degildi.
+            tohum = hafta_tarihleri[0].toordinal()
+            rastgele = random.Random(tohum)
+            gun_mevsimleri = [_tarih_mevsimi(t) for t in hafta_tarihleri]
+            hafta = hafta_olustur(
+                tarifler_zengin, None, rastgele, hedefler=hedefler,
+                gun_mevsimleri=gun_mevsimleri,
+            )
+            # Ekranda gercek tarih/hafta gunu adi gosterebilmek icin, o gunun
+            # gercek datetime.date'ini de tasiyoruz.
+            for gun, tarih in zip(hafta, hafta_tarihleri):
+                gun["tarih"] = tarih
+            haftalar.append(hafta)
     # YIRMI IKINCI DUZELTME (13 Agustos 2026, Oturum 11): kullanicinin
     # "gecmis bir tarih icin uretilen menu, gercek servis kaydiyla
     # karistirilabilir" endisesi uzerine -- uretimi ENGELLEMIYORUZ (test/
@@ -1189,16 +1211,19 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                 # t_ham ile yapiliyor, ekranda gosterilen 10-porsiyonluk
                 # t degil.
                 #
-                # SEKSENINCI DUZELTME (3 Eylul 2026): Bahri'nin acik ve
-                # kesin talebiyle -- "Hedef dışı" etiketi ARTIK HICBIR
-                # YERDE musteriye gosterilmiyor. Hedefte olan ogunler
-                # icin olumlu "Hedefte" rozeti hala gosteriliyor; hedef
-                # disi kalan durumlarda ise SESSIZCE hicbir rozet
-                # gosterilmiyor (algoritmanin ic sinirini musteriye
-                # aciklayan alarm-gibi bir etiket yerine).
+                # SEKSEN ALTINCI DUZELTME (4 Eylul 2026): "Hedef dışı"
+                # rozeti GERI GETIRILDI. SEKSENINCI DUZELTME'de (3 Eylul)
+                # Bahri'nin "bir daha gormek istemiyorum" talebiyle
+                # kaldirilmisti, ama bu kez Bahri BASKA bir sorunu
+                # (hedef canli/yeniden hesaplaniyor, uretim aninda
+                # kullanilan hedeften FARKLI olabiliyor -- bkz. SEKSEN
+                # BESINCI DUZELTME notlari) rozet SESSIZCE gizlendigi
+                # icin GEC fark etti ve rozetin GERI GELMESINI istedi.
                 hedefte = _hedefte_mi(ogun_adi, t_ham, hedefler)
                 if hedefte is True:
                     st.markdown("<span class='omgo-hedef-rozet omgo-hedefte'>Hedefte</span>", unsafe_allow_html=True)
+                elif hedefte is False:
+                    st.markdown("<span class='omgo-hedef-rozet omgo-hedefdisi'>Hedef dışı</span>", unsafe_allow_html=True)
 
                 with st.container(key=f"maliyetkutu_{card_id}_{ogun_adi}"):
                     st.markdown(
@@ -1377,10 +1402,10 @@ def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
                 deger = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
             elif etiket == "Hedef Durumu":
                 hedefte = _hedefte_mi(ogun_adi, t_ham, hedefler)
-                # SEKSENINCI DUZELTME (3 Eylul 2026): "Hedef dışı" metni
-                # buradan da kaldirildi -- pop-up'taki degisiklikle
-                # tutarli olsun diye (bkz. yukarida).
-                deger = "Hedefte" if hedefte is True else "-"
+                # SEKSEN ALTINCI DUZELTME (4 Eylul 2026): pop-up'taki
+                # degisiklikle tutarli olsun diye "Hedef dışı" burada da
+                # geri getirildi (bkz. yukaridaki not).
+                deger = {True: "Hedefte", False: "Hedef dışı", None: "-"}[hedefte]
             else:  # Maliyet
                 if not fiyat_verisi_var:
                     deger = "-"
