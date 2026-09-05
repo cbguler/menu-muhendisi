@@ -264,10 +264,17 @@ def _ogun_dene(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, 
        - tam_sonuc: hedefi TAM saglayan uclu, yoksa None.
        - en_iyi_yakin_sonuc: uyumluluk kurallarina uyan (uyumsuzluk
          DAHIL) VE hedefe EN YAKIN uclu -- tam bir eslesme yoksa bile
-         cagiran taraf bunu "en iyi ihtimal" olarak kullanabilir. Bu,
-         eski "hicbir sey bulunamazsa TAMAMEN rastgele ve uyumsuzluk-
-         KONTROLSUZ sec" son-care davranisinin YERINI ALIYOR.
-    """
+         cagiran taraf bunu "en iyi ihtimal" olarak kullanabilir.
+
+    DOKSAN DOKUZUNCU DUZELTME (4 Eylul 2026): Bugun "haftalik-farkinda"
+    (mesafe_hedefi ile yumusak yonlendirme) bir tasarim denendi, 3 farkli
+    varyantla TEST edildi (bkz. PROJE_NOTLARI, 4 Eylul) -- HICBIRI basit
+    (bu) yaklasimdan ACIKCA daha iyi cikmadi, biri daha da KOTU cikti.
+    Bu yuzden EN GUVENILIR/kanitlanmis hali olan BU versiyona GERI
+    DONULDU. Genisletilmis (TEMEL_5 disi) ogelerin gercekten guvenilir
+    sekilde iyilestirilmesi, muhtemelen daha derin bir arastirma/tasarim
+    calismasi gerektiriyor -- bkz. Bahri'ye iletilen not (nutrient
+    sayisini azaltma onerisi)."""
     aday1_ham = _aday_havuzu(grup1_havuz, mevsim, kullanilan_hafta, tekrara_izin_ver, mevsim_zorunlu, kullanilan_gun_taban)
     aday2_ham = _aday_havuzu(grup2_havuz, mevsim, kullanilan_hafta, tekrara_izin_ver, mevsim_zorunlu, kullanilan_gun_taban)
     aday3_ham = _aday_havuzu(grup3_havuz, mevsim, kullanilan_hafta, tekrara_izin_ver, mevsim_zorunlu, kullanilan_gun_taban)
@@ -280,15 +287,7 @@ def _ogun_dene(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, 
     en_iyi_mesafe = None
     en_iyi_uclu = None
     degerlendirilen = 0  # (t1,t2,t3) UCLU sayisi -- havuz buyuklugunden
-    # BAGIMSIZ kesin bir tavan (SEKSEN SEKIZINCI DUZELTME, 4 Eylul 2026:
-    # onceki versiyon (t1,t2) CIFT sayisini sayiyordu, ama her cift ic
-    # ice TUM aday3_uyumlu'yu (80'e kadar) tarayabiliyordu -- gercekci
-    # buyuk havuzlarda VE gercekten imkansiz bir hedefte, toplam
-    # degerlendirme onbinlere/yuzbinlere cikip performansi ciddi
-    # olcude yavaslatiyordu (test sirasinda zaman asimina UGRADI).
-    # Simdi UCLU sayisi dogrudan sayiliyor, deneme_sayisi'ni asinca
-    # HEMEN duruyor -- havuz ne kadar buyuk olursa olsun ayni sabit
-    # maliyet tavanini garanti ediyor.
+    # BAGIMSIZ kesin bir tavan (SEKSEN SEKIZINCI DUZELTME, 4 Eylul 2026).
 
     for t1 in aday1_karisik:
         t1_taban = _taban_kelime(t1["ad"])
@@ -350,17 +349,11 @@ def ogun_olustur(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta
     (kullanilan_gun_taban) gevsetilmez -- sadece havuz TAMAMEN
     tukenirse (bkz. _aday_havuzu/_ogun_dene ici fallback) devreye girer.
 
-    SEKSEN YEDINCI DUZELTME (4 Eylul 2026): Bahri'nin kesin talebi
-    uzerine -- "Hedef Dışı" ARTIK hicbir kademede kabul edilmiyor.
-    Eskiden 4. (son) kademe hedefi TAMAMEN birakip (hedef=None) rastgele
-    seciyordu -- bu KALDIRILDI. Artik hedef HICBIR kademede birakilmiyor;
-    3 kademe de deneme sayisi ciddi olcude ARTIRILDI (200 -> 1500/1500/
+    SEKSEN YEDINCI DUZELTME (4 Eylul 2026): "Hedef Dışı" ARTIK hicbir
+    kademede kabul edilmiyor -- hedef hicbir kademede birakilmiyor; 3
+    kademe de deneme sayisi ciddi olcude ARTIRILDI (200 -> 1500/1500/
     2500) VE her kademe, tam eslesme bulunamazsa kendi EN YAKIN uyumlu
-    secenegini bildiriyor (bkz. _ogun_dene). Kademeler arasinda en iyi
-    (hedefe en yakin) secenek TUM kademeler arasindan karsilastirilip
-    kullaniliyor -- yani en gevsek kademe bile UYUMSUZLUK kurallarina
-    uyan ve MUMKUN OLDUGUNCA hedefe yakin bir secim yapiyor, tamamen
-    rastgele/kontrolsuz bir secim ARTIK YOK."""
+    secenegini bildiriyor (bkz. _ogun_dene)."""
     en_iyi_genel_uclu = None
     en_iyi_genel_mesafe = None
 
@@ -385,40 +378,13 @@ def ogun_olustur(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta
         return en_iyi_genel_uclu
 
     # Buraya kadar gelinmesi COK OLASI DEGIL (uyumsuzluk kurallarini
-    # saglayan TEK BIR uclu bile bulunamadi demektir -- ör. bir havuz
-    # tamamen bos). Programin cokmemesi icin en gevsek secim yapiliyor,
-    # ama bu artik SADECE havuzlar gercekten calisamaz durumdaysa
-    # tetiklenir, hedefe uyup uymamasi sorunundan dolayi degil.
+    # saglayan TEK BIR uclu bile bulunamadi demektir). Programin
+    # cokmemesi icin en gevsek secim yapiliyor.
     return (
         rastgele.choice(grup1_havuz),
         rastgele.choice(grup2_havuz),
         rastgele.choice(grup3_havuz),
     )
-
-
-def _fast_food_sec(grup4_havuz, birlesik_etiketler, rastgele):
-    """ISTEGE BAGLI 4. yuva (6 Agustos 2026 eklendi): isletmenin kendi
-    ozel recetelerinden Icecek/Baslangic/Pizza/Burger kategorisindeki
-    tarifler (grup=4). Anayasa madde 8'in ZORUNLU 3'lusune dahil DEGIL --
-    bu yuzden:
-      - Madde 11 (uyumsuzluk) yine de kontrol edilir (tutarlilik icin),
-        ama bir aday bulunamazsa ogun YINE DE GECERLI sayilir, sadece bu
-        yuva bos kalir.
-      - Haftalik tekrar kisiti (madde 2) burada UYGULANMAZ -- bu havuz
-        genelde kucuk (isletmenin kendi menusu) oldugu icin tekrarsizlik
-        zorlanirsa yuva birkac gunde tukenip surekli bos kalirdi.
-      - Mevsim kisiti da uygulanmaz (ozel receteler icin mevsim_etiketi
-        zaten hep 'yil_boyunca').
-    Uygun aday yoksa None doner."""
-    if not grup4_havuz:
-        return None
-    adaylar = [
-        t for t in grup4_havuz
-        if _uyumlu_mu(birlesik_etiketler | set(t.get("etiketler") or []))
-    ]
-    if not adaylar:
-        return None
-    return rastgele.choice(adaylar)
 
 
 def hafta_olustur(tarifler, mevsim, rastgele, hedefler=None, gun_sayisi=7, gun_mevsimleri=None):
@@ -427,18 +393,13 @@ def hafta_olustur(tarifler, mevsim, rastgele, hedefler=None, gun_sayisi=7, gun_m
     grup=4 (isletmenin kendi Icecek/Baslangic/Pizza/Burger receteleri)
     varsa, her ogune ISTEGE BAGLI 4. bir tarif eklenir -- bkz. _fast_food_sec.
 
-    gun_mevsimleri: YIRMINCI DUZELTME (13 Agustos 2026, Oturum 11) --
-    kullanicinin "her gun kendi gercek tarihinin ait oldugu mevsimden
-    beslensin" karari uzerine eklendi. GERCEK takvim haftalari (Pazartesi-
-    Pazar) ay/mevsim sinirlarini asabilir (ör. 31 Agustos=yaz, 1 Eylul=
-    sonbahar, ayni haftada). Bu listeye [gun1_mevsim, gun2_mevsim, ...]
-    seklinde (gun_sayisi uzunlugunda) o haftanin HER GUNUNUN GERCEK
-    mevsimi verilirse, o gunun ogun_olustur cagrisinda mevsim yerine bu
-    kullanilir -- `mevsim` parametresi ise SADECE gun_mevsimleri
-    verilmediginde (eski/geriye-donuk kullanim, ör. yillik_ornek_uret)
-    devreye girer. Hafta ici tekrarsizlik (madde 2, kullanilan_hafta)
-    mevsim karisik olsa bile HALA TUM HAFTA icin gecerli -- bir tarif,
-    hangi mevsimden gelirse gelsin, ayni hafta icinde iki kez cikmaz."""
+    gun_mevsimleri: kullanicinin "her gun kendi gercek tarihinin ait
+    oldugu mevsimden beslensin" karari uzerine eklendi. Bu listeye
+    [gun1_mevsim, gun2_mevsim, ...] seklinde (gun_sayisi uzunlugunda)
+    o haftanin HER GUNUNUN GERCEK mevsimi verilirse, o gunun
+    ogun_olustur cagrisinda mevsim yerine bu kullanilir. Hafta ici
+    tekrarsizlik (kullanilan_hafta) mevsim karisik olsa bile HALA TUM
+    HAFTA icin gecerli."""
     grup1 = [t for t in tarifler if t["grup"] == 1]
     grup2 = [t for t in tarifler if t["grup"] == 2]
     grup3 = [t for t in tarifler if t["grup"] == 3]
@@ -452,11 +413,7 @@ def hafta_olustur(tarifler, mevsim, rastgele, hedefler=None, gun_sayisi=7, gun_m
         # YIRMI BIRINCI DUZELTME (30 Agustos 2026): kullanilan_hafta
         # (TAM isim, HAFTA capinda) DEGIL -- bu, TEMEL YEMEK TURU (bkz.
         # _taban_kelime) icin, sadece BU GUNE ozel, her yeni gunde
-        # SIFIRLANAN ayri bir kume. Boylece "Cacık" (ogle) + "Sumaklı
-        # Cacık" (aksam) gibi bir gun icindeki benzer-yemek tekrari
-        # engellenir, ama farkli GUNLERDE ayni temel turun (ör. baska
-        # bir gun yine bir corba turu) cikmasina engel olunmaz -- kucuk
-        # kutuphanede o kadar agir bir kisit pratik olmazdi.
+        # SIFIRLANAN ayri bir kume.
         kullanilan_gun_taban = set()
         for ogun_adi in ("Öğle", "Akşam"):
             hedef = (hedefler or {}).get(ogun_adi)
