@@ -65,3 +65,17 @@ TUM_BESIN_ALANLARI = [
 ]
 BESIN_ETIKET = {anahtar: etiket for anahtar, etiket, *_ in TUM_BESIN_ALANLARI}
 BESIN_ARALIK = {anahtar: (minv, maxv, def_alt, def_ust) for anahtar, _, minv, maxv, def_alt, def_ust in TUM_BESIN_ALANLARI}
+
+_TUM_ANAHTAR_SIRASI = [anahtar for anahtar, *_ in TUM_BESIN_ALANLARI]
+
+
+def kanonik_sirala(anahtar_koleksiyonu):
+    """Bir besin-ogesi anahtar kumesini/listesini, TUM_BESIN_ALANLARI'ndaki
+    TANIM SIRASINA (Kalori, Protein, Yağ, Karbonhidrat, Glisemik İndeks,
+    Sodyum, ...) gore siralar. SEKSEN DORDUNCU DUZELTME (4 Eylul 2026):
+    profil hedeflerini bir set'ten olusturup sorted() ile siralamak,
+    besin ogelerini ALFABETIK (gi, kalori, karbonhidrat, protein, yag)
+    diziyordu -- kullanici bunun yerine dogal/beklenen sirayi
+    (Kalori, Protein, Yağ, Karbonhidrat, GI) istiyor."""
+    anahtar_kumesi = set(anahtar_koleksiyonu)
+    return [a for a in _TUM_ANAHTAR_SIRASI if a in anahtar_kumesi]

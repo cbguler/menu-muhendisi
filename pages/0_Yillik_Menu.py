@@ -18,7 +18,7 @@ from openpyxl.utils import get_column_letter
 # NOT (12 Agustos 2026, Oturum 11): logo artik burada AYRICA gosterilmiyor -- app.py'deki ozel menu satirinin icine tasindi, orada zaten her sayfa gecisinde render ediliyor. Burada tekrar cagirmak cift logoya yol acardi.
 
 from db import get_supabase, oturumu_uygula
-from besin_sabitleri import TUM_BESIN_ALANLARI, BESIN_ETIKET, BESIN_ARALIK
+from besin_sabitleri import TUM_BESIN_ALANLARI, BESIN_ETIKET, BESIN_ARALIK, kanonik_sirala
 from uretim_algoritmasi import hafta_olustur
 
 MEVSIM_AYLARI = {
@@ -790,7 +790,7 @@ with sag2:
         _profil_hedefleri = _secili_sayfa_profili.get("hedefler") or {}
         if _profil_hedefleri:
             st.session_state["besin_hedefi_kullan"] = True
-            st.session_state["yillik_menu_secili_besin_anahtarlari"] = sorted(
+            st.session_state["yillik_menu_secili_besin_anahtarlari"] = kanonik_sirala(
                 {anahtar for ogun in _profil_hedefleri.values() for anahtar in ogun}
             )
             for _ogun_adi, _degerler in _profil_hedefleri.items():

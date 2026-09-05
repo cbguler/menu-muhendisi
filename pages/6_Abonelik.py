@@ -18,7 +18,7 @@
 import streamlit as st
 import pandas as pd
 
-from besin_sabitleri import TUM_BESIN_ALANLARI, BESIN_ETIKET, BESIN_ARALIK
+from besin_sabitleri import TUM_BESIN_ALANLARI, BESIN_ETIKET, BESIN_ARALIK, kanonik_sirala
 
 # NOT (12 Agustos 2026, Oturum 11): logo artik burada AYRICA gosterilmiyor -- app.py'deki ozel menu satirinin icine tasindi, orada zaten her sayfa gecisinde render ediliyor. Burada tekrar cagirmak cift logoya yol acardi.
 
@@ -345,7 +345,7 @@ if _hedef_profil_listesi:
     # onluyor.
     _anahtar_on_eki = f"abn_{_profil_id}_"
 
-    _profil_secili_anahtarlar = sorted(
+    _profil_secili_anahtarlar = kanonik_sirala(
         {anahtar for ogun in _kayitli_hedefler.values() for anahtar in ogun}
     ) or ["kalori", "protein", "yag", "karbonhidrat", "gi"]
 
