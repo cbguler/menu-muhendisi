@@ -7,6 +7,7 @@
 
 import datetime
 import io
+import json
 import random
 
 import streamlit as st
@@ -768,14 +769,24 @@ with sag2:
     _secili_sayfa_profili = _porsiyon_profilleri_sayfa[_sayfa_secili_index]
     st.session_state["secili_porsiyon_sayisi"] = _secili_sayfa_profili["porsiyon_sayisi"]
 
-    # Profil DEGISTI mi kontrol et -- degistiyse hedef widget'larinin
-    # session_state'ini bu profilin kayitli hedefleriyle ONCEDEN
-    # doldur (widget'lar HENUZ olusturulmadi, asagida olusturulacak --
-    # Streamlit'te bir widget'in key'i session_state'te zaten varsa
-    # value= parametresi yok sayilir, o yuzden bu ON-DOLDURMA'nin
-    # widget'lardan ONCE calismasi sart).
-    if st.session_state.get("_onceki_profil_id_aylik_menu") != _secili_sayfa_profili["id"]:
-        st.session_state["_onceki_profil_id_aylik_menu"] = _secili_sayfa_profili["id"]
+    # Profil DEGISTI mi VEYA ayni profilin KAYITLI HEDEFLERI DEGISTI mi
+    # kontrol et -- hedef widget'larinin session_state'ini bu profilin
+    # kayitli hedefleriyle ONCEDEN doldur (widget'lar HENUZ olusturulmadi,
+    # asagida olusturulacak -- Streamlit'te bir widget'in key'i
+    # session_state'te zaten varsa value= parametresi yok sayilir, o
+    # yuzden bu ON-DOLDURMA'nin widget'lardan ONCE calismasi sart).
+    #
+    # SEKSEN UCUNCU DUZELTME (4 Eylul 2026): SADECE profil ID'sini
+    # karsilastirmak YETERSIZDI -- Bahri, Abonelik'te ZATEN SECILI olan
+    # bir profilin (ör. "EV") hedeflerini degistirip kaydettiginde,
+    # Aylik Menu'ye donup AYNI profili (yine "EV") secince degisiklikler
+    # YUKLENMEDI -- cunku ID degismemisti, guard "hicbir sey degismedi"
+    # sanip atladi. Simdi ID + hedeflerin kendisi (JSON) birlikte bir
+    # "imza" olusturuyor -- profilin ALTINDAKI VERI degisse bile
+    # (ID ayni kalsa dahi) yeniden yukleme tetikleniyor.
+    _hedef_imzasi = (_secili_sayfa_profili["id"], json.dumps(_secili_sayfa_profili.get("hedefler"), sort_keys=True))
+    if st.session_state.get("_onceki_profil_imza_aylik_menu") != _hedef_imzasi:
+        st.session_state["_onceki_profil_imza_aylik_menu"] = _hedef_imzasi
         _profil_hedefleri = _secili_sayfa_profili.get("hedefler") or {}
         if _profil_hedefleri:
             st.session_state["besin_hedefi_kullan"] = True
