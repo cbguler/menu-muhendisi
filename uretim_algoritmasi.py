@@ -387,6 +387,31 @@ def ogun_olustur(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta
     )
 
 
+def _fast_food_sec(grup4_havuz, birlesik_etiketler, rastgele):
+    """ISTEGE BAGLI 4. yuva (6 Agustos 2026 eklendi): isletmenin kendi
+    ozel recetelerinden Icecek/Baslangic/Pizza/Burger kategorisindeki
+    tarifler (grup=4). Anayasa madde 8'in ZORUNLU 3'lusune dahil DEGIL --
+    bu yuzden:
+      - Madde 11 (uyumsuzluk) yine de kontrol edilir (tutarlilik icin),
+        ama bir aday bulunamazsa ogun YINE DE GECERLI sayilir, sadece bu
+        yuva bos kalir.
+      - Haftalik tekrar kisiti (madde 2) burada UYGULANMAZ -- bu havuz
+        genelde kucuk (isletmenin kendi menusu) oldugu icin tekrarsizlik
+        zorlanirsa yuva birkac gunde tukenip surekli bos kalirdi.
+      - Mevsim kisiti da uygulanmaz (ozel receteler icin mevsim_etiketi
+        zaten hep 'yil_boyunca').
+    Uygun aday yoksa None doner."""
+    if not grup4_havuz:
+        return None
+    adaylar = [
+        t for t in grup4_havuz
+        if _uyumlu_mu(birlesik_etiketler | set(t.get("etiketler") or []))
+    ]
+    if not adaylar:
+        return None
+    return rastgele.choice(adaylar)
+
+
 def hafta_olustur(tarifler, mevsim, rastgele, hedefler=None, gun_sayisi=7, gun_mevsimleri=None):
     """tarifler: [{"ad","grup"(1/2/3, opsiyonel 4),"mevsim_etiketi","etiketler", ...besin}, ...]
     hedefler: {"Öğle": {"kalori":(min,max), ...}, "Akşam": {...}} ya da None.
