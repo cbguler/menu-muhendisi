@@ -10,8 +10,6 @@ import io
 import json
 import random
 
-import pandas as pd
-
 import streamlit as st
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
@@ -1126,6 +1124,25 @@ def _yillik_menu_tasarim_stilini_uygula():
        okunabilirlik icin acik krem renkli (#FDF6EC) metinle. */
     .omgo-satir-hedefdisi td { background: #A6472F !important; color: #FDF6EC !important; font-weight: 700; }
     .omgo-satir-hedefdisi .omgo-hedef-araligi { color: #FDF6EC !important; opacity: 0.85; }
+
+    /* YUZ UCUNCU DUZELTME (4 Eylul 2026): gercek tablo gorunumu --
+       baslik satiri + hucre kenarliklari + hafta sonu rengi. */
+    .omgo-tablo-baslik-satiri {
+        display: flex; gap: 0; background: #F0EAE0; border: 1px solid #D9D2C2;
+        border-bottom: 2px solid #C88A2E; font-weight: 700; font-size: 12.5px;
+        text-transform: uppercase; letter-spacing: 0.03em; color: #6B5B3D;
+        padding: 6px 0;
+    }
+    .omgo-tablo-h-gun, .omgo-tablo-h-tarih { flex: 1.1; padding: 0 10px; }
+    .omgo-tablo-h-ogun { flex: 2.4; padding: 0 10px; }
+    .omgo-tablo-tarih-hucre { padding: 8px 0; font-size: 13.5px; color: #4A3F2E; }
+    div[class*="st-key-satir_"] {
+        border-left: 1px solid #E4DDCB; border-right: 1px solid #E4DDCB;
+        border-bottom: 1px solid #E4DDCB; padding: 2px 0;
+    }
+    div[class*="st-key-satir_hs_"] { background: #FBF0DC; }
+    div[class*="st-key-satir_"] div[data-testid="stPageLink"] { padding: 1px 0; }
+    div[class*="st-key-satir_"] div[data-testid="stPageLink"] p { font-size: 12.5px !important; }
     .omgo-ogun-baslik-buyuk { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 700; text-align: center; color: #C88A2E; margin: 14px 0 8px; text-transform: uppercase; letter-spacing: 0.02em; }
     .omgo-hedef-rozet { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px; margin-top: 6px; }
     .omgo-maliyet-baslik { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 700; color: #7A531C; margin: 0 0 6px; }
@@ -1582,72 +1599,76 @@ def _gun_popup_dialog(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_me
 
 
 def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, hafta_no):
-    """Haftayi bir HAFTA icinde GUN BASINA BIR SATIR olan GERCEK bir
-    tabloda gosterir (sutun basliklariyla: Gün | Tarih) -- YUZ BIRINCI
-    DUZELTME (4 Eylul 2026): Bahri iki kez ("kartlar arasi bosluklari
-    sikistirdik ama hala tablo gibi degil" / "sutun baslikları da
-    olsun") geri bildirimde bulununca, kart-tabanli goruntuden GERCEK
-    bir st.dataframe tablosuna gecildi -- Streamlit'in row-selection
-    ozelligi (on_select="rerun", selection_mode="single-row",
-    Streamlit 1.35+'da mevcut, resmi API'den dogrulandi) kullanilarak
-    bir SATIRA tiklandiginda o gunun pop-up'i aciliyor -- eski
-    st.dialog() tabanli pop-up (bkz. _gun_popup_dialog) HICBIR
-    DEGISIKLIK olmadan aynen kullaniliyor, SADECE onu tetikleyen
-    arayuz kart yerine tablo satiri oldu."""
+    """Haftayi GERCEK bir tabloda gosterir -- YUZ UCUNCU DUZELTME
+    (4 Eylul 2026): Bahri'nin acikca belirttigi tarif -- her gunun
+    TARIHININ yani sira O GUNUN Ogle/Aksam yemeklerinin isimleri de
+    (tarife TIKLANABILIR linkler olarak) DOGRUDAN tabloda gorunmeli,
+    AYRI kutularda (sutunlarda). Hafta sonlari AYRI renkte.
+
+    ONEMLI: bir onceki deneme (st.dataframe + satir secimi) YANLIS
+    anlasilmaya dayaniyordu -- st.dataframe hucreleri SADECE duz
+    deger tutabilir, GERCEK st.page_link gibi tiklanabilir icerik
+    BARINDIRAMAZ. Bu yuzden st.columns() TABANLI, HER GUN icin bir
+    SATIR olan bir duzene donuldu -- boylece her hucrede GERCEK
+    Streamlit widget'lari (linkler, buton) olabiliyor, CSS ile de
+    tablo gorunumu (kenarlik, hizalama, hafta sonu rengi) veriliyor.
+
+    Gun/Tarih hucresindeki BUTON tiklaninca o gunun pop-up'i (arka
+    yuz -- besin/maliyet/hedef) acilir; Ogle/Aksam hucrelerindeki
+    yemek isimleri ise DOGRUDAN Tarif Kutuphanesi'ne link verir."""
     _yillik_menu_tasarim_stilini_uygula()
 
     GUN_ADLARI = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"]
-
     card_idler = [f"{ay_adi}-{hafta_no}-{gun['gun']}" for gun in hafta]
-    satirlar = []
-    for gun in hafta:
-        tarih = gun.get("tarih")
-        if tarih is not None:
-            satirlar.append({"Gün": GUN_ADLARI[tarih.weekday()], "Tarih": f"{tarih.day} {AYLAR_SIRALI[tarih.month - 1]}"})
-        else:
-            satirlar.append({"Gün": f"Gün {gun['gun']}", "Tarih": ""})
 
-    tablo_key = f"hafta_tablosu_{ay_adi}_{hafta_no}"
-    st.dataframe(
-        pd.DataFrame(satirlar),
-        hide_index=True,
-        use_container_width=True,
-        on_select="rerun",
-        selection_mode="single-row",
-        key=tablo_key,
+    st.markdown(
+        "<div class='omgo-tablo-baslik-satiri'>"
+        "<div class='omgo-tablo-h-gun'>Gün</div>"
+        "<div class='omgo-tablo-h-tarih'>Tarih</div>"
+        "<div class='omgo-tablo-h-ogun'>Öğle Yemeği</div>"
+        "<div class='omgo-tablo-h-ogun'>Akşam Yemeği</div>"
+        "</div>",
+        unsafe_allow_html=True,
     )
 
-    secim = st.session_state.get(tablo_key, {}).get("selection", {}).get("rows", [])
-    if secim:
-        secili_index = secim[0]
-        # YUZ IKINCI DUZELTME (4 Eylul 2026): st.dataframe'in secim
-        # durumu, bir dugme tikinin AKSINE, KALICIDIR -- kullanici
-        # pop-up'i Streamlit'in kendi X dugmesiyle KAPATSA BILE, o satir
-        # "secili" olarak KALIR. Bu yuzden HAM secime dogrudan gore
-        # pop-up acmak, HER YENIDEN CALISTIRMADA pop-up'i tekrar tekrar
-        # ACARDI (kullanici kapatamazdi). Bunun yerine, SADECE YENI bir
-        # secim olayinda (bir onceki calistirmadan FARKLI) bayrak
-        # ayarlaniyor -- eski dugme-tabanli tetikleyicinin "tek seferlik
-        # ates etme" davranisini taklit ediyor.
-        secim_imzasi = (tablo_key, secili_index)
-        if st.session_state.get("_son_tablo_secimi") != secim_imzasi:
-            st.session_state["_son_tablo_secimi"] = secim_imzasi
-            st.session_state["yillik_menu_popup_gun_id"] = card_idler[secili_index]
-            # YUZUNCU DUZELTME (4 Eylul 2026): pop-up dogrudan "arka"
-            # (besin/maliyet/hedef detaylari) ile aciliyor -- tek yuzlu
-            # deneyim.
-            st.session_state["yillik_menu_popup_yuz"] = "arka"
-
-    if st.session_state.get("yillik_menu_popup_gun_id") in card_idler:
-        _secili_gun_index = card_idler.index(st.session_state["yillik_menu_popup_gun_id"])
-        gun = hafta[_secili_gun_index]
-        card_id = card_idler[_secili_gun_index]
+    for i, gun in enumerate(hafta):
+        card_id = card_idler[i]
         tarih = gun.get("tarih")
         if tarih is not None:
-            baslik_metni = f"{GUN_ADLARI[tarih.weekday()]}\n{tarih.day} {AYLAR_SIRALI[tarih.month - 1]}"
+            gun_adi_gercek = GUN_ADLARI[tarih.weekday()]
+            hafta_sonu_mu = tarih.weekday() >= 5
+            tarih_metni = f"{tarih.day} {AYLAR_SIRALI[tarih.month - 1]}"
         else:
-            baslik_metni = f"Gün {gun['gun']}"
-        _gun_popup_dialog(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni, hafta)
+            gun_adi_gercek = f"Gün {gun['gun']}"
+            hafta_sonu_mu = False
+            tarih_metni = ""
+
+        satir_sinifi = f"satir_{'hs_' if hafta_sonu_mu else ''}{card_id}"
+        with st.container(key=satir_sinifi):
+            kol_gun, kol_tarih, kol_ogle, kol_aksam = st.columns([1.1, 1.1, 2.4, 2.4])
+            with kol_gun:
+                if st.button(gun_adi_gercek, key=f"btn_gun_{card_id}", use_container_width=True):
+                    st.session_state["yillik_menu_popup_gun_id"] = card_id
+                    st.session_state["yillik_menu_popup_yuz"] = "arka"
+                    st.rerun()
+            with kol_tarih:
+                st.markdown(f"<div class='omgo-tablo-tarih-hucre'>{tarih_metni}</div>", unsafe_allow_html=True)
+            with kol_ogle:
+                for ad in gun["ogunler"].get("Öğle", []):
+                    st.page_link(
+                        "pages/5_Tarif_Kutuphanesi.py", label=ad,
+                        query_params={"tarif": ad}, use_container_width=True,
+                    )
+            with kol_aksam:
+                for ad in gun["ogunler"].get("Akşam", []):
+                    st.page_link(
+                        "pages/5_Tarif_Kutuphanesi.py", label=ad,
+                        query_params={"tarif": ad}, use_container_width=True,
+                    )
+
+        if st.session_state.get("yillik_menu_popup_gun_id") == card_id:
+            baslik_metni = f"{gun_adi_gercek}\n{tarih_metni}" if tarih_metni else gun_adi_gercek
+            _gun_popup_dialog(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni, hafta)
 
 
 def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
