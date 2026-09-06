@@ -1067,6 +1067,39 @@ def _hedefte_mi(ogun_adi, t, hedefler, hafta=None, detay=None):
     return True, []
 
 
+def _tablo_stilini_uygula():
+    """YUZ DORDUNCU DUZELTME (5 Eylul 2026): tablo (Gun|Tarih|Ogle|Aksam)
+    icin gereken CSS -- BILEREK buyuk paylasilan css_govdesi blogundan
+    AYRI, KUCUK, IZOLE bir st.markdown cagrisi olarak tutuluyor. Sebep:
+    bu CSS o buyuk bloga eklendiginde, sayfada bir kismi DUZ METIN
+    olarak SIZDI (bkz. _hafta_kartlarini_goster docstring'i) -- kesin
+    mekanizma belirlenemedi, ama kucuk/izole bir bloga tasimak sorunu
+    gidermenin en dusuk riskli yolu."""
+    st.markdown(
+        """
+        <style>
+        .omgo-tablo-baslik-satiri {
+            display: flex; gap: 0; background: #F0EAE0; border: 1px solid #D9D2C2;
+            border-bottom: 2px solid #C88A2E; font-weight: 700; font-size: 12.5px;
+            text-transform: uppercase; letter-spacing: 0.03em; color: #6B5B3D;
+            padding: 6px 0;
+        }
+        .omgo-tablo-h-gun, .omgo-tablo-h-tarih { flex: 1.1; padding: 0 10px; }
+        .omgo-tablo-h-ogun { flex: 2.4; padding: 0 10px; }
+        .omgo-tablo-tarih-hucre { padding: 8px 0; font-size: 13.5px; color: #4A3F2E; }
+        div[class*="st-key-satir_"] {
+            border-left: 1px solid #E4DDCB; border-right: 1px solid #E4DDCB;
+            border-bottom: 1px solid #E4DDCB; padding: 2px 0;
+        }
+        div[class*="st-key-satir_hs_"] { background: #FBF0DC; }
+        div[class*="st-key-satir_"] div[data-testid="stPageLink"] { padding: 1px 0; }
+        div[class*="st-key-satir_"] div[data-testid="stPageLink"] p { font-size: 12.5px !important; }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def _yillik_menu_tasarim_stilini_uygula():
     """YIRMINCI DUZELTME (13 Agustos 2026, Oturum 11): kullanicinin
     onayladigi kart-tasarim mockup'ini (tasarim_onizleme.html) GERCEK
@@ -1124,25 +1157,6 @@ def _yillik_menu_tasarim_stilini_uygula():
        okunabilirlik icin acik krem renkli (#FDF6EC) metinle. */
     .omgo-satir-hedefdisi td { background: #A6472F !important; color: #FDF6EC !important; font-weight: 700; }
     .omgo-satir-hedefdisi .omgo-hedef-araligi { color: #FDF6EC !important; opacity: 0.85; }
-
-    /* YUZ UCUNCU DUZELTME (4 Eylul 2026): gercek tablo gorunumu --
-       baslik satiri + hucre kenarliklari + hafta sonu rengi. */
-    .omgo-tablo-baslik-satiri {
-        display: flex; gap: 0; background: #F0EAE0; border: 1px solid #D9D2C2;
-        border-bottom: 2px solid #C88A2E; font-weight: 700; font-size: 12.5px;
-        text-transform: uppercase; letter-spacing: 0.03em; color: #6B5B3D;
-        padding: 6px 0;
-    }
-    .omgo-tablo-h-gun, .omgo-tablo-h-tarih { flex: 1.1; padding: 0 10px; }
-    .omgo-tablo-h-ogun { flex: 2.4; padding: 0 10px; }
-    .omgo-tablo-tarih-hucre { padding: 8px 0; font-size: 13.5px; color: #4A3F2E; }
-    div[class*="st-key-satir_"] {
-        border-left: 1px solid #E4DDCB; border-right: 1px solid #E4DDCB;
-        border-bottom: 1px solid #E4DDCB; padding: 2px 0;
-    }
-    div[class*="st-key-satir_hs_"] { background: #FBF0DC; }
-    div[class*="st-key-satir_"] div[data-testid="stPageLink"] { padding: 1px 0; }
-    div[class*="st-key-satir_"] div[data-testid="stPageLink"] p { font-size: 12.5px !important; }
     .omgo-ogun-baslik-buyuk { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 700; text-align: center; color: #C88A2E; margin: 14px 0 8px; text-transform: uppercase; letter-spacing: 0.02em; }
     .omgo-hedef-rozet { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px; margin-top: 6px; }
     .omgo-maliyet-baslik { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 700; color: #7A531C; margin: 0 0 6px; }
@@ -1613,10 +1627,22 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
     Streamlit widget'lari (linkler, buton) olabiliyor, CSS ile de
     tablo gorunumu (kenarlik, hizalama, hafta sonu rengi) veriliyor.
 
+    YUZ DORDUNCU DUZELTME (5 Eylul 2026): tablo CSS'i, buyuk paylasilan
+    css_govdesi bloguna EKLENINCE, o CSS metninin bir kismi (TAM OLARAK
+    eklenen noktadan itibaren) sayfada DUZ METIN olarak SIZDI -- <style>
+    etiketinin kendisi hic render edilmemis gibi gorundu (gercek DOM
+    dokumu incelenerek dogrulandi). Kesin mekanizma tam olarak
+    belirlenemedi (kare parantez + tirnak dengesi kontrol edildi,
+    sorun bulunamadi -- muhtemelen markdown/HTML render zincirinde
+    beklenmeyen bir etkilesim). En guvenli/dusuk riskli cozum: bu
+    tablo CSS'i buyuk ortak bloktan CIKARILIP, KENDI KUCUK/IZOLE
+    st.markdown cagrisina tasindi (bkz. _tablo_stilini_uygula).
+
     Gun/Tarih hucresindeki BUTON tiklaninca o gunun pop-up'i (arka
     yuz -- besin/maliyet/hedef) acilir; Ogle/Aksam hucrelerindeki
     yemek isimleri ise DOGRUDAN Tarif Kutuphanesi'ne link verir."""
     _yillik_menu_tasarim_stilini_uygula()
+    _tablo_stilini_uygula()
 
     GUN_ADLARI = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"]
     card_idler = [f"{ay_adi}-{hafta_no}-{gun['gun']}" for gun in hafta]

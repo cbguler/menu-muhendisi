@@ -5623,3 +5623,562 @@ aynı profili tekrar seçmek gereksiz tekrar yazma yapmıyor.
 **Dosya durumu:** `besin_sabitleri.py` (yeni),
 `sql/80_isletme_porsiyon_profilleri_hedefler.sql` (yeni),
 `pages/0_Yillik_Menu.py` güncellendi, `pages/6_Abonelik.py` güncellendi.
+
+
+### 4 Eylül 2026 — XIII. Oturum (devam): Profil Hedefi Otomatik Yükleme Hatası Düzeltildi
+
+Bahri test etti: Abonelik'te "EV" profilinin hedeflerini değiştirip
+kaydetti, Aylık Menü'ye dönüp aynı "EV" profilini seçti ama hedefler
+gelmedi. Kök sebep: değişiklik kontrolü SADECE profil ID'sini
+karşılaştırıyordu -- "EV" zaten seçiliyken verisi değişince, ID aynı
+kaldığı için guard "hiçbir şey değişmedi" sanıp yeniden yüklemeyi
+atlıyordu.
+
+**Düzeltme:** Karşılaştırma artık (profil ID + hedefler JSON) ikilisi
+üzerinden yapılıyor -- profilin ALTINDAKI veri değişse bile (ID aynı
+kalsa dahi) doğru şekilde yeniden yükleniyor. Bahri'nin tam senaryosu
+(aynı profil, sonradan değişen veri) simüle edilip doğrulandı.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` güncellendi.
+
+
+### 4 Eylül 2026 — XIII. Oturum (devam): Besin Değerleri Sırası Düzeltildi
+
+Bahri fark etti: profil hedefleri yüklenirken besin öğeleri alfabetik
+sıraya giriyordu (gi, kalori, karbonhidrat, protein, yag) -- oysa
+orijinal/beklenen sıra tanım sırasıydı (Kalori, Protein, Yağ,
+Karbonhidrat, Glisemik İndeks, ...). Sebep: hem `0_Yillik_Menu.py`
+hem `6_Abonelik.py`'de bir `set`'ten anahtar listesi oluştururken
+`sorted()` (alfabetik) kullanılmıştı.
+
+**Düzeltme:** `besin_sabitleri.py`'ye `kanonik_sirala()` yardımcı
+fonksiyonu eklendi -- `TUM_BESIN_ALANLARI`'ndaki TANIM SIRASINA göre
+sıralıyor, alfabetik değil. İki dosyadaki `sorted(...)` çağrıları da
+bununla değiştirildi. Test edildi: karışık bir küme verilince doğru
+(Kalori, Protein, Yağ, Karbonhidrat, GI, Sodyum) sırayla döndüğü
+doğrulandı.
+
+**Dosya durumu:** `besin_sabitleri.py`, `pages/0_Yillik_Menu.py`,
+`pages/6_Abonelik.py` güncellendi.
+
+
+### 4 Eylül 2026 — XIII. Oturum (devam): Üç Düzeltme + Önemli Bir Tespit
+
+**1. Profil hedefi varsa tekrar sorulmuyor:** Seçili profilin kayıtlı
+besin hedefleri varsa "Öğün başına besin hedefi uygula" arayüzü hiç
+gösterilmiyor, sadece bilgi notu + otomatik uygulama. Profilin hiç
+hedefi yoksa eskisi gibi manuel/geçici seçenek sunuluyor.
+DÜZELTME SIRASINDA GERÇEK BİR GİRİNTİ HATASI BULUNDU VE DÜZELTİLDİ:
+`with c2:` ve `hedefler[ogun_adi][anahtar] = ...` satırları yanlışlıkla
+döngünün dışına düşmüştü (sentaks hatasız ama mantık hatalıydı --
+sadece SON seçilen besin öğesi kaydedilirdi). AST + girinti haritası
+ile doğrulandı.
+
+**2. Yükleme göstergesi:** "Ay için menü üret" artık `st.spinner("Menü
+üretiliyor, lütfen bekleyin...")` içinde çalışıyor.
+
+**3. ÖNEMLİ TESPİT -- "Hedefte" kontrolü CANLI, üretim zamanına bağlı
+DEĞİL:** Bahri, Ocak menüsünde "EV" profiliyle (950 kcal hedef) uyumsuz
+(1000+ kcal) günler bulup alarma geçti -- "Hedef dışı" etiketi
+kaldırıldığı için bunlar sessizce saklanıyordu. Kod incelendi:
+popup'taki hedef kontrolü, o GÜN ÜRETİLİRKEN kullanılan hedefe göre
+DEĞİL, popup her açıldığında SAYFADA O AN AKTİF olan `hedefler`
+değişkenine göre CANLI yapılıyor. Yani Ocak menüsü muhtemelen EV
+profilinin 950 kcal hedefi TANIMLANMADAN ÖNCE üretilmişti -- algoritma
+"denemedi" değil, o zamanki (yok/farklı) hedefe göre üretti, şimdi
+YENİ hedefle karşılaştırılınca uyumsuz çıkıyor.
+
+**Bahri'ye önerilen sonraki adım:** Ocak ayını ŞİMDİ (EV'nin 950 kcal
+hedefi aktifken) yeniden üretip, algoritmanın bu hedefe gerçekten
+uyup uymadığını test etmesi. Ayrıca "Hedef dışı" etiketinin TAMAMEN
+kaldırılmasının (önceki oturumdaki talep) şimdi gerçek sorunları
+gizlediği ortaya çıktı -- Bahri'nin bunu nasıl dengelemek istediği
+(admin için görünürlük geri mi gelsin, farklı bir sunumla mı)
+HENÜZ NETLEŞMEDİ, sıradaki konuşma konusu.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` güncellendi (3 değişiklik
++ 1 girinti hatası düzeltmesi).
+
+
+### 4 Eylül 2026 — XIII. Oturum (devam): "Hedef Dışı" Geri Getirildi
+
+Bahri, 3 Eylül'deki "bir daha görmek istemiyorum" talebinin ardından
+şimdi TAM TERSİNİ istedi -- eski kırmızı "Hedef dışı" rozeti aynen
+geri gelsin. Sebep: rozet gizlenince, gerçek hedef-dışı günler
+SESSİZCE saklanıyordu, bu da Bahri'nin sorunları fark etmesini
+engelliyordu. Hem pop-up hem Excel dışa aktarımdaki (SEKSENINCI
+DUZELTME'de kaldırılan) hali birebir geri getirildi.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` güncellendi.
+
+**Hatırlatma (henüz yapılmadı):** Bahri'nin Ocak menüsünde gördüğü
+hedef-dışı günlerin gerçek sebebi muhtemelen menünün "EV" profilinin
+950 kcal hedefi TANIMLANMADAN ÖNCE üretilmiş olması (hedef kontrolü
+canlı/güncel hedefe göre yapılıyor, üretim anındaki hedefe göre değil).
+Bahri'nin Ocak'ı şimdi (güncel hedefle) yeniden üretip sonucu test
+etmesi bekleniyor.
+
+
+### 4 Eylül 2026 — XIII. Oturum (devam): Algoritma "Hedef Dışı"yı Kabul Etmeyecek Şekilde Yeniden Yazıldı
+
+Bahri'nin kesin talebi: "Hedef Dışı" hiçbir şekilde kabul edilemez,
+algoritma alternatif denemeye devam etmeli. `uretim_algoritmasi.py`
+kökten değiştirildi:
+
+**Eski davranış:** 4 kademeli gevşetme, SON kademede hedefin TAMAMEN
+terk edilip (`hedef=None`) rastgele (uyumsuzluk kontrolü bile
+YAPILMADAN) seçim yapılması.
+
+**Yeni davranış:**
+1. Hedef ARTIK HİÇBİR kademede terk edilmiyor (3 kademe kaldı: mevsim+
+   tekrarsız, mevsim gevşek+tekrarsız, ikisi de gevşek -- hepsinde
+   hedef hâlâ aktif).
+2. Her kademe artık RASTGELE-TEKRARLI değil, KARIŞTIRILMIŞ listeler
+   üzerinde SİSTEMLİ dolaşıyor -- aynı çift birden fazla kez boşa
+   denenmiyor.
+3. Deneme bütçesi 200'den 1500/1500/2500'e çıkarıldı (havuz
+   büyüklüğünden BAĞIMSIZ, doğrudan (t1,t2,t3) üçlü sayısı olarak
+   sayılıyor -- ilk versiyon (t1,t2) çift sayısını sayıyordu, bu da
+   büyük havuzlarda üçlü başına 80'e kadar iç tarama tetikleyip
+   performansı ciddi yavaşlatıyordu, ZAMAN AŞIMINA UĞRADI test
+   sırasında -- düzeltildi).
+4. Hedef TAM sağlanamazsa bile, artık **uyumluluk kurallarına uyan VE
+   hedefe EN YAKIN** kombinasyon hatırlanıp kullanılıyor (yeni
+   `_hedef_mesafesi` fonksiyonu) -- tamamen rastgele/uyumsuzluk-
+   kontrolsüz son çare KALKTI.
+
+**Test sonuçları:**
+- Ulaşılabilir hedefte: tam eşleşme buluyor (değişmedi).
+- Gerçekten İMKANSIZ bir hedefte (matematiksel olarak hiçbir kombinasyon
+  uyamaz): algoritma teorik EN İYİ mümkün kombinasyonu buluyor
+  (test: 1200 teorik minimum, algoritma tam 1200'ü buldu).
+- Uyumsuzluk kuralları (madde 11) imkansız hedefte bile KORUNUYOR
+  (20 denemede hiç ihlal yok).
+- Performans: 80'erli havuzlarla, GERÇEKTEN imkansız bir hedefte, 30
+  gün x 2 öğün = 60 çağrı toplam 3.48 saniye (~58ms/öğün) -- seçimler
+  teorik minimumdan ortalama sadece 20 kcal uzakta.
+
+**ÖNEMLİ:** "Hedef dışı" hâlâ TEORİK olarak görülebilir -- ama artık
+SADECE gerçekten hiçbir kombinasyonun tam uymadığı, matematiksel
+olarak imkansız durumlarda, VE o zaman bile EN YAKIN mümkün sonuç
+kullanılıyor (rastgele değil). Kütüphane büyüdükçe (madde 6, 241->daha
+fazla tarif) bu durumların sıklığı daha da azalacak.
+
+**Dosya durumu:** `uretim_algoritmasi.py` tamamen yeniden yazıldı.
+
+
+### 4 Eylül 2026 — XIII. Oturum (devam): Haftalık Ortalama + Hangi Besinin Hedef Dışı Olduğu
+
+Bahri'nin ekran görüntüsünde 27 besin öğesinin 26'sını tutturmuş,
+sadece B12'de (3.40 vs 0.0-3.0) çok az kaçırmış bir sonuç gördük --
+bu, algoritmanın gerçekten çalıştığının kanıtıydı ama "tüm 27'yi AYNI
+ÖĞÜNDE" hedeflemenin aşırı kısıtlayıcı olduğunu gösterdi (gerçek
+diyetisyenler de mikroelementleri haftalık dengeler, tek öğün bazında
+değil). Bahri seçenek 2+3'ü onayladı:
+
+**1. TEMEL_5 dışındaki (22 vitamin/mineral/vb.) besin hedefleri artık
+HAFTALIK ORTALAMA üzerinden kontrol ediliyor** -- TEMEL_5 (kalori/
+protein/yağ/karbonhidrat/GI) hâlâ TEK ÖĞÜN bazında sıkı kontrol
+ediliyor (değişmedi). Yeni `_haftalik_ortalama()` fonksiyonu, o
+haftanın 7 gününün aynı öğünündeki değerleri ortalıyor. `_hedefte_mi`
+artık `hafta`+`detay` parametrelerini de alıyor (geriye dönük uyumlu --
+verilmezse eskisi gibi tek-öğün kontrolü yapar).
+
+**2. "Hedef dışı" yazısının yanında HANGİ besin öğesi(leri) olduğu
+gösteriliyor** (ör. "Hedef dışı: B12 — Kobalamin") -- `_hedefte_mi`
+artık (True/False/None, başarısız_anahtar_listesi) ikilisi döndürüyor.
+Hem pop-up hem Excel dışa aktarımdaki çağrı yerleri güncellendi.
+
+Üç senaryo gerçek koddan doğrudan çekilen fonksiyonlarla test edildi:
+(a) tek günlük değer hedef dışıyken haftalık ortalama içindeyse
+HEDEFTE sayılıyor, (b) haftalık ortalama GERÇEKTEN dışındaysa doğru
+şekilde başarısız + doğru anahtar adı işaretleniyor, (c) TEMEL_5 hâlâ
+haftalık ortalamaya KAÇMIYOR, tek gün bazında sıkı kalıyor.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` güncellendi (TEMEL_5 modül
+seviyesine taşındı, `_haftalik_ortalama` eklendi, `_hedefte_mi`
+yeniden yazıldı, tüm çağrı yerleri güncellendi).
+
+**BEKLEYEN (henüz yapılmadı, büyük kapsamlı, tasarım onayı gerekiyor):**
+Bahri ayrıca şunları istedi:
+- Pop-up'ta "Hedef dışı" altına "TEKRAR DENE" / "DEVAM ET" butonları
+  (tekrar dene = o günü yeniden üret, devam et = olduğu gibi kabul et).
+- Aylık menünün "kaydedilmesi" -- yeni bir kalıcılık kavramı (şu an
+  üretilen menü sadece session_state'te, DB'ye hiç yazılmıyor).
+- "Maliyet hesabı için porsiyon profili" seçicisinin sağına "Bu Profil
+  için Kayıtlı Aylık Menüler" adlı bir liste -- kaydedilmiş menüleri
+  geri çağırmak için.
+Bu üçü birlikte büyük bir özellik seti (yeni DB tablosu + tek-gün
+yeniden üretme mantığı + kaydetme/yükleme akışı) -- ayrı bir tasarım
+konuşması gerektiriyor, henüz kod yazılmadı.
+
+**Küphane genişletme (Bahri'nin seçtiği 2 numaralı seçenek):** Bu bir
+kod değişikliği değil, içerik/tarif üretim işi -- ayrı ele alınacak.
+
+
+### 4 Eylül 2026 — XIII. Oturum (devam): Hedef Dışı Satırlar Tabloda da Kırmızı
+
+Bahri'nin talebi: sadece "Hedef dışı: X, Y" rozetinde değil, ASIL
+"Hedeflenen Besin Değerleri" tablosunda da o satır(lar) belirgin
+şekilde işaretlensin, gerekirse okunabilirlik için arka plan rengi
+değiştirilsin.
+
+**Yapılan:** `hedefte`/`basarisiz_anahtarlar` hesaplaması tablo
+çizilmeden ÖNCEYE taşındı (eskiden sadece rozet için, tablodan SONRA
+hesaplanıyordu -- şimdi tek hesaplama hem tabloyu hem rozeti besliyor).
+Her tablo satırı (`TEMEL_5` + `_tablo_satirlari_yaz` ile yazılan ek
+besin öğeleri), o satırın anahtarı `basarisiz_anahtarlar` içindeyse
+`omgo-satir-hedefdisi` sınıfıyla işaretleniyor. CSS: açık pembe/kırmızı
+arka plan (#E8B4B8) + koyu kırmızı kalın metin (#7A1F2B) -- düz kırmızı
+YAZI RENGİ yerine bilinçli olarak açık arka plan + koyu metin tercih
+edildi, koyu pop-up zemininde bile okunabilirlik garantili olsun diye.
+
+Mantık izole test edildi: ekran görüntüsündeki senaryoya (Protein +
+Glisemik İndeks hedef dışı) birebir uyan bir örnekte, sadece bu ikisi
+işaretleniyor, diğerleri normal kalıyor.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` güncellendi.
+
+
+### 4 Eylül 2026 — XIII. Oturum (devam): Hedef Dışı Satır Rengi Değiştirildi
+
+İlk seçilen açık pembe (#E8B4B8) Bahri'ye uymadı. Uygulamanın zaten
+kullandığı "Hedef dışı" rozet rengiyle (kiremit/pas tonu,
+rgba(166,71,47,...)) AYNI aileye geçildi: satır arka planı #A6472F
+(kiremit), metin #FDF6EC (açık krem) -- rozet ve tablo satırı artık
+tutarlı, aynı "hedef dışı" görsel dilini paylaşıyor.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` güncellendi.
+
+
+### 4 Eylül 2026 — XIII. Oturum (devam): Tekrar Dene/Devam Et + Aylık Menü Kaydetme/Yükleme
+
+Üç kararlı büyük özellik tamamlandı:
+
+**1. "Tekrar Dene" / "Devam Et" (pop-up, gün bazında):** Eski tek
+"Günlük menüye dön" düğmesi ikiye ayrıldı. "Tekrar Dene": SADECE o
+günü (Öğle+Akşam) yeniden üretir -- `tarifler_zengin`'den grup1-4
+havuzları yeniden kurulup, haftanın DİĞER 6 gününde kullanılan TAM
+tarif adları "kullanılmış" sayılarak çakışma önleniyor. Karar gereği
+OTOMATİK 15 farklı rastgele deneme yapılıp `_hedef_mesafesi` ile
+hesaplanan toplam mesafeye göre EN İYİSİ seçiliyor (tam hedef
+bulunursa erken duruyor). "Devam Et": eski düğmenin işlevini üstleniyor
+(kartı ön yüze çevirir).
+
+Test: yeniden üretilen gün, haftanın diğer 6 günüyle hiç çakışmıyor,
+diğer günler değişmeden kalıyor (gerçek `uretim_algoritmasi` modülü
+ile doğrulandı).
+
+**2. Aylık Menü Kaydetme:** Yeni `kayitli_aylik_menuler` tablosu (81
+numaralı migration) -- (işletme, porsiyon_profili, yıl, ay) üçlüsü
+UNIQUE, aynı ay/profil tekrar kaydedilirse ÜZERİNE YAZAR (karar
+gereği, versiyon biriktirilmiyor). "Aylık Menüyü Kaydet" düğmesi
+SADECE tüm günler hedefteyse (ya da hiç hedef tanımlı değilse) aktif
+oluyor; aksi halde hangi gün/öğünlerin sorunlu olduğunu listeleyip
+kaydetmeyi engelliyor (karar gereği).
+
+Test: temiz bir ay doğru şekilde kaydedilebilir çıkıyor, bir günü
+bozuk bir ay doğru şekilde tespit edilip engelleniyor.
+
+**3. "Bu Profil için Kayıtlı Aylık Menüler":** Yıl/Ay/Porsiyon Profili
+seçicilerinin yanına 4. bir sütun eklendi -- seçili profile ait
+kaydedilmiş menüleri listeler, seçilince `yillik_menu_aylik`'i
+doğrudan değiştirip sayfayı tazeler (altındaki görüntüleme/Excel/
+kaydet mantığı hiçbir değişiklik gerektirmeden çalışır).
+
+Geliştirme sırasında bir NameError'a yakalandık ve düzeltildi: yükleme
+mantığı başta henüz tanımlanmamış olan sayfa değişkeni `hedefler`'e
+erişmeye çalışıyordu -- profilin ham verisine doğrudan erişecek
+şekilde düzeltildi.
+
+**Dosya durumu:** `sql/81_kayitli_aylik_menuler.sql` (yeni),
+`pages/0_Yillik_Menu.py` güncellendi (import satırı genişletildi,
+Tekrar Dene/Devam Et düğmeleri, kaydetme/yükleme mantığı eklendi).
+
+
+### 4 Eylül 2026 — XIII. Oturum (devam): Tekrar Dene Düzeltildi + Görsel "Matematik Hatası" Çözüldü
+
+**Madde 3 (öncelikli, en somut):** Bahri "Yağ: 40 g, hedef 10.0-40.0"
+görünürken "hedef dışı" işaretlendiğini fark etti -- "imkansız matematik
+hatası" sandı. Gerçek sebep: TEMEL_5 değerleri `round()` ile TAM SAYIYA
+yuvarlanıyordu (ör. gerçek değer 40.4 iken ekranda "40" görünüyordu),
+ama kontrol YUVARLANMAMIŞ gerçek değeri kullanıyordu -- 40.4 > 40.0
+olduğu için DOĞRU şekilde hedef dışı sayılıyordu, sadece bu fark
+GÖRÜNÜMDE saklanıyordu. Düzeltme: Kalori/Protein/Yağ/Karbonhidrat/GI
+artık 1 ondalık hassasiyetle gösteriliyor -- ekranda görünen değer
+artık kontrolle birebir tutarlı, böyle bir görsel çelişki bir daha
+oluşmuyor.
+
+**Madde 1+2 (Tekrar Dene mantığı):** Bahri iki sorun bildirdi: (1)
+"Tekrar Dene" HER İKİ öğünü (Öğle+Akşam) birden yeniden üretiyordu,
+bu yüzden ZATEN hedefte olan öğün BOZULABİLİYORDU; (2) defalarca
+manuel tıklamaya rağmen düzelmiyordu. İkinci sorun, birincinin DOĞRUDAN
+sonucuydu -- her tıklamada iyi olan da yeniden karıştığı için "düzelt-
+bozdur" döngüsüne giriyordu.
+
+Düzeltme: "Tekrar Dene" artık ÖNCE hangi öğün(ler)in GERÇEKTEN hedef
+dışı olduğunu kontrol ediyor, SADECE onları yeniden üretiyor -- hedefte
+olan öğün(ler)e HİÇ DOKUNULMUYOR. Otomatik deneme sayısı öğün başına
+15'ten 30'a çıkarıldı (artık aynı anda iki değil tek öğün üretildiği
+için aynı süre bütçesiyle daha fazla deneme sığıyor). Hem hafta
+içindeki diğer günlerle hem günün DEĞİŞMEYECEK öğünüyle çakışma
+önleniyor.
+
+Test edildi (gerçek `uretim_algoritmasi` fonksiyonlarıyla): hedefteki
+öğün birebir korunuyor, sadece hedef dışı öğün değişiyor, aralarında
+çakışma yok.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` güncellendi.
+
+
+### 4 Eylül 2026 — XIII. Oturum (devam): Bir Düzeltme Denendi, Test Edildi, YANLIŞ Çıktı, Geri Alındı
+
+Bahri Kasım ayı üretiminde 84 öğünün 74'ünün (%88!) hedef dışı
+olduğunu bildirdi. İlk teorim: bugünkü "genişletilmiş ögeler haftalık
+ortalamayla kontrol edilsin" değişikliği SADECE görüntüleme/doğrulama
+tarafına uygulanmıştı, ÜRETİM algoritması hâlâ TÜM (27) ögeyi TEK
+ÖĞÜNDE tutturmaya çalışıyordu -- bu tutarsızlığı gidermek için üretime
+SADECE TEMEL_5'i vermeyi denedim.
+
+**Bu teori 10 farklı rastgele tohumla test edildi ve YANLIŞ çıktı:**
+TEMEL_5-only üretim, TAM hedefli üretimden DAHA KÖTÜ sonuç verdi
+(%85.7 hedef dışı, TAM hedefli %50.7'ye karşı). Yani genişletilmiş
+ögeleri üretim sırasında TAMAMEN görmezden gelmek, onları (kısmen de
+olsa) hedeflemekten DAHA KÖTÜ -- muhtemelen üretim en azından KISMEN
+doğru yöne çekerken, tamamen görmezden gelmek rastgele/yönsüz
+sonuçlara yol açıyor. **Değişiklik bu yüzden GERİ ALINDI**, üretim
+hâlâ TAM hedefi kullanıyor (bu oturumun başındaki hal).
+
+**Asıl %88 sorunu HÂLÂ ÇÖZÜLMEDİ.** Test verilerim, TAM hedefli
+üretimle bile (sadece 5 eş zamanlı hedefte) ortalama %50 hedef dışı
+oranı gösterdi -- bu, sorunun kök sebebinin muhtemelen "27 eş zamanlı
+hedefin TEK ÖĞÜN üretimi için gerçekten çok fazla olması" olduğunu
+düşündürüyor; üretim algoritması hâlâ HAFTALIK değil TEK ÖĞÜN bazında
+optimize ediyor -- bu, tek-öğün üretiminin doğası gereği çözmesi zor
+bir sorun, ayrı ve daha derin bir tasarım çalışması gerektiriyor.
+
+**Ders:** Göndermeden önce test etmek bu sefer gerçekten işe yaradı --
+sezgisel olarak mantıklı görünen bir "düzeltme" ampirik olarak yanlış
+çıktı, üretime geçmeden yakalandı.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` -- TEMEL_5-filtreleme
+denemesi tamamen geri alındı, bir önceki teslimattaki iki geçerli
+düzeltme (görüntü hassasiyeti + seçici Tekrar Dene) korundu.
+
+
+### 4 Eylül 2026 — XIII. Oturum (devam): Haftalık-Bazda Optimizasyon Denendi, Kanıtlanmış Sonuç Alınamadı
+
+Bahri'nin "büyük tasarıma başlayalım" kararı üzerine, gerçekten
+haftalık-bazda optimize eden bir üretim algoritması denendi. Üç
+farklı versiyon geliştirildi ve HER BİRİ aynı 10-tohumlu sentetik
+kıyaslama testiyle (gerçekçi hedef aralıkları, 5 eş zamanlı besin
+hedefi) denendi:
+
+1. **TEMEL_5-only üretim** (önceki not): %85.7 hedef dışı (BAŞARISIZ,
+   geri alındı).
+2. **Haftalık-ortalama-farkında yönlendirme, ilk versiyon**
+   (`mesafe_hedefi` ile yumuşak yönlendirme, ama TEMEL_5 tutturulunca
+   HEMEN dönen eski mantık korunarak): %67.1 -- hâlâ orijinalden kötü.
+   Kök sebep bulundu: TEMEL_5 genelde KOLAY tutturulduğu için arama
+   İLK eşleşmede hemen dönüyor, genişletilmiş-besin yönlendirmesine
+   SIRA GELMİYORDU.
+3. **Düzeltilmiş versiyon** (TEMEL_5 eşleşmesi bulununca hemen dönmek
+   yerine, bütçe sonuna kadar arayıp genişletilmiş-besin mesafesine
+   göre EN İYİSİNİ seçen hali): %54.3 -- orijinal (%50.7) ile
+   istatistiksel olarak aynı, gözle görülür bir iyileşme YOK.
+
+**Sonuç:** Üç farklı, giderek daha sofistike tasarım denendi, hiçbiri
+basit orijinal yaklaşımı (üretimde TAM hedefi kullanmak, best-effort
+en-yakın seçimi) AÇIKÇA geçemedi. Bu, gerçekten derin bir araştırma
+gerektiren, bir oturumda "çözülüp" gönderilecek bir problem değil --
+TÜM haftalık-farkındalık denemesi GERİ ALINDI, `uretim_algoritmasi.py`
+sabah/öğleden önceki kanıtlanmış haline (orijinal 10-testlik doğrulama
+paketini tekrar geçen hal) döndürüldü.
+
+**Asıl, kanıta dayalı önerim değişmedi:** 27 (ya da hatta sadece 5)
+eş zamanlı besin hedefi, TEK ÖĞÜN üretimi için gerçekten çok fazla --
+algoritma ne kadar akıllı olursa olsun. En güvenilir yol, profil
+başına hedeflenen besin SAYISINI azaltmak (Temel 5 + birkaç kritik
+olan). Kütüphane genişletmek de (madde 6) yardımcı olur ama tek başına
+yeterli olmayabilir.
+
+**Dosya durumu:** `uretim_algoritmasi.py` -- tüm haftalık-farkındalık
+denemesi geri alındı, kanıtlanmış (orijinal test paketini geçen) hale
+döndürüldü. `pages/0_Yillik_Menu.py`'ye bu deneyler sırasında hiç
+dokunulmadı, etkilenmedi.
+
+
+### 4 Eylül 2026 — XIII. Oturum (devam): Deploy Hatası — Eksik Fonksiyon Düzeltildi
+
+Bahri push+reboot sonrası `ImportError` aldı: `pages/0_Yillik_Menu.py`
+satır 22'deki `from uretim_algoritmasi import ..., _fast_food_sec`
+başarısız oluyordu. Sebep: az önceki geri-alma işleminde dosyayı üç
+parçadan (baş/orta/son) birleştirirken `_fast_food_sec` fonksiyonunun
+tanımı YANLIŞLIKLA atlanmıştı -- kod ONU KULLANIYORDU (hafta_olustur
+içinde) ama TANIMI dosyada yoktu.
+
+Düzeltme: `_fast_food_sec`'in orijinal (hiç bozulmamış) tanımı geri
+eklendi. Bu sefer hem `py_compile` hem GERÇEK `from uretim_algoritmasi
+import hafta_olustur, ogun_olustur, _taban_kelime, _hedef_mesafesi,
+_fast_food_sec` ifadesinin TAM OLARAK kendisi çalıştırılıp doğrulandı
+(sadece sentaks kontrolü değil, gerçek içe aktarma testi). Ayrıca
+grup4 (fast food eklentisi) özelliğinin gerçekten çalıştığı ayrı bir
+`hafta_olustur` çağrısıyla teyit edildi.
+
+**Ders:** Dosya birleştirme/geri alma gibi mekanik işlemlerden sonra
+da gerçek import ifadesini çalıştırarak doğrulamak gerekiyor --
+sadece `py_compile` (sentaks) yeterli değil, eksik tanım gibi hatalar
+sentaks açısından sorunsuz görünebilir.
+
+**Dosya durumu:** `uretim_algoritmasi.py` -- `_fast_food_sec` geri
+eklendi, tüm testler (temel + grup4 dahil) tekrar doğrulandı.
+
+
+### 4 Eylül 2026 — XIV. Oturum: Beş UI/UX Düzeltmesi
+
+**1. URL "Yıllık Menü" gösteriyordu:** `st.Page`'in `url_path` parametresi
+(Streamlit resmi API'sinden doğrulandı) kullanılarak `url_path="Aylik_Menu"`
+eklendi -- dosya adı (`0_Yillik_Menu.py`) değişmedi, sadece tarayıcı
+URL'i artık "Aylik_Menu" gösteriyor.
+
+**2. Tarih formatı Türkçeleştirildi + akıllı gruplama:** Yeni
+`_hedef_disi_liste_metni()` fonksiyonu -- seçili ay (ör. Aralık)
+içindeki günler SADECE gün numarasıyla gösteriliyor ("1 (Öğle)"),
+seçili ay DIŞINDAKİ ardışık günler tek bir ay/yıl öneki altında
+gruplanıyor ("Kasım 30 (Akşam)", "2027 Ocak 1 (Öğle), 2, 3"). İki
+senaryo (gerçek ekran görüntüsündeki + varsayımsal yıl sınırı) test
+edilip doğrulandı.
+
+**3. Uyarı metni netleştirildi:** Bahri'nin önerdiği tam metin
+kullanıldı -- "Tekrar Dene"/"Devam Et"/"Aylık Menüyü Kaydet" akışını
+adım adım açıklayan, ardından (yeni formatlı) tarih listesi.
+
+**4. Kart görünümü sıkıştırıldı + pop-up tek yüzlü açılıyor:**
+Kartların iç dolgusu/aralıkları daraltıldı (padding/margin küçültüldü,
+status noktaları küçültüldü), haftalar arası kalın `st.divider()`
+yerine ince özel bir çizgi kullanıldı. Pop-up artık tıklandığında
+DOĞRUDAN arka yüzle (besin/maliyet/hedef detayları) açılıyor -- eski
+"önce sadece tarif adları, sonra çevir" ön yüzü artık varsayılan
+değil (flip mekanizması hala mevcut, sadece varsayılan giriş noktası
+değişti).
+
+**5. Üst alan daraltıldı:** Logonun kendisine (144px/72px,
+min-height) DOKUNULMADI -- sadece çevresindeki padding küçültüldü
+(dış kapsayıcı 0.4rem→0.15rem, logo satırı içi 0.3rem→0.1rem).
+Buna göre boşluk yükseklikleri de aşağı çekildi (220px→200px masaüstü,
+100px→90px mobil). Bu dosyanın geçmişindeki tüm benzer denemelerde
+olduğu gibi bu TAHMİNİ bir değer -- gerçek tarayıcıda piksel farkı
+kalırsa ince ayar gerekebilir.
+
+**Dosya durumu:** `app.py` ve `pages/0_Yillik_Menu.py` güncellendi.
+
+**Sıradaki (madde 6, Bahri'nin talebiyle):** Bu beş düzeltme
+onaylanınca, yarıda kalan iki konuya dönülecek -- 241 tarif kütüphanesi
+genişletme, ve hatalı ikonlar (rendeleme_sogan havuca benziyor, VE/VEYA
+sınıflandırma sorunu, eksik eylem kelime dağarcığı -- bkz. bu
+oturumun ortasındaki ikon denetimi notları).
+
+
+### 4 Eylül 2026 — XIV. Oturum (devam): Gerçek Tablo Görünümü (Sütun Başlıklı)
+
+Bahri iki kez geri bildirimde bulundu: önce "kartlar arası boşluklar
+çok, sıkıştırırsak tablo şekli işe yarar" (sıkıştırıldı ama yetmedi),
+sonra "ön yüzü olmamış" + "sütun başlıkları da olsun (Gün | Tarih
+gibi)". Bu net talep üzerine kart-tabanlı ızgara TAMAMEN kaldırılıp
+gerçek bir `st.dataframe` tablosuyla değiştirildi:
+
+- Sütun başlıkları: "Gün", "Tarih" (Streamlit'in native tablo
+  render'ı -- gerçek kenarlıklar/hizalama, kart görünümü değil).
+- Satır seçimi: Streamlit'in resmi `on_select="rerun",
+  selection_mode="single-row"` özelliği (1.35+'da mevcut, resmi API
+  dokümantasyonundan doğrulandı) kullanılarak bir satıra tıklanınca o
+  günün pop-up'ı açılıyor.
+- Pop-up'ın kendisi (st.dialog tabanlı, `_gun_popup_dialog`) HİÇ
+  DEĞİŞMEDİ -- sadece onu tetikleyen arayüz kart yerine tablo satırı
+  oldu.
+
+**Dikkat edilmesi gereken risk:** `st.dataframe`'in seçim durumu, eski
+buton tıklamasının aksine KALICI -- pop-up kapatılsa bile satır
+"seçili" kalabilir. Bu, pop-up'ın kendini gereksiz yere tekrar tekrar
+açmasına yol açabilirdi -- bunu önlemek için "sadece YENİ bir seçimde
+tetikle" koruması eklendi (`_son_tablo_secimi` ile önceki/şimdiki
+seçim karşılaştırması) ve izole test edildi. Ancak GERÇEK tarayıcıda
+pop-up kapatma/tekrar açma etkileşiminin birebir eskisi gibi
+çalışacağı %100 garanti edilemiyor -- Bahri'nin özellikle bunu test
+etmesi istendi.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` güncellendi (`import
+pandas as pd` eklendi, `_hafta_kartlarini_goster` tamamen yeniden
+yazıldı).
+
+**Not:** Eski kart tasarımındaki hafta sonu turuncu vurgusu (Cumartesi/
+Pazar) bu tabloda henüz YOK -- basit tutmak için şimdilik eklenmedi,
+istenirse ayrıca eklenebilir.
+
+
+### 4 Eylül 2026 — XIV. Oturum (devam): Tablo Düzeltmesi — Doğru Anlaşıldı Bu Kez
+
+Bir önceki teslimat (st.dataframe tabanlı, sadece Gün|Tarih) Bahri'nin
+gerçek talebini KARŞILAMIYORDU -- Bahri sert bir şekilde düzeltti:
+istediği, her günün Öğle/Akşam yemeklerinin isimlerinin de (tarife
+TIKLANABİLİR linkler olarak) DOĞRUDAN tabloda, ayrı kutularda
+(sütunlarda) görünmesiydi. Bu, `_hafta_kartlarini_goster`'ın "ön yüz"
+(front face) içeriğinin (yemek adı linkleri) tabloya taşınması
+anlamına geliyordu -- ilk denemede bu içerik tamamen kaybolmuştu.
+
+**Kök sorun:** `st.dataframe` hücreleri SADECE düz değer tutabilir,
+`st.page_link` gibi gerçek tıklanabilir içerik BARINDIRAMAZ -- bu
+yüzden bu araç bu görev için yanlış seçimdi.
+
+**Doğru çözüm:** `st.columns()` tabanlı, HER GÜN için bir SATIR olan
+bir düzene dönüldü -- 4 sütun: Gün (buton, tıklanınca pop-up açar),
+Tarih (düz metin), Öğle Yemeği (her tarif `st.page_link` ile), Akşam
+Yemeği (aynı). CSS ile gerçek tablo görünümü (başlık satırı, hücre
+kenarlıkları) VE hafta sonu (Cumartesi/Pazar) için ayrı arka plan
+rengi eklendi.
+
+Ayrıca önceki (yanlış) denemeden kalan fazladan/çakışan bir kod bloğu
+temizlendi, kullanılmayan `pandas` importu kaldırıldı.
+
+**Ders:** "Sütun başlıkları olsun" netleştirmesi doğruydu ama TEK
+BAŞINA yetersizdi -- asıl içerik gereksinimini (tıklanabilir yemek
+linkleri) daha önceki mesajdan taşımam gerekirken, sadece son
+netleştirmeye odaklanıp önceki bağlamı kaybettim.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` güncellendi (fonksiyon
+tamamen doğru şekilde yeniden yazıldı, CSS eklendi, pandas importu
+kaldırıldı).
+
+
+### 5 Eylül 2026 — XV. Oturum: Kritik CSS Sızıntısı Bulundu ve Düzeltildi
+
+Bahri'nin gönderdiği .mhtml sayfa kaydı üzerinden GERÇEK render edilmiş
+DOM'u indirip inceledim (quoted-printable çözme + MIME parça arama).
+Bulgu: yeni tablo CSS'i eklendiği andan İTİBAREN, `<style>` etiketinin
+kendisi hiç render edilmemiş gibi görünüyor -- içeriği (CSS metni)
+sayfada DÜZ YAZI olarak görünür hale geliyordu. Bu SADECE tabloyu değil,
+muhtemelen AYNI büyük CSS bloğunda ONDAN SONRA gelen pop-up'ın koyu
+tema stillerini de bozmuştu (Bahri'nin "pop-up'ın arka yüzünün rengi
+değişmiş" gözlemiyle örtüşüyor).
+
+Tırnak/parantez/köşeli parantez dengesi programatik olarak kontrol
+edildi -- HİÇBİR dengesizlik bulunamadı, kesin mekanizma tam olarak
+belirlenemedi (muhtemelen markdown/HTML render zincirinde beklenmeyen
+bir etkileşim). En güvenli çözüm: tablo CSS'i büyük paylaşılan
+`css_govdesi` bloğundan tamamen ÇIKARILIP, kendi küçük/izole
+`st.markdown` çağrısına (`_tablo_stilini_uygula()`) taşındı.
+
+**Beklenen sonuç:** Hem tablo düzgün render olmalı (CSS artık düz
+metin olarak sızmıyor), hem pop-up'ın koyu renk teması eski haline
+dönmüş olmalı (çünkü büyük CSS bloğu artık bozulmadan tam olarak
+parse ediliyor), hem de hafta sonu renklendirmesi (zaten kodda vardı,
+CSS bozukluğu yüzünden görünmüyordu) artık görünür olmalı.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` güncellendi -- yeni
+`_tablo_stilini_uygula()` fonksiyonu eklendi, tablo CSS'i oraya
+taşındı.
+
+**Bahri'den istenen doğrulama:** Deploy sonrası (1) tablonun düzgün
+göründüğünü, (2) pop-up'ın koyu renginin geri geldiğini, (3) hafta
+sonu (Cumartesi/Pazar) satırlarının farklı renkte olduğunu kontrol
+etmesi gerekiyor.
