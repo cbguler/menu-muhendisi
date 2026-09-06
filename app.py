@@ -877,32 +877,30 @@ st.markdown(
     "  box-shadow: 0 2px 6px rgba(0,0,0,0.15);"
     "  border-bottom: 1px solid rgba(0,0,0,0.08);"
     "}"
-    # YUZ YIRMI DORDUNCU DUZELTME (6 Eylul 2026): Bahri'nin talebi --
-    # Windows'un "otomatik gizle" taskbar davranisi gibi, ust menu de
-    # varsayilan olarak GIZLI dursun, ekranin en ustune (imlecle)
-    # gidilince asagi kayarak gorunur olsun. SADECE gercek "hover"
-    # destegi olan cihazlarda (fareli masaustu) -- dokunmatik
-    # cihazlarda "hover" kavraminin kendisi anlamsiz oldugu icin,
-    # @media (hover: hover) ile bu davranis ORADA HIC devreye
-    # girmiyor, mobil nav HER ZAMAN oldugu gibi gorunur kaliyor.
+    # YUZ YIRMI ALTINCI DUZELTME (6 Eylul 2026): bir onceki deneme
+    # (ayri gorunmez tetikleyici serit + :has() ile uzaktan iliskilendirme)
+    # CALISMADI -- Bahri imleci ekranin en ustune goturdugunde menu
+    # HALA gorunmuyordu. Kok sebep KESIN olarak dogrulanamadi (canli
+    # DOM erisimi yok) ama en olasi aciklama: tetikleyicinin kendi
+    # Streamlit sarmalayicisi (stElementContainer) ile masaustu_nav'in
+    # sarmalayicisi (stVerticalBlock) AYNI seviyede GERCEK kardes
+    # olmayabilir, bu da hem ~ kardes secicisini hem varsaydigim :has()
+    # iliskisini gecersiz kilardi.
     #
-    # Teknik: gorunmez ince bir "tetikleyici serit" (st-key-ust_menu_
-    # tetikleyici) ekranin en ustune eklendi. Bu seride VEYA menunun
-    # kendisine imlec gelince (:hover), menu asagi kayarak (translateY)
-    # gorunur oluyor. :has() secici -- bu oturumda hafta sonu rengi ve
-    # kutu boyutu duzeltmelerinde de BASARIYLA kullanilan ayni guvenilir
-    # teknik -- stAppViewContainer uzerinden, tetikleyicinin TAM OLARAK
-    # nerede oldugunu bilmeye gerek kalmadan bu iliskiyi kuruyor.
+    # COK DAHA BASIT VE SAGLAM YONTEME GECILDI: ayri bir tetikleyici
+    # ELEMANA hic gerek yok -- menunun KENDISINDEN, HER ZAMAN ince
+    # (10px) bir dilim gorunur birakiliyor (translateY ile TAM -100%
+    # yerine "-100% + 10px"). Bu dilime (ya da acildiktan sonra
+    # menunun TAMAMINA) imlec gelince -- DOGRUDAN ".st-key-masaustu_nav
+    # :hover" -- TEK, BASIT, GUVENILIR bir CSS iliskisi, baska hicbir
+    # elemana veya varsayimsal DOM iliskisine bagli DEGIL. Ekstra
+    # fayda: bu ince dilim HER ZAMAN gorunur oldugu icin, kullanici
+    # menunun "gizlenebilir" oldugunu kesfetmesi de kolaylasiyor.
     "@media (hover: hover) and (min-width: 768px) {"
-    "  .st-key-ust_menu_tetikleyici {"
-    "    position: fixed; top: 0; left: 0; right: 0; height: 10px;"
-    "    z-index: 1000000; background: transparent;"
-    "  }"
     "  .st-key-masaustu_nav {"
-    "    transform: translateY(-100%);"
+    "    transform: translateY(calc(-100% + 10px));"
     "    transition: transform 0.25s ease;"
     "  }"
-    "  div[data-testid='stAppViewContainer']:has(.st-key-ust_menu_tetikleyici:hover) .st-key-masaustu_nav,"
     "  .st-key-masaustu_nav:hover {"
     "    transform: translateY(0);"
     "  }"
@@ -1047,11 +1045,6 @@ st.markdown(
     "video::-webkit-media-controls-enclosure { display: none !important; }"
     "video::-webkit-media-controls-panel { display: none !important; }"
     "</style>",
-    unsafe_allow_html=True,
-)
-
-st.markdown(
-    "<div class='st-key-ust_menu_tetikleyici'></div>",
     unsafe_allow_html=True,
 )
 
