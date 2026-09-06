@@ -1764,9 +1764,27 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                             # (ve o script'teki bayrak kontrolunu) ETKILEMEZ.
                             st.rerun(scope="fragment")
                 with _devam_et_col:
-                    if st.button("✓ Devam Et", key=f"btn_cevir2_{card_id}", use_container_width=True):
+                    if st.button("✓ Kaydet", key=f"btn_cevir2_{card_id}", use_container_width=True):
                         st.session_state[yuz_key] = "on"
-                        st.rerun(scope="fragment")
+                        # YUZ YIRMI UCUNCU DUZELTME (5 Eylul 2026): Bahri
+                        # bildirdi -- "Tekrar Dene" ile duzelttigi (artik
+                        # ikisi de Hedefte olan) bir gunun yanip sonme
+                        # (blink) durumu, "Devam Et"e (simdi "Kaydet")
+                        # bastiktan SONRA bile SURMEYE devam ediyordu.
+                        # Kok sebep: "Tekrar Dene" verideki DUZELTMEYI
+                        # dogru yapiyordu, ama SADECE FRAGMENT (dialog)
+                        # yeniden calisiyordu -- DISARIDAKI TABLO (blink
+                        # durumunu hesaplayan kod) hic yeniden calismadi,
+                        # bu yuzden ESKI (duzeltilmeden onceki) blink
+                        # durumunu gostermeye devam etti. "Kaydet" artik
+                        # BILEREK TAM SAYFA yeniden calistiriyor (scope
+                        # BELIRTILMEDEN, varsayilan "app") -- boylece
+                        # DISARIDAKI TABLO da GUNCEL veriyle yeniden
+                        # hesaplaniyor, blink dogru sekilde SONA ERIYOR.
+                        # (Bu, pop-up'in TEKRAR ACILMASINA yol acmiyor --
+                        # cunku tetikleyici bayrak ZATEN acilista
+                        # temizlenmisti, bkz. YUZ DOKUZUNCU DUZELTME.)
+                        st.rerun()
 
 
 @st.dialog("Günün Menüsü")
@@ -2112,7 +2130,7 @@ if aylik:
             f"Bu ayı kaydetmeden önce hedef dışı kalan {len(_hedef_disi_kayitlar)} "
             "öğünü \"Tekrar Dene\" butonu ile uygulamanın yaratacağı yeni öğünler "
             "ile gözden geçir, ve eğer limit aşımları tolerans dahilinde ise "
-            "\"Devam Et\" butonu ile kabul et. Tüm hedef dışı günleri bitirince "
+            "\"Kaydet\" butonu ile kabul et. Tüm hedef dışı günleri bitirince "
             "\"Aylık Menüyü Kaydet\" butonu ile bu ayın menüsünü kaydedersen, "
             "herhangi bir zamanda yeniden ulaşabilirsin.\n\n"
             + _hedef_disi_liste_metni(_hedef_disi_kayitlar[:16], yil_secimi, ay_secimi)
