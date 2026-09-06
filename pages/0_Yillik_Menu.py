@@ -1175,14 +1175,20 @@ def _tablo_stilini_uygula():
             font-size: 13.5px !important; color: #2B2320 !important;
         }
         .omgo-tablo-tarih-hucre {
-            padding: 6px 2px 3px; text-align: center;
-            font-family: 'Fraunces', serif; font-weight: 600;
-            font-size: 13.5px; color: #2B2320;
+            padding: 4px 6px; text-align: center; margin: 4px auto 4px;
+            font-family: 'Fraunces', serif; font-weight: 700;
+            font-size: 14px; color: #FDF6EC; background: #7A4A1C;
+            border-radius: 4px; display: inline-block; min-width: 60%;
         }
         .omgo-tablo-ogun-etiketi {
             font-size: 10px; font-weight: 700; text-transform: uppercase;
             letter-spacing: 0.05em; color: #C88A2E; text-align: center;
-            background: rgba(200,138,46,0.08); padding: 3px 0; margin: 3px -7px 2px;
+            background: rgba(200,138,46,0.08); box-sizing: border-box;
+            height: 20px; line-height: 20px; margin: -3px -7px -3px;
+            display: block;
+        }
+        div[class*="_ogle_etiket"], div[class*="_aksam_etiket"] {
+            padding: 3px 0 !important; min-height: 0 !important;
         }
         .omgo-tablo-bos-hucre { min-height: 32px; }
         div[class*="st-key-gunkutusu_"] div[data-testid="stPageLink"] {
@@ -1807,12 +1813,8 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
         return f"gunkutusu_{hs}{card_idler[i]}_{satir_no}"
 
     with st.container(key=f"haftatablosu_{ay_adi}_{hafta_no}"):
-        # YUZ ON BESINCI DUZELTME (5 Eylul 2026): Bahri'nin talebi --
-        # (1) Tarih + Gun adi ARTIK TEK bir kutuda birlesik (eskiden
-        # iki AYRI satir/kutu idi, aralarinda kucuk bir ic-cizgi
-        # goruluyordu). (2) "Öğle"/"Akşam" etiketi de kendi BASINA
-        # AYRI bir ince kutu olmak yerine, o ogunun ILK tarifiyle AYNI
-        # kutuya birlesik.
+        # YUZ ON BESINCI DUZELTME (5 Eylul 2026): Tarih + Gun adi TEK
+        # bir kutuda birlesik (eskiden iki AYRI satir/kutu idi).
         kolonlar = st.columns(len(hafta), gap=None, border=True)
         for i, kolon in enumerate(kolonlar):
             with kolon:
@@ -1823,25 +1825,24 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
                         st.session_state["yillik_menu_popup_yuz"] = "arka"
                         st.rerun()
 
-        # Öğle -- ILK tarif, "Öğle" etiketiyle AYNI kutuda; SONRAKI
-        # tarifler (varsa) kendi satirlarinda (hizalama icin, bkz.
-        # fonksiyon docstring'i).
+        # YUZ ON ALTINCI DUZELTME (5 Eylul 2026, GERI ALINDI): bir
+        # onceki denemede "Öğle" etiketini ILK tarifle AYNI kutuya
+        # birlestirmistim -- Bahri bunu istemiyordu, "ayri VE kucuk
+        # bir etiket" istedi, ayrica TUM tarif kutularinin (ilk tarif
+        # DAHIL) birbiriyle AYNI boyutta olmasini istedi. Simdi etiket
+        # KENDI KUCUK/AYRI satirina geri donuyor (kompakt CSS ile,
+        # bkz. _tablo_stilini_uygula: .omgo-tablo-ogun-etiketi sabit
+        # yukseklikli hale getirildi),
+        # VE tum tarif kutulari (indeks 0 DAHIL) ayni tip/boyutta,
+        # AYRI birer satir.
         kolonlar = st.columns(len(hafta), gap=None, border=True)
-        for i, (kolon, gun) in enumerate(zip(kolonlar, hafta)):
+        for i, kolon in enumerate(kolonlar):
             with kolon:
-                with st.container(key=_kutu_key(i, "ogle_0")):
+                with st.container(key=_kutu_key(i, "ogle_etiket")):
                     st.markdown("<div class='omgo-tablo-ogun-etiketi'>Öğle</div>", unsafe_allow_html=True)
-                    liste = gun["ogunler"].get("Öğle", [])
-                    if liste:
-                        st.page_link(
-                            "pages/5_Tarif_Kutuphanesi.py", label=liste[0],
-                            query_params={"tarif": liste[0]}, use_container_width=True,
-                        )
-                    else:
-                        st.markdown("<div class='omgo-tablo-bos-hucre'>&nbsp;</div>", unsafe_allow_html=True)
 
         max_ogle = max((len(gun["ogunler"].get("Öğle", [])) for gun in hafta), default=0)
-        for j in range(1, max_ogle):
+        for j in range(max_ogle):
             kolonlar = st.columns(len(hafta), gap=None, border=True)
             for i, (kolon, gun) in enumerate(zip(kolonlar, hafta)):
                 with kolon:
@@ -1855,23 +1856,14 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
                         else:
                             st.markdown("<div class='omgo-tablo-bos-hucre'>&nbsp;</div>", unsafe_allow_html=True)
 
-        # Akşam -- ayni sekilde, ILK tarif etiketle AYNI kutuda
         kolonlar = st.columns(len(hafta), gap=None, border=True)
-        for i, (kolon, gun) in enumerate(zip(kolonlar, hafta)):
+        for i, kolon in enumerate(kolonlar):
             with kolon:
-                with st.container(key=_kutu_key(i, "aksam_0")):
+                with st.container(key=_kutu_key(i, "aksam_etiket")):
                     st.markdown("<div class='omgo-tablo-ogun-etiketi'>Akşam</div>", unsafe_allow_html=True)
-                    liste = gun["ogunler"].get("Akşam", [])
-                    if liste:
-                        st.page_link(
-                            "pages/5_Tarif_Kutuphanesi.py", label=liste[0],
-                            query_params={"tarif": liste[0]}, use_container_width=True,
-                        )
-                    else:
-                        st.markdown("<div class='omgo-tablo-bos-hucre'>&nbsp;</div>", unsafe_allow_html=True)
 
         max_aksam = max((len(gun["ogunler"].get("Akşam", [])) for gun in hafta), default=0)
-        for j in range(1, max_aksam):
+        for j in range(max_aksam):
             kolonlar = st.columns(len(hafta), gap=None, border=True)
             for i, (kolon, gun) in enumerate(zip(kolonlar, hafta)):
                 with kolon:
