@@ -1079,35 +1079,55 @@ def _tablo_stilini_uygula():
     AYRI, KUCUK, IZOLE bir st.markdown cagrisi olarak tutuluyor --
     daha once bu CSS o buyuk bloga eklendiginde bir kismi sayfada
     DUZ METIN olarak SIZMISTI, kesin mekanizma belirlenemedi ama
-    izole tutmak en dusuk riskli cozum."""
+    izole tutmak en dusuk riskli cozum.
+
+    YUZ YEDINCI DUZELTME (5 Eylul 2026): Bahri "duzen tam istedigim
+    gibi oldu, biraz guzellestirelim" dedi -- tabloyu CEVRELEYEN ust
+    cizgi, Ogle/Aksam etiket satirlarina hafif zemin rengi, tarif
+    linklerine/gun adi butonuna HOVER vurgusu ve biraz daha nefes
+    alan ic bosluklar eklendi -- YAPI (satir hizalama, bosluksuz
+    sutunlar) DEGISMEDI, sadece gorsel cila."""
     st.markdown(
         """
         <style>
         div[class*="st-key-gunkutusu_"] {
             border-left: 1px solid #E4DDCB; border-right: 1px solid #E4DDCB;
-            padding: 2px 6px; margin: 0;
+            padding: 3px 7px; margin: 0; transition: background 0.15s ease;
         }
         div[class*="st-key-gunkutusu_hs_"] { background: #FBF0DC; }
         div[class*="st-key-gunkutusu_"] button {
             background: transparent !important; border: none !important;
             border-bottom: 2px solid #C88A2E !important; border-radius: 0 !important;
-            padding: 4px 2px !important; width: 100%; box-shadow: none !important;
+            padding: 5px 2px !important; width: 100%; box-shadow: none !important;
+            transition: background 0.15s ease;
+        }
+        div[class*="st-key-gunkutusu_"] button:hover {
+            background: rgba(200,138,46,0.12) !important;
         }
         div[class*="st-key-gunkutusu_"] button p {
             font-family: 'Fraunces', serif !important; font-weight: 600 !important;
             font-size: 13.5px !important; color: #2B2320 !important;
         }
         .omgo-tablo-tarih-hucre {
-            padding: 4px 2px 2px; font-size: 11.5px; font-weight: 700;
-            color: #6B5B3D; text-align: center;
+            padding: 6px 2px 3px; font-size: 11.5px; font-weight: 700;
+            color: #6B5B3D; text-align: center; border-top: 2px solid #C88A2E;
+            margin-top: -3px;
         }
         .omgo-tablo-ogun-etiketi {
             font-size: 10px; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.03em; color: #C88A2E; text-align: center;
+            letter-spacing: 0.05em; color: #C88A2E; text-align: center;
+            background: rgba(200,138,46,0.08); padding: 3px 0; margin: 3px -7px 2px;
         }
-        .omgo-tablo-bos-hucre { min-height: 18px; }
-        div[class*="st-key-gunkutusu_"] div[data-testid="stPageLink"] { padding: 0; margin: 0; }
-        div[class*="st-key-gunkutusu_"] div[data-testid="stPageLink"] p { font-size: 11px !important; }
+        .omgo-tablo-bos-hucre { min-height: 20px; }
+        div[class*="st-key-gunkutusu_"] div[data-testid="stPageLink"] {
+            padding: 0; margin: 0; border-radius: 4px; transition: background 0.15s ease;
+        }
+        div[class*="st-key-gunkutusu_"] div[data-testid="stPageLink"]:hover {
+            background: rgba(200,138,46,0.10);
+        }
+        div[class*="st-key-gunkutusu_"] div[data-testid="stPageLink"] p {
+            font-size: 11px !important; padding: 1px 3px;
+        }
         </style>
         """,
         unsafe_allow_html=True,
