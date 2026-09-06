@@ -1218,6 +1218,15 @@ def _tablo_stilini_uygula():
             height: 26px; line-height: 26px; margin: 0 -7px;
             display: block;
         }
+        /* YUZ YIRMI IKINCI DUZELTME (5 Eylul 2026): hedef disi kalan
+           ogun etiketi YANIP SONSUN -- Bahri'nin talebi. */
+        @keyframes omgoEtiketBlink {
+            0%, 100% { background: #C88A2E; }
+            50% { background: #C0392B; }
+        }
+        .omgo-tablo-ogun-etiketi.omgo-etiket-blink {
+            animation: omgoEtiketBlink 1s step-start infinite;
+        }
         div[class*="st-key-gunkutusu_"]:not([class*="_baslik"]):not([class*="_ogle_etiket"]):not([class*="_aksam_etiket"]) {
             height: 100% !important; box-sizing: border-box; display: flex; align-items: center;
             overflow: hidden;
@@ -1868,10 +1877,19 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
         # VE tum tarif kutulari (indeks 0 DAHIL) ayni tip/boyutta,
         # AYRI birer satir.
         kolonlar = st.columns(len(hafta), gap=None, border=True)
-        for i, kolon in enumerate(kolonlar):
+        for i, (kolon, gun) in enumerate(zip(kolonlar, hafta)):
             with kolon:
                 with st.container(key=_kutu_key(i, "ogle_etiket")):
-                    st.markdown("<div class='omgo-tablo-ogun-etiketi'>Öğle</div>", unsafe_allow_html=True)
+                    # YUZ YIRMI IKINCI DUZELTME (5 Eylul 2026): Bahri'nin
+                    # talebi -- hedef disi kalan bir gunun ilgili ogun
+                    # etiketi (Öğle/Akşam) YANIP SONMELI (blink), boylece
+                    # hangi gunun hangi ogununde sorun oldugu tabloya
+                    # bakar bakmaz fark edilsin.
+                    _ogle_liste = gun["ogunler"].get("Öğle", [])
+                    _t_ham_ogle = _ogun_toplami(_ogle_liste, detay) if _ogle_liste else {}
+                    _ogle_hedefte, _ = _hedefte_mi("Öğle", _t_ham_ogle, hedefler, hafta, detay)
+                    _blink_sinifi = " omgo-etiket-blink" if _ogle_hedefte is False else ""
+                    st.markdown(f"<div class='omgo-tablo-ogun-etiketi{_blink_sinifi}'>Öğle</div>", unsafe_allow_html=True)
 
         max_ogle = max((len(gun["ogunler"].get("Öğle", [])) for gun in hafta), default=0)
         for j in range(max_ogle):
@@ -1889,10 +1907,14 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
                             st.markdown("<div class='omgo-tablo-bos-hucre'>&nbsp;</div>", unsafe_allow_html=True)
 
         kolonlar = st.columns(len(hafta), gap=None, border=True)
-        for i, kolon in enumerate(kolonlar):
+        for i, (kolon, gun) in enumerate(zip(kolonlar, hafta)):
             with kolon:
                 with st.container(key=_kutu_key(i, "aksam_etiket")):
-                    st.markdown("<div class='omgo-tablo-ogun-etiketi'>Akşam</div>", unsafe_allow_html=True)
+                    _aksam_liste = gun["ogunler"].get("Akşam", [])
+                    _t_ham_aksam = _ogun_toplami(_aksam_liste, detay) if _aksam_liste else {}
+                    _aksam_hedefte, _ = _hedefte_mi("Akşam", _t_ham_aksam, hedefler, hafta, detay)
+                    _blink_sinifi = " omgo-etiket-blink" if _aksam_hedefte is False else ""
+                    st.markdown(f"<div class='omgo-tablo-ogun-etiketi{_blink_sinifi}'>Akşam</div>", unsafe_allow_html=True)
 
         max_aksam = max((len(gun["ogunler"].get("Akşam", [])) for gun in hafta), default=0)
         for j in range(max_aksam):
