@@ -1086,10 +1086,23 @@ def _tablo_stilini_uygula():
     cizgi, Ogle/Aksam etiket satirlarina hafif zemin rengi, tarif
     linklerine/gun adi butonuna HOVER vurgusu ve biraz daha nefes
     alan ic bosluklar eklendi -- YAPI (satir hizalama, bosluksuz
-    sutunlar) DEGISMEDI, sadece gorsel cila."""
+    sutunlar) DEGISMEDI, sadece gorsel cila.
+
+    YUZ SEKIZINCI DUZELTME (5 Eylul 2026): (1) tarih fontu, altindaki
+    gun adi fontuyla (Fraunces, 600, 13.5px) AYNI yapildi -- eskiden
+    daha kucuk/farkli bir font kullaniliyordu. (2) hafta tablosu
+    kapsayicisi (st-key-haftatablosu_...) ICINDEKI TUM stVerticalBlock
+    (Streamlit'in sutun govdesi) elemanlarinin gap'i 0'a cekildi --
+    boylece ust uste yigilan kutular ARASINDA Streamlit'in kendi
+    varsayilan boslugu KALMIYOR, kenarliklar/hafta sonu rengi KESINTISIZ
+    gorunuyor. Bu kural SADECE bu tabloya ozel kapsayici icinde
+    calisiyor, sayfadaki BASKA st.columns() kullanimlarini etkilemiyor."""
     st.markdown(
         """
         <style>
+        div[class*="st-key-haftatablosu_"] div[data-testid="stVerticalBlock"] {
+            gap: 0 !important;
+        }
         div[class*="st-key-gunkutusu_"] {
             border-left: 1px solid #E4DDCB; border-right: 1px solid #E4DDCB;
             padding: 3px 7px; margin: 0; transition: background 0.15s ease;
@@ -1109,9 +1122,9 @@ def _tablo_stilini_uygula():
             font-size: 13.5px !important; color: #2B2320 !important;
         }
         .omgo-tablo-tarih-hucre {
-            padding: 6px 2px 3px; font-size: 11.5px; font-weight: 700;
-            color: #6B5B3D; text-align: center; border-top: 2px solid #C88A2E;
-            margin-top: -3px;
+            padding: 6px 2px 3px; text-align: center; border-top: 2px solid #C88A2E;
+            margin-top: -3px; font-family: 'Fraunces', serif; font-weight: 600;
+            font-size: 13.5px; color: #2B2320;
         }
         .omgo-tablo-ogun-etiketi {
             font-size: 10px; font-weight: 700; text-transform: uppercase;
@@ -1666,7 +1679,20 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
     st.columns(7) cagrisini alir -- boylece Streamlit'in kendi yatay
     flex duzeni sayesinde TUM gunlerin AYNI satirdaki icerigi GERCEKTEN
     ayni yukseklikte hizalanir. Eksik tarifi olan gunler icin o
-    hucrede bos birakiliyor (hizayi bozmadan)."""
+    hucrede bos birakiliyor (hizayi bozmadan).
+
+    YUZ SEKIZINCI DUZELTME (5 Eylul 2026): Bahri'nin gozlemi -- sutun
+    aralarindaki/hafta sonu renklendirmesindeki cizgiler "kesik kesik"
+    gorunuyordu. Kok sebep: Streamlit'in kendi st.columns() sutun
+    govdesi (stVerticalBlock), icindeki ust uste yigilan kutularim
+    arasina VARSAYILAN bir bosluk (gap) koyuyordu -- benim kendi
+    kutularimin kenarliklari/arka plani DOGRU olsa bile, ARADAKI bu
+    kucuk Streamlit-bosluğu yuzunden cizgiler/renk SUREKSIZ gorunuyordu.
+    Cozum: TUM satirlari (tarih -> son aksam tarifi) SARAN bir dis
+    kapsayici (st.container(key=...)) eklendi, CSS'te SADECE bu
+    kapsayicinin ICINDEKI stVerticalBlock'larin gap'i 0'a cekildi --
+    boylece degisiklik SADECE bu tabloyu etkiliyor, sayfadaki BASKA
+    st.columns() kullanimlarina (ör. Abonelik sayfasi) DOKUNMUYOR."""
     _yillik_menu_tasarim_stilini_uygula()
     _tablo_stilini_uygula()
 
@@ -1689,68 +1715,69 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
         hs = "hs_" if gun_bilgileri[i]["hafta_sonu_mu"] else ""
         return f"gunkutusu_{hs}{card_idler[i]}_{satir_no}"
 
-    # SATIR 1: Tarih (gun adindan ONCE -- Bahri'nin talebi)
-    kolonlar = st.columns(len(hafta), gap=None)
-    for i, kolon in enumerate(kolonlar):
-        with kolon:
-            with st.container(key=_kutu_key(i, "tarih")):
-                st.markdown(f"<div class='omgo-tablo-tarih-hucre'>{gun_bilgileri[i]['tarih_metni']}</div>", unsafe_allow_html=True)
-
-    # SATIR 2: Gun adi (tiklaninca pop-up acan buton)
-    kolonlar = st.columns(len(hafta), gap=None)
-    for i, kolon in enumerate(kolonlar):
-        with kolon:
-            with st.container(key=_kutu_key(i, "gunadi")):
-                if st.button(gun_bilgileri[i]["gun_adi"], key=f"btn_gun_{card_idler[i]}", use_container_width=True):
-                    st.session_state["yillik_menu_popup_gun_id"] = card_idler[i]
-                    st.session_state["yillik_menu_popup_yuz"] = "arka"
-                    st.rerun()
-
-    # SATIR 3: "Öğle" etiketi
-    kolonlar = st.columns(len(hafta), gap=None)
-    for i, kolon in enumerate(kolonlar):
-        with kolon:
-            with st.container(key=_kutu_key(i, "ogle_etiket")):
-                st.markdown("<div class='omgo-tablo-ogun-etiketi'>Öğle</div>", unsafe_allow_html=True)
-
-    # Öğle tarifleri -- SATIR BAZLI (max sayi kadar satir, her satirda TUM gunler)
-    max_ogle = max((len(gun["ogunler"].get("Öğle", [])) for gun in hafta), default=0)
-    for j in range(max_ogle):
+    with st.container(key=f"haftatablosu_{ay_adi}_{hafta_no}"):
+        # SATIR 1: Tarih (gun adindan ONCE -- Bahri'nin talebi)
         kolonlar = st.columns(len(hafta), gap=None)
-        for i, (kolon, gun) in enumerate(zip(kolonlar, hafta)):
+        for i, kolon in enumerate(kolonlar):
             with kolon:
-                with st.container(key=_kutu_key(i, f"ogle_{j}")):
-                    liste = gun["ogunler"].get("Öğle", [])
-                    if j < len(liste):
-                        st.page_link(
-                            "pages/5_Tarif_Kutuphanesi.py", label=liste[j],
-                            query_params={"tarif": liste[j]}, use_container_width=True,
-                        )
-                    else:
-                        st.markdown("<div class='omgo-tablo-bos-hucre'>&nbsp;</div>", unsafe_allow_html=True)
+                with st.container(key=_kutu_key(i, "tarih")):
+                    st.markdown(f"<div class='omgo-tablo-tarih-hucre'>{gun_bilgileri[i]['tarih_metni']}</div>", unsafe_allow_html=True)
 
-    # SATIR: "Akşam" etiketi
-    kolonlar = st.columns(len(hafta), gap=None)
-    for i, kolon in enumerate(kolonlar):
-        with kolon:
-            with st.container(key=_kutu_key(i, "aksam_etiket")):
-                st.markdown("<div class='omgo-tablo-ogun-etiketi'>Akşam</div>", unsafe_allow_html=True)
-
-    # Akşam tarifleri -- ayni sekilde satir bazli
-    max_aksam = max((len(gun["ogunler"].get("Akşam", [])) for gun in hafta), default=0)
-    for j in range(max_aksam):
+        # SATIR 2: Gun adi (tiklaninca pop-up acan buton)
         kolonlar = st.columns(len(hafta), gap=None)
-        for i, (kolon, gun) in enumerate(zip(kolonlar, hafta)):
+        for i, kolon in enumerate(kolonlar):
             with kolon:
-                with st.container(key=_kutu_key(i, f"aksam_{j}")):
-                    liste = gun["ogunler"].get("Akşam", [])
-                    if j < len(liste):
-                        st.page_link(
-                            "pages/5_Tarif_Kutuphanesi.py", label=liste[j],
-                            query_params={"tarif": liste[j]}, use_container_width=True,
-                        )
-                    else:
-                        st.markdown("<div class='omgo-tablo-bos-hucre'>&nbsp;</div>", unsafe_allow_html=True)
+                with st.container(key=_kutu_key(i, "gunadi")):
+                    if st.button(gun_bilgileri[i]["gun_adi"], key=f"btn_gun_{card_idler[i]}", use_container_width=True):
+                        st.session_state["yillik_menu_popup_gun_id"] = card_idler[i]
+                        st.session_state["yillik_menu_popup_yuz"] = "arka"
+                        st.rerun()
+
+        # SATIR 3: "Öğle" etiketi
+        kolonlar = st.columns(len(hafta), gap=None)
+        for i, kolon in enumerate(kolonlar):
+            with kolon:
+                with st.container(key=_kutu_key(i, "ogle_etiket")):
+                    st.markdown("<div class='omgo-tablo-ogun-etiketi'>Öğle</div>", unsafe_allow_html=True)
+
+        # Öğle tarifleri -- SATIR BAZLI (max sayi kadar satir, her satirda TUM gunler)
+        max_ogle = max((len(gun["ogunler"].get("Öğle", [])) for gun in hafta), default=0)
+        for j in range(max_ogle):
+            kolonlar = st.columns(len(hafta), gap=None)
+            for i, (kolon, gun) in enumerate(zip(kolonlar, hafta)):
+                with kolon:
+                    with st.container(key=_kutu_key(i, f"ogle_{j}")):
+                        liste = gun["ogunler"].get("Öğle", [])
+                        if j < len(liste):
+                            st.page_link(
+                                "pages/5_Tarif_Kutuphanesi.py", label=liste[j],
+                                query_params={"tarif": liste[j]}, use_container_width=True,
+                            )
+                        else:
+                            st.markdown("<div class='omgo-tablo-bos-hucre'>&nbsp;</div>", unsafe_allow_html=True)
+
+        # SATIR: "Akşam" etiketi
+        kolonlar = st.columns(len(hafta), gap=None)
+        for i, kolon in enumerate(kolonlar):
+            with kolon:
+                with st.container(key=_kutu_key(i, "aksam_etiket")):
+                    st.markdown("<div class='omgo-tablo-ogun-etiketi'>Akşam</div>", unsafe_allow_html=True)
+
+        # Akşam tarifleri -- ayni sekilde satir bazli
+        max_aksam = max((len(gun["ogunler"].get("Akşam", [])) for gun in hafta), default=0)
+        for j in range(max_aksam):
+            kolonlar = st.columns(len(hafta), gap=None)
+            for i, (kolon, gun) in enumerate(zip(kolonlar, hafta)):
+                with kolon:
+                    with st.container(key=_kutu_key(i, f"aksam_{j}")):
+                        liste = gun["ogunler"].get("Akşam", [])
+                        if j < len(liste):
+                            st.page_link(
+                                "pages/5_Tarif_Kutuphanesi.py", label=liste[j],
+                                query_params={"tarif": liste[j]}, use_container_width=True,
+                            )
+                        else:
+                            st.markdown("<div class='omgo-tablo-bos-hucre'>&nbsp;</div>", unsafe_allow_html=True)
 
     for i, gun in enumerate(hafta):
         card_id = card_idler[i]
