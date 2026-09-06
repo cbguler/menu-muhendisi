@@ -1161,24 +1161,31 @@ def _tablo_stilini_uygula():
         div[class*="st-key-haftatablosu_"] div[data-testid="stColumn"]:has(div[class*="st-key-gunkutusu_hs_"]) {
             background: #FBF0DC !important;
         }
-        div[class*="st-key-gunkutusu_"] button {
-            background: transparent !important; border: none !important;
-            border-bottom: 2px solid #C88A2E !important; border-radius: 0 !important;
-            padding: 5px 2px !important; width: 100%; box-shadow: none !important;
-            transition: background 0.15s ease;
+        /* YUZ ON YEDINCI DUZELTME (5 Eylul 2026): Bahri'nin acikladigi
+           gercek istegi -- Tarih+Gun TEK BUTUN bir etiket, PASTEL
+           arka plan, KALIN kenarlik, ikisi de ORTALANMIS. Onceki
+           deneme (koyu kahverengi AYRI rozet) YANLIS anlasilmisti --
+           GERI ALINDI. */
+        div[class*="_baslik"] {
+            background: #F3E3C3 !important; border: 2px solid #C88A2E !important;
+            border-radius: 6px; text-align: center;
         }
-        div[class*="st-key-gunkutusu_"] button:hover {
+        div[class*="_baslik"] button {
+            background: transparent !important; border: none !important;
+            border-radius: 0 !important; padding: 2px 2px 5px !important;
+            width: 100%; box-shadow: none !important; transition: background 0.15s ease;
+        }
+        div[class*="_baslik"] button:hover {
             background: rgba(200,138,46,0.12) !important;
         }
-        div[class*="st-key-gunkutusu_"] button p {
+        div[class*="_baslik"] button p {
             font-family: 'Fraunces', serif !important; font-weight: 600 !important;
-            font-size: 13.5px !important; color: #2B2320 !important;
+            font-size: 13.5px !important; color: #2B2320 !important; text-align: center !important;
         }
         .omgo-tablo-tarih-hucre {
-            padding: 4px 6px; text-align: center; margin: 4px auto 4px;
+            padding: 5px 4px 1px; text-align: center;
             font-family: 'Fraunces', serif; font-weight: 700;
-            font-size: 14px; color: #FDF6EC; background: #7A4A1C;
-            border-radius: 4px; display: inline-block; min-width: 60%;
+            font-size: 14px; color: #7A4A1C;
         }
         .omgo-tablo-ogun-etiketi {
             font-size: 10px; font-weight: 700; text-transform: uppercase;
@@ -1190,10 +1197,14 @@ def _tablo_stilini_uygula():
         div[class*="_ogle_etiket"], div[class*="_aksam_etiket"] {
             padding: 3px 0 !important; min-height: 0 !important;
         }
-        .omgo-tablo-bos-hucre { min-height: 32px; }
+        /* YUZ ON YEDINCI DUZELTME (5 Eylul 2026): Bahri'nin talebi --
+           tum yemek kutulari HER ZAMAN (kisa isimler de DAHIL) 2
+           SATIRLIK bir yukseklige sabitlensin -- boylece uzun isimler
+           icin de yer var, kisa isimlerle de GORSEL TUTARLILIK saglanir. */
+        .omgo-tablo-bos-hucre { min-height: 40px; }
         div[class*="st-key-gunkutusu_"] div[data-testid="stPageLink"] {
             padding: 0; margin: 0; border-radius: 4px; transition: background 0.15s ease;
-            min-height: 32px; display: flex; align-items: center;
+            min-height: 40px; display: flex; align-items: center;
         }
         div[class*="st-key-gunkutusu_"] div[data-testid="stPageLink"]:hover {
             background: rgba(200,138,46,0.10);
