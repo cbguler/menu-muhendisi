@@ -1297,15 +1297,15 @@ def _yillik_menu_tasarim_stilini_uygula():
     .omgo-satir-hedefdisi td { background: #A6472F !important; color: #FDF6EC !important; font-weight: 700; }
     .omgo-satir-hedefdisi .omgo-hedef-araligi { color: #FDF6EC !important; opacity: 0.85; }
     .omgo-ogun-baslik-buyuk { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 700; text-align: center; color: #C88A2E; margin: 14px 0 8px; text-transform: uppercase; letter-spacing: 0.02em; }
-    .omgo-hedef-rozet { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px; margin-top: 6px; }
+    .omgo-hedef-rozet { display: inline-block; font-size: 15px; font-weight: 800; padding: 4px 14px; border-radius: 20px; margin-top: 6px; }
     .omgo-maliyet-baslik { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 700; color: #7A531C; margin: 0 0 6px; }
     div[class*="st-key-maliyetkutu_"] { background: #EDE6D6; border: 1px solid #C88A2E; border-radius: 10px; padding: 12px 14px; margin: 10px 0; }
     .omgo-maliyet-tablo td { font-size: 14px !important; font-weight: 600 !important; color: #2B2320 !important; padding: 4px 0 !important; }
     div[class*="st-key-popupkart_arka_"] .omgo-maliyet-baslik { color: #7A531C !important; }
     div[class*="st-key-popupkart_arka_"] .omgo-maliyet-tablo td { color: #2B2320 !important; font-weight: 600 !important; font-size: 14px !important; }
     .omgo-veri-yok { font-size: 11.5px; font-style: italic; opacity: 0.65; margin-bottom: 6px; }
-    .omgo-hedefte { background: rgba(91,117,83,0.30); color: #1B4D1B !important; }
-    .omgo-hedefdisi { background: rgba(166,71,47,0.30); color: #6B2314 !important; }
+    .omgo-hedefte { background: #3E7A3E; color: #FFFFFF !important; }
+    .omgo-hedefdisi { background: #C0392B; color: #FFFFFF !important; }
     @keyframes omgoFlipOn { 0% { transform: rotateY(90deg); } 100% { transform: rotateY(0deg); } }
     @keyframes omgoFlipArka { 0% { transform: rotateY(-90deg); } 100% { transform: rotateY(0deg); } }
     [data-testid="stDialog"] { perspective: 1200px; }
