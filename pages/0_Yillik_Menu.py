@@ -2145,16 +2145,15 @@ if aylik:
     )
 
     for i, hafta in enumerate(aylik["haftalar"], start=1):
-        st.markdown(
-            f"<div style='font-weight:700; margin:10px 0 4px; font-size:14px;'>"
-            f"{aylik['ay']} — {i}. Hafta</div>",
-            unsafe_allow_html=True,
-        )
         _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, kayitli_hedefler, aylik["ay"], i, aylik["yil"])
-        # YUZUNCU DUZELTME (4 Eylul 2026): Bahri'nin "aralarda cok bosluk
-        # var" gozlemi uzerine -- st.divider() (kalin, buyuk dikey bosluklu
-        # bir cizgi) yerine COK INCE, DUSUK-MARJINLI ozel bir cizgi.
+        # YUZ YIRMINCI DUZELTME (5 Eylul 2026): Bahri'nin talebi --
+        # "Aralık — N. Hafta" basligi tamamen kaldirildi (tablo zaten
+        # tarihleri gosteriyor, ayrica bir hafta basligina gerek yok).
+        # Ayrica alttaki (bir SONRAKI haftanin) etiketleri, aradaki
+        # cizgiye YAKLASTIRILDI (cizgiden SONRAKI bosluk 10px'ten 2px'e
+        # indirildi) -- ama cizgiden ONCEKI bosluk (6px) AYNEN
+        # birakildi, boylece onceki haftanin ALT satirina YAPISMIYOR.
         st.markdown(
-            "<hr style='margin:6px 0 10px; border:none; border-top:1px solid #DDD6C4;'>",
+            "<hr style='margin:6px 0 2px; border:none; border-top:1px solid #DDD6C4;'>",
             unsafe_allow_html=True,
         )
