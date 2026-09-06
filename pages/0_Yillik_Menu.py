@@ -1782,6 +1782,26 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
     for i, gun in enumerate(hafta):
         card_id = card_idler[i]
         if st.session_state.get("yillik_menu_popup_gun_id") == card_id:
+            # YUZ DOKUZUNCU DUZELTME (5 Eylul 2026): Bahri, pop-up'i bir
+            # kere acip kapattigi halde SUREKLI tekrar actigini bildirdi.
+            # Kok sebep: bu bayrak HICBIR ZAMAN temizlenmiyordu -- bir
+            # butonun aksine (ki st.button() SADECE tikleme aninda True
+            # doner, sonraki her calistirmada otomatik False'a doner),
+            # benim session_state bayragim SONSUZA KADAR true kaliyordu.
+            # Bu yuzden sayfadaki HERHANGI bir etkilesim (farkli bir
+            # gune tiklamak DAHIL, hatta alakasiz bir sey) sayfayi
+            # yeniden calistirdiginda, bu kosul HALA dogruydu ve
+            # pop-up'i TEKRAR aciyordu.
+            #
+            # Resmi Streamlit dokumantasyonundan dogrulandi: st.dialog
+            # kendi ICINDEKI etkilesimleri (Tekrar Dene/Devam Et gibi)
+            # FRAGMENT olarak ele alir -- SADECE dialog fonksiyonunun
+            # kendisini yeniden calistirir, DIS script'i (bu dongu dahil)
+            # DEGIL. Yani bayragi BURADA, HEMEN tuketilir tuketilmez
+            # temizlemek, ZATEN ACIK olan dialogun kendi ic
+            # etkilesimlerini BOZMAZ -- sadece DIS script'in onu
+            # GEREKSIZ YERE TEKRAR TEKRAR acmasini engeller.
+            st.session_state["yillik_menu_popup_gun_id"] = None
             bilgi = gun_bilgileri[i]
             baslik_metni = f"{bilgi['gun_adi']}\n{bilgi['tarih_metni']}" if bilgi["tarih_metni"] else bilgi["gun_adi"]
             _gun_popup_dialog(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni, hafta)
