@@ -1408,7 +1408,7 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
             with st.container(key=f"cevir_{card_id}"):
                 if st.button("◤ Besin değerleri ve maliyet", key=f"btn_cevir_{card_id}", use_container_width=True):
                     st.session_state[yuz_key] = "arka"
-                    st.rerun()
+                    st.rerun(scope="fragment")
         else:
             # O an hedeflenen (kullanicinin "Ogun basina besin hedefi
             # uygula" ile sectigi) ek anahtarlar -- temel 5'in disinda
@@ -1698,11 +1698,25 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                                     for _ad in _yeni_tarif_adlari:
                                         _kullanilan_hafta_disarida.add(_ad)
                                         _kullanilan_gun_taban_disarida.add(_taban_kelime(_ad))
-                            st.rerun()
+                            # YUZ UCUNCU DUZELTME (5 Eylul 2026): Bahri,
+                            # "Tekrar Dene"ye tikladiginda pop-up'in
+                            # KAYBOLDUGUNU bildirdi. Kok sebep: st.rerun()
+                            # VARSAYILAN OLARAK scope="app" kullanir (TAM
+                            # sayfa yeniden calisir) -- resmi Streamlit
+                            # dokumantasyonundan dogrulandi. Bu, DIS
+                            # script'teki pop-up tetikleyici bayragini
+                            # (ki BUGUN ERKEN bir duzeltmede "tek seferlik"
+                            # yapmak icin HEMEN temizleniyordu) TEKRAR
+                            # kontrol ediyordu -- bayrak zaten BOS oldugu
+                            # icin pop-up'i YENIDEN ACMIYOR, kapatiyordu.
+                            # Cozum: scope="fragment" -- SADECE bu dialog
+                            # fragment'ini yeniden calistirir, DIS scripti
+                            # (ve o script'teki bayrak kontrolunu) ETKILEMEZ.
+                            st.rerun(scope="fragment")
                 with _devam_et_col:
                     if st.button("✓ Devam Et", key=f"btn_cevir2_{card_id}", use_container_width=True):
                         st.session_state[yuz_key] = "on"
-                        st.rerun()
+                        st.rerun(scope="fragment")
 
 
 @st.dialog("Günün Menüsü")
