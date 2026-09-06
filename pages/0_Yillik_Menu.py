@@ -1195,16 +1195,29 @@ def _tablo_stilini_uygula():
             display: block;
         }
         div[class*="_ogle_etiket"], div[class*="_aksam_etiket"] {
-            padding: 3px 0 !important; min-height: 0 !important;
+            padding: 2px 0 !important; height: 24px !important; box-sizing: border-box;
         }
-        /* YUZ ON YEDINCI DUZELTME (5 Eylul 2026): Bahri'nin talebi --
-           tum yemek kutulari HER ZAMAN (kisa isimler de DAHIL) 2
-           SATIRLIK bir yukseklige sabitlensin -- boylece uzun isimler
-           icin de yer var, kisa isimlerle de GORSEL TUTARLILIK saglanir. */
+        /* YUZ ON SEKIZINCI DUZELTME (5 Eylul 2026): Bahri iki sey daha
+           bildirdi -- (1) Öğle/Akşam etiketi hala AYRI/gorunur bir
+           kutu gibi durmuyordu (eskiden min-height:0 ile FAZLA
+           sikistirilmisti, sinirlari belirsizlesiyordu) -- simdi
+           sabit/gorulebilir bir yukseklige (24px) getirildi.
+           (2) Yemek kutulari "bazilari kalin bazilari ince" gorunuyordu
+           -- eskiden SADECE min-height vardi (icerik daha uzunsa
+           BUYUYEBILIYORDU, bu da SATIRLAR ARASI farkli yukseklige yol
+           aciyordu). Simdi SABIT (min degil, TAM) yukseklik -- kisa
+           isim de, uzun (2 satira saran) isim de AYNI kutuya sigiyor,
+           GORSEL TUTARLILIK saglaniyor. :not() ile baslik/etiket
+           kutulari bu kuraldan HARIC tutuluyor (onlarin kendi ayri
+           boyut ihtiyaci var). */
+        div[class*="st-key-gunkutusu_"]:not([class*="_baslik"]):not([class*="_ogle_etiket"]):not([class*="_aksam_etiket"]) {
+            height: 44px !important; box-sizing: border-box; display: flex; align-items: center;
+            overflow: hidden;
+        }
         .omgo-tablo-bos-hucre { min-height: 40px; }
         div[class*="st-key-gunkutusu_"] div[data-testid="stPageLink"] {
             padding: 0; margin: 0; border-radius: 4px; transition: background 0.15s ease;
-            min-height: 40px; display: flex; align-items: center;
+            width: 100%; display: flex; align-items: center;
         }
         div[class*="st-key-gunkutusu_"] div[data-testid="stPageLink"]:hover {
             background: rgba(200,138,46,0.10);
