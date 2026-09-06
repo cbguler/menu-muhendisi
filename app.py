@@ -968,7 +968,19 @@ st.markdown(
     ".st-key-nav_buton_satiri div[data-testid='stColumn'] {"
     "  flex: 0 0 auto !important; width: auto !important;"
     "}"
-    "@media (min-width: 768px) { .st-key-masaustu_nav { top: 60px; } }"
+    # YUZ YIRMI BESINCI DUZELTME (6 Eylul 2026): burada ESKIDEN
+    # ".st-key-masaustu_nav { top: 60px; }" vardi -- bu, benim BUGUNKU
+    # hover-gizleme kuralimdaki "top:0" temel ayarini SESSIZCE
+    # eziyordu (CSS'te esit ozgullukte SONRAKI kural kazanir, bu kural
+    # ASAGIDA/SONRA geliyordu). SONUC: "gizli" durumdaki
+    # translateY(-100%) hesabi, elemanin KENDI yuksekliginden hareket
+    # eder (top degerinden BAGIMSIZ) -- yani top:60px + yukseklik~55-
+    # 200px arasinda bir sey oldugunda, elemanin ALT kismi (~60px'lik
+    # bir dilim) HER ZAMAN ekranda kaliyordu -- Bahri'nin AYNEN
+    # bildirdigi "tam gizlenmiyor, bir kismi ustten gorunuyor" hatasi
+    # BUYDU. Mobildeki AYNI kural (bir alt satir) BURADAN
+    # ETKILENMIYOR/DOKUNULMADI -- mobil nav zaten hep gorunur, hover-
+    # gizleme sistemine hic dahil degil.
     "@media (max-width: 767px) { .st-key-mobil_nav { top: 60px; } }"
     # OTUZ DOKUZUNCU DUZELTME: bosluk yukseklikleri, kucuk video +
     # kucuk logo ile YENIDEN TAHMIN edildi (144px logo + buyuk metin
@@ -988,30 +1000,27 @@ st.markdown(
     # KIRK SEKIZINCI DUZELTME: artik TEK satir var (144px logo + yazi +
     # butonlar, alt-hizali) -- ayri banner satiri tamamen kalktigi icin
     # bosluk da buyuk olcude kuculdu.
-    # ELLI BIRINCI DUZELTME (30 Agustos 2026): kullanici "380px COK
-    # FAZLA, alt/video kayboldu (asiri asagi itildi)" dedi -- hakliydi,
-    # o tahmin 8rem'lik yazinin logoyla AYNI satirda kalacagini (ekran
-    # goruntusunde dogrulandi) hesaba katmiyordu, gereginden fazla
-    # buyuk bir GUVENLIK PAYI birakmisti. Yazi da 4rem'e yarilandiginda
-    # logo (144px) artik ACIKCA satirin en uzun elemani -- yukseklik
-    # artik COK daha ongorulebilir: ~154px (logo+yazi satiri) + ~50px
-    # (buton satiri) + ~15px (padding) = ~220px.
-    ".ust_menu_bosluk_masaustu { height: 200px; }"
+    # YUZ YIRMI BESINCI DUZELTME (6 Eylul 2026): logo/baslik artik BU
+    # bosluğun kapsamindan CIKTI (normal akista, kendi yerini kendi
+    # ayirir) -- bu bosluk artik SADECE kucuk buton satirini (~50px +
+    # ~15px dolgu = ~65px) telafi ediyor, eskisi gibi logo+buton
+    # toplamini (200px) DEGIL.
+    ".ust_menu_bosluk_masaustu { height: 65px; }"
     ".ust_menu_bosluk_mobil { height: 90px; }"
     "@media (min-width: 768px) { .ust_menu_bosluk_mobil { display: none !important; } }"
     "@media (max-width: 767px) { .ust_menu_bosluk_masaustu { display: none !important; } }"
     # YUZ YIRMI DORDUNCU DUZELTME (6 Eylul 2026, devam): Windows'un
     # taskbar'i gizlenince o alani GERCEKTEN geri veriyor (diger
     # pencereler o alani kullanabiliyor) -- SADECE menuyu gizleyip
-    # altindaki 200px'lik sabit boslugu OLDUGU GIBI birakmak, "yer
-    # kazanma" amacinin yarisini kacirirdi. Bu yuzden, SADECE
-    # hover-destekli masaustunde, bu boslugu KUCULTUP (sadece
-    # tetikleyici seridi icin yeterli, ~14px) icerigin yukari kaymasini
-    # sagliyoruz -- menu tekrar acildiginda zaten kendi UZERINE
-    # (position:fixed) bindigi icin, altindaki icerikle CAKISMA
-    # olmuyor (transform ile kayarak gorunuyor, akisi ITMIYOR)."
+    # altindaki sabit boslugu OLDUGU GIBI birakmak, "yer kazanma"
+    # amacinin yarisini kacirirdi. Bu yuzden, SADECE hover-destekli
+    # masaustunde, bu boslugu KUCULTUP (sadece tetikleyici seridi kadar,
+    # 10px) icerigin yukari kaymasini sagliyoruz -- gizliyken butonlar
+    # zaten ekran disina (translateY) TAMAMEN cikiyor, sifir gorsel alan
+    # kapliyor; menu tekrar acildiginda ise logonun UZERINE GECICI
+    # olarak biner (position:fixed), altindaki icerikle CAKISMA olmuyor.
     "@media (hover: hover) and (min-width: 768px) {"
-    "  .ust_menu_bosluk_masaustu { height: 14px !important; }"
+    "  .ust_menu_bosluk_masaustu { height: 10px !important; }"
     "}"
     # YIRMI BIRINCI DUZELTME (13 Agustos 2026, Oturum 11): kullanici
     # sayfa basliklarinin (ör. "Yıllık Menü Üretim Motoru") gereksiz
@@ -1046,94 +1055,116 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# YUZ YIRMI BESINCI DUZELTME (6 Eylul 2026): Bahri "otomatik gizle"
+# menude iki sorun bildirdi -- (1) logo+buyuk baslik tam gizlenmiyordu
+# (bir kismi ustten sizip goruyordu), (2) "sadece ust menu [butonlar]
+# gorunse cok daha kullanisli olur" -- yani logo+baslik hover-gizleme
+# sistemine hic DAHIL OLMAMALI, SADECE buton satiri gizlenip-gorunmeli.
+#
+# YAPISAL COZUM: logo+baslik artik `masaustu_nav` kapsayicisinin
+# ICINDE DEGIL -- NORMAL sayfa akisinda (sabit/fixed DEGIL), sayfa her
+# zaman ACILDIGINDA ustte gorunuyor, kaydirinca normal icerik gibi
+# yukari kayiyor. `masaustu_nav` artik SADECE buton satirini
+# (nav_buton_satiri) iceriyor -- position:fixed + hover-ile-goster
+# davranisi ARTIK SADECE bu (cok daha kucuk, ~55px) satira uygulaniyor.
+# Gizliyken (varsayilan), butonlar ekran disina (translateY(-100%))
+# TAMAMEN cikiyor -- gorunur hicbir sizinti kalmiyor. Gosterilince,
+# logonun UZERINE gecici olarak biner (Windows'un taskbar'i da ayni
+# sekilde ustune biner, altindaki icerigi ITMEZ) -- bu, kisa sureli
+# bir etkilesim oldugu icin sorun degil.
+#
+# ESKI (30 Agustos 2026 tarihli) yorumlar asagida GENEL BASLIK
+# TASARIMI GECMISI olarak korunuyor -- hala gecerli (144px logo, sade
+# yazi, vb.), sadece ARTIK fixed/hover-gizleme kapsaminin DISINDA.
+# OTUZ DOKUZUNCU DUZELTME (30 Agustos 2026): eskiden burada
+# (OTUZ UCUNCU DUZELTME, 13 Agustos) SVG ikonlar + base64 PNG kose
+# susleri + "Menü Mühendisi" buyuk metniyle olusan bir bant vardi --
+# kullanici istegiyle YERINE kendi gonderdigi dongulu tanitim
+# videosu kondu (assets/baslik_video.mp4 -- orijinal 1280x720/3MB
+# dosya, sadece kucuk gosterilecegi icin 640x360'a kucultulup ses
+# izi kaldirilarak ~176KB'a indirildi). st.video()'nun autoplay/
+# loop/muted parametreleri Kontrol Paneli'ndeki tanitim videosuyla
+# AYNI yontem (bkz. _video_varsa_goster). Video dosyasi yoksa sayfa
+# kirilmasin diye once varligi kontrol ediliyor.
+# KIRK BIRINCI DUZELTME (30 Agustos 2026): `st.video()` bu Streamlit
+# surumunde `key` parametresi KABUL ETMIYOR (TypeError verdi, canli
+# hata mesajindan dogrudan goruldu, tahmin edilmedi) -- key
+# yaklasimi TAMAMEN TERK EDILDI. Bunun yerine masaustu ve mobil icin
+# FARKLI dosyalar kullaniliyor (zaten farkli boyutlarda olmalari
+# gerekiyordu) -- farkli byte icerigi, Streamlit'in ayni-icerikli
+# elemanlari "duplicate" sayma sorununu da dogal olarak ortadan
+# kaldiriyor. Video ayrica videonun ORIJINALINDEN yeniden kirpildi:
+# 720px'lik kaynak yukseklikte 153-573 araligi disinda (ust/alt)
+# sadece bos krem alan vardi -- o kirpilip video artik doganl olarak
+# ~3:1 (genis-kisa banner) oranina sahip, CSS'te zorlama kırpmaya
+# ihtiyac kalmadi.
+# KIRK ALTINCI DUZELTME (30 Agustos 2026): bir onceki deneme
+# (st.image + CSS zorlama) TAMAMEN BASARISIZ oldu -- gorsel kucuk
+# kaldi VE bosluk devasa bos alan yaratti (kullanici ekran
+# goruntusuyle dogruladi). CSS hack'i TAMAMEN TERK EDILDI. Bunun
+# yerine bu dosyada ZATEN KANITLANMIS yontem kullanildi: base64 ile
+# dogrudan HTML'e gomme (bkz. eski baslik_susu_sol/sag.png yorumu,
+# "Streamlit'in ozel CSS/HTML enjeksiyonunda st.image() guvenilir
+# CALISMIYOR, base64 veri-URI en saglam yontem"). AYRICA iki sorun
+# kaynaginda cozuldu: (1) banner.jpg'deki dama deseni piksel piksel
+# tespit edilip (iki kesin renk: beyaz #FFFFFF ve acik gri #C6C6C4)
+# GERCEK PNG SEFFAFLIGINA cevrildi -- artik arka planla (beyaz)
+# sorunsuz harmanlaniyor; (2) 2816x1536'lik (~1.83:1, COK uzun)
+# orijinal yerine sadece yazi+yakin malzemeleri iceren bir serit
+# (0,470)-(2816,860) kirpildi -- yeni oran ~7.2:1, tam genislikte
+# (~1300px) ~180px yukseklik demek (709px'e kiyasla COK makul).
+# KIRK SEKIZINCI DUZELTME (30 Agustos 2026): kullanici bircok video/
+# banner denemesinden sonra en temiz cozumde karar kildi -- ayri
+# banner SATIRI TAMAMEN KALDIRILDI (en cok yer kaplayan sey oydu),
+# logo eski begenilen boyutuna (144px) DONDURULDU, yaninda SADE bir
+# "Menü Mühendisi" yazisi (agir SVG/PNG suslemesi OLMADAN) ayni
+# SATIRDA (nav butonlariyla birlikte, TEK satir) gosteriliyor.
+# Gerekce: "ust tarafta menu basliklarindan baska hicbir seyin
+# islevi yok, alt tarafin genislemesi lazim" -- ayri bir banner
+# satiri tamamen ortadan kalkinca ust kisim ARTIK SADECE bu tek
+# (144px) satir kadar yer kapliyor.
+# KIRK DOKUZUNCU DUZELTME (30 Agustos 2026): kullanici ekran
+# goruntusuyle dogruladi -- yazi sutunu ("Menü Mühendisi") yeterince
+# genis degildi, ilk nav butonunun ("Kontrol Paneli") UZERINE tasti.
+# Ayrica logo ile yazi vertical_alignment="bottom" yuzunden ayri
+# hizada duruyordu (yazi alt kisimda, logo yukarida) -- gorsel olarak
+# kopuk duruyordu. Iki ayri sutun yerine logo+yazi TEK BIR flex
+# HTML blogunda birlestirildi (align-items:center ile dogal olarak
+# ayni hizada) -- bu da yaziya ayrilan genislik tahminine olan
+# bagimliligi ortadan kaldirmiyor, o yuzden asagida ayrica bu ILK
+# SUTUNA (CSS ile) GARANTI bir minimum genislik veriliyor (bkz.
+# asagidaki min-width kurali) -- oran tahmini az yanlis olsa bile
+# artik tasma olmuyor.
+# ELLINCI DUZELTME (30 Agustos 2026): kullanici iki sey istedi --
+# (1) yazi 5 KAT buyutulsun (1.6rem -> 8rem), (2) ortalanmali. Bu
+# boyutta bir yazi + 144px logo + 6 buton ARTIK TEK SATIRA hicbir
+# sekilde sigmaz -- zorlarsak bir onceki hata (Admin butonunun
+# tasip tek basina genislemesi) kacinilmaz olurdu. YAPISAL COZUM:
+# logo+buyuk yazi KENDI satirinda (ortalanmis), nav butonlari
+# AYRI, kendi satirinda (esit sutun paylarinda, digerleriyle YER
+# KAVGASI YOK) -- butonlar artik HER ZAMAN standart/esit boyutta,
+# logo/yazi boyutundan tamamen bagimsiz.
+with open("assets/logo.png", "rb") as _f:
+    _logo_b64 = base64.b64encode(_f.read()).decode("ascii")
+# ELLI IKINCI DUZELTME (30 Agustos 2026): kullanici logo SOLA
+# YASLANSIN, yazi ORTADA kalsin dedi -- yani ikisi ARTIK BIRBIRINE
+# BAGLI DEGIL (once "grupca ortalama" yapiliyordu, logo yaziyla
+# birlikte kayiyordu). Coz: disaridaki kutuyu `position:relative`
+# yapip logoyu `position:absolute; left:0` ile SOLA SABITLEDIK,
+# yaziyi ise `width:100%; text-align:center` ile TUM SATIRIN
+# ORTASINA (logonun konumundan BAGIMSIZ) yerlestirdik.
+st.markdown(
+    "<div style='position:relative; min-height:144px; padding:0.1rem 0;'>"
+    f"<img src='data:image/png;base64,{_logo_b64}' style='width:144px; height:auto; "
+    "position:absolute; left:0; top:50%; transform:translateY(-50%);'/>"
+    "<div style='width:100%; text-align:center;'>"
+    "<span style='font-size:4rem; font-weight:700; color:#0F6E56; "
+    "line-height:1; white-space:nowrap;'>Menü Mühendisi</span></div>"
+    "</div>",
+    unsafe_allow_html=True,
+)
+
 with st.container(key="masaustu_nav"):
-    # OTUZ DOKUZUNCU DUZELTME (30 Agustos 2026): eskiden burada
-    # (OTUZ UCUNCU DUZELTME, 13 Agustos) SVG ikonlar + base64 PNG kose
-    # susleri + "Menü Mühendisi" buyuk metniyle olusan bir bant vardi --
-    # kullanici istegiyle YERINE kendi gonderdigi dongulu tanitim
-    # videosu kondu (assets/baslik_video.mp4 -- orijinal 1280x720/3MB
-    # dosya, sadece kucuk gosterilecegi icin 640x360'a kucultulup ses
-    # izi kaldirilarak ~176KB'a indirildi). st.video()'nun autoplay/
-    # loop/muted parametreleri Kontrol Paneli'ndeki tanitim videosuyla
-    # AYNI yontem (bkz. _video_varsa_goster). Video dosyasi yoksa sayfa
-    # kirilmasin diye once varligi kontrol ediliyor.
-    # KIRK BIRINCI DUZELTME (30 Agustos 2026): `st.video()` bu Streamlit
-    # surumunde `key` parametresi KABUL ETMIYOR (TypeError verdi, canli
-    # hata mesajindan dogrudan goruldu, tahmin edilmedi) -- key
-    # yaklasimi TAMAMEN TERK EDILDI. Bunun yerine masaustu ve mobil icin
-    # FARKLI dosyalar kullaniliyor (zaten farkli boyutlarda olmalari
-    # gerekiyordu) -- farkli byte icerigi, Streamlit'in ayni-icerikli
-    # elemanlari "duplicate" sayma sorununu da dogal olarak ortadan
-    # kaldiriyor. Video ayrica videonun ORIJINALINDEN yeniden kirpildi:
-    # 720px'lik kaynak yukseklikte 153-573 araligi disinda (ust/alt)
-    # sadece bos krem alan vardi -- o kirpilip video artik doganl olarak
-    # ~3:1 (genis-kisa banner) oranina sahip, CSS'te zorlama kırpmaya
-    # ihtiyac kalmadi.
-    # KIRK ALTINCI DUZELTME (30 Agustos 2026): bir onceki deneme
-    # (st.image + CSS zorlama) TAMAMEN BASARISIZ oldu -- gorsel kucuk
-    # kaldi VE bosluk devasa bos alan yaratti (kullanici ekran
-    # goruntusuyle dogruladi). CSS hack'i TAMAMEN TERK EDILDI. Bunun
-    # yerine bu dosyada ZATEN KANITLANMIS yontem kullanildi: base64 ile
-    # dogrudan HTML'e gomme (bkz. eski baslik_susu_sol/sag.png yorumu,
-    # "Streamlit'in ozel CSS/HTML enjeksiyonunda st.image() guvenilir
-    # CALISMIYOR, base64 veri-URI en saglam yontem"). AYRICA iki sorun
-    # kaynaginda cozuldu: (1) banner.jpg'deki dama deseni piksel piksel
-    # tespit edilip (iki kesin renk: beyaz #FFFFFF ve acik gri #C6C6C4)
-    # GERCEK PNG SEFFAFLIGINA cevrildi -- artik arka planla (beyaz)
-    # sorunsuz harmanlaniyor; (2) 2816x1536'lik (~1.83:1, COK uzun)
-    # orijinal yerine sadece yazi+yakin malzemeleri iceren bir serit
-    # (0,470)-(2816,860) kirpildi -- yeni oran ~7.2:1, tam genislikte
-    # (~1300px) ~180px yukseklik demek (709px'e kiyasla COK makul).
-    # KIRK SEKIZINCI DUZELTME (30 Agustos 2026): kullanici bircok video/
-    # banner denemesinden sonra en temiz cozumde karar kildi -- ayri
-    # banner SATIRI TAMAMEN KALDIRILDI (en cok yer kaplayan sey oydu),
-    # logo eski begenilen boyutuna (144px) DONDURULDU, yaninda SADE bir
-    # "Menü Mühendisi" yazisi (agir SVG/PNG suslemesi OLMADAN) ayni
-    # SATIRDA (nav butonlariyla birlikte, TEK satir) gosteriliyor.
-    # Gerekce: "ust tarafta menu basliklarindan baska hicbir seyin
-    # islevi yok, alt tarafin genislemesi lazim" -- ayri bir banner
-    # satiri tamamen ortadan kalkinca ust kisim ARTIK SADECE bu tek
-    # (144px) satir kadar yer kapliyor.
-    # KIRK DOKUZUNCU DUZELTME (30 Agustos 2026): kullanici ekran
-    # goruntusuyle dogruladi -- yazi sutunu ("Menü Mühendisi") yeterince
-    # genis degildi, ilk nav butonunun ("Kontrol Paneli") UZERINE tasti.
-    # Ayrica logo ile yazi vertical_alignment="bottom" yuzunden ayri
-    # hizada duruyordu (yazi alt kisimda, logo yukarida) -- gorsel olarak
-    # kopuk duruyordu. Iki ayri sutun yerine logo+yazi TEK BIR flex
-    # HTML blogunda birlestirildi (align-items:center ile dogal olarak
-    # ayni hizada) -- bu da yaziya ayrilan genislik tahminine olan
-    # bagimliligi ortadan kaldirmiyor, o yuzden asagida ayrica bu ILK
-    # SUTUNA (CSS ile) GARANTI bir minimum genislik veriliyor (bkz.
-    # asagidaki min-width kurali) -- oran tahmini az yanlis olsa bile
-    # artik tasma olmuyor.
-    # ELLINCI DUZELTME (30 Agustos 2026): kullanici iki sey istedi --
-    # (1) yazi 5 KAT buyutulsun (1.6rem -> 8rem), (2) ortalanmali. Bu
-    # boyutta bir yazi + 144px logo + 6 buton ARTIK TEK SATIRA hicbir
-    # sekilde sigmaz -- zorlarsak bir onceki hata (Admin butonunun
-    # tasip tek basina genislemesi) kacinilmaz olurdu. YAPISAL COZUM:
-    # logo+buyuk yazi KENDI satirinda (ortalanmis), nav butonlari
-    # AYRI, kendi satirinda (esit sutun paylarinda, digerleriyle YER
-    # KAVGASI YOK) -- butonlar artik HER ZAMAN standart/esit boyutta,
-    # logo/yazi boyutundan tamamen bagimsiz.
-    with open("assets/logo.png", "rb") as _f:
-        _logo_b64 = base64.b64encode(_f.read()).decode("ascii")
-    # ELLI IKINCI DUZELTME (30 Agustos 2026): kullanici logo SOLA
-    # YASLANSIN, yazi ORTADA kalsin dedi -- yani ikisi ARTIK BIRBIRINE
-    # BAGLI DEGIL (once "grupca ortalama" yapiliyordu, logo yaziyla
-    # birlikte kayiyordu). Coz: disaridaki kutuyu `position:relative`
-    # yapip logoyu `position:absolute; left:0` ile SOLA SABITLEDIK,
-    # yaziyi ise `width:100%; text-align:center` ile TUM SATIRIN
-    # ORTASINA (logonun konumundan BAGIMSIZ) yerlestirdik.
-    st.markdown(
-        "<div style='position:relative; min-height:144px; padding:0.1rem 0;'>"
-        f"<img src='data:image/png;base64,{_logo_b64}' style='width:144px; height:auto; "
-        "position:absolute; left:0; top:50%; transform:translateY(-50%);'/>"
-        "<div style='width:100%; text-align:center;'>"
-        "<span style='font-size:4rem; font-weight:700; color:#0F6E56; "
-        "line-height:1; white-space:nowrap;'>Menü Mühendisi</span></div>"
-        "</div>",
-        unsafe_allow_html=True,
-    )
     # ELLI UCUNCU DUZELTME (30 Agustos 2026): kullanici -- (1) butonlar
     # cok buyuk, hepsi "Tarif Kütüphanesi" kadar (en uzun etiket) sabit
     # genislikte olsun (esit-oranli sutunlarin TAM SATIRA gerilmesi
@@ -1144,6 +1175,7 @@ with st.container(key="masaustu_nav"):
     # zorlanip satir "sola yaslı" hale getirildi, ayrica logo genisligi
     # (144px) kadar sol bosluk eklendi.
     with st.container(key="nav_buton_satiri"):
+
         _buton_kolonlari = st.columns([1] * len(sayfa_listesi))
         for _i, (_kolon, _sayfa) in enumerate(zip(_buton_kolonlari, sayfa_listesi)):
             with _kolon:
