@@ -1068,37 +1068,46 @@ def _hedefte_mi(ogun_adi, t, hedefler, hafta=None, detay=None):
 
 
 def _tablo_stilini_uygula():
-    """YUZ DORDUNCU/BESINCI DUZELTME (5 Eylul 2026): gun-kutusu (yatay,
-    sutun-tabanli) tablo gorunumu icin gereken CSS -- BILEREK buyuk
-    paylasilan css_govdesi blogundan AYRI, KUCUK, IZOLE bir st.markdown
-    cagrisi olarak tutuluyor. Sebep: bu CSS o buyuk bloga eklendiginde,
-    sayfada bir kismi DUZ METIN olarak SIZDI -- kesin mekanizma
-    belirlenemedi, ama kucuk/izole bir bloga tasimak sorunu gidermenin
-    en dusuk riskli yolu."""
+    """YUZ ALTINCI DUZELTME (5 Eylul 2026): artik HER "satir" (tarih,
+    gun adi, her Ogle/Aksam tarifi) kendi KUCUK st-key-gunkutusu_...
+    kutusuna sahip (satir hizalamasi icin, bkz. _hafta_kartlarini_goster
+    docstring'i). CSS de buna gore ayarlandi: SADECE SOL/SAG kenarlik
+    (dikey sutun ayiricilari) -- boylece alt alta istiflenen kutular,
+    ARADA BOSLUK OLMADAN, KESINTISIZ bir dikey cizgi gibi gorunuyor;
+    UST/ALT kenarlik/radius/margin YOK (yatay ic-cizgi karmasasini
+    onlemek icin). BILEREK buyuk paylasilan css_govdesi blogundan
+    AYRI, KUCUK, IZOLE bir st.markdown cagrisi olarak tutuluyor --
+    daha once bu CSS o buyuk bloga eklendiginde bir kismi sayfada
+    DUZ METIN olarak SIZMISTI, kesin mekanizma belirlenemedi ama
+    izole tutmak en dusuk riskli cozum."""
     st.markdown(
         """
         <style>
         div[class*="st-key-gunkutusu_"] {
-            border: 1px solid #E4DDCB; border-radius: 4px; padding: 4px 6px 8px;
-            margin-bottom: 2px;
+            border-left: 1px solid #E4DDCB; border-right: 1px solid #E4DDCB;
+            padding: 2px 6px; margin: 0;
         }
-        div[class*="st-key-gunkutusu_hs_"] { background: #FBF0DC; border-color: #E8C888; }
+        div[class*="st-key-gunkutusu_hs_"] { background: #FBF0DC; }
         div[class*="st-key-gunkutusu_"] button {
             background: transparent !important; border: none !important;
             border-bottom: 2px solid #C88A2E !important; border-radius: 0 !important;
-            padding: 4px 2px 4px !important; width: 100%; box-shadow: none !important;
+            padding: 4px 2px !important; width: 100%; box-shadow: none !important;
         }
         div[class*="st-key-gunkutusu_"] button p {
             font-family: 'Fraunces', serif !important; font-weight: 600 !important;
             font-size: 13.5px !important; color: #2B2320 !important;
         }
-        .omgo-tablo-tarih-hucre { padding: 4px 2px 6px; font-size: 12px; color: #6B5B3D; }
-        .omgo-tablo-ogun-etiketi {
-            font-size: 10.5px; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.03em; color: #C88A2E; margin: 6px 2px 2px;
+        .omgo-tablo-tarih-hucre {
+            padding: 4px 2px 2px; font-size: 11.5px; font-weight: 700;
+            color: #6B5B3D; text-align: center;
         }
-        div[class*="st-key-gunkutusu_"] div[data-testid="stPageLink"] { padding: 0; margin: 0 0 1px; }
-        div[class*="st-key-gunkutusu_"] div[data-testid="stPageLink"] p { font-size: 11.5px !important; }
+        .omgo-tablo-ogun-etiketi {
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.03em; color: #C88A2E; text-align: center;
+        }
+        .omgo-tablo-bos-hucre { min-height: 18px; }
+        div[class*="st-key-gunkutusu_"] div[data-testid="stPageLink"] { padding: 0; margin: 0; }
+        div[class*="st-key-gunkutusu_"] div[data-testid="stPageLink"] p { font-size: 11px !important; }
         </style>
         """,
         unsafe_allow_html=True,
@@ -1618,66 +1627,116 @@ def _gun_popup_dialog(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_me
 
 
 def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, hafta_no):
-    """Haftayi GERCEK bir tabloda gosterir -- YUZ BESINCI DUZELTME
-    (5 Eylul 2026): Bahri'nin ACIK duzeltmesi -- tablo DIKEY (gun basina
-    satir) DEGIL, ESKISI GIBI YATAY olmali: HAFTALAR ALT ALTA, GUNLER
-    (Pazartesi->Pazar) YAN YANA sutunlar. Bir onceki deneme (YUZ UCUNCU
-    DUZELTME) yanlislikla DIKEY bir tabloya cevirmisti -- GERI ALINDI.
+    """Haftayi GERCEK bir tabloda gosterir -- YUZ ALTINCI DUZELTME
+    (5 Eylul 2026): Bahri'nin uc net duzeltmesi:
+    1) Tarih GUN ADININ USTUNE alinir (en ustte "29 Aralık", altinda
+       "Pazartesi").
+    2) Gunler arasindaki bosluklar kaldirilir -- st.columns(gap=None)
+       + kutu CSS'inde kenarlik/dolgu sikilastirildi, gercek bir tablo
+       gibi BITISIK gorunuyor.
+    3) Tum hafta boyunca Öğle porsiyonlari YAN YANA HIZALI olmali,
+       Akşam porsiyonlari da AYRI olarak yan yana hizali olmali.
 
-    Yapı: st.columns(7) ile ESKI (kart-tabanli) duzenin YATAY
-    ORYANTASYONUNA donuluyor, ama her sutun ARTIK sadece gun adi/tarih
-    degil, O GUNUN Ogle/Aksam yemek isimlerini de (tarife TIKLANABILIR
-    linkler olarak) DOGRUDAN icinde gosteriyor -- boylece hem "eskisi
-    gibi yatay" hem "yemek isimleri dogrudan gorunsun" istekleri
-    birlikte karsilaniyor. CSS ile tablo-hucresi gorunumu (kenarlik,
-    golgesiz) + hafta sonu sutunlari icin ayri renk veriliyor.
-
-    Gun adindaki BUTON tiklaninca o gunun pop-up'i (arka yuz -- besin/
-    maliyet/hedef) acilir."""
+    (3) icin ONEMLI bir mimari degisiklik gerekti: eskiden HER GUN
+    kendi sutununda BAGIMSIZ olarak Ogle+Aksam listelerini alt alta
+    diziyordu -- bir gunun 3, digerinin 2 tarifi varsa, Aksam bolumu
+    gunler arasinda FARKLI yukseklikte baslıyordu (hizasiz gorunuyordu).
+    Simdi SATIR BAZLI render ediliyor: HER "satir" (tarih satiri, gun
+    adi satiri, Öğle 1. tarif satiri, Öğle 2. tarif satiri, ...) kendi
+    st.columns(7) cagrisini alir -- boylece Streamlit'in kendi yatay
+    flex duzeni sayesinde TUM gunlerin AYNI satirdaki icerigi GERCEKTEN
+    ayni yukseklikte hizalanir. Eksik tarifi olan gunler icin o
+    hucrede bos birakiliyor (hizayi bozmadan)."""
     _yillik_menu_tasarim_stilini_uygula()
     _tablo_stilini_uygula()
 
     GUN_ADLARI = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"]
     card_idler = [f"{ay_adi}-{hafta_no}-{gun['gun']}" for gun in hafta]
 
-    kolonlar = st.columns(len(hafta), gap="small")
-    for i, (kolon, gun) in enumerate(zip(kolonlar, hafta)):
-        with kolon:
-            card_id = card_idler[i]
-            tarih = gun.get("tarih")
-            if tarih is not None:
-                gun_adi_gercek = GUN_ADLARI[tarih.weekday()]
-                hafta_sonu_mu = tarih.weekday() >= 5
-                tarih_metni = f"{tarih.day} {AYLAR_SIRALI[tarih.month - 1]}"
-            else:
-                gun_adi_gercek = f"Gün {gun['gun']}"
-                hafta_sonu_mu = False
-                tarih_metni = ""
+    gun_bilgileri = []
+    for gun in hafta:
+        tarih = gun.get("tarih")
+        if tarih is not None:
+            gun_bilgileri.append({
+                "gun_adi": GUN_ADLARI[tarih.weekday()],
+                "hafta_sonu_mu": tarih.weekday() >= 5,
+                "tarih_metni": f"{tarih.day} {AYLAR_SIRALI[tarih.month - 1]}",
+            })
+        else:
+            gun_bilgileri.append({"gun_adi": f"Gün {gun['gun']}", "hafta_sonu_mu": False, "tarih_metni": ""})
 
-            gun_kutusu_sinifi = f"gunkutusu_{'hs_' if hafta_sonu_mu else ''}{card_id}"
-            with st.container(key=gun_kutusu_sinifi):
-                if st.button(gun_adi_gercek, key=f"btn_gun_{card_id}", use_container_width=True):
-                    st.session_state["yillik_menu_popup_gun_id"] = card_id
+    def _kutu_key(i, satir_no):
+        hs = "hs_" if gun_bilgileri[i]["hafta_sonu_mu"] else ""
+        return f"gunkutusu_{hs}{card_idler[i]}_{satir_no}"
+
+    # SATIR 1: Tarih (gun adindan ONCE -- Bahri'nin talebi)
+    kolonlar = st.columns(len(hafta), gap=None)
+    for i, kolon in enumerate(kolonlar):
+        with kolon:
+            with st.container(key=_kutu_key(i, "tarih")):
+                st.markdown(f"<div class='omgo-tablo-tarih-hucre'>{gun_bilgileri[i]['tarih_metni']}</div>", unsafe_allow_html=True)
+
+    # SATIR 2: Gun adi (tiklaninca pop-up acan buton)
+    kolonlar = st.columns(len(hafta), gap=None)
+    for i, kolon in enumerate(kolonlar):
+        with kolon:
+            with st.container(key=_kutu_key(i, "gunadi")):
+                if st.button(gun_bilgileri[i]["gun_adi"], key=f"btn_gun_{card_idler[i]}", use_container_width=True):
+                    st.session_state["yillik_menu_popup_gun_id"] = card_idler[i]
                     st.session_state["yillik_menu_popup_yuz"] = "arka"
                     st.rerun()
-                st.markdown(f"<div class='omgo-tablo-tarih-hucre'>{tarih_metni}</div>", unsafe_allow_html=True)
 
+    # SATIR 3: "Öğle" etiketi
+    kolonlar = st.columns(len(hafta), gap=None)
+    for i, kolon in enumerate(kolonlar):
+        with kolon:
+            with st.container(key=_kutu_key(i, "ogle_etiket")):
                 st.markdown("<div class='omgo-tablo-ogun-etiketi'>Öğle</div>", unsafe_allow_html=True)
-                for ad in gun["ogunler"].get("Öğle", []):
-                    st.page_link(
-                        "pages/5_Tarif_Kutuphanesi.py", label=ad,
-                        query_params={"tarif": ad}, use_container_width=True,
-                    )
 
+    # Öğle tarifleri -- SATIR BAZLI (max sayi kadar satir, her satirda TUM gunler)
+    max_ogle = max((len(gun["ogunler"].get("Öğle", [])) for gun in hafta), default=0)
+    for j in range(max_ogle):
+        kolonlar = st.columns(len(hafta), gap=None)
+        for i, (kolon, gun) in enumerate(zip(kolonlar, hafta)):
+            with kolon:
+                with st.container(key=_kutu_key(i, f"ogle_{j}")):
+                    liste = gun["ogunler"].get("Öğle", [])
+                    if j < len(liste):
+                        st.page_link(
+                            "pages/5_Tarif_Kutuphanesi.py", label=liste[j],
+                            query_params={"tarif": liste[j]}, use_container_width=True,
+                        )
+                    else:
+                        st.markdown("<div class='omgo-tablo-bos-hucre'>&nbsp;</div>", unsafe_allow_html=True)
+
+    # SATIR: "Akşam" etiketi
+    kolonlar = st.columns(len(hafta), gap=None)
+    for i, kolon in enumerate(kolonlar):
+        with kolon:
+            with st.container(key=_kutu_key(i, "aksam_etiket")):
                 st.markdown("<div class='omgo-tablo-ogun-etiketi'>Akşam</div>", unsafe_allow_html=True)
-                for ad in gun["ogunler"].get("Akşam", []):
-                    st.page_link(
-                        "pages/5_Tarif_Kutuphanesi.py", label=ad,
-                        query_params={"tarif": ad}, use_container_width=True,
-                    )
 
+    # Akşam tarifleri -- ayni sekilde satir bazli
+    max_aksam = max((len(gun["ogunler"].get("Akşam", [])) for gun in hafta), default=0)
+    for j in range(max_aksam):
+        kolonlar = st.columns(len(hafta), gap=None)
+        for i, (kolon, gun) in enumerate(zip(kolonlar, hafta)):
+            with kolon:
+                with st.container(key=_kutu_key(i, f"aksam_{j}")):
+                    liste = gun["ogunler"].get("Akşam", [])
+                    if j < len(liste):
+                        st.page_link(
+                            "pages/5_Tarif_Kutuphanesi.py", label=liste[j],
+                            query_params={"tarif": liste[j]}, use_container_width=True,
+                        )
+                    else:
+                        st.markdown("<div class='omgo-tablo-bos-hucre'>&nbsp;</div>", unsafe_allow_html=True)
+
+    for i, gun in enumerate(hafta):
+        card_id = card_idler[i]
         if st.session_state.get("yillik_menu_popup_gun_id") == card_id:
-            baslik_metni = f"{gun_adi_gercek}\n{tarih_metni}" if tarih_metni else gun_adi_gercek
+            bilgi = gun_bilgileri[i]
+            baslik_metni = f"{bilgi['gun_adi']}\n{bilgi['tarih_metni']}" if bilgi["tarih_metni"] else bilgi["gun_adi"]
             _gun_popup_dialog(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni, hafta)
 
 
