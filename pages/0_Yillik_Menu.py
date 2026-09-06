@@ -778,7 +778,19 @@ with sag2:
         .eq("isletme_id", st.session_state.isletme_id)
         .order("sira")
         .execute()
-    ).data or [{"id": None, "ad": "Standart", "porsiyon_sayisi": 10, "hedefler": None}]
+    ).data or []
+    # YUZ ONBIRINCI DUZELTME (5 Eylul 2026): Bahri'nin talebi -- bu
+    # listedeki TUM secenekler onun Abonelik sayfasinda olusturdugu
+    # GERCEK profillerdi. Eger BUNLARIN HEPSININ zaten kayitli hedefi
+    # varsa, "Ogun basina besin hedefi" ad-hoc/manuel giris arayuzune
+    # HICBIR YOLLA erisemiyordu. Listenin sonuna, hedefi HIC olmayan
+    # (bu yuzden asagida otomatik olarak manuel giris arayuzunu acan)
+    # sentetik bir "Boş Profil" secenegi eklendi -- Abonelik'e
+    # KAYDEDILMEDEN, bu SADECE bu uretim icin gecici bir hedef girmeyi
+    # sagliyor.
+    _porsiyon_profilleri_sayfa = _porsiyon_profilleri_sayfa + [
+        {"id": None, "ad": "Boş Profil (özel/geçici hedef)", "porsiyon_sayisi": 10, "hedefler": None}
+    ]
     _profil_etiketleri_sayfa = [f"{p['ad']} ({p['porsiyon_sayisi']} porsiyon)" for p in _porsiyon_profilleri_sayfa]
     _sayfa_secili_index = st.selectbox(
         "Maliyet hesabı için porsiyon profili",
@@ -1678,7 +1690,7 @@ def _gun_popup_dialog(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_me
     _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni, hafta)
 
 
-def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, hafta_no):
+def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, hafta_no, yil_secimi=None):
     """Haftayi GERCEK bir tabloda gosterir -- YUZ ALTINCI DUZELTME
     (5 Eylul 2026): Bahri'nin uc net duzeltmesi:
     1) Tarih GUN ADININ USTUNE alinir (en ustte "29 Aralık", altinda
@@ -1722,10 +1734,19 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
     for gun in hafta:
         tarih = gun.get("tarih")
         if tarih is not None:
+            # YUZ ONUNCU DUZELTME (5 Eylul 2026): Bahri Aralık->Ocak
+            # (YIL sinirini asan) bir hafta gorunce, "1 Ocak" gibi
+            # gorunen bir tarihin hangi YILA ait oldugunu anlayamadi --
+            # yil hic gosterilmiyordu. Artik secili yildan (yil_secimi)
+            # FARKLI bir yil ise, yil da ekleniyor (ör. "1 Ocak 2027").
+            if yil_secimi is not None and tarih.year != yil_secimi:
+                tarih_metni = f"{tarih.day} {AYLAR_SIRALI[tarih.month - 1]} {tarih.year}"
+            else:
+                tarih_metni = f"{tarih.day} {AYLAR_SIRALI[tarih.month - 1]}"
             gun_bilgileri.append({
                 "gun_adi": GUN_ADLARI[tarih.weekday()],
                 "hafta_sonu_mu": tarih.weekday() >= 5,
-                "tarih_metni": f"{tarih.day} {AYLAR_SIRALI[tarih.month - 1]}",
+                "tarih_metni": tarih_metni,
             })
         else:
             gun_bilgileri.append({"gun_adi": f"Gün {gun['gun']}", "hafta_sonu_mu": False, "tarih_metni": ""})
@@ -2051,7 +2072,7 @@ if aylik:
             f"{aylik['ay']} — {i}. Hafta</div>",
             unsafe_allow_html=True,
         )
-        _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, kayitli_hedefler, aylik["ay"], i)
+        _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, kayitli_hedefler, aylik["ay"], i, aylik["yil"])
         # YUZUNCU DUZELTME (4 Eylul 2026): Bahri'nin "aralarda cok bosluk
         # var" gozlemi uzerine -- st.divider() (kalin, buyuk dikey bosluklu
         # bir cizgi) yerine COK INCE, DUSUK-MARJINLI ozel bir cizgi.
