@@ -1187,37 +1187,45 @@ def _tablo_stilini_uygula():
             font-family: 'Fraunces', serif; font-weight: 700;
             font-size: 14px; color: #7A4A1C;
         }
-        .omgo-tablo-ogun-etiketi {
-            font-size: 10px; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.05em; color: #C88A2E; text-align: center;
-            background: rgba(200,138,46,0.08); box-sizing: border-box;
-            height: 20px; line-height: 20px; margin: -3px -7px -3px;
-            display: block;
+        /* YUZ ON DOKUZUNCU DUZELTME (5 Eylul 2026): UCUNCU deneme --
+           onceki iki deneme (ic ogeye yukseklik vermek) GUVENILIR
+           SONUC VERMEDI. Bu sefer TAMAMEN FARKLI bir yontem: gorunen
+           kenarligi FIILEN CIZEN eleman stColumn'un KENDISI -- bu
+           yuzden yukseklik SABITLEMESI de DOGRUDAN stColumn'a,
+           icindeki ETIKET/TARIF turune gore :has() ile uygulaniyor.
+           (:has() zaten hafta sonu rengi duzeltmesinde BASARIYLA
+           calisti, ayni guvenilir teknik burada da kullanildi.)
+           Etiket ayrica GUCLU/DOLU renkli bir blok yapildi (soluk
+           degil), boylece kenarlik tam net gorunmese bile RENK BLOGU
+           kesinlikle "ayri bir seyin oldugu" mesajini veriyor. */
+        div[class*="st-key-haftatablosu_"] div[data-testid="stColumn"]:has(div[class*="_ogle_etiket"]),
+        div[class*="st-key-haftatablosu_"] div[data-testid="stColumn"]:has(div[class*="_aksam_etiket"]) {
+            height: 26px !important; min-height: 26px !important; max-height: 26px !important;
+            overflow: hidden !important;
+        }
+        div[class*="st-key-haftatablosu_"] div[data-testid="stColumn"]:has(div[data-testid="stPageLink"]),
+        div[class*="st-key-haftatablosu_"] div[data-testid="stColumn"]:has(.omgo-tablo-bos-hucre) {
+            height: 60px !important; min-height: 60px !important; max-height: 60px !important;
+            overflow: hidden !important;
         }
         div[class*="_ogle_etiket"], div[class*="_aksam_etiket"] {
-            padding: 2px 0 !important; height: 24px !important; box-sizing: border-box;
+            padding: 0 !important; height: 100% !important; box-sizing: border-box;
         }
-        /* YUZ ON SEKIZINCI DUZELTME (5 Eylul 2026): Bahri iki sey daha
-           bildirdi -- (1) Öğle/Akşam etiketi hala AYRI/gorunur bir
-           kutu gibi durmuyordu (eskiden min-height:0 ile FAZLA
-           sikistirilmisti, sinirlari belirsizlesiyordu) -- simdi
-           sabit/gorulebilir bir yukseklige (24px) getirildi.
-           (2) Yemek kutulari "bazilari kalin bazilari ince" gorunuyordu
-           -- eskiden SADECE min-height vardi (icerik daha uzunsa
-           BUYUYEBILIYORDU, bu da SATIRLAR ARASI farkli yukseklige yol
-           aciyordu). Simdi SABIT (min degil, TAM) yukseklik -- kisa
-           isim de, uzun (2 satira saran) isim de AYNI kutuya sigiyor,
-           GORSEL TUTARLILIK saglaniyor. :not() ile baslik/etiket
-           kutulari bu kuraldan HARIC tutuluyor (onlarin kendi ayri
-           boyut ihtiyaci var). */
+        .omgo-tablo-ogun-etiketi {
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.06em; color: #FFFFFF; text-align: center;
+            background: #C88A2E; box-sizing: border-box;
+            height: 26px; line-height: 26px; margin: 0 -7px;
+            display: block;
+        }
         div[class*="st-key-gunkutusu_"]:not([class*="_baslik"]):not([class*="_ogle_etiket"]):not([class*="_aksam_etiket"]) {
-            height: 44px !important; box-sizing: border-box; display: flex; align-items: center;
+            height: 100% !important; box-sizing: border-box; display: flex; align-items: center;
             overflow: hidden;
         }
-        .omgo-tablo-bos-hucre { min-height: 40px; }
+        .omgo-tablo-bos-hucre { height: 100%; min-height: 60px; box-sizing: border-box; }
         div[class*="st-key-gunkutusu_"] div[data-testid="stPageLink"] {
             padding: 0; margin: 0; border-radius: 4px; transition: background 0.15s ease;
-            width: 100%; display: flex; align-items: center;
+            width: 100%; height: 100%; display: flex; align-items: center;
         }
         div[class*="st-key-gunkutusu_"] div[data-testid="stPageLink"]:hover {
             background: rgba(200,138,46,0.10);
