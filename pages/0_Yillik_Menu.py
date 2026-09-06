@@ -1155,7 +1155,6 @@ def _tablo_stilini_uygula():
             margin: 0 !important; padding: 0 !important; gap: 0 !important;
         }
         div[class*="st-key-gunkutusu_"] {
-            border-left: 1px solid #E4DDCB; border-right: 1px solid #E4DDCB;
             padding: 3px 7px; margin: 0; transition: background 0.15s ease;
         }
         div[class*="st-key-gunkutusu_hs_"] { background: #FBF0DC; }
@@ -1725,7 +1724,21 @@ def _gun_popup_dialog(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_me
 
 
 def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, hafta_no, yil_secimi=None):
-    """Haftayi GERCEK bir tabloda gosterir -- YUZ ALTINCI DUZELTME
+    """YUZ ON DORDUNCU DUZELTME (5 Eylul 2026): Bahri, sert yenilemeden
+    SONRA bile sutunlar arasi dikey ayirici cizgilerin "kesik kesik"
+    gorundugunu netlestirdi (ozel bir soruyla teyit edildi -- SADECE
+    bu, baska yer degil). Kok sebep: benim kendi CSS kenarligim
+    (gunkutusu_ kutularinin border-left/right'i) HER SATIR icin AYRI
+    bir kutuya uygulaniyordu -- bunlarin USTUSTE gelip TEK bir surekli
+    cizgi gibi gorunmesi gerekiyordu, ama herhangi bir kucuk render
+    farkinda "dikis" gibi gorunebiliyordu. COZUM: kendi CSS kenarligimi
+    tamamen BIRAKIP, Streamlit'in KENDI YERLESIK st.columns(border=True)
+    ozelligine (1.41.0'da eklendi, resmi API'den dogrulandi) gecildi --
+    bu, Streamlit'in kendi native render motorunun cizdigi TEK PARCA
+    bir kutu kenarligi, benim kucuk parcali CSS'imden cok daha
+    guvenilir olmali.
+
+    Haftayi GERCEK bir tabloda gosterir -- YUZ ALTINCI DUZELTME
     (5 Eylul 2026): Bahri'nin uc net duzeltmesi:
     1) Tarih GUN ADININ USTUNE alinir (en ustte "29 Aralık", altinda
        "Pazartesi").
@@ -1791,14 +1804,14 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
 
     with st.container(key=f"haftatablosu_{ay_adi}_{hafta_no}"):
         # SATIR 1: Tarih (gun adindan ONCE -- Bahri'nin talebi)
-        kolonlar = st.columns(len(hafta), gap=None)
+        kolonlar = st.columns(len(hafta), gap=None, border=True)
         for i, kolon in enumerate(kolonlar):
             with kolon:
                 with st.container(key=_kutu_key(i, "tarih")):
                     st.markdown(f"<div class='omgo-tablo-tarih-hucre'>{gun_bilgileri[i]['tarih_metni']}</div>", unsafe_allow_html=True)
 
         # SATIR 2: Gun adi (tiklaninca pop-up acan buton)
-        kolonlar = st.columns(len(hafta), gap=None)
+        kolonlar = st.columns(len(hafta), gap=None, border=True)
         for i, kolon in enumerate(kolonlar):
             with kolon:
                 with st.container(key=_kutu_key(i, "gunadi")):
@@ -1808,7 +1821,7 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
                         st.rerun()
 
         # SATIR 3: "Öğle" etiketi
-        kolonlar = st.columns(len(hafta), gap=None)
+        kolonlar = st.columns(len(hafta), gap=None, border=True)
         for i, kolon in enumerate(kolonlar):
             with kolon:
                 with st.container(key=_kutu_key(i, "ogle_etiket")):
@@ -1817,7 +1830,7 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
         # Öğle tarifleri -- SATIR BAZLI (max sayi kadar satir, her satirda TUM gunler)
         max_ogle = max((len(gun["ogunler"].get("Öğle", [])) for gun in hafta), default=0)
         for j in range(max_ogle):
-            kolonlar = st.columns(len(hafta), gap=None)
+            kolonlar = st.columns(len(hafta), gap=None, border=True)
             for i, (kolon, gun) in enumerate(zip(kolonlar, hafta)):
                 with kolon:
                     with st.container(key=_kutu_key(i, f"ogle_{j}")):
@@ -1831,7 +1844,7 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
                             st.markdown("<div class='omgo-tablo-bos-hucre'>&nbsp;</div>", unsafe_allow_html=True)
 
         # SATIR: "Akşam" etiketi
-        kolonlar = st.columns(len(hafta), gap=None)
+        kolonlar = st.columns(len(hafta), gap=None, border=True)
         for i, kolon in enumerate(kolonlar):
             with kolon:
                 with st.container(key=_kutu_key(i, "aksam_etiket")):
@@ -1840,7 +1853,7 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
         # Akşam tarifleri -- ayni sekilde satir bazli
         max_aksam = max((len(gun["ogunler"].get("Akşam", [])) for gun in hafta), default=0)
         for j in range(max_aksam):
-            kolonlar = st.columns(len(hafta), gap=None)
+            kolonlar = st.columns(len(hafta), gap=None, border=True)
             for i, (kolon, gun) in enumerate(zip(kolonlar, hafta)):
                 with kolon:
                     with st.container(key=_kutu_key(i, f"aksam_{j}")):
