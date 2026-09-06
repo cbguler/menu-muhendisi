@@ -1124,15 +1124,35 @@ def _tablo_stilini_uygula():
     KENDI DOGRUDAN cocuklari (her SATIR icin ayri bir stHorizontalBlock,
     ör. tarih satiri / gun adi satiri / her tarif satiri) ARASINDAKI
     gap'ten geliyordu. Kapsayicinin KENDISINE de gap:0 uygulanarak
-    duzeltildi."""
+    duzeltildi.
+
+    YUZ ON IKINCI DUZELTME (5 Eylul 2026, DUZELTME): Bahri normal (mhtml
+    olmayan) bir ekran goruntusunde kanitladi -- baslik satirlari
+    (tarih/gun adi) DUZGUN kesintisiz gorunuyordu, ama TARIF SATIRLARI
+    ARASINDA (ör. "Bulgur Pilavı" ile "Cacık" arasinda) HALA beyaz
+    bosluk vardi. Kok sebep: st.page_link/st.markdown gibi her ogeyi
+    Streamlit KENDI stElementContainer sarmalayicisina koyar, ve bu
+    sarmalayicinin DA kendi varsayilan dis boslugu (margin) vardi --
+    onceki duzeltmeler SADECE stVerticalBlock/stHorizontalBlock
+    seviyesindeki gap'i sifirlamisti, stElementContainer'in KENDI
+    marjini HEDEFLENMEMISTI. Bu sefer TUM olasi Streamlit sarmalayici
+    seviyeleri (stElementContainer, stHorizontalBlock, stColumn,
+    stLayoutWrapper) kapsayici icinde SIFIRLANDI -- artik hicbir
+    seviyede bosluk kalan bir yer olmamali."""
     st.markdown(
         """
         <style>
         div[class*="st-key-haftatablosu_"] {
             gap: 0 !important;
         }
-        div[class*="st-key-haftatablosu_"] div[data-testid="stVerticalBlock"] {
+        div[class*="st-key-haftatablosu_"] div[data-testid="stVerticalBlock"],
+        div[class*="st-key-haftatablosu_"] div[data-testid="stHorizontalBlock"] {
             gap: 0 !important;
+        }
+        div[class*="st-key-haftatablosu_"] div[data-testid="stElementContainer"],
+        div[class*="st-key-haftatablosu_"] div[data-testid="stColumn"],
+        div[class*="st-key-haftatablosu_"] div[data-testid="stLayoutWrapper"] {
+            margin: 0 !important; padding: 0 !important; gap: 0 !important;
         }
         div[class*="st-key-gunkutusu_"] {
             border-left: 1px solid #E4DDCB; border-right: 1px solid #E4DDCB;
