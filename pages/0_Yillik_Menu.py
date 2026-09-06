@@ -982,11 +982,22 @@ RENKLER = {1: "#D85A30", 2: "#639922", 3: "#1D9E75"}
 
 def _hedef_disi_liste_metni(kayitlar, yil_secimi, ay_secimi):
     """YUZUNCU DUZELTME (4 Eylul 2026): Bahri'nin talebi -- tarih formati
-    ISO (2026-12-01) DEGIL Turkce olsun, VE zaten SEÇILI olan ay (ör.
-    Aralık) icin sadece GUN NUMARASI yeterli (ay/yil tekrar tekrar
-    yazilmasin) -- SADECE secili ay DISINDAKI gunler icin ay/yil
-    belirtilsin, VE ardisik ayni-ay/yil gunler TEK BIR onek altinda
-    gruplansin (ör. "2027 Ocak 1 (Öğle), 2 (Öğle), 3 (Akşam)").
+    ISO (2026-12-01) DEGIL Turkce olsun, VE ardisik ayni-ay/yil gunler
+    TEK BIR onek altinda gruplansin (ör. "2027 Ocak 1 (Öğle), 2 (Öğle),
+    3 (Akşam)").
+
+    ON BIRINCI DUZELTME (5 Eylul 2026, DUZELTME): ilk versiyon, SEÇILI
+    ay icin HICBIR ZAMAN onek gostermiyordu (Bahri'nin "zaten secili,
+    tekrar yazmaya gerek yok" talebine gore) -- ama bu, bir ONCEKI
+    (secili OLMAYAN, ör. Aralık) baglamdan SECILI aya (ör. Ocak) GECIS
+    yapildiginda hicbir isaret olmadan "...31 (Akşam), 1 (Akşam), 2..."
+    seklinde devam ediyordu -- okuyucu "1"in Ocak'in 1'i mi yoksa
+    Aralık'ta bir yerde mi oldugunu ANLAYAMIYORDU. Duzeltme: artik HER
+    baglam degisiminde (SECILI aya gecis DAHIL) bir kez ay adi
+    gosteriliyor, SADECE ayni baglam icinde ART ARDA gelen gunlerde
+    onek atlaniyor -- boylece hem "zaten secili ayda tekrar tekrar ay
+    yazma" hem "gecis noktasinda belirsizlik" sorunlari birlikte
+    cozuluyor.
 
     kayitlar: [(tarih:date|None, ogun_adi:str), ...]"""
     parcalar = []
@@ -996,18 +1007,13 @@ def _hedef_disi_liste_metni(kayitlar, yil_secimi, ay_secimi):
             parcalar.append(f"(tarihsiz, {ogun_adi})")
             onceki_baglam = "BILINMIYOR"
             continue
-        secili_ay_mi = tarih.year == yil_secimi and AYLAR_SIRALI[tarih.month - 1] == ay_secimi
-        if secili_ay_mi:
-            baglam = "SECILI"
-            onek = ""
-        else:
-            baglam = (tarih.year, tarih.month)
+        baglam = (tarih.year, tarih.month)
+        if baglam != onceki_baglam:
             ay_adi = AYLAR_SIRALI[tarih.month - 1]
             onek = f"{tarih.year} {ay_adi} " if tarih.year != yil_secimi else f"{ay_adi} "
-        if baglam != onceki_baglam:
-            parcalar.append(f"{onek}{tarih.day} ({ogun_adi})")
         else:
-            parcalar.append(f"{tarih.day} ({ogun_adi})")
+            onek = ""
+        parcalar.append(f"{onek}{tarih.day} ({ogun_adi})")
         onceki_baglam = baglam
     return ", ".join(parcalar)
 
