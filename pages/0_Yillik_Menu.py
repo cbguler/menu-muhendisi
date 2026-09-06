@@ -1096,10 +1096,23 @@ def _tablo_stilini_uygula():
     boylece ust uste yigilan kutular ARASINDA Streamlit'in kendi
     varsayilan boslugu KALMIYOR, kenarliklar/hafta sonu rengi KESINTISIZ
     gorunuyor. Bu kural SADECE bu tabloya ozel kapsayici icinde
-    calisiyor, sayfadaki BASKA st.columns() kullanimlarini etkilemiyor."""
+    calisiyor, sayfadaki BASKA st.columns() kullanimlarini etkilemiyor.
+
+    YUZ DOKUZUNCU DUZELTME (5 Eylul 2026, DUZELTME): Bahri "hala kesik
+    cizgi ve hafta sonu arasinda beyaz boslukar var" dedi. Gercek
+    render edilmis DOM incelenerek kok sebep bulundu: bir onceki
+    kuralim SADECE haftatablosu kapsayicisinin ICINDEKI (descendant)
+    stVerticalBlock'lari hedefliyordu -- ama asil bosluk, kapsayicinin
+    KENDI DOGRUDAN cocuklari (her SATIR icin ayri bir stHorizontalBlock,
+    ör. tarih satiri / gun adi satiri / her tarif satiri) ARASINDAKI
+    gap'ten geliyordu. Kapsayicinin KENDISINE de gap:0 uygulanarak
+    duzeltildi."""
     st.markdown(
         """
         <style>
+        div[class*="st-key-haftatablosu_"] {
+            gap: 0 !important;
+        }
         div[class*="st-key-haftatablosu_"] div[data-testid="stVerticalBlock"] {
             gap: 0 !important;
         }
