@@ -1068,32 +1068,37 @@ def _hedefte_mi(ogun_adi, t, hedefler, hafta=None, detay=None):
 
 
 def _tablo_stilini_uygula():
-    """YUZ DORDUNCU DUZELTME (5 Eylul 2026): tablo (Gun|Tarih|Ogle|Aksam)
-    icin gereken CSS -- BILEREK buyuk paylasilan css_govdesi blogundan
-    AYRI, KUCUK, IZOLE bir st.markdown cagrisi olarak tutuluyor. Sebep:
-    bu CSS o buyuk bloga eklendiginde, sayfada bir kismi DUZ METIN
-    olarak SIZDI (bkz. _hafta_kartlarini_goster docstring'i) -- kesin
-    mekanizma belirlenemedi, ama kucuk/izole bir bloga tasimak sorunu
-    gidermenin en dusuk riskli yolu."""
+    """YUZ DORDUNCU/BESINCI DUZELTME (5 Eylul 2026): gun-kutusu (yatay,
+    sutun-tabanli) tablo gorunumu icin gereken CSS -- BILEREK buyuk
+    paylasilan css_govdesi blogundan AYRI, KUCUK, IZOLE bir st.markdown
+    cagrisi olarak tutuluyor. Sebep: bu CSS o buyuk bloga eklendiginde,
+    sayfada bir kismi DUZ METIN olarak SIZDI -- kesin mekanizma
+    belirlenemedi, ama kucuk/izole bir bloga tasimak sorunu gidermenin
+    en dusuk riskli yolu."""
     st.markdown(
         """
         <style>
-        .omgo-tablo-baslik-satiri {
-            display: flex; gap: 0; background: #F0EAE0; border: 1px solid #D9D2C2;
-            border-bottom: 2px solid #C88A2E; font-weight: 700; font-size: 12.5px;
-            text-transform: uppercase; letter-spacing: 0.03em; color: #6B5B3D;
-            padding: 6px 0;
+        div[class*="st-key-gunkutusu_"] {
+            border: 1px solid #E4DDCB; border-radius: 4px; padding: 4px 6px 8px;
+            margin-bottom: 2px;
         }
-        .omgo-tablo-h-gun, .omgo-tablo-h-tarih { flex: 1.1; padding: 0 10px; }
-        .omgo-tablo-h-ogun { flex: 2.4; padding: 0 10px; }
-        .omgo-tablo-tarih-hucre { padding: 8px 0; font-size: 13.5px; color: #4A3F2E; }
-        div[class*="st-key-satir_"] {
-            border-left: 1px solid #E4DDCB; border-right: 1px solid #E4DDCB;
-            border-bottom: 1px solid #E4DDCB; padding: 2px 0;
+        div[class*="st-key-gunkutusu_hs_"] { background: #FBF0DC; border-color: #E8C888; }
+        div[class*="st-key-gunkutusu_"] button {
+            background: transparent !important; border: none !important;
+            border-bottom: 2px solid #C88A2E !important; border-radius: 0 !important;
+            padding: 4px 2px 4px !important; width: 100%; box-shadow: none !important;
         }
-        div[class*="st-key-satir_hs_"] { background: #FBF0DC; }
-        div[class*="st-key-satir_"] div[data-testid="stPageLink"] { padding: 1px 0; }
-        div[class*="st-key-satir_"] div[data-testid="stPageLink"] p { font-size: 12.5px !important; }
+        div[class*="st-key-gunkutusu_"] button p {
+            font-family: 'Fraunces', serif !important; font-weight: 600 !important;
+            font-size: 13.5px !important; color: #2B2320 !important;
+        }
+        .omgo-tablo-tarih-hucre { padding: 4px 2px 6px; font-size: 12px; color: #6B5B3D; }
+        .omgo-tablo-ogun-etiketi {
+            font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.03em; color: #C88A2E; margin: 6px 2px 2px;
+        }
+        div[class*="st-key-gunkutusu_"] div[data-testid="stPageLink"] { padding: 0; margin: 0 0 1px; }
+        div[class*="st-key-gunkutusu_"] div[data-testid="stPageLink"] p { font-size: 11.5px !important; }
         </style>
         """,
         unsafe_allow_html=True,
@@ -1613,79 +1618,58 @@ def _gun_popup_dialog(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_me
 
 
 def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, hafta_no):
-    """Haftayi GERCEK bir tabloda gosterir -- YUZ UCUNCU DUZELTME
-    (4 Eylul 2026): Bahri'nin acikca belirttigi tarif -- her gunun
-    TARIHININ yani sira O GUNUN Ogle/Aksam yemeklerinin isimleri de
-    (tarife TIKLANABILIR linkler olarak) DOGRUDAN tabloda gorunmeli,
-    AYRI kutularda (sutunlarda). Hafta sonlari AYRI renkte.
+    """Haftayi GERCEK bir tabloda gosterir -- YUZ BESINCI DUZELTME
+    (5 Eylul 2026): Bahri'nin ACIK duzeltmesi -- tablo DIKEY (gun basina
+    satir) DEGIL, ESKISI GIBI YATAY olmali: HAFTALAR ALT ALTA, GUNLER
+    (Pazartesi->Pazar) YAN YANA sutunlar. Bir onceki deneme (YUZ UCUNCU
+    DUZELTME) yanlislikla DIKEY bir tabloya cevirmisti -- GERI ALINDI.
 
-    ONEMLI: bir onceki deneme (st.dataframe + satir secimi) YANLIS
-    anlasilmaya dayaniyordu -- st.dataframe hucreleri SADECE duz
-    deger tutabilir, GERCEK st.page_link gibi tiklanabilir icerik
-    BARINDIRAMAZ. Bu yuzden st.columns() TABANLI, HER GUN icin bir
-    SATIR olan bir duzene donuldu -- boylece her hucrede GERCEK
-    Streamlit widget'lari (linkler, buton) olabiliyor, CSS ile de
-    tablo gorunumu (kenarlik, hizalama, hafta sonu rengi) veriliyor.
+    Yapı: st.columns(7) ile ESKI (kart-tabanli) duzenin YATAY
+    ORYANTASYONUNA donuluyor, ama her sutun ARTIK sadece gun adi/tarih
+    degil, O GUNUN Ogle/Aksam yemek isimlerini de (tarife TIKLANABILIR
+    linkler olarak) DOGRUDAN icinde gosteriyor -- boylece hem "eskisi
+    gibi yatay" hem "yemek isimleri dogrudan gorunsun" istekleri
+    birlikte karsilaniyor. CSS ile tablo-hucresi gorunumu (kenarlik,
+    golgesiz) + hafta sonu sutunlari icin ayri renk veriliyor.
 
-    YUZ DORDUNCU DUZELTME (5 Eylul 2026): tablo CSS'i, buyuk paylasilan
-    css_govdesi bloguna EKLENINCE, o CSS metninin bir kismi (TAM OLARAK
-    eklenen noktadan itibaren) sayfada DUZ METIN olarak SIZDI -- <style>
-    etiketinin kendisi hic render edilmemis gibi gorundu (gercek DOM
-    dokumu incelenerek dogrulandi). Kesin mekanizma tam olarak
-    belirlenemedi (kare parantez + tirnak dengesi kontrol edildi,
-    sorun bulunamadi -- muhtemelen markdown/HTML render zincirinde
-    beklenmeyen bir etkilesim). En guvenli/dusuk riskli cozum: bu
-    tablo CSS'i buyuk ortak bloktan CIKARILIP, KENDI KUCUK/IZOLE
-    st.markdown cagrisina tasindi (bkz. _tablo_stilini_uygula).
-
-    Gun/Tarih hucresindeki BUTON tiklaninca o gunun pop-up'i (arka
-    yuz -- besin/maliyet/hedef) acilir; Ogle/Aksam hucrelerindeki
-    yemek isimleri ise DOGRUDAN Tarif Kutuphanesi'ne link verir."""
+    Gun adindaki BUTON tiklaninca o gunun pop-up'i (arka yuz -- besin/
+    maliyet/hedef) acilir."""
     _yillik_menu_tasarim_stilini_uygula()
     _tablo_stilini_uygula()
 
     GUN_ADLARI = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"]
     card_idler = [f"{ay_adi}-{hafta_no}-{gun['gun']}" for gun in hafta]
 
-    st.markdown(
-        "<div class='omgo-tablo-baslik-satiri'>"
-        "<div class='omgo-tablo-h-gun'>Gün</div>"
-        "<div class='omgo-tablo-h-tarih'>Tarih</div>"
-        "<div class='omgo-tablo-h-ogun'>Öğle Yemeği</div>"
-        "<div class='omgo-tablo-h-ogun'>Akşam Yemeği</div>"
-        "</div>",
-        unsafe_allow_html=True,
-    )
+    kolonlar = st.columns(len(hafta), gap="small")
+    for i, (kolon, gun) in enumerate(zip(kolonlar, hafta)):
+        with kolon:
+            card_id = card_idler[i]
+            tarih = gun.get("tarih")
+            if tarih is not None:
+                gun_adi_gercek = GUN_ADLARI[tarih.weekday()]
+                hafta_sonu_mu = tarih.weekday() >= 5
+                tarih_metni = f"{tarih.day} {AYLAR_SIRALI[tarih.month - 1]}"
+            else:
+                gun_adi_gercek = f"Gün {gun['gun']}"
+                hafta_sonu_mu = False
+                tarih_metni = ""
 
-    for i, gun in enumerate(hafta):
-        card_id = card_idler[i]
-        tarih = gun.get("tarih")
-        if tarih is not None:
-            gun_adi_gercek = GUN_ADLARI[tarih.weekday()]
-            hafta_sonu_mu = tarih.weekday() >= 5
-            tarih_metni = f"{tarih.day} {AYLAR_SIRALI[tarih.month - 1]}"
-        else:
-            gun_adi_gercek = f"Gün {gun['gun']}"
-            hafta_sonu_mu = False
-            tarih_metni = ""
-
-        satir_sinifi = f"satir_{'hs_' if hafta_sonu_mu else ''}{card_id}"
-        with st.container(key=satir_sinifi):
-            kol_gun, kol_tarih, kol_ogle, kol_aksam = st.columns([1.1, 1.1, 2.4, 2.4])
-            with kol_gun:
+            gun_kutusu_sinifi = f"gunkutusu_{'hs_' if hafta_sonu_mu else ''}{card_id}"
+            with st.container(key=gun_kutusu_sinifi):
                 if st.button(gun_adi_gercek, key=f"btn_gun_{card_id}", use_container_width=True):
                     st.session_state["yillik_menu_popup_gun_id"] = card_id
                     st.session_state["yillik_menu_popup_yuz"] = "arka"
                     st.rerun()
-            with kol_tarih:
                 st.markdown(f"<div class='omgo-tablo-tarih-hucre'>{tarih_metni}</div>", unsafe_allow_html=True)
-            with kol_ogle:
+
+                st.markdown("<div class='omgo-tablo-ogun-etiketi'>Öğle</div>", unsafe_allow_html=True)
                 for ad in gun["ogunler"].get("Öğle", []):
                     st.page_link(
                         "pages/5_Tarif_Kutuphanesi.py", label=ad,
                         query_params={"tarif": ad}, use_container_width=True,
                     )
-            with kol_aksam:
+
+                st.markdown("<div class='omgo-tablo-ogun-etiketi'>Akşam</div>", unsafe_allow_html=True)
                 for ad in gun["ogunler"].get("Akşam", []):
                     st.page_link(
                         "pages/5_Tarif_Kutuphanesi.py", label=ad,
@@ -1695,6 +1679,8 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
         if st.session_state.get("yillik_menu_popup_gun_id") == card_id:
             baslik_metni = f"{gun_adi_gercek}\n{tarih_metni}" if tarih_metni else gun_adi_gercek
             _gun_popup_dialog(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni, hafta)
+
+
 
 
 def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):

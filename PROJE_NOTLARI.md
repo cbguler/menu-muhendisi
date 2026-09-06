@@ -6182,3 +6182,25 @@ taşındı.
 göründüğünü, (2) pop-up'ın koyu renginin geri geldiğini, (3) hafta
 sonu (Cumartesi/Pazar) satırlarının farklı renkte olduğunu kontrol
 etmesi gerekiyor.
+
+
+### 5 Eylül 2026 — XV. Oturum (devam): Tablo Yönü Düzeltildi (Yatay)
+
+Bir önceki teslimat (dikey tablo: her gün bir satır) Bahri'nin
+istediğinin TAM TERSİYDİ -- net düzeltmesi: "haftalar alt alta, günler
+yan yana" yani ESKİ (kart-tabanlı) düzenin YATAY yönü korunmalı, ama
+her sütun artık sadece gün/tarih değil, o günün Öğle/Akşam yemek
+isimlerini de (tıklanabilir linkler olarak) doğrudan içinde göstermeli.
+
+**Düzeltme:** `st.columns(7)` ile yatay (gün=sütun) düzene dönüldü,
+her sütun içinde: gün adı (buton, pop-up açar) → tarih → "Öğle"
+etiketi + tarif linkleri → "Akşam" etiketi + tarif linkleri, üst üste
+istiflenmiş. Hafta sonu (Cumartesi/Pazar) sütunları farklı arka
+planla (`gunkutusu_hs_` sınıfı) işaretleniyor. CSS yine izole
+`_tablo_stilini_uygula()` içinde tutuldu (önceki CSS-sızıntısı dersi
+korunarak), yeni sınıf adlarına güncellendi, tırnak/parantez dengesi
+tekrar kontrol edildi.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` -- `_hafta_kartlarini_goster`
+yatay yapıya geri döndürüldü, `_tablo_stilini_uygula` yeni sınıflara
+göre güncellendi.
