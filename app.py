@@ -877,34 +877,18 @@ st.markdown(
     "  box-shadow: 0 2px 6px rgba(0,0,0,0.15);"
     "  border-bottom: 1px solid rgba(0,0,0,0.08);"
     "}"
-    # YUZ YIRMI ALTINCI DUZELTME (6 Eylul 2026): bir onceki deneme
-    # (ayri gorunmez tetikleyici serit + :has() ile uzaktan iliskilendirme)
-    # CALISMADI -- Bahri imleci ekranin en ustune goturdugunde menu
-    # HALA gorunmuyordu. Kok sebep KESIN olarak dogrulanamadi (canli
-    # DOM erisimi yok) ama en olasi aciklama: tetikleyicinin kendi
-    # Streamlit sarmalayicisi (stElementContainer) ile masaustu_nav'in
-    # sarmalayicisi (stVerticalBlock) AYNI seviyede GERCEK kardes
-    # olmayabilir, bu da hem ~ kardes secicisini hem varsaydigim :has()
-    # iliskisini gecersiz kilardi.
-    #
-    # COK DAHA BASIT VE SAGLAM YONTEME GECILDI: ayri bir tetikleyici
-    # ELEMANA hic gerek yok -- menunun KENDISINDEN, HER ZAMAN ince
-    # (10px) bir dilim gorunur birakiliyor (translateY ile TAM -100%
-    # yerine "-100% + 10px"). Bu dilime (ya da acildiktan sonra
-    # menunun TAMAMINA) imlec gelince -- DOGRUDAN ".st-key-masaustu_nav
-    # :hover" -- TEK, BASIT, GUVENILIR bir CSS iliskisi, baska hicbir
-    # elemana veya varsayimsal DOM iliskisine bagli DEGIL. Ekstra
-    # fayda: bu ince dilim HER ZAMAN gorunur oldugu icin, kullanici
-    # menunun "gizlenebilir" oldugunu kesfetmesi de kolaylasiyor.
-    "@media (hover: hover) and (min-width: 768px) {"
-    "  .st-key-masaustu_nav {"
-    "    transform: translateY(calc(-100% + 10px));"
-    "    transition: transform 0.25s ease;"
-    "  }"
-    "  .st-key-masaustu_nav:hover {"
-    "    transform: translateY(0);"
-    "  }"
-    "}"
+    # YUZ YIRMI YEDINCI DUZELTME (6 Eylul 2026): Bahri'nin AMACINI
+    # tam tersine anlamisim -- "otomatik gizle" istegi menu BUTONLARI
+    # icin DEGIL, dekoratif logo/baslik kismi icin gecerliymis: "ustteki
+    # herseyKAYBOLABILIR yeter ki menu butonlari kaybolmasin". Yani
+    # butonlar HER ZAMAN sabit/gorunur kalmali (tipki bu ozellik
+    # eklenmeden ONCEKI orijinal davranis gibi) -- hover-ile-gizleme
+    # MEKANIZMASI BURADAN TAMAMEN KALDIRILDI. Logo/baslik zaten
+    # BUGUNKU erken bir duzeltmede masaustu_nav'in DISINA, normal sayfa
+    # akisina tasinmisti -- bu YETERLI: normal icerik gibi sayfa
+    # kaydirilinca kendiliginden "kayboluyor" (ekrandan yukari kayiyor),
+    # ozel bir hover mekanizmasina GEREK YOK. Butonlar ise ARTIK
+    # (yukaridaki temel kural geregi) basitce HER ZAMAN top:0'da sabit.
     ".st-key-masaustu_nav div[data-testid='stHorizontalBlock'] { gap: 0.7rem !important; }"
     # ON IKINCI DUZELTME (12 Agustos 2026): kullanici "mobilde degisiklik
     # olmamis gibi" dedi -- hakliydi. Streamlit varsayilan olarak dar
@@ -1007,19 +991,10 @@ st.markdown(
     ".ust_menu_bosluk_mobil { height: 90px; }"
     "@media (min-width: 768px) { .ust_menu_bosluk_mobil { display: none !important; } }"
     "@media (max-width: 767px) { .ust_menu_bosluk_masaustu { display: none !important; } }"
-    # YUZ YIRMI DORDUNCU DUZELTME (6 Eylul 2026, devam): Windows'un
-    # taskbar'i gizlenince o alani GERCEKTEN geri veriyor (diger
-    # pencereler o alani kullanabiliyor) -- SADECE menuyu gizleyip
-    # altindaki sabit boslugu OLDUGU GIBI birakmak, "yer kazanma"
-    # amacinin yarisini kacirirdi. Bu yuzden, SADECE hover-destekli
-    # masaustunde, bu boslugu KUCULTUP (sadece tetikleyici seridi kadar,
-    # 10px) icerigin yukari kaymasini sagliyoruz -- gizliyken butonlar
-    # zaten ekran disina (translateY) TAMAMEN cikiyor, sifir gorsel alan
-    # kapliyor; menu tekrar acildiginda ise logonun UZERINE GECICI
-    # olarak biner (position:fixed), altindaki icerikle CAKISMA olmuyor.
-    "@media (hover: hover) and (min-width: 768px) {"
-    "  .ust_menu_bosluk_masaustu { height: 10px !important; }"
-    "}"
+    # YUZ YIRMI YEDINCI DUZELTME (6 Eylul 2026, devam): butonlar artik
+    # HER ZAMAN gorunur oldugu icin (bir onceki yorum), ozel bir
+    # hover-modu bosluk kucultmesine GEREK KALMADI -- taban 65px
+    # bosluk HER durumda (hover destegi olsun olmasin) gecerli.
     # YIRMI BIRINCI DUZELTME (13 Agustos 2026, Oturum 11): kullanici
     # sayfa basliklarinin (ör. "Yıllık Menü Üretim Motoru") gereksiz
     # asagida kaldigini bildirdi. Sebep: Streamlit'in KENDI varsayilan
@@ -1048,23 +1023,23 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# YUZ YIRMI BESINCI DUZELTME (6 Eylul 2026): Bahri "otomatik gizle"
-# menude iki sorun bildirdi -- (1) logo+buyuk baslik tam gizlenmiyordu
-# (bir kismi ustten sizip goruyordu), (2) "sadece ust menu [butonlar]
-# gorunse cok daha kullanisli olur" -- yani logo+baslik hover-gizleme
-# sistemine hic DAHIL OLMAMALI, SADECE buton satiri gizlenip-gorunmeli.
+# YUZ YIRMI BESINCI/YEDINCI DUZELTME (6 Eylul 2026): Bahri "otomatik
+# gizle" istegini ACIKLADI -- amac, menu BUTONLARINI degil, dekoratif
+# logo/baslik kismini gizlemekti: "ustteki herseyKAYBOLABILIR yeter ki
+# menu butonlari kaybolmasin". Yani BUTONLAR HER ZAMAN sabit/gorunur
+# kalmali, SADECE logo/baslik "kaybolabilir" (ozel bir hover mekanizmasi
+# bile GEREKMEDEN -- normal sayfa akisinda oldugu icin, sayfa
+# kaydirilinca zaten kendiliginden ekrandan yukari kayip "kayboluyor").
 #
-# YAPISAL COZUM: logo+baslik artik `masaustu_nav` kapsayicisinin
+# YAPISAL DURUM: logo+baslik artik `masaustu_nav` kapsayicisinin
 # ICINDE DEGIL -- NORMAL sayfa akisinda (sabit/fixed DEGIL), sayfa her
 # zaman ACILDIGINDA ustte gorunuyor, kaydirinca normal icerik gibi
-# yukari kayiyor. `masaustu_nav` artik SADECE buton satirini
-# (nav_buton_satiri) iceriyor -- position:fixed + hover-ile-goster
-# davranisi ARTIK SADECE bu (cok daha kucuk, ~55px) satira uygulaniyor.
-# Gizliyken (varsayilan), butonlar ekran disina (translateY(-100%))
-# TAMAMEN cikiyor -- gorunur hicbir sizinti kalmiyor. Gosterilince,
-# logonun UZERINE gecici olarak biner (Windows'un taskbar'i da ayni
-# sekilde ustune biner, altindaki icerigi ITMEZ) -- bu, kisa sureli
-# bir etkilesim oldugu icin sorun degil.
+# yukari kayip gozden kayboluyor (Bahri'nin istedigi TAM OLARAK buydu).
+# `masaustu_nav` artik SADECE buton satirini (nav_buton_satiri)
+# iceriyor -- ve butonlar, temel CSS kuraliyla (yukarida,
+# ".st-key-masaustu_nav, .st-key-mobil_nav { position:fixed; top:0;
+# ...}") HER ZAMAN, hicbir hover mekanizmasi olmadan, sabit ve gorunur
+# kaliyor.
 #
 # ESKI (30 Agustos 2026 tarihli) yorumlar asagida GENEL BASLIK
 # TASARIMI GECMISI olarak korunuyor -- hala gecerli (144px logo, sade
