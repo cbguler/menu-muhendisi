@@ -401,9 +401,28 @@ if st.session_state.oturum is None:
 # 2) Oturum var: kullaniciyi isletmeye baglayip abonelik durumunu kontrol et
 # ---------------------------------------------------------------------
 
-supabase.auth.set_session(
-    st.session_state.oturum.access_token, st.session_state.oturum.refresh_token
-)
+# YUZ YIRMI BIRINCI DUZELTME (5 Eylul 2026): Bahri gercek bir cokme
+# yasadi -- supabase_auth.errors.AuthApiError, set_session() cagrisinda,
+# hic yakalanmadan TUM uygulamayi cokertiyordu. Kok sebep: Supabase
+# refresh token'lari TEK KULLANIMLIK (rotation) -- st.session_state.oturum
+# icindeki refresh_token, BASKA bir yerde (ör. "beni hatirla" cerez
+# yenilemesi, ya da Supabase'in kendi arka plan yenilemesi) ZATEN
+# kullanilip DEGISTIRILMISSE, burada AYNI (artik gecersiz) token ile
+# tekrar set_session cagirmak basarisiz oluyordu. Cozum: ayni "sessizce
+# temizleyip giris ekranina don" korumasi (cerez-tabanli yenileme icin
+# zaten mevcuttu, satir ~221 civari) BURAYA da eklendi.
+try:
+    supabase.auth.set_session(
+        st.session_state.oturum.access_token, st.session_state.oturum.refresh_token
+    )
+except Exception:
+    st.session_state.oturum = None
+    try:
+        cerezler.delete("refresh_token", key="refresh_token_sil_set_session_hata")
+    except Exception:
+        pass
+    st.rerun()
+
 kullanici = supabase_ile_dene(lambda: supabase.auth.get_user())
 
 kullanici_kaydi = supabase_ile_dene(
@@ -947,14 +966,6 @@ st.markdown(
     # logo (144px) artik ACIKCA satirin en uzun elemani -- yukseklik
     # artik COK daha ongorulebilir: ~154px (logo+yazi satiri) + ~50px
     # (buton satiri) + ~15px (padding) = ~220px.
-    # YUZUNCU DUZELTME (4 Eylul 2026): Bahri "ust kisim cok genisledi,
-    # alt/asil islem alanina az yer kaliyor" dedi -- LOGO'nun kendisine
-    # (144px/72px, min-height) DOKUNULMADI, sadece CEVRESINDEKI padding
-    # daraltildi: dis kapsayici 0.4rem->0.15rem, logo+yazi satiri ic
-    # padding'i 0.3rem->0.1rem. Tahmini toplam kazanc ~15-20px --
-    # bosluk yukseklikleri buna gore asagi cekildi. ONCEKI TUM
-    # denemelerde oldugu gibi bu YINE DE TAHMINI bir deger, gercek
-    # tarayicida piksel farki kalirsa ince ayar gerekebilir.
     ".ust_menu_bosluk_masaustu { height: 200px; }"
     ".ust_menu_bosluk_mobil { height: 90px; }"
     "@media (min-width: 768px) { .ust_menu_bosluk_mobil { display: none !important; } }"
