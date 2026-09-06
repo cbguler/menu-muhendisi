@@ -871,11 +871,41 @@ st.markdown(
     "@media (min-width: 768px) { .st-key-mobil_nav { display: none !important; } }"
     "@media (max-width: 767px) { .st-key-masaustu_nav { display: none !important; } }"
     ".st-key-masaustu_nav, .st-key-mobil_nav {"
-    "  position: fixed; left: 0; right: 0; z-index: 999999;"
+    "  position: fixed; top: 0; left: 0; right: 0; z-index: 999999;"
     "  background-color: var(--background-color, #ffffff);"
     "  padding: 0.15rem 1rem;"
     "  box-shadow: 0 2px 6px rgba(0,0,0,0.15);"
     "  border-bottom: 1px solid rgba(0,0,0,0.08);"
+    "}"
+    # YUZ YIRMI DORDUNCU DUZELTME (6 Eylul 2026): Bahri'nin talebi --
+    # Windows'un "otomatik gizle" taskbar davranisi gibi, ust menu de
+    # varsayilan olarak GIZLI dursun, ekranin en ustune (imlecle)
+    # gidilince asagi kayarak gorunur olsun. SADECE gercek "hover"
+    # destegi olan cihazlarda (fareli masaustu) -- dokunmatik
+    # cihazlarda "hover" kavraminin kendisi anlamsiz oldugu icin,
+    # @media (hover: hover) ile bu davranis ORADA HIC devreye
+    # girmiyor, mobil nav HER ZAMAN oldugu gibi gorunur kaliyor.
+    #
+    # Teknik: gorunmez ince bir "tetikleyici serit" (st-key-ust_menu_
+    # tetikleyici) ekranin en ustune eklendi. Bu seride VEYA menunun
+    # kendisine imlec gelince (:hover), menu asagi kayarak (translateY)
+    # gorunur oluyor. :has() secici -- bu oturumda hafta sonu rengi ve
+    # kutu boyutu duzeltmelerinde de BASARIYLA kullanilan ayni guvenilir
+    # teknik -- stAppViewContainer uzerinden, tetikleyicinin TAM OLARAK
+    # nerede oldugunu bilmeye gerek kalmadan bu iliskiyi kuruyor.
+    "@media (hover: hover) and (min-width: 768px) {"
+    "  .st-key-ust_menu_tetikleyici {"
+    "    position: fixed; top: 0; left: 0; right: 0; height: 10px;"
+    "    z-index: 1000000; background: transparent;"
+    "  }"
+    "  .st-key-masaustu_nav {"
+    "    transform: translateY(-100%);"
+    "    transition: transform 0.25s ease;"
+    "  }"
+    "  div[data-testid='stAppViewContainer']:has(.st-key-ust_menu_tetikleyici:hover) .st-key-masaustu_nav,"
+    "  .st-key-masaustu_nav:hover {"
+    "    transform: translateY(0);"
+    "  }"
     "}"
     ".st-key-masaustu_nav div[data-testid='stHorizontalBlock'] { gap: 0.7rem !important; }"
     # ON IKINCI DUZELTME (12 Agustos 2026): kullanici "mobilde degisiklik
@@ -970,6 +1000,19 @@ st.markdown(
     ".ust_menu_bosluk_mobil { height: 90px; }"
     "@media (min-width: 768px) { .ust_menu_bosluk_mobil { display: none !important; } }"
     "@media (max-width: 767px) { .ust_menu_bosluk_masaustu { display: none !important; } }"
+    # YUZ YIRMI DORDUNCU DUZELTME (6 Eylul 2026, devam): Windows'un
+    # taskbar'i gizlenince o alani GERCEKTEN geri veriyor (diger
+    # pencereler o alani kullanabiliyor) -- SADECE menuyu gizleyip
+    # altindaki 200px'lik sabit boslugu OLDUGU GIBI birakmak, "yer
+    # kazanma" amacinin yarisini kacirirdi. Bu yuzden, SADECE
+    # hover-destekli masaustunde, bu boslugu KUCULTUP (sadece
+    # tetikleyici seridi icin yeterli, ~14px) icerigin yukari kaymasini
+    # sagliyoruz -- menu tekrar acildiginda zaten kendi UZERINE
+    # (position:fixed) bindigi icin, altindaki icerikle CAKISMA
+    # olmuyor (transform ile kayarak gorunuyor, akisi ITMIYOR)."
+    "@media (hover: hover) and (min-width: 768px) {"
+    "  .ust_menu_bosluk_masaustu { height: 14px !important; }"
+    "}"
     # YIRMI BIRINCI DUZELTME (13 Agustos 2026, Oturum 11): kullanici
     # sayfa basliklarinin (ör. "Yıllık Menü Üretim Motoru") gereksiz
     # asagida kaldigini bildirdi. Sebep: Streamlit'in KENDI varsayilan
@@ -995,6 +1038,11 @@ st.markdown(
     "video::-webkit-media-controls-enclosure { display: none !important; }"
     "video::-webkit-media-controls-panel { display: none !important; }"
     "</style>",
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    "<div class='st-key-ust_menu_tetikleyici'></div>",
     unsafe_allow_html=True,
 )
 
