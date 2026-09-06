@@ -2136,18 +2136,6 @@ if aylik:
         disabled=st.session_state.get("salt_okunur", False),
     )
 
-    fast_food_notasi = (
-        "&nbsp;&nbsp;&nbsp;<span style='color:#BA7517;'>●</span> Fast Food"
-        if st.session_state.get("kendi_menu_dahil") else ""
-    )
-    st.markdown(
-        "<div style='font-size:13px; color:gray; margin:0.5rem 0 1rem;'>"
-        "<span style='color:#D85A30;'>●</span> Ana Yemek&nbsp;&nbsp;&nbsp;"
-        "<span style='color:#639922;'>●</span> Yardımcı Yemek&nbsp;&nbsp;&nbsp;"
-        f"<span style='color:#1D9E75;'>●</span> Tamamlayıcılar{fast_food_notasi}</div>",
-        unsafe_allow_html=True,
-    )
-
     for i, hafta in enumerate(aylik["haftalar"], start=1):
         st.markdown(
             f"<div style='font-weight:700; margin:10px 0 4px; font-size:14px;'>"
