@@ -877,6 +877,19 @@ st.markdown(
     "  box-shadow: 0 2px 6px rgba(0,0,0,0.15);"
     "  border-bottom: 1px solid rgba(0,0,0,0.08);"
     "}"
+    # YUZ OTUZ BIRINCI DUZELTME (6 Eylul 2026): Bahri "Aralık ayını
+    # secemiyorum" dedi -- acilan Ay secim listesi UST MENUNUN
+    # ARKASINDA/ALTINDA kaliyordu, tiklamak imkansizdi. Kok sebep: bu
+    # sayfadaki ust menu z-index'i (999999) COK yuksek -- Streamlit'in
+    # KENDI acilir liste/secim kutusu (BaseWeb kutuphanesi kullaniyor,
+    # `data-baseweb="popover"` ile isaretleniyor) bundan DAHA DUSUK bir
+    # z-index ile render ediliyordu, bu yuzden ust menunun ALTINDA
+    # kaliyordu. Cozum: SADECE "Ay" secimine ozel degil, sayfadaki
+    # TUM acilir listeleri (selectbox/multiselect/vb.) kapsayan
+    # `data-baseweb="popover"` elemaninin z-index'i, ust menuden DAHA
+    # YUKSEGE cekildi -- boylece HERHANGI bir acilir liste artik HER
+    # ZAMAN ust menunun ONUNDE, tiklanabilir kaliyor.
+    "div[data-baseweb=\"popover\"] { z-index: 1000001 !important; }"
     # YUZ YIRMI YEDINCI DUZELTME (6 Eylul 2026): Bahri'nin AMACINI
     # tam tersine anlamisim -- "otomatik gizle" istegi menu BUTONLARI
     # icin DEGIL, dekoratif logo/baslik kismi icin gecerliymis: "ustteki
