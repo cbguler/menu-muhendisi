@@ -1253,13 +1253,32 @@ def _tablo_stilini_uygula():
         @media (min-width: 768px) {
             div[class*="st-key-haftakartlari_mobil_"] { display: none !important; }
         }
+        /* YUZ YIRMI DOKUZUNCU DUZELTME (6 Eylul 2026): Bahri mobil kart
+           gorunumunu begendi ama uc ince ayar istedi -- (1) tarih
+           ortalansin, (2) her gun DAHA BELIRGIN ayri bir kart gibi
+           dursun (eskiden ince/soluk kenarlikla "asagiya akan yazi
+           dizisi" gibi gorunuyordu), (3) parmakla SAGA/SOLA
+           CEKILEBILEN (swipe) bir kart deneyimi. (3) icin JavaScript'e
+           HIC GEREK YOK -- salt CSS "scroll-snap" ile tarayicinin
+           KENDI dokunmatik kaydirma motoru kullanildi: dis kapsayici
+           yatay flex+scroll, her kart TAM GENISLIKTE bir "slayt" --
+           parmakla kaydirinca bir sonraki/onceki gune KENDILIGINDEN
+           "yapisip" duruyor (scroll-snap-align). */
+        div[class*="st-key-haftakartlari_mobil_"] {
+            display: flex; flex-direction: row; overflow-x: auto;
+            scroll-snap-type: x mandatory; scroll-behavior: smooth;
+            gap: 12px; padding-bottom: 6px; -webkit-overflow-scrolling: touch;
+        }
         div[class*="st-key-gunkarti_mobil_"] {
-            border: 1px solid #E4DDCB; border-radius: 6px;
-            padding: 8px 10px; margin-bottom: 10px;
+            flex: 0 0 100%; scroll-snap-align: center;
+            border: 2px solid #C88A2E; border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(122,74,28,0.15);
+            background: #FFFDF8;
+            padding: 10px 12px; box-sizing: border-box;
         }
         .omgo-mobil-baslik {
-            font-family: 'Fraunces', serif; font-weight: 700; font-size: 15px;
-            color: #7A4A1C; margin-bottom: 6px;
+            font-family: 'Fraunces', serif; font-weight: 700; font-size: 16px;
+            color: #7A4A1C; margin-bottom: 8px; text-align: center;
         }
         .omgo-mobil-hs { color: #A6472F; }
         div[class*="st-key-gunkarti_mobil_"] div[data-testid="stPageLink"] {
