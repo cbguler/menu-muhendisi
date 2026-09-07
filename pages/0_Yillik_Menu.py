@@ -2068,6 +2068,8 @@ def _hafta_kartlarini_goster_mobil(hafta, detay, fiyat_verisi_var, hedefler, ay_
                     else:
                         st.markdown("<div class='omgo-tablo-bos-hucre'>&nbsp;</div>", unsafe_allow_html=True)
 
+
+def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
     """Aylık menüyü ekrandaki kart görünümüyle AYNI düzende Excel'e döker:
     her gün bir sütun, altında Öğle/Akşam blokları (yemekler + besin +
     alerjen + maliyet) aynı sırayla. Bir finansal model degil -- formul
