@@ -1269,12 +1269,29 @@ def _tablo_stilini_uygula():
             scroll-snap-type: x mandatory; scroll-behavior: smooth;
             gap: 12px; padding-bottom: 6px; -webkit-overflow-scrolling: touch;
         }
+        /* YUZ OTUZUNCU DUZELTME (6 Eylul 2026): Bahri ekran goruntusuyle
+           kanitladi -- her kart, tum genislikte bir "slayt" OLACAGINA,
+           7'de-1 dar bir seride sikismisti (harfler alt alta yaziliyordu).
+           Kok sebep: `flex:0 0 100%` kuralim `st-key-gunkarti_mobil_`
+           SINIFINA uygulanmisti, ama bu muhtemelen flex kapsayicinin
+           GERCEK DOGRUDAN cocugu DEGIL -- Streamlit ARAYA kendi
+           sarmalayicisini koyuyor olabilir, bu da benim kuralimin HICBIR
+           ETKISI OLMAMASINA yol aciyordu (varsayilan esit-paylasimli flex
+           davranisi devam ediyordu). Cozum: Streamlit'in o ara katmanin
+           TAM ADINI bilmeye GEREK KALMADAN, DOGRUDAN COCUK SECICISI (>)
+           ile "bu flex kapsayicinin HANGI DOGRUDAN COCUGU olursa olsun"
+           tam genislik ver -- boylece hangi seviyede oldugu ONEMLI
+           DEGIL. */
+        div[class*="st-key-haftakartlari_mobil_"] > div {
+            flex: 0 0 100% !important; min-width: 100% !important;
+            scroll-snap-align: center;
+        }
         div[class*="st-key-gunkarti_mobil_"] {
-            flex: 0 0 100%; scroll-snap-align: center;
             border: 2px solid #C88A2E; border-radius: 8px;
             box-shadow: 0 2px 8px rgba(122,74,28,0.15);
             background: #FFFDF8;
             padding: 10px 12px; box-sizing: border-box;
+            width: 100%;
         }
         .omgo-mobil-baslik {
             font-family: 'Fraunces', serif; font-weight: 700; font-size: 16px;
