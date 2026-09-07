@@ -1242,6 +1242,29 @@ def _tablo_stilini_uygula():
         div[class*="st-key-gunkutusu_"] div[data-testid="stPageLink"] p {
             font-size: 11px !important; padding: 1px 3px;
         }
+        /* YUZ YIRMI SEKIZINCI DUZELTME (6 Eylul 2026): masaustu (coklu
+           sutun) tablo ile mobil (tek sutun kart) gorunumu birbirini
+           DISLIYOR -- hangisinin GORUNECEGI SADECE ekran genisligiyle
+           belirleniyor, masaustu_nav/mobil_nav ayriminda ZATEN
+           KANITLANMIS AYNI teknik. */
+        @media (max-width: 767px) {
+            div[class*="st-key-haftatablosu_"] { display: none !important; }
+        }
+        @media (min-width: 768px) {
+            div[class*="st-key-haftakartlari_mobil_"] { display: none !important; }
+        }
+        div[class*="st-key-gunkarti_mobil_"] {
+            border: 1px solid #E4DDCB; border-radius: 6px;
+            padding: 8px 10px; margin-bottom: 10px;
+        }
+        .omgo-mobil-baslik {
+            font-family: 'Fraunces', serif; font-weight: 700; font-size: 15px;
+            color: #7A4A1C; margin-bottom: 6px;
+        }
+        .omgo-mobil-hs { color: #A6472F; }
+        div[class*="st-key-gunkarti_mobil_"] div[data-testid="stPageLink"] {
+            margin-bottom: 2px;
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -1977,9 +2000,74 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
             _gun_popup_dialog(gun, detay, hedefler, fiyat_verisi_var, card_id, baslik_metni, hafta)
 
 
+def _hafta_kartlarini_goster_mobil(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, hafta_no, yil_secimi=None):
+    """YUZ YIRMI SEKIZINCI DUZELTME (6 Eylul 2026): Bahri mobil ekran
+    goruntusuyle kanitladi -- masaustu icin tasarlanan COK SUTUNLU
+    tablo (st.columns(7)) mobilde Streamlit'in kendi varsayilan
+    davranisiyla DIKEYE cevriliyor -- 7 gunun tum "Öğle" etiketleri
+    ust uste, sonra TUM tariflerin karisik bir yigin halinde, hangi
+    tarifin hangi gune ait oldugu TAMAMEN kayboluyor.
 
+    Bahri'nin ACIK talebi: "masaustundeki gorunumu HIC BOZMADAN"
+    mobili duzelt. Bu yuzden MEVCUT `_hafta_kartlarini_goster`
+    fonksiyonuna TEK BIR SATIR bile DOKUNULMADI -- bunun yerine
+    TAMAMEN AYRI, mobile ozel bu fonksiyon eklendi. Her gun kendi
+    TEK SUTUNLU kartinda (tarih+gun+Öğle+Akşam BIRLIKTE, sirayla)
+    gosteriliyor -- coklu sutun hizalamaya hic gerek yok, cunku
+    mobilde zaten yan yana degil, alt alta okunuyor.
 
-def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
+    Hangi surumun (masaustu/mobil) GORUNECEGI SADECE CSS ile
+    (@media max-width/min-width, _tablo_stilini_uygula icinde)
+    belirleniyor -- HER IKI surum de HER ZAMAN render ediliyor,
+    sadece biri gizleniyor. Bu, projede zaten KANITLANMIS bir desen
+    (masaustu_nav / mobil_nav ayrimi ile AYNI teknik)."""
+    GUN_ADLARI = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"]
+    card_idler = [f"{ay_adi}-{hafta_no}-{gun['gun']}" for gun in hafta]
+
+    with st.container(key=f"haftakartlari_mobil_{ay_adi}_{hafta_no}"):
+        for i, gun in enumerate(hafta):
+            tarih = gun.get("tarih")
+            hafta_sonu_mu = False
+            if tarih is not None:
+                if yil_secimi is not None and tarih.year != yil_secimi:
+                    tarih_metni = f"{tarih.day} {AYLAR_SIRALI[tarih.month - 1]} {tarih.year}"
+                else:
+                    tarih_metni = f"{tarih.day} {AYLAR_SIRALI[tarih.month - 1]}"
+                gun_adi = GUN_ADLARI[tarih.weekday()]
+                hafta_sonu_mu = tarih.weekday() >= 5
+            else:
+                tarih_metni = ""
+                gun_adi = f"Gün {gun['gun']}"
+
+            hs_sinifi = " omgo-mobil-hs" if hafta_sonu_mu else ""
+            with st.container(key=f"gunkarti_mobil_{card_idler[i]}"):
+                st.markdown(
+                    f"<div class='omgo-mobil-baslik{hs_sinifi}'>{tarih_metni} — {gun_adi}</div>",
+                    unsafe_allow_html=True,
+                )
+                if st.button(f"Ayrıntılar / Maliyet", key=f"btn_gun_mobil_{card_idler[i]}", use_container_width=True):
+                    st.session_state["yillik_menu_popup_gun_id"] = card_idler[i]
+                    st.session_state["yillik_menu_popup_yuz"] = "arka"
+                    st.rerun()
+
+                for ogun_adi in ("Öğle", "Akşam"):
+                    liste = gun["ogunler"].get(ogun_adi, [])
+                    t_ham = _ogun_toplami(liste, detay) if liste else {}
+                    hedefte, _ = _hedefte_mi(ogun_adi, t_ham, hedefler, hafta, detay)
+                    blink_sinifi = " omgo-etiket-blink" if hedefte is False else ""
+                    st.markdown(
+                        f"<div class='omgo-tablo-ogun-etiketi{blink_sinifi}' style='margin:6px 0 2px;'>{ogun_adi}</div>",
+                        unsafe_allow_html=True,
+                    )
+                    if liste:
+                        for j, tarif_adi in enumerate(liste):
+                            st.page_link(
+                                "pages/5_Tarif_Kutuphanesi.py", label=tarif_adi,
+                                query_params={"tarif": tarif_adi}, use_container_width=True,
+                            )
+                    else:
+                        st.markdown("<div class='omgo-tablo-bos-hucre'>&nbsp;</div>", unsafe_allow_html=True)
+
     """Aylık menüyü ekrandaki kart görünümüyle AYNI düzende Excel'e döker:
     her gün bir sütun, altında Öğle/Akşam blokları (yemekler + besin +
     alerjen + maliyet) aynı sırayla. Bir finansal model degil -- formul
@@ -2186,6 +2274,7 @@ if aylik:
 
     for i, hafta in enumerate(aylik["haftalar"], start=1):
         _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, kayitli_hedefler, aylik["ay"], i, aylik["yil"])
+        _hafta_kartlarini_goster_mobil(hafta, detay, fiyat_verisi_var, kayitli_hedefler, aylik["ay"], i, aylik["yil"])
         # YUZ YIRMINCI DUZELTME (5 Eylul 2026): Bahri'nin talebi --
         # "Aralık — N. Hafta" basligi tamamen kaldirildi (tablo zaten
         # tarihleri gosteriyor, ayrica bir hafta basligina gerek yok).
