@@ -46,6 +46,21 @@ ASAMA_IKON_KOKLERI = {
     "marine_etme": ["marine"],
     "dinlendirme": ["dinlen", "demle"],
     "baharatlama": ["baharatla", "tatlandır", "tatlandir"],
+    # YETMIS SEKIZINCI DUZELTME (6 Eylul 2026): Bahri'nin onceki
+    # oturumda tespit ettigi "kapsam boslugu" (240 tariflik metinde 20
+    # eylem listesinin disinda kalan ama sik gecen fiiller) icin, GERCEK
+    # kelime sikligi verisiyle (satir bazinda) 4 yeni eylem eklendi:
+    # yikama (49 satir), doldurma (19 satir), sis_dizme (~17-24 satir),
+    # kirma (13 satir, ozenle DUZELTILMIS sayim -- "kırmızı" kelimesiyle
+    # yanlislikla karisan ilk kaba sayim 35 gosteriyordu).
+    "yikama": ["yıkayın", "yıkayıp", "yıkanmış", "yikayin", "yikayip", "yikanmis"],
+    "doldurma": ["doldur"],
+    "sis_dizme": ["şiş", "sis"],
+    # "kirma" icin BILEREK KISA "kır"/"kir" koku KULLANILMADI -- bu,
+    # "kırmızı" (red) kelimesiyle YANLISLIKLA eslesirdi (ikisi de "kır"
+    # ile basliyor). Bunun yerine SADECE gercekten kullanilan TAM
+    # cekimli emir/ulac formlari listelendi.
+    "kirma": ["kırın", "kırıp", "kırarak", "kırılmış", "kirin", "kirip", "kirarak", "kirilmis"],
 }
 
 
@@ -81,6 +96,14 @@ _SPESIFIK_MALZEME_VARYANTLARI = [
     # (10 tarif), patlican/havuctan (7 tarif) belirgin sekilde onde.
     (["limon"], "limon"),
     (["biber"], "biber"),
+    # YETMIS SEKIZINCI DUZELTME (6 Eylul 2026): "kirma" eylemi HEM
+    # yumurta kirmak HEM findik/ceviz gibi kabuklu yemis kirmak icin
+    # kullaniliyor -- ikisi GORSEL OLARAK COK FARKLI (yumurta kirmak =
+    # kabuk acip icini bosaltmak; findik/ceviz kirmak = sert kabugu
+    # ezmek/kirmak). "yumurta" ozel varyanti eklendi -- "kirma_yumurta"
+    # dosyasi varsa o kullanilir, yoksa genel "kirma" (findik/ceviz
+    # gorseli) devreye girer.
+    (["yumurta"], "yumurta"),
 ]
 
 MEYVE_KOKLERI = [
@@ -91,7 +114,7 @@ MEYVE_KOKLERI = [
     "ahududu", "mersin",
 ]
 
-_MALZEME_DUYARLI_ISLEMLER = {"dograma", "dilimleme", "rendeleme", "soyma"}
+_MALZEME_DUYARLI_ISLEMLER = {"dograma", "dilimleme", "rendeleme", "soyma", "kirma"}
 
 
 def _kelimelerde_kok_var_mi(kelimeler, kokler):
