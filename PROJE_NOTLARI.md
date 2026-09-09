@@ -6204,3 +6204,1656 @@ tekrar kontrol edildi.
 **Dosya durumu:** `pages/0_Yillik_Menu.py` -- `_hafta_kartlarini_goster`
 yatay yapıya geri döndürüldü, `_tablo_stilini_uygula` yeni sınıflara
 göre güncellendi.
+
+
+### 5 Eylül 2026 — XV. Oturum (devam): Tarih Üstte, Boşluksuz Tablo, Satır Hizalama
+
+Bahri üç net düzeltme verdi (yine ekran görüntüsü/render üzerinden):
+
+1. **Tarih gün adının ÜSTÜNE alındı** ("29 Aralık" üstte, "Pazartesi"
+   altta).
+2. **Günler arası boşluklar kaldırıldı:** `st.columns(gap=None)` (resmi
+   Streamlit API'sinden doğrulandı -- "small" yerine None gerçekten
+   sıfır boşluk veriyor) + kutu CSS'i sadeleştirildi (border-radius/
+   margin kaldırıldı, sadece sol/sağ kenarlık -- üst üste istiflenince
+   kesintisiz dikey çizgiler oluşturuyor).
+3. **Öğle/Akşam porsiyonları GERÇEKTEN hizalı:** Mimari değişiklik --
+   eskiden HER GÜN kendi sütununda bağımsız olarak tariflerini alt
+   alta diziyordu (farklı tarif sayılarında hizasız görünüyordu).
+   Şimdi SATIR BAZLI render ediliyor: her "satır" (tarih, gün adı,
+   Öğle 1. tarif, Öğle 2. tarif, ...) kendi `st.columns(7)` çağrısını
+   alıyor -- bu sayede Streamlit'in kendi yatay düzeni sayesinde TÜM
+   günlerin aynı satırdaki içeriği gerçekten aynı yükseklikte
+   hizalanıyor. Eksik tarifi olan günler için o hücre boş bırakılıyor.
+
+Satır hizalama mantığı izole test edildi (farklı tarif sayılarına
+sahip iki gün senaryosuyla) -- doğru satırlara doğru içerik/boşluk
+yerleştirildiği doğrulandı. CSS tırnak/parantez dengesi yine kontrol
+edildi (geçmişteki sızıntı dersi nedeniyle).
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` -- `_hafta_kartlarini_goster`
+tamamen satır-bazlı mimariye geçirildi, `_tablo_stilini_uygula` CSS'i
+buna göre güncellendi.
+
+
+### 5 Eylül 2026 — XV. Oturum (devam): Tablo Görsel Cila
+
+Bahri "düzen tam istediğim gibi oldu, biraz güzelleştirelim" dedi --
+yapı (satır hizalama, boşluksuz sütunlar) değişmedi, sadece görsel
+cila eklendi:
+- Tabloyu çevreleyen üst çizgi (tarih satırının üstünde altın rengi).
+- "Öğle"/"Akşam" etiket satırlarına hafif altın-tonu zemin rengi.
+- Gün adı butonuna ve tarif linklerine hover vurgusu (fare üzerine
+  gelince hafif renk değişimi).
+- Biraz daha nefes alan iç boşluklar.
+
+CSS yine izole `_tablo_stilini_uygula()` içinde, tırnak/parantez
+dengesi kontrol edildi.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` güncellendi.
+
+
+### 5 Eylül 2026 — XV. Oturum (devam): Font Eşitleme + Kesintisiz Çizgiler
+
+Bahri üç ince ayar istedi:
+1. Tarih fontu, altındaki gün adı fontuyla (Fraunces, 600, 13.5px)
+   eşitlendi.
+2+3. **Kök sebep aynıydı:** çizgilerin "kesik kesik" görünmesi VE
+   hafta sonu renklendirmesindeki beyaz boşluklar, Streamlit'in
+   sütun içindeki üst üste yığılan kutular arasına koyduğu VARSAYILAN
+   boşluktan (gap) kaynaklanıyordu. Çözüm: tüm satırları (tarih -> son
+   akşam tarifi) saran yeni bir dış kapsayıcı (`haftatablosu_...`)
+   eklendi, CSS'te SADECE bu kapsayıcı içindeki `stVerticalBlock`
+   elemanlarının gap'i 0'a çekildi -- bu değişiklik SADECE bu tabloyu
+   etkiliyor, sayfadaki başka `st.columns()` kullanımlarına dokunmuyor.
+
+CSS tırnak/parantez dengesi yine kontrol edildi (12/12, 13/13, 42
+çift tırnak, 1/1 style etiketi).
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` -- `_hafta_kartlarini_goster`
+dış kapsayıcı ile sarıldı, `_tablo_stilini_uygula` CSS'i güncellendi.
+
+
+### 5 Eylül 2026 — XV. Oturum (devam): Pop-up Sürekli Yeniden Açılma Hatası Düzeltildi
+
+Bahri bildirdi: pop-up'ı bir kere açıp kapattığı halde sürekli tekrar
+açılıyordu. Kök sebep bulundu (resmi Streamlit dokümantasyonundan
+doğrulandı): pop-up'ı tetikleyen `yillik_menu_popup_gun_id` bayrağı
+HİÇBİR ZAMAN temizlenmiyordu -- bir düğmenin aksine (ki `st.button()`
+SADECE tıklama anında True döner, sonraki her çalıştırmada otomatik
+False'a döner), bu session_state bayrağı SONSUZA KADAR true kalıyordu.
+Bu yüzden sayfadaki HERHANGİ bir etkileşim (hatta alakasız bir şey)
+sayfayı yeniden çalıştırdığında, bu koşul hâlâ doğruydu ve pop-up'ı
+TEKRAR açıyordu.
+
+**Düzeltme:** Bayrak artık okunduğu anda (dialog açılmadan hemen önce)
+temizleniyor -- bir düğme gibi TEK SEFERLİK bir tetikleyici davranışı.
+Streamlit dokümantasyonundan doğrulandı: `st.dialog` kendi İÇİNDEKİ
+etkileşimleri (Tekrar Dene/Devam Et gibi) FRAGMENT olarak ele alıyor
+-- sadece dialog fonksiyonunun kendisini yeniden çalıştırıyor, DIŞ
+script'i (bu bayrak kontrolü dahil) DEĞİL. Yani bayrağı hemen
+temizlemek, zaten açık olan dialog'un kendi iç etkileşimlerini
+BOZMUYOR, sadece dış script'in onu gereksiz yere tekrar tekrar
+açmasını engelliyor.
+
+İzole test edildi: tıklama sonrası doğru açılıyor, sonraki alakasız
+"yeniden çalıştırmalarda" bir daha AÇILMIYOR, farklı bir güne
+tıklanınca doğru şekilde YENİ pop-up açılıyor.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` güncellendi.
+
+
+### 5 Eylül 2026 — XV. Oturum (devam): Gerçek Kök Sebep Bulundu — Satırlar Arası Boşluk
+
+Bahri hâlâ kesik çizgi ve hafta sonu boşlukları görüyordu -- bir
+önceki "düzeltme" YETERSIZ kalmıştı. Gerçek render edilmiş DOM'u
+tekrar inceleyip TAM yapıyı çıkardım:
+
+```
+stVerticalBlock (st-key-haftatablosu_...)   <- DIŞ SARMALAYICI
+  stHorizontalBlock (tarih satırı)          <- her SATIR ayrı blok
+  stHorizontalBlock (gün adı satırı)
+  stHorizontalBlock (Öğle etiketi satırı)
+  ... (her tarif satırı için birer tane daha)
+```
+
+**Kök sebep:** Önceki kuralım `div[class*="st-key-haftatablosu_"]
+div[data-testid="stVerticalBlock"]` -- bu SADECE kapsayıcının
+İÇİNDEKİ (descendant) bloklarını hedefliyordu. Ama asıl boşluk,
+kapsayıcının KENDİ DOĞRUDAN çocukları (yukarıdaki stHorizontalBlock
+satırların HER BİRİ) ARASINDAKİ gap'ten geliyordu -- kapsayıcının
+KENDİSİ hiç hedeflenmemişti.
+
+**Düzeltme:** `div[class*="st-key-haftatablosu_"] { gap: 0 !important;
+}` eklendi (kapsayıcının kendisi için) -- önceki descendant kuralı da
+korunarak. Bu, hem kesik çizgi hem hafta sonu beyaz boşluk sorununun
+AYNI kök sebepten geldiğini doğruluyor -- tek bir düzeltme ikisini de
+çözmeli.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` güncellendi.
+
+
+### 5 Eylül 2026 — XV. Oturum (devam): Ay Geçiş İşareti Eksikti
+
+Bahri fark etti: 2026 Ocak seçiliyken, liste "...31 (Akşam), 1 (Akşam),
+2 (Akşam)..." şeklinde devam ediyordu -- Aralık'tan Ocak'a geçildiği
+hiçbir yerde belirtilmiyordu, "1" ve "2" hangi aya ait belirsizdi.
+
+**Kök sebep:** Önceki mantık, SEÇİLİ ay için HİÇBİR ZAMAN önek
+göstermiyordu (Bahri'nin "zaten seçili, tekrar yazmaya gerek yok"
+talebine göre) -- ama bu, seçili OLMAYAN bir bağlamdan (Aralık) seçili
+aya (Ocak) geçişte de öneki bastırıyordu.
+
+**Düzeltme:** Artık HER bağlam değişiminde (seçili aya geçiş DAHİL)
+bir kez ay adı gösteriliyor, sadece AYNI bağlam içinde art arda gelen
+günlerde önek atlanıyor. Bahri'nin tam senaryosuyla test edildi: "...31
+(Akşam), Ocak 1 (Akşam), 2 (Akşam), 3 (Öğle)..." -- geçiş net, sonrası
+sade.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` -- `_hedef_disi_liste_metni`
+düzeltildi.
+
+
+### 5 Eylül 2026 — XV. Oturum (devam): Yıl Bilgisi + Boş Profil Seçeneği
+
+**CSS durumu (netlik için):** .mhtml dosyası bu sefer `<style>`
+etiketinin kendisini hiç içermiyordu (muhtemelen tarayıcının mhtml
+kaydı, dinamik eklenen stil etiketlerini arşivlemiyor) -- bu, CSS
+düzeltmesinin çalışmadığı ANLAMINA GELMİYOR, sadece bu yöntemle
+doğrulanamıyor. Bahri'den düz bir ekran görüntüsü (mhtml değil)
+istendi, CSS durumunu onunla teyit edeceğiz.
+
+**1. Yıl bilgisi eksikliği düzeltildi:** Aralık 2026 seçiliyken Ocak
+2027'ye sarkan günler sadece "1 Ocak" gösteriyordu, hangi yıla ait
+olduğu belirsizdi. `_hafta_kartlarini_goster`'a `yil_secimi` parametresi
+eklendi (çağrı yerinde `aylik["yil"]` -- canlı widget değil, gösterilen
+ayın kendi kayıtlı yılı -- geçiriliyor); tarih metni artık seçili
+yıldan FARKLIYSA yıl da ekleniyor (ör. "1 Ocak 2027").
+
+**2. "Boş Profil" seçeneği eklendi:** Bahri fark etti -- "Maliyet
+hesabı için porsiyon profili" listesindeki TÜM seçenekler onun
+Abonelik'te oluşturduğu GERÇEK profillerdi; hepsinin zaten kayıtlı
+hedefi varsa, manuel/geçici hedef girme arayüzüne HİÇBİR YOLLA
+erişilemiyordu. Listenin sonuna, hedefi hiç olmayan (bu yüzden
+otomatik olarak manuel giriş arayüzünü açan) sentetik bir "Boş Profil
+(özel/geçici hedef)" seçeneği eklendi -- Abonelik'e kaydedilmeden,
+sadece o üretim için geçici bir hedef girmeyi sağlıyor.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` güncellendi.
+
+
+### 5 Eylül 2026 — XV. Oturum (devam): Tarif Satırları Arası Kalan Boşluk Düzeltildi
+
+Bahri normal (mhtml olmayan) bir ekran görüntüsüyle kanıtladı: başlık
+satırları (tarih/gün adı) düzgün kesintisiz görünüyordu, ama TARİF
+SATIRLARI ARASINDA (ör. "Bulgur Pilavı" ile "Cacık" arasında) hâlâ
+beyaz boşluk vardı.
+
+**Kök sebep:** `st.page_link`/`st.markdown` gibi her öge, Streamlit'in
+KENDİ `stElementContainer` sarmalayıcısına konur, ve bu sarmalayıcının
+DA kendi varsayılan dış boşluğu (margin) vardı -- önceki düzeltmeler
+SADECE `stVerticalBlock`/`stHorizontalBlock` seviyesindeki gap'i
+sıfırlamıştı, `stElementContainer`'ın KENDİ marjini hiç hedeflenmemişti.
+
+**Düzeltme:** Tablo kapsayıcısı içindeki TÜM olası Streamlit sarmalayıcı
+seviyeleri (`stElementContainer`, `stColumn`, `stLayoutWrapper`, ayrıca
+`stHorizontalBlock`'un kendisi) kapsamlı şekilde sıfırlandı -- artık
+hiçbir seviyede boşluk kalan bir yer olmamalı.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` güncellendi.
+
+
+### 5 Eylül 2026 — XV. Oturum (devam): KRİTİK REGRESYON — Tekrar Dene Pop-up'ı Kapatıyordu
+
+Bahri bildirdi: "Tekrar Dene"ye tıklayınca pop-up KAYBOLUYORDU (kapanıyordu),
+kapatması gerekirken. Bu, birkaç mesaj önceki "pop-up sürekli yeniden
+açılıyor" düzeltmemin YAN ETKİSİYDİ.
+
+**Kök sebep (resmi Streamlit dokümantasyonundan doğrulandı):**
+`st.rerun()`'ün VARSAYILAN kapsamı `scope="app"` (TAM sayfa yeniden
+çalışır), `"fragment"` DEĞİL. Pop-up (st.dialog, fragment davranışı
+miras alır) içindeki "Tekrar Dene"/"Devam Et"/"◤ Besin değerleri"
+düğmeleri düz `st.rerun()` çağırıyordu -- bu TAM SAYFAYI yeniden
+çalıştırıyordu. Az önceki düzeltmemde, pop-up'ı tetikleyen bayrağı
+"tek seferlik" yapmak için AÇILIR AÇILMAZ temizliyordum -- bu YENİ
+tam-sayfa yeniden çalıştırma, o bayrağın ZATEN BOŞ olduğunu görüp
+pop-up'ı YENİDEN AÇMIYOR, KAPATIYORDU.
+
+**Düzeltme:** Pop-up İÇİNDEKİ üç `st.rerun()` çağrısı (Tekrar Dene,
+Devam Et, ön/arka çevirme düğmesi) `st.rerun(scope="fragment")` olarak
+değiştirildi -- bu SADECE dialog fragment'ını yeniden çalıştırır, DIŞ
+script'i (ve oradaki bayrak kontrolünü) ETKİLEMEZ. Pop-up DIŞINDAKİ
+(gün adı butonu, bölge seçici, vb.) `st.rerun()` çağrıları düz
+bırakıldı -- onlar zaten dış script'ten çağrılıyor, tam sayfa
+yenilemesi doğru davranış.
+
+**CSS/kesik çizgi durumu:** Bahri hâlâ eski görünümü bildiriyor --
+üçüncü kapsamlı CSS düzeltmesinden sonra bile. Tarayıcı önbelleğinin
+(hard refresh yapılmamış olabilir) sorumlu olabileceği belirtildi,
+Bahri'den sert yenileme (Ctrl+Shift+R) denemesi istendi.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` güncellendi.
+
+
+### 5 Eylül 2026 — XV. Oturum (devam): Dikey Çizgi Sorunu — Yerleşik Streamlit Özelliğine Geçildi
+
+Bahri, "kesik çizgi TAM olarak nerede?" sorusuna net cevap verdi:
+**sütunlar arasındaki dikey ayırıcı çizgiler**. Bu, üç CSS denemesinden
+sonra da düzelmemişti.
+
+**Kök sebep:** Benim kendi CSS kenarlığım (`gunkutusu_` kutularının
+`border-left`/`border-right`'ı) HER SATIR için AYRI bir kutuya
+uygulanıyordu -- bunların üst üste gelip TEK bir sürekli çizgi gibi
+görünmesi gerekiyordu, ama herhangi bir küçük render farkında "dikiş"
+gibi görünebiliyordu.
+
+**Çözüm:** Kendi CSS kenarlığımı tamamen bırakıp, Streamlit'in KENDİ
+YERLEŞİK `st.columns(border=True)` özelliğine geçildi (1.41.0'da
+eklendi, resmi API'den doğrulandı) -- bu, Streamlit'in kendi native
+render motorunun çizdiği tek parça bir kutu kenarlığı, benim küçük
+parçalı CSS'imden çok daha güvenilir olmalı. Tüm 6 `st.columns()`
+çağrısına `border=True` eklendi, çakışan özel CSS kenarlığı kaldırıldı.
+
+**Not:** Bu, artık her satırın etrafında (yatay çizgiler dahil) tam
+bir kutu görünümü verecek -- eskisi gibi sadece dikey çizgiler değil,
+gerçek bir ızgara görünümü. Bu, "gerçek tablo görünümü" isteğine daha
+da uygun olabilir, ama Bahri'nin tepkisini görmemiz gerekiyor.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` güncellendi.
+
+
+### 5 Eylül 2026 — XV. Oturum (devam): Dört Kozmetik Düzeltme
+
+Bahri "şimdiki hali öncekinden daha iyi" dedi (native border=True
+işe yaradı), dört ince ayar istedi:
+
+1. **Tarih + Gün adı birleştirildi:** Artık TEK bir kutuda (eskiden
+   iki ayrı satır/kutuydu, aralarında ince bir çizgi görünüyordu).
+2. **"Öğle"/"Akşam" etiketleri, o öğünün İLK tarifiyle AYNI kutuya
+   birleştirildi** -- kendi başlarına ince bir şerit kutu olmaktan
+   çıktılar. Sonraki tarifler (varsa) yine kendi satırlarında (hizalama
+   korunuyor).
+3. **Hafta sonu arka planı güçlendirildi:** `!important` eklendi, AYRICA
+   modern CSS `:has()` seçiciyle `stColumn`un KENDİSİNE de (sadece
+   içindeki `gunkutusu_` değil) hafta sonu rengi uygulanıyor -- native
+   `border=True` kutusunun kendi varsayılan arka planını ezmek için.
+4. **Tüm yemek kutuları için tutarlı minimum yükseklik:** `st.page_link`
+   ve boş hücre yer tutucusuna `min-height: 32px` eklendi -- uzun
+   isimlerin sarılabileceği, ve TÜM satırlarda (kısa isim olsa bile)
+   tutarlı bir yükseklik sağlıyor.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` -- `_hafta_kartlarini_goster`
+yeniden yapılandırıldı (birleşik kutular), `_tablo_stilini_uygula`
+CSS'i güncellendi.
+
+
+### 5 Eylül 2026 — XV. Oturum (devam): "Öğle"/"Akşam" Etiketi Birleştirmesi Geri Alındı
+
+Bir önceki değişiklik (etiketi ilk tarifle aynı kutuya birleştirmek)
+YANLIŞ yorumdu. Bahri netleştirdi: "ayrı VE küçük bir etiket" istiyor,
+ayrıca TÜM tarif kutularının (ilk tarif dahil) birbiriyle AYNI boyutta
+olmasını istiyor.
+
+**Düzeltme:** Etiket satırı KENDİ ayrı/küçük satırına geri döndü
+(kompakt CSS ile -- normal tarif kutularından daha az iç boşluk).
+TÜM tarif kutuları (indeks 0 dahil) artık AYNI tip/boyutta, ayrı
+birer satır -- eskiden sadece indeks 1+ ayrıydı, indeks 0 etikete
+yapışıktı.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` -- `_hafta_kartlarini_goster`
+ve `_tablo_stilini_uygula` güncellendi.
+
+
+### 5 Eylül 2026 — XV. Oturum (devam): Etiket Boyutu Tutarlılığı + Belirgin Tarih Rozeti
+
+Bahri üç düzeltme istedi:
+
+1. **"Öğle"/"Akşam" ayrı, tek satırlık etiket olarak kalsın** -- bir
+   önceki oturumdaki "ilk tarifle birleştirme" denemesi istenmiyordu,
+   koddaki bu kısım zaten ayrı satırlara geri döndürülmüştü.
+2. **Etiket boyutu tutarsızlığı düzeltildi:** `.omgo-tablo-ogun-etiketi`
+   artık SABİT bir `height: 20px; line-height: 20px;` ile deterministik
+   -- eskiden sadece padding'e dayanıyordu, bu da (muhtemelen native
+   `border=True` kutusunun kendi iç boşluk davranışıyla etkileşerek)
+   ÖĞLE ve AKŞAM etiketlerinin farklı boyutta görünmesine yol açmış
+   olabilir.
+3. **Tarih artık belirgin bir rozet:** Sabit koyu kahve/altın renkli
+   (#7A4A1C), krem metinli (#FDF6EC) bir "rozet" haline getirildi --
+   bu renk hafta içi/hafta sonu ayrımından TAMAMEN BAĞIMSIZ (kendi
+   arka planı olduğu için), böylece hafta sonu sarısıyla asla
+   karışmıyor, her zaman net okunuyor.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` -- `_tablo_stilini_uygula`
+CSS'i güncellendi.
+
+
+### 5 Eylül 2026 — XV. Oturum (devam): Tarih+Gün Birleşik Pastel Etiket + 2 Satırlık Yemek Kutuları
+
+Bahri'nin bir önceki mesajdaki "koyu kahverengi ayrı rozet" denemesi
+YANLIŞ anlaşılmıştı ("Yahu bu ne? Böyle mi anlattım ben?"). Gerçek
+istek netleştirildi:
+
+1+2. **Tarih+Gün TEK BÜTÜN bir etiket:** Pastel arka plan (#F3E3C3),
+   kalın kenarlık (2px, altın rengi #C88A2E), ikisi de ORTALANMIŞ,
+   aralarında iç ayırıcı çizgi YOK (bütünlük hissi için kaldırıldı).
+3. **Öğle/Akşam tek satırlık ayrı etiket olarak KALDI** (zaten
+   doğruydu, değişmedi).
+4. **Yemek kutuları 2 satırlık sabit yüksekliğe** (`min-height: 40px`,
+   32px'ten yükseltildi) -- kısa isimlerle de görsel tutarlılık,
+   uzun isimlere de yer.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` -- `_tablo_stilini_uygula`
+CSS'i güncellendi.
+
+
+### 5 Eylül 2026 — XV. Oturum (devam): Etiket Görünürlüğü + Sabit Yemek Kutusu Boyu
+
+Bahri iki eksik bildirdi:
+
+1. **"ÖĞLE"/"AKŞAM" hâlâ ayrı görünür bir kutu gibi durmuyordu** --
+   eskiden `min-height: 0 !important` ile FAZLA sıkıştırılmıştı,
+   sınırları belirsizleşiyordu. Artık sabit/görülebilir bir yüksekliğe
+   (`height: 24px`) getirildi.
+2. **Yemek kutuları "bazıları kalın bazıları ince" görünüyordu** --
+   eskiden SADECE `min-height` vardı (içerik daha uzunsa BÜYÜYEBİLİYORDU,
+   bu da satırlar arası farklı yükseklige yol açıyordu). Artık SABİT
+   (min değil, TAM `height: 44px`) yükseklik -- kısa isim de, uzun (2
+   satıra saran) isim de AYNI kutuya sığıyor, görsel tutarlılık
+   sağlanıyor. `:not()` seçicileriyle başlık/etiket kutuları bu
+   kuraldan hariç tutuldu (onların kendi ayrı boyut ihtiyacı var).
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` -- `_tablo_stilini_uygula`
+CSS'i güncellendi.
+
+
+### 5 Eylül 2026 — XV. Oturum (devam): Eski Nokta Açıklaması Kaldırıldı
+
+"● Ana Yemek ● Yardımcı Yemek ● Tamamlayıcılar" açıklama metni
+kaldırıldı -- bu, eski kart tasarımındaki renkli noktaları açıklıyordu,
+yeni tabloda o noktalar zaten yok, açıklama artık anlamsızdı.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` güncellendi.
+
+
+### 5 Eylül 2026 — XV. Oturum (devam): ÜÇÜNCÜ DENEME — Kenarlığı Çizen Elemanın Kendisi Hedeflendi
+
+Bahri'nin haklı sinirlenmesi üzerine (üçüncü kez aynı sorunu bildirdi),
+tamamen farklı bir yönteme geçildi. Önceki iki deneme (iç elemanlara
+yükseklik vermek: `min-height`, sonra `height`) GÜVENİLİR SONUÇ VERMEDİ.
+
+**Yeni yöntem:** Görünen kenarlığı FİİLEN ÇİZEN eleman `stColumn`ın
+KENDİSİ -- bu yüzden yükseklik sabitlemesi de DOĞRUDAN `stColumn`a,
+içindeki İÇERİK TÜRÜNE göre `:has()` seçiciyle uygulandı (`:has()`
+zaten hafta sonu rengi düzeltmesinde BAŞARIYLA çalışmıştı, aynı
+güvenilir teknik burada da kullanıldı):
+- `stColumn:has(etiket)` → sabit 26px (Öğle/Akşam etiketi).
+- `stColumn:has(stPageLink veya boş hücre)` → sabit 60px (3 satır
+  standart yükseklik, Bahri'nin son talebi -- 2'den 3'e çıkarıldı).
+
+**Etiket ayrıca güçlü/dolu renkli bir blok yapıldı** (soluk ton değil,
+tam doygun altın #C88A2E + beyaz metin) -- kenarlık net görünmese bile
+RENK BLOĞU kesinlikle "burada ayrı bir şey var" mesajını versin diye.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` -- `_tablo_stilini_uygula`
+CSS'i kapsamlı şekilde yeniden yazıldı.
+
+
+### 5 Eylül 2026 — XV. Oturum (devam): "Hedef Dışı"/"Hedefte" Rozetleri Görünür Yapıldı
+
+Bahri fark etti: bu rozetler koyu pop-up zemininde fark edilmiyordu.
+Font büyütüldü (11px→15px, 600→800 kalınlık) AMA asıl kök sebep
+KONTRAST sorunuydu -- eski renkler KOYU metin (#1B4D1B, #6B2314) ile
+yarı saydam (%30 opaklık) KOYU zemin kombinasyonuydu, bu da koyu
+pop-up arka planının üstünde neredeyse görünmez hale geliyordu.
+Renkler tamamen opak, güçlü kontrastlı hale getirildi: "Hedefte" artık
+yeşil zemin (#3E7A3E) + beyaz metin, "Hedef dışı" kırmızı zemin
+(#C0392B) + beyaz metin.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` güncellendi.
+
+
+### 5 Eylül 2026 — XV. Oturum (devam): Hafta Başlığı Kaldırıldı, Aralık Sıkıştırıldı
+
+"Aralık — N. Hafta" başlık metni tamamen kaldırıldı (tablo zaten
+tarihleri gösteriyor, gereksizdi). Haftalar arası ince çizgiden
+SONRAKI boşluk 10px'ten 2px'e indirildi (bir sonraki haftanın
+etiketleri çizgiye yaklaştı), ama çizgiden ÖNCEKİ boşluk (6px) aynen
+bırakıldı -- önceki haftanın alt satırına yapışmıyor.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` güncellendi.
+
+
+### 5 Eylül 2026 — XV. Oturum (devam): Oturum Yenileme Çökmesi Düzeltildi
+
+Bahri `supabase_auth.errors.AuthApiError` ile TÜM uygulamanın çöktüğü
+bir hata bildirdi (satır 404, `supabase.auth.set_session(...)`).
+
+**Kök sebep:** Supabase'in refresh token'ları TEK KULLANIMLIKTIR
+(rotation) -- `st.session_state.oturum` içindeki refresh_token, BAŞKA
+bir yerde (ör. "beni hatırla" çerez yenilemesi ya da Supabase'in kendi
+arka plan yenilemesi) ZATEN kullanılıp DEĞİŞTİRİLMİŞSE, bu satırda AYNI
+(artık geçersiz) token ile tekrar `set_session` çağırmak başarısız
+oluyordu. Bu çağrı HİÇ korumasızdı (try/except yoktu) -- oysa AYNI
+uygulamada, "beni hatırla" çerezinin kendi yenileme denemesi için
+ZATEN böyle bir koruma vardı (satır ~221 civarı).
+
+**Düzeltme:** Aynı "sessizce temizleyip giriş ekranına dön" koruması
+buraya da eklendi -- `set_session` başarısız olursa, oturum
+temizlenir, çerez silinir, ve kullanıcı ÇÖKME yerine normal giriş
+ekranına yönlendirilir.
+
+**Not:** Bu, benim son Aylık Menü tablosu değişikliklerimle İLGİSİZ,
+ayrı bir kimlik doğrulama sağlamlık sorunuydu -- muhtemelen uzun süreli
+açık kalan bir oturumda veya çerez ile senkron olmayan bir arka plan
+yenilemesinde tetiklenmişti.
+
+**Dosya durumu:** `app.py` güncellendi (ayrıca önceki oturumdaki
+URL/başlık ve üst alan daraltma düzeltmeleri de bu dosyada yeniden
+uygulandı -- taze kopyalama sırasında kaybolmuşlardı).
+
+
+### 5 Eylül 2026 — XV. Oturum (devam): Hedef Dışı Öğün Etiketi Yanıp Sönüyor
+
+Bahri'nin talebi: hedef dışı kalan bir günün ilgili öğün etiketi
+(ÖĞLE/AKŞAM) tabloda YANIP SÖNSÜN, böylece hangi günün hangi öğününde
+sorun olduğu bir bakışta fark edilsin.
+
+Her gün için Öğle/Akşam etiketi render edilmeden önce o öğünün hedefte
+olup olmadığı hesaplanıyor (`_hedefte_mi` ile, haftalık ortalama dahil
+aynı mantık), hedef dışıysa etikete `omgo-etiket-blink` sınıfı
+ekleniyor. CSS `@keyframes` ile 1 saniyede bir altın-kırmızı arası
+geçiş yapan bir animasyon tanımlandı.
+
+İzole test edildi: hedef dışı öğün (1500 kcal, hedef 350-500) blink
+alıyor, hedefteki öğün almıyor.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` güncellendi.
+
+
+### 5 Eylül 2026 — XV. Oturum (devam): "Devam Et" → "Kaydet" + Blink Kalıcılık Hatası Düzeltildi
+
+Bahri bildirdi: "Tekrar Dene" ile düzelttiği (artık ikisi de Hedefte
+olan) bir günün blink durumu, "Devam Et"e bastıktan SONRA bile
+SÜRMEYE devam ediyordu.
+
+**Kök sebep:** "Tekrar Dene" verideki düzeltmeyi doğru yapıyordu, ama
+sadece FRAGMENT (dialog) yeniden çalışıyordu (`scope="fragment"`,
+bugünkü erken bir düzeltmenin sonucu) -- DIŞARIDAKİ TABLO (blink
+durumunu hesaplayan kod) hiç yeniden çalışmadı, bu yüzden ESKİ
+(düzeltilmeden önceki) blink durumunu göstermeye devam etti.
+
+**Düzeltme:** "Devam Et" → "Kaydet" olarak yeniden adlandırıldı, VE
+artık BİLEREK TAM SAYFA yeniden çalıştırıyor (`scope` belirtilmeden,
+varsayılan "app") -- böylece dışarıdaki tablo da güncel veriyle
+yeniden hesaplanıyor, blink doğru şekilde sona eriyor. Bu, pop-up'ın
+tekrar açılmasına yol AÇMIYOR -- çünkü tetikleyici bayrak zaten
+açılışta temizlenmişti (önceki bir düzeltme). "Tekrar Dene" hâlâ
+`scope="fragment"` kullanıyor (dialog açık kalmalı, kullanıcı
+isterse tekrar deneyebilmeli).
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` güncellendi.
+
+
+### 5 Eylül 2026 — XVI. Oturum: İlkbahar Tarif Açığı — 12 Yeni Tarif Eklendi
+
+Bahri'nin "neden bu kadar çok hedef dışı var" sorusu üzerine yapılan
+teşhis (Bahri'nin çalıştırıp paylaştığı 5 sorgu sonucu) çarpıcı bir
+bulgu ortaya çıkardı: 241 tariflik ORTAK kütüphanede İLKBAHAR, her üç
+grupta da diğer mevsimlerin ~1/4'ü kadar tarife sahipti:
+- Grup 1 (Ana Yemek): ilkbahar=5 (kış=17, yaz=21, sonbahar=19)
+- Grup 2 (Çorba/Pilav/vb.): ilkbahar=4 (kış=19, yaz=10, sonbahar=11)
+- Grup 3 (Salata/Tatlı/vb.): ilkbahar=4 (kış=11, yaz=13, sonbahar=12)
+
+Bu, bahar aylarına sarkan haftalarda algoritmanın seçenek havuzunun
+küçük kalmasına katkıda bulunuyordu. Bahri'nin de doğruladığı gibi
+("ilkbahar tüm meyve ve sebzelerin bollaştığı mevsimdir") bu mantıklı
+bir öncelikti.
+
+**Yapılan:** `82_ilkbahar_tarifleri_ekle.sql` -- 12 yeni tarif (her
+grupta 4), SADECE gerçekten var olan malzemeler kullanılarak (564
+malzemelik gerçek liste, Bahri'nin export ettiği CSV'den doğrulandı).
+BESİN DEĞERLERİ HİÇ YAZILMADI -- sistem bunları `recete_malzemeleri`
+tablosundaki gerçek malzeme miktarlarından otomatik hesaplıyor (mevcut
+`_tarif_detaylarini_getir` mantığı, değişmedi).
+
+Eklenen tarifler:
+- **Grup 1:** Enginarlı Kuzu Yahnisi, Bahar Sebzeli Tavuk Sote, Taze
+  Bakla Kavurma (Etli), Ispanaklı Yumurta
+- **Grup 2:** Enginar Çorbası, Zeytinyağlı Taze Bakla, Bezelyeli
+  Pilav, Ispanaklı Börek
+- **Grup 3:** Roka Marul Salatası, Kuşkonmaz Salatası, Çilekli
+  Yoğurt, Vişne Kompostosu
+
+Her tarif, mevcut etiket kelime dağarcığından (balik, beyaz_et, cacik,
+corba, dolma, etli_sebze, izgara, kirmizi_et, komposto, kuru_baklagil,
+pilav_makarna_borek, salata, sporcu_uygun, tatli, tursu, vejetaryen,
+yogurt, yumurta, zeytinyagli) doğru şekilde etiketlendi.
+
+**Dosya durumu:** `sql/82_ilkbahar_tarifleri_ekle.sql` (yeni, Bahri
+tarafından Supabase'de çalıştırılacak).
+
+**Sıradaki adım:** Bahri migration'ı çalıştırıp doğrulama sorgusu
+sonuçlarını paylaşınca, gerekirse ikinci bir parti (belki Grup
+2/3'te hâlâ göreceli az olan diğer mevsimler için) değerlendirilebilir.
+
+
+### 5 Eylül 2026 — XVI. Oturum (devam): SQL Hatası Düzeltildi
+
+`82_ilkbahar_tarifleri_ekle.sql` çalıştırılınca hata verdi: `column
+reference "id" is ambiguous` -- hem `mutfak_kategorileri` (mk) hem
+`mutfaklar` (m) tablosunda `id` sütunu olduğu için, grup ID'lerini
+bulan üç sorguda bare `id` belirsizdi. `mk.id` olarak netleştirildi.
+
+**Dosya durumu:** `sql/82_ilkbahar_tarifleri_ekle.sql` düzeltildi.
+
+
+### 5 Eylül 2026 — XVI. Oturum (devam): İsim Çakışması Düzeltildi
+
+Bahri'nin çalıştırdığı ön-kontrol sorgusu 2 çakışma buldu: "Ispanaklı
+Börek" ve "Vişne Kompostosu" -- ikisi de zaten mevcut kütüphanede
+vardı. Bu iyi bir haber de getirdi: `DO $$ ... END $$;` bloğu tek bir
+işlem (transaction) olduğu için, ilk hatada (Ispanaklı Börek) ÖNCEKİ
+7 tarif de dahil TÜMÜ otomatik geri alınmıştı -- veritabanı hiç
+bozulmadı.
+
+Düzeltme: "Ispanaklı Börek" → "Bahar Ispanaklı Böreği", "Vişne
+Kompostosu" → "Taze Vişne Kompostosu" olarak yeniden adlandırıldı
+(hem INSERT hem doğrulama sorgusunda tutarlı şekilde).
+
+**Dosya durumu:** `sql/82_ilkbahar_tarifleri_ekle.sql` düzeltildi.
+
+
+### 5 Eylül 2026 — XVI. Oturum (devam): 12 Bahar Tarifi Başarıyla Eklendi
+
+Doğrulama sonucu beklendiği gibi çıktı:
+- Grup 1: 5 → 9 (+4)
+- Grup 2: 4 → 8 (+4)
+- Grup 3: 4 → 8 (+4)
+
+Kütüphane artık 253 tarif (241+12). İlkbahar hâlâ diğer mevsimlerin
+gerisinde ama açık daralmaya başladı.
+
+
+### 5 Eylül 2026 — XVI. Oturum (devam): 1000 Tarif Hedefi Belirlendi, İkinci Bahar Partisi Hazırlandı
+
+Bahri'nin nihai hedefi netleşti: **toplam 1000 tarif** (şu an 253).
+Bu, çok sayıda parti/oturum gerektirecek uzun vadeli bir hedef --
+tek seferde ulaşılamaz.
+
+**Bu turda yapılan:** İkinci 12 tariflik bahar partisi
+(`83_ilkbahar_tarifleri_parti2.sql`) -- Taze Fasulyeli Kuzu Güveç,
+Havuçlu Fırın Tavuk But, Nohutlu Sığır Kavurma, Pırasalı Kıymalı
+Yemek (Grup 1); Havuç Çorbası, Zeytinyağlı Pırasa, Şehriyeli Pilav,
+Zeytinyağlı Kereviz (Grup 2); Bahar Cacığı, Portakallı Havuç Salatası,
+Elmalı Cevizli Salata, Barbunya Turşusu (Grup 3).
+
+**Ders alınan:** Önceki partide 2 isim çakışması yaşanmıştı -- bu
+sefer TÜM 12 isme "(Bahar)"/"(İlkbahar)" gibi ayırt edici ekler
+eklendi, çakışma riski önemli ölçüde azaltıldı. Yine de çalıştırmadan
+önce bir ön-kontrol sorgusu (`teshis_isim_cakismasi_parti2.sql`)
+verildi.
+
+**Uygulanırsa yeni ilkbahar dağılımı:** Grup1: 9→13, Grup2: 8→12,
+Grup3: 8→12 (hâlâ diğer mevsimlerin gerisinde ama fark kapanıyor).
+
+**Bekleyen (1000 hedefine göre):** Bahri madde 3'ü de seçti (diğer
+mevsim/grup açıkları) -- bir sonraki partilerde Grup2'nin yaz(10)/
+sonbahar(11) ve Grup3'ün kış(11) gibi diğer görece zayıf
+kombinasyonlar da ele alınmalı. 1000'e ulaşmak için bu, MUHTEMELEN
+onlarca parti/oturum sürecek -- gerçekçi beklenti bu şekilde
+belirlenmeli.
+
+
+### 5 Eylül 2026 — XVI. Oturum (devam): İkinci Bahar Partisi de Başarılı
+
+Doğrulama: Grup1=13, Grup2=12, Grup3=12 (beklenen tam olarak buydu).
+Hiç isim çakışması olmadı bu sefer. Kütüphane artık 265 tarif
+(241+12+12).
+
+**Güncel dağılım (ilkbahar artık çok daha dengeli):**
+| Grup | İlkbahar | Kış | Sonbahar | Yaz | Yıl Boyunca |
+|---|---|---|---|---|---|
+| 1 | 13 | 17 | 19 | 21 | 31 |
+| 2 | 12 | 19 | 11 | **10** | 30 |
+| 3 | 12 | 11 | 12 | 13 | 34 |
+
+**Yeni en zayıf nokta:** Grup 2 - Yaz (10) artık tablodaki EN DÜŞÜK
+tek hücre. Grup 2-Sonbahar (11) ve Grup 3-Kış (11) da yakın ikinci
+sıradalar. Bir sonraki parti için doğal öncelik burası.
+
+
+### 5 Eylül 2026 — XVI. Oturum (devam): Üçüncü Parti — Yaz/Sonbahar/Kış Açıkları
+
+Yeni öncelik sırasına göre (Grup2-Yaz=10 en zayıf, sonra Grup2-Sonbahar=11
+ve Grup3-Kış=11), `84_yaz_sonbahar_kis_tarifleri.sql` hazırlandı:
+
+- **Grup 2 - Yaz (6 tarif, öncelik):** Zeytinyağlı Patlıcan, Zeytinyağlı
+  Kabak, Yaz Domates Çorbası, Mısırlı Yaz Pilavı, Zeytinyağlı Bamya,
+  Peynirli Yaz Böreği
+- **Grup 2 - Sonbahar (3 tarif):** Kestaneli Pilav, Karnabahar Çorbası,
+  Zeytinyağlı Karalahana
+- **Grup 3 - Kış (3 tarif):** Portakallı Mandalinalı Salata, Kuru
+  Kayısılı Komposto, Lahana Turşusu
+
+Tüm malzemeler gerçek listeden doğrulandı, isimler yine ayırt edici
+seçildi. On-kontrol dosyası (`teshis_isim_cakismasi_parti3.sql`) verildi.
+
+**Uygulanırsa:** kütüphane 265→277, Grup2-Yaz 10→16, Grup2-Sonbahar
+11→14, Grup3-Kış 11→14.
+
+
+### 5 Eylül 2026 — XVI. Oturum (devam): Üçüncü Parti de Başarılı — Tablo Belirgin Dengelendi
+
+Doğrulandı: Grup2-Yaz 10→16, Grup2-Sonbahar 11→14, Grup3-Kış 11→14.
+Kütüphane artık 277 tarif (241+12+12+12).
+
+**Güncel tam dağılım:**
+| Grup | İlkbahar | Kış | Sonbahar | Yaz | Yıl Boyunca | Toplam |
+|---|---|---|---|---|---|---|
+| 1 | 13 | 17 | 19 | 21 | 31 | 101 |
+| 2 | 12 | 19 | 14 | 16 | 30 | 91 |
+| 3 | 12 | 14 | 12 | 13 | 34 | 85 |
+
+En keskin dengesizlikler (4-10 aralığındaki hücreler) artık giderildi
+-- kalan en düşük hücreler 12-13 civarında, çok daha yatay bir dağılım.
+1000 hedefine 723 tarif kaldı -- bundan sonraki partiler artık "en
+kötü tek noktayı düzelt" yerine daha DENGELI/genel bir büyüme
+stratejisiyle ilerleyebilir.
+
+
+### 5 Eylül 2026 — XVI. Oturum (devam): Üçüncü Parti Başarılı — Mevsimsel Denge Büyük Ölçüde Sağlandı
+
+Doğrulandı: Grup2-Yaz 10→16, Grup2-Sonbahar 11→14, Grup3-Kış 11→14 --
+hepsi tam beklenen gibi. Kütüphane artık 277 tarif (241+12+12+12).
+
+**Güncel tam tablo:**
+| Grup | İlkbahar | Kış | Sonbahar | Yaz | Yıl Boyunca | Toplam |
+|---|---|---|---|---|---|---|
+| 1 | 13 | 17 | 19 | 21 | 31 | 101 |
+| 2 | 12 | 19 | 14 | 16 | 30 | 91 |
+| 3 | 12 | 14 | 12 | 13 | 34 | 85 |
+
+Mevsimsel dengesizlik (başlangıçta 4-21 arası) artık 12-21 arasına
+sıkıştı -- "neden bu kadar çok hedef dışı var" sorusunu tetikleyen
+ASIL sorun büyük ölçüde giderildi. 1000 hedefine hala çok uzak (723
+tarif daha gerekiyor) ama BU ACİL sorun artık çözülmüş durumda.
+
+
+### 5 Eylul 2026 -- XVI. Oturum (devam): Dorduncu Parti (Genel Cesitlilik) + Bir Yazim Hatasi Yakalandi
+
+Mevsimsel dengesizlik cozuldukten sonra, Bahri "1000'e dogru genel
+cesitlilik" ile devam etmeyi secti. 16 tariflik bir parti hazirlandi
+(`85_cesitlilik_tarifleri_parti4.sql`) -- Grup1: 5 (ILK KEZ "balik"
+etiketi kullanildi: Firinda Levrek, Hamsi Tava, Somon Fileto, Palamut
+Izgara + Etli Kuru Fasulye), Grup2: 6 (Mercimek Corbasi, Yaprak Sarma
+"dolma" etiketiyle ILK KEZ, Domates Soslu Makarna, Ispanakli Mercimek
+Corbasi, Zeytinyagli Enginar, Kasarli Firin Makarna), Grup3: 5 (Ayva
+Tatlisi, Incirli Yogurt, Uzumlu Cevizli Salata, Mevsim Yesillik
+Salatasi, Naneli Cacik).
+
+**ONEMLI SUREC IYILESTIRMESI:** Bu turda, malzeme adlarini SADECE
+gorsel olarak degil, PROGRAMATIK olarak (Python ile, dosyadaki her
+"('AD', sayi)" desenini regex ile cikarip gercek 564 malzeme listesiyle
+kume karsilastirmasi yaparak) dogruladim. Bu, ("ZEYTİNYAĞİ" yerine
+yanlislikla "ZEYTİNYAĞİ" yazilmis -- Turkce noktali/noktasiz I/İ
+farkindan kaynaklanan) SESSIZ bir hatayi yakaladi -- bu tur bir hata,
+SQL INSERT sirasinda HATA VERMEZ, sadece o malzeme JOIN'de eslesmez ve
+o tarifin besin degeri EKSIK/YANLIS hesaplanir, fark edilmesi zor olur.
+
+Bu FARKINDALIK uzerine, ONCEKI UC dosya (82, 83, 84) de GERIYE DONUK
+olarak ayni programatik yontemle kontrol edildi -- HICBIRINDE benzer
+bir sorun bulunmadi (temiz).
+
+**Ders/surec iyilestirmesi:** Bundan sonraki TUM partilerde, teslim
+etmeden ONCE bu programatik (regex + kume farki) kontrolu STANDART
+adim olarak uygulanacak -- sadece gorsel/manuel okumaya guvenilmeyecek.
+
+**Dosya durumu:** `sql/85_cesitlilik_tarifleri_parti4.sql` (yeni),
+`teshis_isim_cakismasi_parti4.sql` (yeni).
+
+
+### 5 Eylul 2026 -- XVI. Oturum (devam): Parti 4 Isim Cakismasi Duzeltildi
+
+On-kontrol 2 cakisma buldu: "Fırında Levrek" -> "Limonlu Fırın Levrek",
+"Domates Soslu Makarna" -> "Sarımsaklı Domates Soslu Makarna" (zaten
+tarifte olan sarimsak malzemesine atifla, kozmetik degil aciklayici
+bir isim degisikligi). Her iki dosyada da tutarli guncellendi,
+programatik malzeme kontrolu tekrar temiz cikti.
+
+
+### 5 Eylul 2026 -- XVI. Oturum (devam): Parti 4 Basarili -- 293 Tarif
+
+Dogrulandi: 277 + 16 = 293, tam beklenen gibi. "balik" ve "dolma"
+etiketleri ilk kez kullanildi (Levrek/Hamsi/Somon/Palamut, Yaprak
+Sarma).
+
+**Ilerleme:** 241 (baslangic) -> 253 -> 265 -> 277 -> 293 (dort parti,
+toplam +52). 1000 hedefine 707 tarif kaldi.
+
+
+### 5 Eylul 2026 -- XVI. Oturum Sonu
+
+Bahri gunu burada birakti. Ozet: Aylik Menu tablosu yeniden
+tasarlandi (gercek tablo, hafta sonu rengi, sabit boyut, blink),
+birkac kritik hata duzeltildi (oturum cokmesi, pop-up kapanma, blink
+kaliciligi), tarif kutuphanesi 241->293 (+52, mevsimsel dengesizlik
+buyuk olcude giderildi).
+
+**Sirada (bir sonraki oturum icin):**
+- Tarif kutuphanesini 1000'e dogru genisletmeye devam (707 tarif
+  kaldi) -- ayni surec (gercek malzeme dogrulama + programatik kontrol
+  + isim cakismasi on-kontrolu) takip edilmeli.
+- Aylik Menu'de bahar/yaz/sonbahar/kis aylarina sarkan bir ay uretip,
+  yeni tariflerin "hedef disi" oranini gercekten azaltip azaltmadigi
+  test edilmeli (henuz test EDILMEDI, sadece kutuphane genisletildi).
+- Daha once bahsedilen "hatali resimler" konusu (rendeleme_sogan
+  havuca benziyor, VE/VEYA ikon sorunu) hala bekliyor.
+
+
+### 6 Eylul 2026 -- XVII. Oturum: Ust Menu "Otomatik Gizle" (Windows Taskbar Tarzi)
+
+Bahri'nin talebi: Windows'un "Automatically hide the taskbar" ozelligi
+gibi, ust menu bar varsayilan olarak gizli dursun, imlec ekranin
+en ustune gelince asagi kayarak gorunur olsun.
+
+**Uygulama:**
+- Ekranin en ustune gorunmez ince (10px) bir "tetikleyici serit"
+  eklendi (`st-key-ust_menu_tetikleyici`).
+- Bu seride VEYA menunun kendisine imlec gelince (`:hover`), menu
+  `transform: translateY(-100%)` -> `translateY(0)` ile yumusakca
+  (0.25s) asagi kayarak goruniyor. `:has()` secici kullanildi (bu
+  oturumda hafta sonu rengi/kutu boyutu duzeltmelerinde de basariyla
+  kullanilan ayni guvenilir teknik).
+- **SADECE gercek "hover" destegi olan cihazlarda** (`@media (hover:
+  hover) and (min-width: 768px)`) -- dokunmatik/mobil cihazlarda bu
+  davranis HIC devreye girmiyor, mobil nav her zamanki gibi surekli
+  gorunur kaliyor (hover kavraminin kendisi dokunmatikte anlamsiz).
+- **Yer kazanma:** Windows'un taskbar'i gizlenince alani GERCEKTEN
+  geri verdigi gibi, altindaki 200px'lik sabit bosluk da (sadece bu
+  hover-destekli masaustu modunda) 14px'e kucultuldu -- icerik yukari
+  kayip bosalan alani kullaniyor, menu tekrar acilinca zaten KENDI
+  UZERINE (position:fixed) bindigi icin icerikle cakismiyor.
+
+**Dosya durumu:** `app.py` guncellendi.
+
+**Beklenti:** Bu tur hover-tabanli CSS davranislari canli tarayicida
+test edilmeden %100 garanti edilemez -- ince ayar (tetikleyici
+yuksekligi, gecis suresi) gerekebilir.
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Otomatik Gizle Menu -- Kok Sebep Bulundu ve Yeniden Yapilandirildi
+
+Bahri iki sorun bildirdi: (1) "Tam gizlenmiyor, bir kismi ustten
+gorunuyor", (2) "sadece ust menu [butonlar] gorunse cok daha
+kullanisli olur" -- logo/baslik hover-gizleme sistemine hic dahil
+olmamali.
+
+**Kok sebep (1. sorun icin):** `.st-key-masaustu_nav { top: 60px; }`
+adinda ESKI bir kural (60px'lik bir top ofseti veren), benim BUGUNKU
+hover-gizleme kuralimdaki "top:0" temel ayarini SESSIZCE eziyordu
+(CSS'te esit ozgullukte SONRAKI kural kazanir). SONUC: "gizli"
+durumdaki `translateY(-100%)` hesabi elemanin KENDI yuksekliginden
+hareket eder (top degerinden BAGIMSIZ) -- top:60px ile birlikte,
+elemanin ALT kismindan ~60px'lik bir dilim HER ZAMAN ekranda kaliyordu.
+Bu kural kaldirildi (mobildeki AYNI kural DOKUNULMADAN birakildi --
+mobil zaten hover sistemine dahil degil).
+
+**Yapisal cozum (2. sorun icin):** Logo+baslik artik `masaustu_nav`
+kapsayicisinin ICINDE DEGIL -- NORMAL sayfa akisinda (position:fixed
+DEGIL), sayfa her zaman acildiginda ustte gorunuyor, kaydirinca
+normal icerik gibi yukari kayiyor. `masaustu_nav` artik SADECE buton
+satirini (nav_buton_satiri) iceriyor -- hover-ile-goster davranisi
+ARTIK SADECE bu (cok daha kucuk, ~55-65px) satira uygulaniyor.
+Gosterilince, logonun UZERINE gecici olarak biner (Windows'un
+taskbar'i da ayni sekilde ustune biner, altindaki icerigi ITMEZ).
+
+**Bosluk (spacer) ayarlari guncellendi:** Taban (hover-destegi olmayan
+tarayicilar icin) bosluk 200px'ten 65px'e indirildi (artik SADECE
+buton satirini telafi ediyor, logo+buton toplamini DEGIL -- logo
+kendi yerini normal akista kendisi ayiriyor). Hover-destekli
+masaustunde bosluk 14px'ten 10px'e (tetikleyici serit kadar)
+indirildi.
+
+**Dosya durumu:** `app.py` -- buyuk bir yeniden yapilandirma (logo
+kodu masaustu_nav disina tasindi), CSS guncellemeleri.
+
+**Not:** Bu tur hover-tabanli CSS canli test edilmeden garanti
+edilemez -- ozellikle buton satirinin sol bosluğu (164px, eskiden
+logonun sagindan baslamasi icindi, artik gerekcesi zayifladi) gozden
+gecirilmek isteyebilir, ama simdilik dokunulmadi.
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Otomatik Gizle Menu -- Guvenilir Yonteme Gecildi
+
+Bahri dogruladi: imleci ustte denedi, menu HALA gorunmuyordu -- bir
+onceki (ayri tetikleyici + :has()) yaklasim GERCEKTEN calismiyordu
+(kok sebep kesin dogrulanamadi -- canli DOM erisimi yok -- ama en
+olasi aciklama: tetikleyicinin sarmalayicisi ile menunun sarmalayicisi
+varsayildigi gibi GERCEK kardes olmayabilirdi).
+
+**Yeni, cok daha basit ve saglam yontem:** Ayri bir tetikleyici
+elemana ARTIK gerek yok. Menunun KENDISINDEN, HER ZAMAN ince (10px)
+bir dilim gorunur birakiliyor (`translateY(calc(-100% + 10px))`).
+Bu dilime (ya da acildiktan sonra menunun tamamina) imlec gelince --
+DOGRUDAN `.st-key-masaustu_nav:hover` -- TEK, basit, guvenilir bir
+CSS iliskisi, baska hicbir elemana veya varsayimsal DOM iliskisine
+bagli DEGIL. Ekstra fayda: bu ince dilim her zaman gorunur oldugu
+icin, menunun "gizlenebilir" oldugunu kesfetmek de kolaylasiyor.
+
+**Dosya durumu:** `app.py` -- ayri tetikleyici (`st-key-ust_menu_
+tetikleyici`) hem Python hem CSS tarafinda tamamen kaldirildi,
+daha basit tek-kural cozumle degistirildi.
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Amac Ters Anlasilmisti -- Butonlar HER ZAMAN Sabit
+
+Bahri netlestirdi: "Ben demistim ki, ustteki herseyKAYBOLABILIR yeter
+ki menu butonlari kaybolmasin" -- amac butonlari gizlemek DEGIL, tam
+tersi: butonlar HER ZAMAN sabit/gorunur kalmali, SADECE dekoratif
+logo/baslik kismi "kaybolabilir" (ozel bir mekanizma bile gerekmeden --
+normal sayfa akisinda oldugu icin kaydirilinca zaten kendiliginden
+kayboluyor).
+
+**Duzeltme:** Butonlardaki TUM hover-gizleme mekanizmasi (transform,
+transition, :hover kurallari) TAMAMEN KALDIRILDI -- butonlar artik
+sadece temel kuralla (`position:fixed; top:0;`) HER ZAMAN sabit ve
+gorunur. Logo zaten (bir onceki duzeltmede) `masaustu_nav`'in disina,
+normal sayfa akisina tasinmisti -- bu YETERLI, kaydirilinca zaten
+kendiliginden "kayboluyor", ekstra bir hover mekanizmasina gerek yok.
+Bosluk (spacer) ayarlari da sadelestirildi -- artik tek bir taban
+deger (65px) her durumda gecerli, ozel hover-modu kucultmesi kaldirildi.
+
+**Ders:** "sadece ust menu gorunse cok daha kullanisli olur" ifadesi
+YANLIS yorumlanmisti (butonlarin SADECE hover'da gorunmesi olarak
+degil, butonlarin HER ZAMAN gorunur kalmasi olarak anlasilmasi
+gerekiyordu).
+
+**Dosya durumu:** `app.py` -- hover-gizleme CSS'i butonlardan tamamen
+kaldirildi, yorumlar dogru davranisi yansitacak sekilde guncellendi.
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Besinci Cesitlilik Partisi
+
+1000 hedefine dogru devam. 16 tarif (Grup1: 5, Grup2: 5, Grup3: 6) --
+ilk kez "sporcu_uygun" etiketi kullanildi (Izgara Bonfile, Brokolili
+Tavuk Sote). Yeni: Izgara Kuzu Pirzola/Sigir Bonfile, Firinda Tavuk
+Kanat/Butun Tavuk, Brokoli Corbasi, Yayla Corbasi, Sehriyeli Bulgur
+Pilavi, Zeytinyagli Barbunya Pilaki, Irmik Corbasi, Kadayifli Sut
+Tatlisi, Muzlu Yogurt, Tahin Pekmez, Ayran, Muzlu Meyve Salatasi,
+Karnabahar Tursusu.
+
+**Not (veri kalitesi):** Malzeme tablosunda "ÜzÜM PEKMEZİ" (ortasinda
+kucuk z) seklinde eski bir yazim hatasi tespit edildi -- SQL'de
+BIREBIR bu sekilde kullanildi (JOIN icin gerekli), ama Bahri isterse
+ayrica duzeltilebilir.
+
+Programatik malzeme kontrolu + isim cakismasi on-kontrolu (standart
+surec) uygulandi.
+
+**Dosya durumu:** `sql/86_cesitlilik_tarifleri_parti5.sql` (yeni),
+`teshis_isim_cakismasi_parti5.sql` (yeni).
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Parti 5 Isim Cakismasi Duzeltildi
+
+"Zeytinyağlı Barbunya Pilaki" -> "Zeytinyağlı Barbunya Pilaki (Ev
+Usulü)" olarak yeniden adlandirildi. Programatik kontrol tekrar temiz.
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Parti 5 Basarili -- 309 Tarif
+
+Dogrulandi: 293 + 16 = 309. Ilerleme: 241 -> 253 -> 265 -> 277 -> 293
+-> 309 (bes parti, toplam +68). 1000 hedefine 691 tarif kaldi.
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Altinci Parti -- Gercekten Farkli Yemekler
+
+Bahri'nin ayran uyarisi uzerine, bu partide OZELLIKLE gercekten
+birbirinden FARKLI yemek KATEGORILERI secildi -- kozmetik isim
+varyasyonu degil. Ilk kez deniz urunleri (KARIDES/KALAMAR/MIDYE/
+AHTAPOT) kullanildi. 16 tarif:
+
+- **Grup1 (5):** Karides Guvec, Izgara Kalamar, Midye Dolma, Izgara
+  Ahtapot, Firinda Patatesli Kiyma
+- **Grup2 (5):** Patatesli Sebze Corbasi, Zeytinyagli Taze Fasulye,
+  Karidesli Makarna, Mercimekli Bulgur Pilavi, Humus
+- **Grup3 (6):** Tereli Yogurt Salatasi, Maydanozlu Bulgur Salatasi
+  (Kisir), Ahtapot Salatasi (Soguk -- Grup1'deki SICAK versiyondan
+  KAVRAMSAL olarak GERCEKTEN farkli, sadece isim degil), Patates
+  Salatasi, Karisik Tursu, Portakal Kompostosu
+
+Programatik malzeme kontrolu + isim cakismasi on-kontrolu uygulandi.
+
+**Dosya durumu:** `sql/87_cesitlilik_tarifleri_parti6.sql` (yeni),
+`teshis_isim_cakismasi_parti6.sql` (yeni).
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Parti 6 Isim Cakismasi Duzeltildi
+
+"Karides Güveç" -> "Karides Güveç (Ege Usulü)" olarak yeniden
+adlandirildi. Kontrol tekrar temiz.
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Parti 6 Basarili -- 325 Tarif
+
+Dogrulandi: 309 + 16 = 325. Ilerleme: 241 -> 253 -> 265 -> 277 -> 293
+-> 309 -> 325 (alti parti, toplam +84). 1000 hedefine 675 tarif kaldi.
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Mobil icin Ayri Kart Gorunumu
+
+Bahri mobil ekran goruntusuyle kanitladi: masaustu icin tasarlanan
+COK SUTUNLU tablo (st.columns(7)) mobilde Streamlit'in kendi
+varsayilan davranisiyla DIKEYE cevriliyordu -- 7 gunun tum "Öğle"
+etiketleri ust uste, sonra TUM tariflerin karisik bir yigin halinde,
+hangi tarifin hangi gune ait oldugu TAMAMEN kayboluyordu.
+
+**Bahri'nin acik talebi:** "masaustundeki gorunumu HIC BOZMADAN"
+mobili duzelt.
+
+**Yapilan:** Mevcut `_hafta_kartlarini_goster` fonksiyonuna TEK BIR
+SATIR bile dokunulmadi. Bunun yerine TAMAMEN AYRI, mobile ozel yeni
+bir fonksiyon (`_hafta_kartlarini_goster_mobil`) eklendi -- her gun
+kendi TEK SUTUNLU kartinda (tarih+gun basligi, "Ayrintilar/Maliyet"
+butonu, Öğle+Akşam etiketleri VE tarifleri BIRLIKTE, sirayla)
+gosteriliyor.
+
+Hangi surumun (masaustu/mobil) GORUNECEGI SADECE CSS ile (@media
+max-width:767px / min-width:768px) belirleniyor -- HER IKI surum de
+HER ZAMAN render ediliyor, sadece biri gizleniyor -- projede zaten
+KANITLANMIS bir desen (masaustu_nav/mobil_nav ayrimiyla AYNI teknik).
+
+**Onemli bulgu (crash onlendi):** `st.page_link`'e mobil surumde
+disambiguation icin `key=` parametresi eklemistim -- resmi Streamlit
+API referansindan KONTROL EDINCE, `st.page_link`'in key PARAMETRESI
+OLMADIGI dogrulandi (st.video()'daki eski surprizle AYNI turden bir
+tuzak). Bu, canli ortamda CRASH'e yol acardi -- gonderilmeden once
+yakalanip kaldirildi. Container-ici benzersiz key'lere (gunkarti_
+mobil_...) guvenerek, tipki masaustu surumunun zaten yaptigi gibi
+disambiguation sagliyor.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` -- yeni
+`_hafta_kartlarini_goster_mobil` fonksiyonu eklendi, cagri yerine
+eklendi, CSS'e responsive goster/gizle kurallari eklendi. Masaustu
+fonksiyonu TAMAMEN DOKUNULMADAN kaldi.
+
+**Not:** Canli test edilmeden hover/responsive CSS %100 garanti
+edilemez -- ince ayar gerekebilir.
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): KRITIK HATA -- Fonksiyon Tanimi Yanlislikla Silinmisti
+
+Bahri `NameError` ile masaustunun COKTUGUNU bildirdi (Excel olusturma
+sirasinda). Kok sebep BULUNDU: bir onceki duzenlemede (mobil kart
+fonksiyonu eklenirken), `def _aylik_menu_excel_olustur(aylik, detay,
+fiyat_verisi_var, hedefler):` SATIRININ KENDISI yanlislikla silinmisti
+-- fonksiyonun GOVDESI (docstring + tum Excel olusturma kodu) hala
+oradaydi, ama artik AYRI bir fonksiyon DEGIL, yanlislikla
+`_hafta_kartlarini_goster_mobil`'in SONUNA "yutulmus" (o fonksiyonun
+govdesinin bir parcasi haline gelmis) durumdaydi. Sonuc: kod HER
+`_hafta_kartlarini_goster_mobil` cagrisinda GEREKSIZ YERE calisiyordu
+VE `_aylik_menu_excel_olustur` diye bir fonksiyon ARTIK HIC
+YOKTU -- baska bir yerden cagrilinca "NameError: not defined" veriyordu.
+
+**Duzeltme:** Eksik `def _aylik_menu_excel_olustur(...):` satiri doğru
+yere geri eklendi. Iki fonksiyon arasindaki sinir dogrulandi (ikisi de
+artik `^def` ile satir basinda, dogru bagimsiz fonksiyonlar).
+
+**Ders:** Bir fonksiyonun SONUNA yeni bir fonksiyon eklerken,
+str_replace'in old_str/new_str'inin, SONRAKI fonksiyonun `def` satirini
+da (silinmeyecekse) ACIKCA icermesi/korumasi gerekiyor -- aksi halde
+sessizce yutulabiliyor. Bundan sonra bu tur eklemelerden sonra
+`grep -n "^def "` ile TUM fonksiyon sinirlarini dogrulamak standart
+adim olmali.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` duzeltildi.
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Mobil Kartlar -- Kaydirmali (Swipe) Gorunume Gecildi
+
+Masaustu artik SORUNSUZ (Bahri onayladi, "buna artik dokunma"). Mobil
+kartlar icin uc ince ayar:
+
+1. **Tarih ortalandi** (eskiden sola yasliydi).
+2. **Kartlar cok daha belirgin:** kalin altin kenarlik (2px), hafif
+   golge (box-shadow), krem-beyaz arka plan -- eskiden ince/soluk
+   kenarlikla "asagiya akan yazi dizisi" gibi gorunuyordu.
+3. **Parmakla saga/sola CEKILEBILEN (swipe) kart deneyimi:**
+   JavaScript'e HIC GEREK KALMADAN, salt CSS "scroll-snap" ile
+   tarayicinin KENDI dokunmatik kaydirma motoru kullanildi -- dis
+   kapsayici yatay flex+scroll, her kart TAM GENISLIKTE bir "slayt",
+   parmakla kaydirinca bir sonraki/onceki gune KENDILIGINDEN "yapisip"
+   duruyor.
+
+**Not:** Her HAFTA kendi bagimsiz kaydirma alani -- bir hafta icindeki
+7 gun arasinda yatay kaydiriliyor, SONRAKI haftaya gecmek icin sayfa
+normal sekilde asagi kaydiriliyor (ayri bir carousel bloğu).
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` -- SADECE mobil CSS'i
+guncellendi, masaustu koduna hic dokunulmadi.
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Swipe Kart Genislik Hatasi Duzeltildi
+
+Bahri ekran goruntusuyle kanitladi -- her kart TAM GENISLIKTE bir
+"slayt" OLACAGINA, 7'de-1 dar bir seride sikismisti (harfler alt alta
+yaziliyordu, okunaksiz).
+
+**Kok sebep:** `flex:0 0 100%` kuralim `st-key-gunkarti_mobil_`
+sinifina uygulanmisti, ama bu muhtemelen flex kapsayicinin GERCEK
+DOGRUDAN cocugu DEGILDI -- Streamlit araya kendi sarmalayicisini
+koyuyor olabilir, bu da kuralimin HICBIR ETKISI OLMAMASINA yol
+aciyordu (varsayilan esit-paylasimli flex davranisi devam ediyordu).
+
+**Duzeltme:** Streamlit'in o ara katmanin TAM ADINI bilmeye GEREK
+KALMADAN, DOGRUDAN COCUK SECICISI (`>`) ile "bu flex kapsayicinin
+HANGI dogrudan cocugu olursa olsun tam genislik ver" kurali eklendi --
+hangi seviyede oldugu artik ONEMLI DEGIL.
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` -- mobil kart CSS'i
+duzeltildi.
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Yedinci Parti -- Hindi ve Yer Elmasi Ilk Kez
+
+1000 hedefine devam. Ilk kez HINDI ETI ve YER ELMASI kullanildi. 16
+tarif, hepsi kavramsal olarak birbirinden farkli:
+
+- **Grup1 (5):** Hindi Sote, Firinda Hindi But, Yer Elmali Kuzu
+  Yahnisi, Enginar Kalpli Tavuk Guvec, Kirmizi Biberli Kiyma Sote
+- **Grup2 (5):** Pancar Corbasi, Yer Elmasi Zeytinyaglisi, Zeytinyagli
+  Biber Dolmasi, Enginar Kalpli Pilav, Sehriye Corbasi
+- **Grup3 (6):** Kuru Fasulye Piyazi, Pancar Salatasi, Armutlu Cevizli
+  Salata, Mandalina Kompostosu, Turplu Yogurt Salatasi, Kirmizi Biber
+  Tursusu
+
+Programatik malzeme kontrolu + isim cakismasi on-kontrolu uygulandi.
+
+**Dosya durumu:** `sql/88_cesitlilik_tarifleri_parti7.sql` (yeni),
+`teshis_isim_cakismasi_parti7.sql` (yeni).
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Parti 7 Isim Cakismasi Duzeltildi
+
+"Kuru Fasulye Piyazı" -> "Kuru Fasulye Piyazı (Ev Usulü)" olarak
+yeniden adlandirildi. Kontrol tekrar temiz.
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Parti 7 Basarili -- 341 Tarif
+
+Dogrulandi: 325 + 16 = 341. Ilerleme: 241 -> ... -> 341 (yedi parti,
+toplam +100). 1000 hedefine 659 tarif kaldi.
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Sekizinci Parti -- Yeni Baliklar, Peynirler, Klasik Eslesmeler
+
+1000 hedefine devam. Ilk kez: istavrit, luфer, murekkep baligi, konserve
+ton baligi, bildircin yumurtasi, tulum/lor/cerkez peyniri, kaymak, ve
+kavun+peynir gibi klasik ama daha once hic kullanilmamis kombinasyonlar.
+16 tarif:
+
+- **Grup1 (5):** Izgara Istavrit, Firinda Lufer, Izgara Murekkep
+  Baligi, Ton Balikli Sote, Bildircin Yumurtali Biber Kavurma
+- **Grup2 (5):** Tulum Peynirli Makarna, Lor Peynirli Borek, Zeytinli
+  Bulgur Pilavi, Domatesli Bulgur Corbasi, Zeytinyagli Nohut
+- **Grup3 (6):** Cerkez Peynirli Salata, Zeytin Ezmesi, Bal Kaymak,
+  Maydanozlu Domates Salatasi, Kavunlu Peynir Tabagi, Kuru Incirli
+  Ceviz Tabagi
+
+Programatik malzeme kontrolu + isim cakismasi on-kontrolu uygulandi.
+
+**Dosya durumu:** `sql/89_cesitlilik_tarifleri_parti8.sql` (yeni),
+`teshis_isim_cakismasi_parti8.sql` (yeni).
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Acilir Liste Ust Menu Arkasinda Kaliyordu
+
+Bahri "Aralık ayını seçmekte güçlük çekiyorum" dedi -- netlestirilince
+acilan Ay secim listesinin UST MENUNUN ARKASINDA/ALTINDA kaldigi,
+tiklamak imkansiz oldugu ortaya cikti.
+
+**Kok sebep:** Bu oturumda ust menuye eklenen COK yuksek z-index
+(999999), Streamlit'in KENDI acilir liste/secim kutusundan (BaseWeb
+kutuphanesi, `data-baseweb="popover"` ile isaretleniyor) DAHA
+YUKSEKTI -- bu yuzden acilir liste ust menunun ALTINDA kaliyordu.
+
+**Duzeltme:** SADECE "Ay" secimine ozel degil, sayfadaki TUM acilir
+listeleri (selectbox/multiselect/vb.) kapsayan genel bir kural
+eklendi -- `data-baseweb="popover"` elemaninin z-index'i ust
+menuden DAHA YUKSEGE (1000001) cekildi. Bu, projedeki HERHANGI bir
+acilir listeyi (sadece Aylik Menu sayfasindaki degil) etkileyen,
+tek seferlik, genel bir cozum.
+
+**Dosya durumu:** `app.py` guncellendi.
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Dokuzuncu Parti -- Sucuk, Pastirma, Gullac Ilk Kez
+
+1000 hedefine devam. Ilk kez: sucuk, pastirma, gullac. 16 tarif:
+
+- **Grup1 (5):** Sucuklu Yumurta, Pastirmali Kavurma, Kerevizli Kuzu
+  Yahnisi, Misirli Tavuk Sote, Ispanakli Kiyma
+- **Grup2 (5):** Misir Corbasi, Sucuklu Pilav, Nohutlu Pilav, Kerevizli
+  Corba, Zeytinyagli Ispanak
+- **Grup3 (6):** Gullac, Pastirmali Kasar Tabagi, Kerevizli Yogurt
+  Salatasi, Misirli Salata, Taze Soganli Cacik, Ispanakli Yogurt
+  (Borani)
+
+Programatik malzeme kontrolu + isim cakismasi on-kontrolu uygulandi.
+
+**Dosya durumu:** `sql/90_cesitlilik_tarifleri_parti9.sql` (yeni),
+`teshis_isim_cakismasi_parti9.sql` (yeni).
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Parti 9 Isim Cakismasi Duzeltildi
+
+"Nohutlu Pilav" -> "Nohutlu Pilav (Ev Usulü)" olarak yeniden
+adlandirildi. Kontrol tekrar temiz.
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Parti 9 Basarili -- 357 Tarif
+
+Dogrulandi: 341 + 16 = 357. Ilerleme: 241 -> ... -> 357 (dokuz parti,
+toplam +116). 1000 hedefine 643 tarif kaldi.
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Onuncu Parti -- Tarhana Ilk Kez
+
+1000 hedefine devam. Ilk kez tarhana kullanildi. 16 tarif:
+
+- **Grup1 (5):** Bezelyeli Kuzu Yemegi, Roka Soslu Izgara Tavuk,
+  Kuskonmazli Dana Bonfile, Firinda Somon Sebzeli, Patlicanli Kiyma
+  Musakka
+- **Grup2 (5):** Tarhana Corbasi, Konserve Bezelyeli Makarna, Roka
+  Soslu Makarna, Kuskonmaz Corbasi, Tavuk Suyu Corbasi
+- **Grup3 (6):** Rokali Domates Salatasi, Haslanmis Yumurta Salatasi,
+  Patlican Salatasi (Kozlenmis), Ispanakli Cacik, Patlican Tursusu,
+  Karisik Meyve Kompostosu
+
+Programatik malzeme kontrolu + isim cakismasi on-kontrolu uygulandi.
+
+**Dosya durumu:** `sql/91_cesitlilik_tarifleri_parti10.sql` (yeni),
+`teshis_isim_cakismasi_parti10.sql` (yeni).
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Parti 10 Isim Cakismasi Duzeltildi
+
+"Tarhana Çorbası" -> "Tarhana Çorbası (Ev Usulü)" olarak yeniden
+adlandirildi. Kontrol tekrar temiz.
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Parti 10 Basarili -- 373 Tarif
+
+Dogrulandi: 357 + 16 = 373. Ilerleme: 241 -> ... -> 373 (on parti,
+toplam +132). 1000 hedefine 627 tarif kaldi.
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): On Birinci Parti -- Yeni Et Kesimi, Kuruyemis, Sifirdan Muhallebi/Kesku
+
+1000 hedefine devam. Ilk kez: dana pirzola, findik, badem, antep
+fistigi, yulaf. Muhallebi/Kesku SIFIRDAN (sut+seker+nisasta ile)
+kuruldu -- hazir malzeme olarak degil, boylece tek-malzemeli "sahte
+tarif" riskinden kacinildi. 16 tarif:
+
+- **Grup1 (5):** Izgara Dana Pirzola, Findikli Tavuk Sote, Sade Kuzu
+  Guvec, Bademli Firin Tavuk But, Antep Fistikli Kavurma
+- **Grup2 (5):** Yulafli Corba, Bademli Pirinc Pilavi, Antep Fistikli
+  Bulgur Pilavi, Et Suyu Corbasi, Kasarli Bulgur Pilavi
+- **Grup3 (6):** Muhallebi, Kesku, Badem Ezmesi Tabagi, Yesil Salata
+  (Cevizli), Yulaf Ezmeli Yogurt, Kayisi Kompostosu
+
+Programatik malzeme kontrolu + isim cakismasi on-kontrolu uygulandi.
+
+**Dosya durumu:** `sql/92_cesitlilik_tarifleri_parti11.sql` (yeni),
+`teshis_isim_cakismasi_parti11.sql` (yeni).
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Parti 11 Isim Cakismasi Duzeltildi
+
+"Fındıklı Tavuk Sote" -> "Fındıklı Tavuk Sote (Karadeniz Usulü)",
+"Kayısı Kompostosu" -> "Kayısı Kompostosu (Ev Usulü)" olarak yeniden
+adlandirildi. Kontrol tekrar temiz.
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Parti 11 Basarili -- 389 Tarif
+
+Dogrulandi: 373 + 16 = 389. Ilerleme: 241 -> ... -> 389 (on bir parti,
+toplam +148). 1000 hedefine 611 tarif kaldi.
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Supabase Guvenlik Uyarilari Analiz Edildi ve Duzeltme Hazirlandi
+
+Bahri, Supabase'in Security Advisor sayfasinda 1 hata + 7 uyari
+buldu. Gercek gorunum/fonksiyon tanimlari incelenerek (kor bir
+"hepsini kapat" yaklasimi DEGIL) analiz edildi:
+
+1. **`recete_guncel_maliyet` gorunumu (HATA):** receteler/malzemeler/
+   fiyat tablolarini isletme_id'ye gore birlestirip maliyet
+   hesapliyor. SECURITY DEFINER oldugu icin alttaki RLS'i atlayarak
+   COK KIRACILI sistemde BIR ISLETMENIN BASKASININ maliyet verisini
+   gorebilmesi riski var. Duzeltme: `security_invoker = true` --
+   standart, guvenli Supabase onerisi.
+
+2. **`rls_auto_enable()` ve `yeni_kullanici_isle()` (uyarilar):**
+   Gercek tanimlari incelenince ikisinin de aslinda TETIKLEYICI
+   (event trigger / auth.users INSERT trigger) oldugu, ELLE
+   cagrilmaya HIC ihtiyaci olmadigi goruldu. EXECUTE izinleri
+   anon+authenticated'dan kaldirildi -- uygulamanin normal islevini
+   ETKILEMEZ (tetikleyiciler kendi ic mekanizmasiyla calisir).
+
+3. **`auth_isletme_id()` (uyari):** RLS politikalari ICINDE kullanilan
+   standart bir yardimci fonksiyon -- SECURITY DEFINER olmasi
+   muhtemelen KASITLI. SADECE anonim erisim kaldirildi, authenticated
+   icin DOKUNULMADI (uygulama dogrudan cagiriyor olabilir, emin
+   olmadan kaldirmak riskliydi).
+
+4. **Sizmis sifre korumasi:** kod degil, Supabase panel ayari --
+   Authentication bolumunden acilmasi onerildi.
+
+**Dosya durumu:** `sql/93_guvenlik_uyarilarini_duzelt.sql` (yeni,
+Bahri tarafindan Supabase'de calistirilacak).
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): auth_isletme_id() Icin Eksik Yakalandi
+
+Bahri'nin paylastigi dogrulama sonucu gosterdi: `rls_auto_enable` ve
+`yeni_kullanici_isle` icin duzeltme tam calismisti (artik sadece
+postgres/service_role), AMA `auth_isletme_id` icin "PUBLIC"
+(Postgres'te "herkes" anlamina gelen ozel rol) hala EXECUTE
+yetkisine sahipti -- cunku onceki duzeltmede SADECE "anon"dan
+kaldirilmisti, "public"tan degil. PUBLIC yetkisi VARKEN, tek basina
+anon'dan REVOKE etmek ETKISIZ kalir (anon, PUBLIC uzerinden dolayli
+erismeye devam eder).
+
+**Duzeltme:** `94_auth_isletme_id_public_yetkisi_kaldir.sql` --
+PUBLIC'ten de kaldirildi. "authenticated" icin AYRI, dogrudan bir
+yetki zaten vardi, bu islemden ETKILENMEZ.
+
+**Dosya durumu:** `sql/94_auth_isletme_id_public_yetkisi_kaldir.sql`
+(yeni).
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Guvenlik Duzeltmeleri Tamamlandi
+
+Dogrulandi: `auth_isletme_id` icin artik SADECE authenticated/postgres/
+service_role var, PUBLIC ve anon tamamen kalkti -- tam istenen durum.
+
+**Ozet -- tum guvenlik uyarilari durumu:**
+1. `recete_guncel_maliyet` gorunumu -- security_invoker=true yapildi. OK
+2. `rls_auto_enable()` -- anon+authenticated'dan kaldirildi. OK
+3. `yeni_kullanici_isle()` -- anon+authenticated'dan kaldirildi. OK
+4. `auth_isletme_id()` -- anon+PUBLIC'ten kaldirildi, authenticated
+   korundu. OK
+5. Sizmis sifre korumasi -- Bahri'nin Supabase panelinden manuel
+   acmasi gerekiyor (kod degil, ayar).
+
+Bahri'den Security Advisor sayfasinda "Rerun linter" ile tum
+uyarilarin temizlendigini dogrulamasi istendi.
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): auth_isletme_id Tamamen Kapatildi
+
+Guvenlik uyarilari 7'den 2'ye dustu (0 hata). Kalan iki uyari: (1)
+auth_isletme_id icin "authenticated" yetkisi -- daha once bilerek
+dokunulmamisti, (2) sizmis sifre korumasi (panel ayari, kod degil).
+
+**(1) icin kesin cozum:** Kod tabaninda `grep -rn "auth_isletme_id"`
+VE `grep -rln "rpc("` ile TUM Python dosyalari tarandi -- HICBIR
+DOGRUDAN cagri bulunamadi. Bu, fonksiyonun SADECE RLS politikalarinin
+icinde kullanildigini KESIN olarak dogruladi. `authenticated`
+yetkisi de kaldirildi (`95_auth_isletme_id_authenticated_yetkisi_
+kaldir.sql`) -- artik sadece postgres/service_role EXECUTE
+edebiliyor, RLS kurallari kendi ic mekanizmasiyla calismaya devam
+ediyor.
+
+**(2) icin:** Bahri'nin Supabase panelinden (Authentication
+ayarlari) manuel acmasi gerekiyor.
+
+**Dosya durumu:** `sql/95_auth_isletme_id_authenticated_yetkisi_
+kaldir.sql` (yeni).
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Guvenlik Duzeltmeleri TAMAMLANDI
+
+Dogrulandi: auth_isletme_id artik SADECE postgres/service_role.
+Tum 5 SQL-tabanli guvenlik uyarisi (1 hata + 4 fonksiyon/gorunum
+uyarisi) cozuldu. Kalan tek konu: sizmis sifre korumasi (Bahri'nin
+Supabase panelinden manuel acmasi gereken bir ayar, kod degil).
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): On Ikinci Parti -- Sakatat ve Soya Kiyma Ilk Kez
+
+1000 hedefine devam. Ilk kez: sakatat (dana bobrek/beyin/iskembe),
+soya kiyma (etsiz kiyma alternatifi). 16 tarif:
+
+- **Grup1 (5):** Izgara Dana Bobrek, Soyali Biberli Sote, Soya Kiymali
+  Patlican Musakka, Firinda Dana Beyin, Kuzu Etli Kirmizi Mercimek
+  Yemegi
+- **Grup2 (5):** Iskembe Corbasi, Soya Kiymali Zeytinyagli Dolma,
+  Kirmizi Mercimekli Pilav, Zeytinyagli Soya Fasulyesi, Zeytinyagli
+  Kuru Fasulye (Soguk)
+- **Grup3 (6):** Mercimek Koftesi, Yesil Mercimekli Salata, Elma
+  Kompostosu, Domatesli Cacik, Havuc Tursusu, Cevizli Pekmez
+
+Programatik malzeme kontrolu + isim cakismasi on-kontrolu uygulandi.
+
+**Dosya durumu:** `sql/96_cesitlilik_tarifleri_parti12.sql` (yeni),
+`teshis_isim_cakismasi_parti12.sql` (yeni).
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Parti 12 Isim Cakismasi Duzeltildi
+
+"Elma Kompostosu" -> "Elma Kompostosu (Ev Usulü)" olarak yeniden
+adlandirildi. Kontrol tekrar temiz.
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Parti 12 Basarili -- 405 Tarif
+
+Dogrulandi: 389 + 16 = 405. Ilerleme: 241 -> ... -> 405 (on iki parti,
+toplam +164). 1000 hedefine 595 tarif kaldi.
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): On Ucuncu Parti -- Semizotu, Madimak, Salep Ilk Kez
+
+1000 hedefine devam. Ilk kez: semizotu, madimak, salep. 16 tarif:
+
+- **Grup1 (5):** Semizotlu Etli Yemek, Madimakli Kavurma, Yogurtlu
+  Kebap, Firinda Kuzu But (Butun), Nohutlu Tavuk Guvec
+- **Grup2 (5):** Zeytinyagli Semizotu, Domatesli Sehriye Corbasi,
+  Kasarli Sehriyeli Pilav, Zeytinyagli Havuc, Sade Ispanak Corbasi
+- **Grup3 (6):** Salep, Semizotlu Yogurt, Nohut Ezmesi, Yogurtlu
+  Havuc Salatasi, Kuru Uzumlu Komposto, Zeytin ve Peynir Tabagi
+
+Programatik malzeme kontrolu + isim cakismasi on-kontrolu uygulandi.
+
+**Dosya durumu:** `sql/97_cesitlilik_tarifleri_parti13.sql` (yeni),
+`teshis_isim_cakismasi_parti13.sql` (yeni).
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Parti 13 Basarili -- 421 Tarif
+
+Dogrulandi: 405 + 16 = 421. Ilerleme: 241 -> ... -> 421 (on uc parti,
+toplam +180). 1000 hedefine 579 tarif kaldi.
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): On Dorduncu Parti -- Dolma Cesitliligi
+
+1000 hedefine devam. Bu parti "dolma" cesitliligine odaklandi --
+domates/lahana/kabak/biber/enginar, hem ETLI (Grup1) hem ZEYTINYAGLI
+(Grup2) versiyonlari. 16 tarif:
+
+- **Grup1 (5, etli dolmalar):** Domates, Lahana, Kabak, Biber,
+  Enginar Dolmasi (Etli)
+- **Grup2 (5):** Zeytinyagli Kabak/Lahana/Domates Dolmasi, Peynirli
+  Kabak Boregi, Kabak Corbasi
+- **Grup3 (6):** Lahana Salatasi, Kabakli Yogurt Salatasi, Enginar
+  Salatasi, Domates Tursusu, Kabak Tursusu, Enginarli Yogurt
+
+Programatik malzeme kontrolu + isim cakismasi on-kontrolu uygulandi.
+
+**Dosya durumu:** `sql/98_cesitlilik_tarifleri_parti14.sql` (yeni),
+`teshis_isim_cakismasi_parti14.sql` (yeni).
+
+
+### 6 Eylul 2026 -- XVII. Oturum (devam): Parti 14 Basarili -- 437 Tarif
+
+Dogrulandi: 421 + 16 = 437. Ilerleme: 241 -> ... -> 437 (on dort
+parti, toplam +196). 1000 hedefine 563 tarif kaldi.
+
+
+### 6 Eylul 2026 -- XVIII. Oturum: Ikon Sistemi -- VE/VEYA Duzeltmesi + rendeleme_sogan Yeniden Uretimi
+
+Onceki bir oturumda (kaydi bulunup ozetlendi) bulunan 4 sorunun
+ikisine simdi gecildi (Bahri: "evet simdi ikisini de duzeltelim"):
+
+**1. VE/VEYA (AND/OR) mantigi duzeltildi:** `ikon_siniflandirma_
+calistir.py`'nin SISTEM_PROMPTU'na acik bir kural eklendi (YETMIS
+YEDINCI DUZELTME) -- "Soğanı rendeleyin (ya da robotta çekip ezin)"
+gibi IKI ALTERNATIF yontem sunan bir satirda, artik SADECE ILK
+bahsedilen yontem atanacak, ikincisi (alternatif) atanmayacak.
+
+**ONEMLI:** Bu prompt degisikligi, script'in ARTIMLI (hash-tabanli)
+calismasi yuzunden ZATEN islenmis tarifleri OTOMATIK yeniden
+islemez -- bu yuzden `99_ikon_yeniden_isleme_ve_teshis.sql` ile TUM
+ORTAK kutuphane tariflerinin `hazirlik_ikonlari` alani temizlendi,
+bir sonraki script calistirmasinda HEPSI duzeltilmis mantikla
+yeniden islenecek.
+
+**2. rendeleme_sogan.png icin yeniden uretim prompt'u hazirlandi:**
+Onceki gorsel gercekten HAVUCA benziyordu (soğan degil). Digerleriyle
+(dograma_sogan, dilimleme_sogan, soyma_sogan -- DOGRU cikanlar) AYNI
+gorsel stili koruyan, ama soğanin KATMANLI (halka halka) ic yapisini
+acikca tarif eden yeni bir prompt yazildi
+(`rendeleme_sogan_yeniden_uretim_prompt.md`).
+
+**3. Kapsam boslugu icin taze veri istendi:** Bahri "daha fazlasini
+da dusunelim (yikama, kirma vb.)" dedi -- eski scan 240 tarifle
+yapilmisti, kutuphane artik 405+ tarif. `99_ikon_yeniden_isleme_ve_
+teshis.sql`'in 2. sorgusu TUM hazirlik_talimati metinlerini disa
+aktariyor -- Bahri export edip gonderince GERCEK, GUNCEL kelime
+sikligi analizini yapip hangi yeni eylemlerin (doldurma+sise dizme
+disinda) gercekten deger katacagina birlikte karar verecegiz.
+
+**Dosya durumu:** `ikon_siniflandirma_calistir.py` guncellendi,
+`rendeleme_sogan_yeniden_uretim_prompt.md` (yeni),
+`99_ikon_yeniden_isleme_ve_teshis.sql` (yeni).
+
+**Sirada:** (a) Bahri rendeleme_sogan gorselini uretip gonderecek,
+(b) Bahri hazirlik_talimati export'unu gonderecek (kelime sikligi
+analizi icin), (c) Script'i (guncellenmis .py ile) yeniden
+calistirip VE/VEYA duzeltmesinin gercekten calistigini dogrulayacagiz.
+
+
+### 6 Eylul 2026 -- XVIII. Oturum (devam): 4 Yeni Ikon Eklendi (Veri-Tabanli Karar)
+
+Bahri'nin paylastigi 240 tariflik hazirlik_talimati export'u uzerinde
+GERCEK kelime sikligi analizi yapildi (onceki kaba tahminden DAHA
+KESIN -- "kirma" icin ilk sayim 35 idi, "kırmızı" kelimesiyle
+YANLISLIKLA karisiyordu, TAM emir/ulac formlariyla dogru sayim: 13).
+
+**Sonuc tablosu:**
+- yikama: 49 satir (yuksek deger)
+- doldurma: 19 satir (orta-yuksek)
+- sis_dizme: ~17-24 satir (orta-yuksek)
+- kirma: 13 satir (dusuk ama Bahri dahil edilmesini istedi)
+
+**Onemli bulgu:** Yeni eklenen 164+ tarifin (parti 1-14) HICBIRINDE
+hazirlik_talimati YAZILMAMIS -- export sadece orijinal ~240 tarifi
+donduruyor. Bu, ayri bir bekleyen is olarak not edildi (tarif
+kutuphanesini GENISLETMEK ile HAZIRLIK TALIMATI YAZMAK farkli
+gorevler).
+
+**kirma icin ozel cozum:** "kirma" HEM yumurta kirmak HEM findik/ceviz
+kirmak icin kullaniliyor -- ikisi GORSEL OLARAK COK FARKLI. Mevcut
+malzeme-varyanti sistemi (soğan/limon/biber'de kullanilan AYNI
+altyapi) genisletildi: "kirma" `_MALZEME_DUYARLI_ISLEMLER`'e eklendi,
+"yumurta" yeni bir ozel varyant tetikleyicisi olarak eklendi --
+"yumurtaları kırın" -> `kirma_yumurta.png`, "fındıkları kırın" ->
+genel `kirma.png` (ceviz/findik gorseli).
+
+**Kirmizi hatasi onlendi:** "kirma" icin KISA "kır" koku KULLANILMADI
+-- bu "kırmızı" (red) ile YANLISLIKLA eslesirdi (ikisi de "kır" ile
+basliyor). Bunun yerine TAM cekimli formlar (kırın/kırıp/kırarak/vb.)
+listelendi. Izole test edildi: yumurta->kirma_yumurta, findik->kirma,
+"kırmızı biber"->HICBIRIYLE eslesmiyor (dogru).
+
+**Dosya durumu:** `asama_ikonlari.py` guncellendi (4 yeni eylem +
+yumurta varyanti), `yeni_ikonlar_prompt_listesi.md` (yeni, 5 gorsel
+prompt'u -- kirma icin 2 ayri varyant dahil).
+
+**Sirada:** Bahri 5 gorseli (yikama, doldurma, sis_dizme, kirma,
+kirma_yumurta) uretip gonderecek, ben seffaflastirip teslim edecegim.
+`ikon_siniflandirma_calistir.py`'nin GECERLI_EYLEMLER listesi
+ASAMA_IKON_KOKLERI'den OTOMATIK turedigi icin, ayrica bir kod
+degisikligi GEREKMIYOR.
+
+
+### 6 Eylul 2026 -- XVIII. Oturum (devam): 5 Yeni Ikon Islendi -- Ilginc Bir Kaynak Kusuru Bulundu ve Duzeltildi
+
+Bahri 5 gorseli de gonderdi -- hepsi net, dogru sahneleri gosteriyor
+(doldurma: biber+kasik+pilav harci; kirma: havanda ceviz; kirma_
+yumurta: elde yumurta kirma; sis_dizme: siste et kupleri dizme;
+yikama: musluk altinda sebze yikama).
+
+**4'u standart yontemle (seffaflastir_v3) temiz cikti.**
+
+**yikama.png icin ilginc bir kaynak kusuru bulundu:** Standart islem
+sonrasi, suzgecin GOVDESI (kenarlara BAGLI OLMAYAN, "adacik" bir
+bolge) HALA dama deseni gosteriyordu. Kok sebep arastirilinca --
+ORIJINAL kaynak JPG'nin KENDISINDE, AI modelin suzgecin govdesini
+"gorunmez/gecirgen mesh" gibi yanlislikla arka planla AYNI dama
+deseniyle cizmis oldugu goruldu (benim islemimden kaynaklanan bir
+hata DEGIL, kaynagin kendi kusuru).
+
+**Cozum:** Kenara-baglilik analizi (ndimage.label ile) kullanilarak,
+"gercek arka plan" (kenara bagli dama) ile "suzgec govdesi" (kenara
+BAGLI OLMAYAN, kapali bir adacik olarak ayni dama tonlarini gosteren
+bolge) AYRISTIRILDI. Gercek arka plan seffaflastirildi, suzgec govdesi
+ise DUZ SICAK KREM rengiyle (250,245,235) DOLDURULDU -- boylece hem
+seffaflik doGru calisti hem GORSEL KUSUR (govdenin "dama" gorunmesi)
+duzeltildi. Iki farkli arka planla (mavi, krem) gorsel olarak
+dogrulandi -- suzgec artik duzgun, dolu beyaz govdeli, delikleri net.
+
+**Dosya durumu:** `doldurma.png`, `kirma.png`, `kirma_yumurta.png`,
+`sis_dizme.png`, `yikama.png` -- hepsi `assets/` klasorune eklenmeye
+hazir.
+
+
+### 6 Eylul 2026 -- XIX. Oturum: ACIL -- Guvenlik Duzeltmesi Uretimi Bozdu, Duzeltildi
+
+**HATA (benim hatam):** Onceki oturumda (95 numarali migration)
+"auth_isletme_id()" fonksiyonunun "authenticated" rolunden EXECUTE
+yetkisi kaldirilmisti -- "kod dogrudan cagirmiyor, sadece RLS icinde
+kullaniliyor, guvenle kaldirilabilir" varsayimiyla. BU YANLISTI:
+Postgres'te bir fonksiyon RLS POLITIKASI icinde referans veriliyorsa,
+SORGUYU YAPAN ROLUN o fonksiyona YINE DE EXECUTE yetkisi olmasi
+GEREKIYOR -- SECURITY DEFINER olmasi bu gereksinimi kaldirmiyor
+(sadece fonksiyonun govdesinin hangi yetkiyle calisacagini belirler).
+
+**SONUC:** authenticated kullanicilarin "kullanicilar" tablosuna
+yaptigi TUM sorgular (yani NEREDEYSE TUM GIRIS/KAYIT akisi) kirildi
+-- Bahri uygulamaya giremez oldu (postgrest.exceptions.APIError).
+
+**DUZELTME:** `101_ACIL_auth_isletme_id_authenticated_geri_ver.sql`
+ile "authenticated" rolune EXECUTE yetkisi GERI VERILDI. "anon" ve
+"PUBLIC" icin kaldirma DOGRU kaliyor (bu hatayla ilgisi yok).
+
+**DERS:** RLS politikasi icinde kullanilan SECURITY DEFINER
+fonksiyonlarin EXECUTE yetkisini "authenticated" rolunden KALDIRMADAN
+ONCE, o fonksiyonun HANGI RLS politikalarinda referans verildigini
+mutlaka kontrol etmek gerekiyor -- "kod dogrudan cagirmiyor" tek
+basina YETERLI bir guvenlik kriteri DEGIL.
+
+
+### 6 Eylul 2026 -- XIX. Oturum (devam): Parti 15 (100 numarali dosya) Tamamlandi ve Teslim Edildi
+
+Onceki oturumda (acil cokme bildirimi araya girdigi icin) hazirlanan
+100 numarali dosya HIC teslim EDILMEMISTI -- Bahri geriye baktiginda
+99'da kaldiklarini fark etti. Simdi tamamlanip teslim edildi.
+
+Ilk kez dana but kullanildi. 16 tarif:
+- **Grup1 (5):** Firinda Dana But, Patatesli Dana Guvec, Kerevizli
+  Tavuk Sote, Bezelyeli Dana Yahnisi, Taze Fasulyeli Tavuk Guvec
+- **Grup2 (5):** Havuc ve Kereviz Corbasi, Naneli Bulgur Pilavi,
+  Zeytinyagli Patatesli Havuc, Zeytinyagli Bezelyeli Havuc, Domatesli
+  Patates Yemegi
+- **Grup3 (6):** Irmik Helvasi, Limonlu Zeytinyagli Havuc Salatasi,
+  Zeytinyagli Patates Salatasi, Portakal ve Limon Kompostosu,
+  Bezelyeli Yogurt Salatasi, Naneli Yogurt
+
+Programatik malzeme kontrolu + isim cakismasi on-kontrolu uygulandi.
+
+**Dosya durumu:** `sql/100_cesitlilik_tarifleri_parti15.sql` (yeni,
+gec teslim edildi), `teshis_isim_cakismasi_parti15.sql` (yeni).
+
+
+### 6 Eylul 2026 -- XIX. Oturum (devam): Parti 15 Basarili -- 453 Tarif
+
+Dogrulandi: 437 + 16 = 453. Ilerleme: 241 -> ... -> 453 (on bes parti,
+toplam +212). 1000 hedefine 547 tarif kaldi.
+
+
+### 6 Eylul 2026 -- XX. Oturum: "Hedef Dışı" Gorunum Tutarsizligi Bulundu ve Duzeltildi
+
+Bahri, ekranda "Lif: 6g (3.0-10.0)" -- yani ARALIK ICINDE -- gorunen
+bir degerin "Hedef dışı" olarak isaretlendigini bildirdi (Bakır ve
+Manganez icin de ayni sorun). Ayni gozlem: gorunen tum degerler,
+gosterilen araliklarin ICINDEYDI, yine de "Hedef dışı" cikiyordu.
+
+**Kok sebep:** `_hedefte_mi`, TEMEL_5 (kalori/protein/yag/
+karbonhidrat/gi) DISINDAKI ogeler icin (Lif, Bakır, Manganez dahil)
+GUNUN KENDI degerini DEGIL, o haftanin TUM gunlerinin ORTALAMASINI
+kontrol ediyor (`_haftalik_ortalama`, SEKSEN DOKUZUNCU DUZELTME'de
+eklenmis -- amaci mantikli: tek ogunde 27 besin ogesini birden
+tutturmak gercekci degil). AMA tablo o ana kadar SADECE gunun kendi
+degerini gosteriyordu -- kontrol edilen (haftalik ortalama) degeri
+DEGIL. Bu yuzden ekranda gorunen deger araligin icinde olsa bile, o
+HAFTANIN ortalamasi araligin disinda kalabiliyor ve "Hedef dışı"
+cikiyordu -- DOKSAN DORDUNCU DUZELTME'deki (yuvarlama nedeniyle
+gorunen/kontrol edilen degerin FARKLILASMASI) sorunla AYNI KATEGORIDE
+bir hata.
+
+**Duzeltme:** `_tablo_satirlari_yaz` fonksiyonuna `ogun_adi`, `hafta`,
+`detay` parametreleri eklendi -- artik haftalik ortalamayla kontrol
+edilen satirlarda EKRANDA DA haftalik ortalama gosteriliyor (kontrol
+edilenle birebir tutarli), etiketin yanina "(haft. ort.)" notu
+eklendi ki Bahri (ve ileride personel) NEYE gore kontrol edildigini
+acikca gorsun. Cagiran satir da guncellendi.
+
+**Dosya durumu:** `duzeltme_haftalik_ortalama_gosterimi.py` (yeni,
+find-replace talimati -- Bahri elle uygulayacak, dogrudan dosya
+teslimi degil, cunku canli dosyaya dogrudan erisim yoktu bu oturumda).
+
+
+### 6 Eylul 2026 -- XX. Oturum (devam): Haftalik Ortalama GERI ALINDI, Gunluk Kontrole Donuldu
+
+Bahri, "haftalik ortalama neden konuldu, gunluge donsek daha uygun
+olmaz mi" diye sordu. Gerekce aciklandi (Kasim ayinda %88 hedef disi
+cikmisti, 27 esitzamanli hedefin gercekci olmadigi icin haftalik
+ortalamaya gecilmisti) -- ama Bahri sonucu gormek icin GUNLUGE
+DONMEYI tercih etti.
+
+**Onceki talimat GERI CEKILDI:** `duzeltme_haftalik_ortalama_
+gosterimi.py` (gosterimi haftalik ortalamayla tutarli yapan
+duzeltme) ARTIK UYGULANMAYACAK -- yerine daha basit bir degisiklik
+yeterli.
+
+**Yeni degisiklik:** `_hedefte_mi` fonksiyonu, TEMEL_5 disindaki
+ogeler icin de artik SADECE gunun kendi degerini (t.get(anahtar))
+kontrol ediyor -- `_haftalik_ortalama` cagrisi kaldirildi (fonksiyonun
+kendisi dosyada duruyor, ileride tekrar istenirse kolayca geri
+eklenebilir). Bu, gosterilen deger ile kontrol edilen degerin
+OTOMATIK tutarli olmasini sagliyor, `_tablo_satirlari_yaz`'a
+DOKUNULMASINA gerek kalmadi.
+
+**Beklenti:** Muhtemelen yeniden yuksek "hedef disi" orani gorulecek
+(Kasim'daki %88 gibi) -- bu, uretim algoritmasinin kendisiyle ilgili
+AYRI, daha derin bir tasarim sorunu, cozulmedi, sadece kontrol
+mantigi gunluge donduruldu.
+
+**Dosya durumu:** `gunluk_kontrole_donus.py` (yeni, tek fonksiyon
+degisikligi -- Bahri elle uygulayacak).
+
+
+### 9 Eylul 2026 -- XXI. Oturum: Gunluk Kontrole Donus Dogrudan Dosyaya Uygulandi + Python Alias Teshisi Dogrulandi
+
+Bahri `files.zip` ile proje dosyalarinin tamamini yukledi -- bu kez
+(bir onceki oturumun aksine) canli dosyaya DOGRUDAN erisim vardi.
+Bu sayede XX. oturumda hazirlanan `gunluk_kontrole_donus.py` /
+`otomatik_duzeltme_uygula.py` talimati, Bahri'nin elle uygulamasina
+gerek kalmadan `pages/0_Yillik_Menu.py` uzerinde DOGRUDAN uygulandi:
+`_hedefte_mi` fonksiyonu artik TEMEL_5 disindaki ogeler icin de
+`_haftalik_ortalama` cagirmiyor -- TUM ogeler gunun kendi degeriyle
+kontrol ediliyor. Sonuc dogrulandi (syntax kontrolu basarili).
+
+Ayri konu: onceki oturumda supheli gorulen Windows `python` komutunun
+App Execution Alias yuzunden sessiz kalma teshisi, tam yol ile
+calistirilan `python.exe --version` komutunun `Python 3.12.10`
+dondurmesiyle DOGRULANDI. Bahri kalici cozum icin App execution
+alias ayarini kapatabilir (Ayarlar > Uygulamalar > Gelismis uygulama
+ayarlari > Uygulama yurutme diger adlari).
+
+**Dosya durumu:** `pages/0_Yillik_Menu.py` guncellendi ve teslim
+edildi. `hedef_teshis_v2.py`, `gecici_satir_goster.py`,
+`otomatik_duzeltme_uygula.py`, `gunluk_kontrole_donus.py` artik
+gereksiz (amaclarini yerine getirdiler) -- silinebilir.
