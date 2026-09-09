@@ -7902,3 +7902,52 @@ paylasmasi bekleniyor. Sonuca gore iki yol ayrimi var:
 
 **Dosya durumu:** `hedef_fizibilite_teshis.py` (yeni, proje kok
 dizinine konup calistirilmasi gerekiyor -- db.py'ye bagimli).
+
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): Fizibilite Sonucu -- Cozum VAR ama 1/103.740 Nadir; Arama Butcesi SINIRSIZ Yapildi
+
+Bahri `hedef_fizibilite_teshis.py`'i calistirdi (Turk mutfagi, kis
+mevsimi, grup1=89/grup2=92/grup3=88). Sonuc KESIN:
+
+- 518.698 uyumlu (madde 11 + ayni-gun-taban-tekrarsizligi saglayan)
+  uclu degerlendirildi, SADECE 5'i (yani ~1/103.740) TUM 32 besin
+  ogesini AYNI ANDA tutturuyor. Ornek: 4/5 eslesme AYNI t1'i
+  ("Etli Yeşil Mercimek Yemeği") kullaniyor -- yani kazananlar rastgele
+  dagilmis degil, birkac "sansli" tarifin etrafinda kumeleniyor.
+- Performans: bu tarama SADECE 14.5 saniye surdu (~35.800 deneme/sn).
+- En sik "engelleyici" ogeler (tum ucrlularda basarisizlik orani):
+  kalori %91.1 (!), vitamin_b3 %89.1, magnezyum %87.8, vitamin_b1
+  %87.2 -- en az engelleyici: gi %1.5, vitamin_b7 %33.6, vitamin_d
+  %39.9. (Not: kalorinin bu kadar sik basarisiz cikmasi, varsayilan
+  900-1200 araliginin 3 tam tarifin toplami icin belki fazla dar
+  olabilecegini dusundurebilir -- ayri bir gozlem, simdilik aksiyon
+  alinmadi cunku Bahri hedef araliklarini DEGIL algoritmayi
+  iyilestirmeyi tercih etti.)
+
+**SONUC:** Cozum VAR ama COK NADIR -- bu bir ARAMA/KAPSAMA sorunu,
+hedef degil. Kok neden bulundu: eski butce (1500-2500) ile TEK BIR t1
+adayinin butun kombinasyonlarini denemek bile ORTALAMA ~6.000 deneme
+gerektiriyor (89 t1 icin) -- yani algoritma tek bir t1'i bile
+bitiremeden bütçesi tükeniyor, "sansli" t1'e hic ulasamiyordu.
+
+**Bahri'ye soruldu:** aylik uretim icin kabul edilebilir bekleme
+suresi ne kadar? **Cevap: "onemli degil, ne kadar surerse sursun en
+iyi sonucu istiyorum."**
+
+**YUZ YIRMI ALTINCI DUZELTME uygulandi:** `uretim_algoritmasi.py`
+`ogun_olustur` icindeki 3 kademenin deneme_sayisi'si `float("inf")`
+yapildi -- artik HER kademe, KENDI kisitlari altindaki TUM uyumlu
+havuzu tuketene kadar arar (tam/exhaustive). Eger bir kademenin
+kisitlari altinda tam eslesme VARSA, artik MUTLAKA bulunacak. Sentetik
+veriyle test edildi: (1) infeasible hedefte dogru sekilde en yakin
+sonuca duser, sonsuz donguye girmez; (2) feasible hedefte doğru tam
+eslesmeyi buluyor. Maliyet: buyuk/gevsek havuzlarda (3. kademe,
+tekrara_izin_ver=True) bir ogun onlarca saniye surebilir, aylik
+uretimde kotu durumda onlarca dakikaya cikabilir -- Bahri bunu
+BILINCLI kabul etti.
+
+**Sirada:** Bahri Aralik ayini bu degisiklikle YENIDEN uretip yeni
+"kac gun hedefte" sonucunu paylasacak.
+
+**Dosya durumu:** `uretim_algoritmasi.py` guncellendi ve teslim
+edildi.

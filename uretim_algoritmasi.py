@@ -286,8 +286,12 @@ def _ogun_dene(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, 
 
     en_iyi_mesafe = None
     en_iyi_uclu = None
-    degerlendirilen = 0  # (t1,t2,t3) UCLU sayisi -- havuz buyuklugunden
-    # BAGIMSIZ kesin bir tavan (SEKSEN SEKIZINCI DUZELTME, 4 Eylul 2026).
+    degerlendirilen = 0  # (t1,t2,t3) UCLU sayisi -- SEKSEN SEKIZINCI
+    # DUZELTME'de (4 Eylul 2026) havuz buyuklugunden BAGIMSIZ SABIT bir
+    # tavandi; YUZ YIRMI ALTINCI DUZELTME (9 Eylul 2026) ile deneme_
+    # sayisi artik float("inf") gelebiliyor -- bu durumda asagidaki
+    # kontrol hicbir zaman tetiklenmez, dongu havuzu DOGAL olarak
+    # tuketene kadar devam eder (tam/exhaustive arama).
 
     for t1 in aday1_karisik:
         t1_taban = _taban_kelime(t1["ad"])
@@ -353,14 +357,38 @@ def ogun_olustur(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta
     kademede kabul edilmiyor -- hedef hicbir kademede birakilmiyor; 3
     kademe de deneme sayisi ciddi olcude ARTIRILDI (200 -> 1500/1500/
     2500) VE her kademe, tam eslesme bulunamazsa kendi EN YAKIN uyumlu
-    secenegini bildiriyor (bkz. _ogun_dene)."""
+    secenegini bildiriyor (bkz. _ogun_dene).
+
+    YUZ YIRMI ALTINCI DUZELTME (9 Eylul 2026): Aralik ayinda 31 gunden
+    SADECE 1'inin hedefte ciktigi bildirildi. `hedef_fizibilite_teshis.py`
+    ile YAPILAN GERCEK VERI TESTI (kis mevsimi, 32 besin ogesi ayni anda,
+    hafta/gun kisitlari OLMADAN en iyimser senaryo) sunu kanitladi: tam
+    eslesme VAR ama COK NADIR -- 518.698 uyumlu uclunun SADECE 5'i (yani
+    ~1/103.740) TUM 32 ogeyi tutturuyor. Sorun sonuc degil, KAPSAMA: tek
+    bir t1 (ana yemek) adayinin butun kombinasyonlarini denemek bile
+    ORTALAMA ~6.000 deneme gerektiriyor (89 t1 adayi icin), yani eski
+    1500-2500 butcesiyle algoritma TEK BIR t1 adayini bile bitiremeden
+    tukeniyor -- kazanan kombinasyonlarin kumelendigi "sansli" t1'e
+    (ornekte: "Etli Yeşil Mercimek Yemeği") hic ulasamiyordu.
+    Olcum: bu tarama 518.698 denemeyi 14.5 saniyede tamamladi (~35.800
+    deneme/sn) -- yani butceyi ciddi olcude buyutmek HESAPSAL OLARAK
+    UCUZ. Bahri'nin acik talimatiyla ("ne kadar surerse sursun en iyi
+    sonucu istiyorum") 3 kademe de SINIRSIZ (tam/exhaustive) yapildi --
+    artik bir kademe, o kademenin butun uyumlu havuzunu tuketmeden
+    vazgecmiyor. Bu, EGER bir tam eslesme o kademenin kisitlari altinda
+    VARSA, MUTLAKA bulunacagi anlamina gelir (aksi halde en yakin
+    sonuca duser, eskisi gibi). Maliyet: buyuk/gevsek havuzlarda
+    (ozellikle 3. kademe, tekrara_izin_ver=True) bir ogun icin BIRKAC
+    ON SANIYEYE kadar surebilir -- aylik (~60 ogunluk) bir uretimde bu,
+    kotu durumda onlarca dakikaya cikabilir; Bahri bu tradeoff'u
+    BILINCLI olarak kabul etti."""
     en_iyi_genel_uclu = None
     en_iyi_genel_mesafe = None
 
     for tekrara_izin_ver, mevsim_zorunlu, deneme_sayisi in (
-        (False, True, 1500),
-        (False, False, 1500),
-        (True, False, 2500),
+        (False, True, float("inf")),
+        (False, False, float("inf")),
+        (True, False, float("inf")),
     ):
         tam_sonuc, en_iyi_yakin = _ogun_dene(
             grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele,
