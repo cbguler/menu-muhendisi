@@ -20,23 +20,45 @@
 # kontrol DISI birakilir (0 sayilmaz) -- bkz. ON DOKUZUNCU DUZELTME.
 #
 # CALISTIRMA:
-#   1) Bu dosyayi proje kok dizinine koy (db.py'nin yaninda).
-#   2) Once MUTFAK_KODU = None ile bir kez calistir -- mevcut mutfak
+#   1) Bu dosyayi proje kok dizinine koy (besin_sabitleri.py ve
+#      uretim_algoritmasi.py'nin yaninda).
+#   2) SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY ortam degiskenlerinin
+#      tanimli oldugundan emin ol (ikon_siniflandirma_calistir.py icin
+#      zaten "setx" ile kaydetmistin -- ayni terminal/oturumdaysa hazir).
+#   3) Once MUTFAK_KODU = None ile bir kez calistir -- mevcut mutfak
 #      kodlarini listeler.
-#   3) MUTFAK_KODU'nu doldur, HEDEF'i (varsayilan araliklari
+#   4) MUTFAK_KODU'nu doldur, HEDEF'i (varsayilan araliklari
 #      kullanmiyorsan) kendi degerlerinle guncelle, tekrar calistir:
 #         python hedef_fizibilite_teshis.py
 #
 # SURE: Havuz buyuklugune gore degisir -- birkac saniyeden birkac
 # dakikaya kadar surebilir, ilerleme t1 bazinda ekrana yazilir.
 
+import os
 import time
 
-from db import get_supabase
+from supabase import create_client
 from besin_sabitleri import TUM_BESIN_ALANLARI, BESIN_ARALIK
 from uretim_algoritmasi import ogun_besin_toplami, _taban_kelime, _uyumlu_mu, _besin_mesafesi
 
-supabase = get_supabase()
+# YETMIS BIRINCI DUZELTME'deki ikon_siniflandirma_calistir.py ile AYNI
+# neden: bu script db.py/oturumu_uygula() (Streamlit oturum) UZERINDEN
+# GECMIYOR, yani "anon" rolunde baglanir -- ve anon rolunden
+# auth_isletme_id() EXECUTE yetkisi kaldirilmis durumda (93-101
+# numarali migration'lar). Bu yuzden SERVICE_ROLE anahtariyla, RLS'i
+# atlayarak baglaniyoruz (SADECE bu tur tek seferlik/lokal teshis
+# scriptleri icin uygun -- ASLA istemci tarafinda/uretimde kullanma).
+supabase_url = os.environ.get("SUPABASE_URL")
+supabase_service_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+if not supabase_url or not supabase_service_key:
+    print("HATA: SUPABASE_URL ve/veya SUPABASE_SERVICE_ROLE_KEY bulunamadi.")
+    print("Bunlari ikon_siniflandirma_calistir.py icin zaten 'setx' ile")
+    print("kaydetmistin -- ayni terminalde calistiriyorsan zaten mevcut")
+    print("olmalilar. Degilse: Supabase projenin Settings -> API")
+    print("sayfasindan 'Project URL' ve 'service_role' anahtarini al.")
+    raise SystemExit(1)
+
+supabase = create_client(supabase_url, supabase_service_key)
 
 # ---- AYARLANMASI GEREKENLER ----
 MUTFAK_KODU = None   # None birakirsan mevcut mutfaklar listelenir.
