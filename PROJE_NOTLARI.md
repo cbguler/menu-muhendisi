@@ -7857,3 +7857,48 @@ ayarlari > Uygulama yurutme diger adlari).
 edildi. `hedef_teshis_v2.py`, `gecici_satir_goster.py`,
 `otomatik_duzeltme_uygula.py`, `gunluk_kontrole_donus.py` artik
 gereksiz (amaclarini yerine getirdiler) -- silinebilir.
+
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): Aralik Sonucu -- 31 Gunden Sadece 1'i Hedefte, Fizibilite Teshis Scripti Yazildi
+
+Gunluk kontrole donus sonrasi Bahri Aralik ayini uretti: 31 gunden
+SADECE 1'i tum gun hedefte cikti (~%97 hedef disi, Kasim'daki %88'i
+de gecti). Bahri'nin secimi: uretim ALGORITMASINI iyilestirmek
+(hedef araliklarini gevsetmek DEGIL). Kullanilan hedef: "bos hedef"
+profili + TUM 32 besin ogesi (5 temel + 27 genisletilmis) AYNI ANDA
+secili.
+
+**Once fizibilite sorusu sorulmali:** 32 ogeyi ayni anda tutturan
+HERHANGI bir 3'lu kombinasyon havuzda var mi, yoksa yok mu? Bu
+bilinmeden algoritma degisikligi kor atis olur -- havuzda cozum
+yoksa arama ne kadar iyilestirilirse iyilestirilsin sonuc degismez.
+(Not: DOKSAN ALTINCI DUZELTME DENEMESI'nde -- 4 Eylul -- TEMEL_5-only
+uretimin TAM-32-hedefli uretimden DAHA KOTU ciktigi zaten bulunmustu,
+yani uretim algoritmasi zaten TUM 32'yi hedefliyor, bu yeni degil.)
+
+**Yapilan:** `hedef_fizibilite_teshis.py` yazildi -- TEK bir ogun icin
+(varsayilan: kis/Aralik, hafta/gun tekrar kisitlari OLMADAN, yani en
+iyimser senaryo) grup1×grup2×grup3'un TUM uyumlu (madde 11 + ayni-
+ogun-taban-tekrarsizligi) uclulerini SINIRSIZ (deneme sayisi tavani
+YOK) tarayan bir teshis scripti. Gercek uretim mantigiyla (`uretim_
+algoritmasi.ogun_besin_toplami`, `_taban_kelime`, `_uyumlu_mu`, `_besin_
+mesafesi` DOGRUDAN import edilerek) birebir tutarli. Raporladigi
+seyler: (1) tam eslesme var mi, varsa ornekler; (2) yoksa en yakin
+uclu ve kac/hangi oge basarisiz; (3) TUM degerlendirilen ucluler
+icinde HANGI besin ogelerinin en sik "engelleyici" ciktigi (kronik
+darbogaz tespiti).
+
+**Henuz calistirilmadi** -- Bahri'nin projeyi calistirip ciktiyi
+paylasmasi bekleniyor. Sonuca gore iki yol ayrimi var:
+- Tam eslesme VAR ama nadir -> gercek bir arama/kapsama sorunu,
+  algoritma (arama butcesi/stratejisi) iyilestirmesi anlamli ve
+  faydali olur.
+- Tam eslesme HIC YOK (en iyimser senaryoda bile) -> mevcut tarif
+  havuzuyla 32 ogeyi ayni anda tutturmak matematiksel olarak
+  imkansiza yakin -- bu durumda algoritma degisikligi COZUM DEGIL,
+  Bahri ile bu bulguyu paylasip yol haritasini (hedef sayisini
+  azaltma, esik/puanlama yaklasimina gecme, vb.) yeniden konusmak
+  gerekecek.
+
+**Dosya durumu:** `hedef_fizibilite_teshis.py` (yeni, proje kok
+dizinine konup calistirilmasi gerekiyor -- db.py'ye bagimli).
