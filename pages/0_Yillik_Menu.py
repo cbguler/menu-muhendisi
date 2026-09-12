@@ -747,9 +747,46 @@ for t in tarifler:
     t2["yag"] = b.get("yag")
     t2["karbonhidrat"] = b.get("karbonhidrat")
     t2["gi"] = b.get("gi")
+    t2["alerjenler"] = b.get("alerjenler", set())
     for kolon in _GENISLETILMIS_KOLONLAR:
         t2[kolon] = b.get(kolon)
     tarifler_zengin.append(t2)
+
+# YUZ OTUZ UCUNCU DUZELTME (9 Eylul 2026): "filtre gerektiren" beslenme
+# kaliplari (vejetaryen/vegan/alerjen kisitlamasi) icin alt yapi. Veri
+# zaten VARDI (ozel_etiketler'de 'vejetaryen' etiketi, malzeme_alerjen
+# tablosunda alerjenler -- ikisi de baska amacla onceden kuruldu, bu
+# oturumda ILK KEZ menu URETIMINI filtrelemek icin KULLANILDI). Vegan,
+# ayri bir etiket GEREKTIRMEDEN 'vejetaryen' + sut/yumurta alerjeni
+# icermeme olarak TURETILIYOR -- alerjen adlarinin TAM YAZIMINI
+# (Turkce karakter, "ve urunleri" eki vb.) varsaymamak icin gercekte
+# VEROTABANINDA GECEN adlar arasindan "sut"/"yumurta" gecen kelimeler
+# ARANIYOR (hardcode edilmedi).
+tum_alerjenler = sorted(set().union(*(t["alerjenler"] for t in tarifler_zengin))) if tarifler_zengin else []
+
+st.markdown("**Beslenme tarzı ve alerjenler**")
+beslenme_tarzi = st.radio(
+    "Beslenme tarzı", options=["Tümü", "Vejetaryen", "Vegan"],
+    horizontal=True, key="beslenme_tarzi_secimi", label_visibility="collapsed",
+)
+haric_alerjenler = st.multiselect(
+    "Hariç tutulacak alerjenler", options=tum_alerjenler, key="haric_alerjenler_secimi",
+    help="Seçilen alerjenlerden herhangi birini içeren tarifler menüden tamamen çıkarılır.",
+)
+
+if beslenme_tarzi in ("Vejetaryen", "Vegan"):
+    tarifler_zengin = [t for t in tarifler_zengin if "vejetaryen" in t["etiketler"]]
+if beslenme_tarzi == "Vegan":
+    sut_yumurta_alerjenleri = {a for a in tum_alerjenler if "süt" in a.lower() or "yumurta" in a.lower()}
+    tarifler_zengin = [t for t in tarifler_zengin if not (t["alerjenler"] & sut_yumurta_alerjenleri)]
+if haric_alerjenler:
+    tarifler_zengin = [t for t in tarifler_zengin if not (t["alerjenler"] & set(haric_alerjenler))]
+
+if beslenme_tarzi != "Tümü" or haric_alerjenler:
+    if not tarifler_zengin:
+        st.warning("Bu beslenme tarzı/alerjen kısıtlamasıyla hiç tarif kalmadı.")
+        st.stop()
+    st.caption(f"Filtre sonrası {len(tarifler_zengin)} tarif kullanılacak.")
 
 sol, sag, sag2, sag3 = st.columns([1, 1, 1.4, 1.6])
 with sol:

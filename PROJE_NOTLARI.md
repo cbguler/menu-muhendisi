@@ -8129,3 +8129,56 @@ yemek isimleri fontu bir olcek buyutuldu -- `st-key-gunkutusu_`
 icindeki `stPageLink` metni 11px -> 12.5px (YUZ OTUZ IKINCI DUZELTME).
 
 **Dosya durumu:** `0_Yillik_Menu.py` guncellendi ve teslim edildi.
+
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): Vejetaryen/Vegan/Alerjen Filtreleme Alt Yapisi Kuruldu (YUZ OTUZ UCUNCU DUZELTME)
+
+Bahri'nin karari: dunya beslenme kaliplarindan (Akdeniz/MIND/Nordik/Keto)
+ONCE, "filtre gerektirenler" (Vejetaryen/Vegan/alerjen kisitlamalari)
+icin alt yapiyi kuralim, sonra HEPSINI birden kodlayalim.
+
+**Kesif:** Alt yapinin BUYUK kismi ZATEN VARDI, hic bilinmiyordu:
+- `ozel_etiketler` icinde 'vejetaryen' GERCEK bir etiket, birden fazla
+  tarife zaten islenmis (ör. "Çiğ Köfte (Vejetaryen)", "Naneli Bulgur
+  Pilavı").
+- `malzeme_alerjen` tablosu + `alerjenler(ad)` lookup zaten her
+  malzemenin alerjenini tutuyor, tarif bazinda BIRLESTIRILIYOR
+  (`_tarif_detaylarini_getir` icinde `alerjenler` seti olarak) ve
+  ZATEN ekranda gosteriliyor (recete detay tablosu).
+- EKSIK OLAN TEK SEY: bu zaten hesaplanmis `alerjenler` verisinin
+  MENU URETIMI icin kullanilan `tarifler_zengin` listesine hic
+  KOPYALANMAMASI (sadece besin ogeleri kopyalaniyordu) VE bunu
+  KULLANAN bir filtreleme UI/mantiginin hic yazilmamis olmasi.
+
+**Yapilan:**
+1. `alerjenler` alani artik `tarifler_zengin` olusturulurken KOPYALANIYOR.
+2. "Bölge (mutfak)" bolumunun hemen altina yeni bir "Beslenme tarzı ve
+   alerjenler" bolumu eklendi: Tümü/Vejetaryen/Vegan radio + "Hariç
+   tutulacak alerjenler" cok-secimli kutusu (secenekler VERITABANINDAN
+   DINAMIK cekiliyor, hardcode edilmedi).
+3. Vejetaryen: sadece 'vejetaryen' etiketli tarifler kalir. Vegan:
+   Vejetaryen + ayrica sut/yumurta alerjeni ICEREN tarifler de elenir
+   -- bu, ayri bir 'vegan' etiketi GEREKTIRMEDEN, mevcut alerjen
+   verisinden TURETILDI (alerjen adlarinin tam yazimini varsaymadan,
+   icinde "sut"/"yumurta" gecen adlar dinamik aranarak).
+4. Alerjen hariç tutma: secilen alerjenlerden HERHANGI birini iceren
+   tarif tamamen elenir.
+5. Havuz bu filtrelerle tamamen bosalirsa uyari verilip durduruluyor
+   (bolge filtresindeki "hic tarif bulunamadi" ile ayni desen).
+6. Sentetik veriyle filtreleme mantigi test edildi (vejetaryen,
+   vegan-turetme, alerjen-haric-tutma) -- hepsi dogru calisti.
+
+**Bilinen risk (Keto icin daha once konusulan ayni sinif risk):**
+Vejetaryen/Vegan secildiginde grup1 (ana yemek) havuzu ciddi
+kuculebilir -- eger cok az sayida vejetaryen ana yemek varsa, arama
+zorlasabilir (Keto icin konusulan fizibilite sorunuyla ayni mantik).
+Bahri pratikte deneyip sonucu paylasirsa, gerekirse
+`hedef_fizibilite_teshis.py` ile dogrulariz.
+
+**Sirada:** Bu alt yapi kuruldugu icin artik dunya kaliplarindan
+(Akdeniz/MIND/Nordik/+Keto fizibiliteye bagli) VE topluluk
+kaliplarindan (Hastane/Sporcu/vb.) HEPSI BIRDEN, Bahri'nin son karari
+geregi, kalan vitamin/mineral arastirmasi tamamlandiktan sonra
+kodlanacak.
+
+**Dosya durumu:** `0_Yillik_Menu.py` guncellendi ve teslim edildi.
