@@ -8221,3 +8221,28 @@ deneyecek, sonucu paylasacak.
 
 **Dosya durumu:** `besin_sabitleri.py` ve `6_Abonelik.py` guncellendi
 ve teslim edildi.
+
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): "Ay" Acilir Listesi Kesiliyordu -- Sayfaya Bosluk Eklendi (YUZ OTUZ BESINCI DUZELTME)
+
+Bahri bildirdi: "Ay" acilir listesi (12 secenek) sayfanin alt kenarina
+yakin oldugunda tarayici tarafindan kesiliyor, "Aralık" (listenin son
+elemani) gorunmuyordu. Arastirildi: Streamlit'in (BaseWeb tabanli)
+selectbox'i ekran kenarina carpinca YUKARI ACILACAK sekilde
+DONMUYOR -- bu, Streamlit'in kendi GitHub deposunda da bilinen bir
+sinir, resmi/guvenilir bir CSS "auto-flip" cozumu YOK (topluluk
+kaynaklari da bunu dogruluyor).
+
+Gercek dunyada onerilen cozum uygulandi: "Yıl/Ay/Porsiyon profili"
+satirinin HEMEN ALTINA 220px'lik bos bir alan eklendi
+(`0_Yillik_Menu.py`) -- boylece tarayicinin kaydiracak GERCEK yeri
+oluyor, acilir liste tam gorunebiliyor. Bu %100 garanti bir "yukari
+acilma" degil (Streamlit bunu desteklemiyor), ama pratikte calisan,
+topluluk tarafindan da onerilen bir yontem.
+
+**Sirada:** Bahri test edip "Aralık" artik secilebiliyor mu
+paylasacak. Yeterli gelmezse, daha kokten cozum (Yil/Ay/Porsiyon
+satirini sayfanin daha yukarisina -- Bolge/Beslenme tarzi
+filtrelerinden ONCE -- tasimak) konusulacak.
+
+**Dosya durumu:** `0_Yillik_Menu.py` guncellendi ve teslim edildi.

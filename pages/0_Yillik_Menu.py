@@ -937,6 +937,19 @@ with sag3:
                     st.session_state[f"{_ogun_adi}_{_anahtar}_alt"] = float(_aralik[0])
                     st.session_state[f"{_ogun_adi}_{_anahtar}_ust"] = float(_aralik[1])
 
+# YUZ OTUZ BESINCI DUZELTME (9 Eylul 2026): Bahri'nin bildirdigi sorun --
+# "Ay" acilir listesi (12 secenek) sayfanin alt kenarina yakin
+# oldugunda tarayici tarafindan kesiliyor, "Aralık" gorunmuyordu.
+# Arastirildi: Streamlit'in (BaseWeb tabanli) selectbox'i, diger
+# kutuphanelerde oldugu gibi ekran kenarina carpinca YUKARI ACILACAK
+# SEKILDE DONMUYOR -- bu, Streamlit'in kendi GitHub deposunda da
+# bilinen bir sinir, guvenilir/resmi bir CSS cozumu yok. Gercek
+# dunyada onerilen (ve burada uygulanan) cozum: acilir kutunun HEMEN
+# ALTINA bosluk eklemek -- boylece tarayicinin kaydiracak GERCEK yeri
+# oluyor, liste tam gorunebiliyor. Bu, ozellikle "Ay" (12 secenekli,
+# en uzun liste) icin onemliydi.
+st.markdown('<div style="height: 220px;"></div>', unsafe_allow_html=True)
+
 # SEKSEN BESINCI DUZELTME (4 Eylul 2026): Bahri'nin talebi -- secili
 # profilin ZATEN kayitli besin hedefleri varsa, "Ogun basina besin
 # hedefi uygula" sorusu/arayuzu HIC gosterilmiyor, hedefler sessizce
