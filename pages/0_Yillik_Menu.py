@@ -1267,7 +1267,7 @@ def _tablo_stilini_uygula():
             background: rgba(200,138,46,0.10);
         }
         div[class*="st-key-gunkutusu_"] div[data-testid="stPageLink"] p {
-            font-size: 11px !important; padding: 1px 3px;
+            font-size: 12.5px !important; padding: 1px 3px;
         }
         /* YUZ YIRMI SEKIZINCI DUZELTME (6 Eylul 2026): masaustu (coklu
            sutun) tablo ile mobil (tek sutun kart) gorunumu birbirini

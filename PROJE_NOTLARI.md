@@ -8098,3 +8098,34 @@ yeniden uretip sonucu paylasacak.
 
 **Dosya durumu:** `besin_sabitleri.py` (nihai, dogrulanmis hali)
 guncellendi ve teslim edildi.
+
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): SORUN COZULDU -- Uretim Hizli VE Tum Ogunler Hedefte
+
+Bahri YUZ OTUZ BIRINCI DUZELTME sonrasi Aralik'i (veya guncel ay)
+yeniden uretti: uretim COK HIZLI tamamlandi VE TUM ogunler hedefte
+cikti. Bu, oturumun basindaki "Aralik'ta 31 gunden sadece 1'i hedefte"
+sikayetinin (ve onu izleyen -- gunluk kontrole donus, arama butcesi,
+Streamlit Cloud zaman asimi, mevsim kisitinin sabitlenmesi, porsiyon
+bolme hatasi, ve nihayet besin araligi kalibrasyonu -- uzun teshis
+zincirinin) TAM COZUMU.
+
+**Sirada:** Bahri "kaliplari da devreye sokalim" dedi -- yani daha
+once arastirilan STANDART TOPLULUK KALIPLARI (Hastane, Sporcu, Diyet,
+Seker Hastasi, Cocuklar, Hamile/Emziren, Kalp-damar) `besin_sabitleri.py`'ye
+kod olarak eklenip UI'da tek-tus secim haline getirilecek. Kalan
+vitamin/mineral arastirmasi (magnezyum, cinko, fosfor, bakir,
+manganez, selenyum, iyot, B1-B12, E, K -- grup bazinda) ile bunun
+sirasi Bahri ile netlestirilecek.
+
+Bahri sirlamayi netlestirdi: (1) once DUNYADA TANINMIS beslenme
+KALIPLARININ (Akdeniz, Keto, vb. -- topluluk/klinik hedef guruplarindan
+AYRI bir kavram) arastirilip listelenmesi, kendisi secim yapacak; (2)
+sonra kalan vitamin/mineral arastirmasi; (3) sonra HEPSI BIRDEN
+kodlanacak. Kalip arastirmasi bu oturumda baslatildi (asagida).
+
+Ayrica kucuk bir istek: aylik menu kartlarindaki (takvim gorunumu)
+yemek isimleri fontu bir olcek buyutuldu -- `st-key-gunkutusu_`
+icindeki `stPageLink` metni 11px -> 12.5px (YUZ OTUZ IKINCI DUZELTME).
+
+**Dosya durumu:** `0_Yillik_Menu.py` guncellendi ve teslim edildi.
