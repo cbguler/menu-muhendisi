@@ -8065,3 +8065,36 @@ Sporcu, Diyet, Seker Hastasi, Cocuklar, Hamile/Emziren, Kalp-damar)
 bazinda arastirma grup grup devam edecek.
 
 **Dosya durumu:** `besin_sabitleri.py` guncellendi ve teslim edildi.
+
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): p10/p90 Yeterince Genis Degildi -- p5/p95 + Eski-Yeni Birlesimi (YUZ OTUZUNCU ve YUZ OTUZ BIRINCI DUZELTME)
+
+Bahri, YUZ YIRMI DOKUZUNCU DUZELTME sonrasi bile uretimin hala uzun
+surdugunu bildirdi ve "araliklari acmadin mi" diye sordu. Inceleme
+sonucu: p10/p90 (dogal dagilimin sadece ortadaki %80'i) BAZI onemli
+ogelerde (sodyum, potasyum, fosfor, iyot, GI) ESKI (OTUZ IKINCI
+DUZELTME'nin kaba tahmini) araliktan DAHA DAR cikmisti -- ozetle
+"araliklari ac" hedefinin TAM TERSI etki yaratmisti (ör. sodyum
+genisligi 4200 -> 1922'ye, potasyum 2200 -> 1311'e DUSMUSTU).
+
+**YUZ OTUZUNCU DUZELTME:** p10/p90 yerine p5/p95 (yuzde 90 kapsama)
+kullanildi -- besin_kalibrasyon.py'nin AYNI ciktisindan (yeniden
+calistirmaya gerek yok), cunku script zaten p5/p95'i de olcup
+yazdirmisti.
+
+**YUZ OTUZ BIRINCI DUZELTME:** p5/p95'te bile 9 oge (gi, sodyum, b2,
+b5, b6, b7, potasyum, fosfor, iyot) hala eski araliktan dar kaldi.
+Bu 9 oge icin ESKI ve YENI araligin BIRLESIMI (ikisini de kapsayan en
+genis bant) uygulandi. Otomatik testle DOGRULANDI: TUM 32 ogenin
+hicbiri artik eskisinden dar degil (32/32 gecti, 0 istisna).
+
+(Not: bu iki duzeltme sirasinda bir ara dosyada YANLISLIKLA 7 anahtar
+-- b2/b5/b6/b7/potasyum/fosfor/iyot -- IKI KEZ yazilmis oldu; fark
+edilip dosya tamamen temiz yeniden yazilarak duzeltildi, teslim
+edilen sonuc dogrulanmis/tekrarsiz.)
+
+**Sirada:** Bahri bu son haliyle Aralik'i (veya herhangi bir ayi)
+yeniden uretip sonucu paylasacak.
+
+**Dosya durumu:** `besin_sabitleri.py` (nihai, dogrulanmis hali)
+guncellendi ve teslim edildi.
