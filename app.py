@@ -638,7 +638,8 @@ def kontrol_paneli_sayfasi():
     with sutun1:
         st.markdown(
             "**Beslenme ve sağlık takibi**\n"
-            "- Diyetisyenler\n"
+            "- Diyetisyenler ve doktorlar (danışan/hasta başına özel hedef)\n"
+            "- Kendi hanesi için besin değerlerini takip eden bireysel kullanıcılar\n"
             "- Diyet yapanlar ve kilo vermek isteyenler\n"
             "- Sporcular\n"
             "- Gelişme çağındaki çocuklar\n"

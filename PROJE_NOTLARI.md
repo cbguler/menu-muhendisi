@@ -7951,3 +7951,81 @@ BILINCLI kabul etti.
 
 **Dosya durumu:** `uretim_algoritmasi.py` guncellendi ve teslim
 edildi.
+
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): KRITIK HATA -- Teshis/Kalibrasyon Scriptlerinde Porsiyon Bolme Eksikti (YUZ YIRMI YEDINCI DUZELTME)
+
+Bahri `besin_kalibrasyon.py`'i calistirdi, sonuclar SAGDUYUYA AYKIRI
+cikti (ornegin medyan tek OGUN kalorisi 2958-3521 kcal, medyan sodyum
+5898-8001mg -- gunluk onerilen sodyumun 2-3 kati, TEK ogunde). Kok
+sebep bulundu: tarifler veritabaninda PARTI (batch, coklu porsiyon)
+toplami olarak saklaniyor -- GERCEK uygulama kodu
+(`0_Yillik_Menu.py:_tarif_detaylarini_getir`, satir 618-622) her besin
+degerini `porsiyon_sayisi`'na BOLUYOR. Ama bu oturumda yazilan IKI
+script te (`hedef_fizibilite_teshis.py` VE `besin_kalibrasyon.py`) bu
+bolme adimi ATLANMISTI -- ikisi de ayni ingredient-toplama mantigini
+tasidi ama porsiyon_sayisi'ni ne cekti ne boldu.
+
+**Etki degerlendirmesi:**
+- GERCEK URETIM KODU (`uretim_algoritmasi.py`, `0_Yillik_Menu.py`)
+  ETKILENMEDI -- bu ikisi hep DOGRU (porsiyona bolunmus) veriyle
+  calisiyor, hic degismedi.
+- SADECE bu oturumda yazilan iki TEShIS/OLCUM scripti etkilendi. Yani:
+  `hedef_fizibilite_teshis.py`'nin "518.698 uyumlu uclunun sadece 5'i
+  (1/103.740) tam eslesiyor" bulgusu VE "kalori %91.1 basarisiz"
+  istatistigi YANLIS (sisirilmis) veriyle olculmustu -- GUVENILMEZ.
+  YUZ YIRMI ALTINCI DUZELTME'nin kendisi (arama butcesini sinirsiz
+  yapmak) YINE DE MANTIKLI kaldi (daha genis arama hicbir zaman zarar
+  vermez, tek maliyeti sure -- bu zaten ayrica Streamlit Cloud
+  saglik-kontrolu sorunuyla ele alindi, mevsim kisitini sabit tutarak
+  havuzu sinirli tutuyoruz), ama gerekcedeki SAYILAR yeniden
+  olculmeden guvenilir sayilmamali.
+- `besin_kalibrasyon.py`'nin bu oturumda paylasilan TUM yuzdelik
+  tablosu ve p10/p90 onerisi GECERSIZ -- besin_sabitleri.py'ye
+  UYGULANMADI (Bahri'ye "nihai karari birlikte verecegiz" denip
+  bekletiliyordu, iyi ki uygulanmadan yakalandi).
+
+**Duzeltme:** Her iki script te `besin_detaylarini_getir()`
+fonksiyonu, `0_Yillik_Menu.py` ile BIREBIR ayni sekilde
+`porsiyon_sayisi` cekip her degeri ona BOLECEK sekilde guncellendi.
+
+**Sirada:** Bahri `besin_kalibrasyon.py`'yi DUZELTILMIS haliyle
+yeniden calistiracak -- bu seferki sonuclar guvenilir olacak, ONDAN
+SONRA besin_sabitleri.py'nin yeni varsayilan araliklarina karar
+verecegiz. Fizibilite/nadirlik sorusu da istenirse ayni sekilde
+`hedef_fizibilite_teshis.py` yeniden calistirilarak dogru olculebilir
+(simdilik oncelik kalibrasyon).
+
+**Dosya durumu:** `hedef_fizibilite_teshis.py` ve
+`besin_kalibrasyon.py` duzeltildi ve teslim edildi.
+
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): "Boş Profil" Diyetisyen/Doktor VE Bireysel Ev Kullanicisi Icin de Konumlandi (YUZ YIRMI SEKIZINCI DUZELTME)
+
+Bahri'nin talebi: "Boş Profil" secenegi sadece kurumsal (isletme)
+kullanicilar icin degil -- kendi hastasi/danisani icin ozel hedef
+girmek isteyen bir DIYETISYEN/DOKTOR, ya da sadece kendi hanesi icin
+(kurumsal abonelik olmadan) besin degerlerine dikkat eden bir EV
+KULLANICISI tarafindan da kullanilabilecegi, ve bu durumda porsiyon
+sayisinin hane buyuklugune gore ayarlanabilecegi NOTLARDA
+belirtilmeli.
+
+Kontrol edildiginde, bu senaryonun su an GERCEKTEN desteklenmedigi
+gorulup DUZELTILDI (sadece dokumante etmek yerine): "Boş Profil"
+porsiyon sayisi `0_Yillik_Menu.py` icinde SABIT 10'a kilitliydi,
+degistirilebilir bir arayuz alani yoktu. Simdi "Boş Profil"
+secildiginde bir `st.number_input` ("Boş Profil porsiyon sayısı
+(ör. hanenizdeki kişi sayısı)", 1-500 arasi, varsayilan 10) beliriyor
+ve secilen deger dogrudan `secili_porsiyon_sayisi`'ye yaziliyor.
+Profil secim kutusunun yardim metni de bu iki kullanim senaryosunu
+(diyetisyen/doktor, bireysel ev kullanicisi) acikca belirtecek sekilde
+guncellendi.
+
+Ayrica `app.py` ana sayfasindaki "Beslenme ve sağlık takibi" hedef
+kitle listesi de bu iki senaryoyu yansitacak sekilde guncellendi:
+"Diyetisyenler" -> "Diyetisyenler ve doktorlar (danışan/hasta başına
+özel hedef)" oldu, ve "Kendi hanesi için besin değerlerini takip eden
+bireysel kullanıcılar" satiri eklendi.
+
+**Dosya durumu:** `0_Yillik_Menu.py` ve `app.py` guncellendi ve
+teslim edildi.

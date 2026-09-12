@@ -788,8 +788,19 @@ with sag2:
     # sentetik bir "Boş Profil" secenegi eklendi -- Abonelik'e
     # KAYDEDILMEDEN, bu SADECE bu uretim icin gecici bir hedef girmeyi
     # sagliyor.
+    #
+    # YUZ YIRMI SEKIZINCI DUZELTME (9 Eylul 2026): "Boş Profil" sadece
+    # kurumsal (isletme) kullanicilar icin degil -- Bahri'nin belirttigi
+    # gibi, kendi hastasi/danisani icin ozel hedef girmek isteyen bir
+    # DIYETISYEN/DOKTOR, ya da sadece kendi hanesi icin (kurumsal
+    # abonelik olmadan) besin degerlerine dikkat eden bir EV KULLANICISI
+    # da bu secenegi kullanabilir -- bu durumda 10 porsiyonluk sabit
+    # varsayilan anlamsiz (bir hane genelde 2-6 kisi). Bu yuzden "Boş
+    # Profil" secildiginde porsiyon sayisi ARTIK KULLANICIDAN
+    # SORULUYOR (asagida), sabit 10 degil.
+    _bos_profil_porsiyon_varsayilan = 10
     _porsiyon_profilleri_sayfa = _porsiyon_profilleri_sayfa + [
-        {"id": None, "ad": "Boş Profil (özel/geçici hedef)", "porsiyon_sayisi": 10, "hedefler": None}
+        {"id": None, "ad": "Boş Profil (özel/geçici hedef)", "porsiyon_sayisi": _bos_profil_porsiyon_varsayilan, "hedefler": None}
     ]
     _profil_etiketleri_sayfa = [f"{p['ad']} ({p['porsiyon_sayisi']} porsiyon)" for p in _porsiyon_profilleri_sayfa]
     _sayfa_secili_index = st.selectbox(
@@ -798,9 +809,22 @@ with sag2:
         format_func=lambda i: _profil_etiketleri_sayfa[i],
         key="sayfa_porsiyon_profili_secimi",
         help="Profilleri eklemek/düzenlemek için Abonelik sayfasındaki "
-             "\"Porsiyon Profilleri\" bölümüne bak.",
+             "\"Porsiyon Profilleri\" bölümüne bak. \"Boş Profil\" "
+             "diyetisyen/doktorlar veya kendi hanesi için besin takibi "
+             "yapan bireysel kullanıcılar için de uygundur -- porsiyon "
+             "sayısını aşağıdan kendi ihtiyacınıza (ör. hane "
+             "büyüklüğünüze) göre ayarlayabilirsiniz.",
     )
     _secili_sayfa_profili = _porsiyon_profilleri_sayfa[_sayfa_secili_index]
+    if _secili_sayfa_profili["id"] is None:
+        _bos_profil_porsiyon = st.number_input(
+            "Boş Profil porsiyon sayısı (ör. hanenizdeki kişi sayısı)",
+            min_value=1, max_value=500,
+            value=_bos_profil_porsiyon_varsayilan,
+            step=1,
+            key="bos_profil_porsiyon_sayisi",
+        )
+        _secili_sayfa_profili = {**_secili_sayfa_profili, "porsiyon_sayisi": _bos_profil_porsiyon}
     st.session_state["secili_porsiyon_profil_id"] = _secili_sayfa_profili["id"]
     st.session_state["secili_porsiyon_sayisi"] = _secili_sayfa_profili["porsiyon_sayisi"]
 
