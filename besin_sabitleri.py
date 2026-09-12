@@ -88,3 +88,163 @@ def kanonik_sirala(anahtar_koleksiyonu):
     (Kalori, Protein, Yağ, Karbonhidrat, GI) istiyor."""
     anahtar_kumesi = set(anahtar_koleksiyonu)
     return [a for a in _TUM_ANAHTAR_SIRASI if a in anahtar_kumesi]
+
+
+# YUZ OTUZ DORDUNCU DUZELTME (9 Eylul 2026): STANDART_PROFILLER --
+# dunyada/klinikte taninmis beslenme kaliplari icin ARASTIRILMIS
+# baslangic sablonlari. Abonelik sayfasinda bir porsiyon profilinin
+# besin hedeflerini "sifirdan" girmek yerine, buradan birini secip
+# "Şablonu uygula" ile BASLANGIC noktasi olarak kullanabilir --
+# sonra istedigi gibi elle degistirebilir (profil sistemi zaten
+# TAMAMEN ozgur/sinirsiz, bu SADECE bir kolaylik, bir KISIT degil).
+#
+# TUMU gunluk resmi/klinik rakamlarin %35'i olarak (Ogle VE Aksam icin
+# AYNI deger -- kahvaltiya/ara ogune kalan pay ~%30 varsayilarak)
+# hesaplandi; bu yontem ve tum kaynaklar PROJE_NOTLARI'nda (9 Eylul,
+# XXI. Oturum) satir satir belgelendi. Her deger, ozellikle o grubu
+# AYIRT EDEN ogeler icin -- kalan ogeler icin genel varsayilan (yukarida)
+# gecerli kalir, "genel gibi" sayilan alanlar buraya YAZILMADI (uydurma
+# sayi yerine bos birakildi).
+#
+# BILINCLI OLARAK DISLANANLAR: MIND ve Nordik diyetleri (DASH'in
+# aksine, literaturde SAYISAL bir hedef tablosu yok -- besin
+# grubu/porsiyon sikligi olarak tanimlaniyorlar, min-max araligina
+# zorlanirsa uydurma olur). Vejetaryen/Vegan zaten ayri bir FILTRE
+# (bkz. YUZ OTUZ UCUNCU DUZELTME) -- bunlar burada TEKRAR EDILMEDI.
+# Keto EKLENMEDI -- fizibilite testi yapilmadan (Turk mutfagi
+# tarif havuzunun cok dusuk karbonhidratli kombinasyon barindirmasi
+# suphesi var) eklemek, Aralik'ta yasanan "hicbir ogun hedefte
+# cikmiyor" sorununu tekrarlama riski tasiyordu.
+STANDART_PROFILLER = {
+    "Hastane (Genel/Standart Diyet)": {
+        # NHS Scotland "Food in Hospitals" standardi + Kanada hastane
+        # menu degerlendirmesi (gunluk 1800-2400 kcal, protein
+        # >=56-75g, yag %20-35, sodyum <=2300-3000mg, lif 19-30g).
+        # Elderly hastane popülasyonunda RNI-alti cikan ogeler icin
+        # (D vitamini, cinko, C vitamini, selenyum, magnezyum,
+        # potasyum, iyot) genel RDA taban alindi.
+        "kalori": (630.0, 840.0),
+        "protein": (20.0, 40.0),
+        "karbonhidrat": (92.0, 119.0),
+        "yag": (16.0, 29.0),
+        "doymus_yag_g": (0.0, 9.0),
+        "lif_g": (7.0, 11.0),
+        "sodyum_mg": (0.0, 900.0),
+        "vitamin_d_mcg": (7.0, 15.0),
+        "vitamin_c_mg": (27.0, 250.0),
+        "cinko_mg": (3.0, 25.0),
+        "selenyum_mcg": (19.0, 180.0),
+        "magnezyum_mg": (110.0, 700.0),
+        "potasyum_mg": (910.0, 5000.0),
+        "iyot_mcg": (52.0, 800.0),
+    },
+    "Sporcu (Orta-Yüksek Antrenman)": {
+        # ISSN protein pozisyon bildirgesi (1.6-2.0 g/kg/gun) + ACSM
+        # karbonhidrat rehberi (6-8 g/kg/gun, orta-yuksek antrenman),
+        # 70kg referans. Demir/kalsiyum/cinko: Female Athlete
+        # Triad/REDs literaturu (kadin sporcularda daha yuksek ihtiyac,
+        # koruyucu taraf secildi). Sodyum bilincli olarak EKLENMEDI --
+        # ter kaybi bireysel farkliligi cok yuksek, guvenilir tek bir
+        # sayi bulunamadi.
+        "kalori": (980.0, 1120.0),
+        "protein": (35.0, 55.0),
+        "karbonhidrat": (147.0, 196.0),
+        "yag": (23.0, 35.0),
+        "lif_g": (9.0, 13.0),
+        "demir_mg": (6.0, 35.0),
+        "kalsiyum_mg": (350.0, 1500.0),
+        "cinko_mg": (3.0, 25.0),
+    },
+    "Diyet / Kilo Verme": {
+        # NHLBI "Low-Calorie Step I Diet" + USDA 2025-2030 kilavuzu
+        # (protein 1.6-2.0 g/kg diyet sirasinda, lif 25-38g/gun,
+        # sodyum <=2.4g/gun). Mikrobesin icin ozel bir hedef oneren
+        # kilavuz bulunamadi -- genel varsayilan gecerli.
+        "kalori": (420.0, 630.0),
+        "protein": (25.0, 40.0),
+        "karbonhidrat": (57.0, 70.0),
+        "yag": (11.0, 17.0),
+        "lif_g": (9.0, 13.0),
+        "seker_g": (0.0, 15.0),
+        "sodyum_mg": (0.0, 800.0),
+    },
+    "Şeker Hastası": {
+        # ADA 2026 Standartlari (lif >=14g/1000kcal, dusuk-GI vurgusu,
+        # seker/sodyum minimizasyonu). ADA acikca "tek bir ideal
+        # karbonhidrat orani yok, bireysellestirilmeli" diyor, karbonhidrat
+        # araligi bu yuzden genis tutuldu. Magnezyum/cinko takviyesi
+        # ARASTIRILDI ama kanit CELISKILI (bir meta-analiz "rutin
+        # onerilemez" diyor) -- bu yuzden EKLENMEDI.
+        "kalori": (630.0, 770.0),
+        "karbonhidrat": (50.0, 90.0),
+        "lif_g": (10.0, 20.0),
+        "seker_g": (0.0, 10.0),
+        "sodyum_mg": (0.0, 750.0),
+        "gi": (0.0, 55.0),
+        "doymus_yag_g": (0.0, 8.0),
+    },
+    "Çocuklar (9-13 Yaş / Okul Çağı)": {
+        # Mayo Clinic (USDA tabanli) cocuk kalori rehberi + IOM AMDR
+        # (yag/protein/karbonhidrat, 9-13 yas) + CDC cocuk sodyum
+        # verisi. Kalsiyum/D vitamini/demir/cinko/iyot: standart
+        # 9-13 yas RDA degerleri (buyume donemi kemik/bagisiklik
+        # ihtiyaci).
+        "kalori": (490.0, 910.0),
+        "protein": (15.0, 45.0),
+        "karbonhidrat": (79.0, 114.0),
+        "yag": (19.0, 27.0),
+        "lif_g": (8.0, 15.0),
+        "sodyum_mg": (0.0, 650.0),
+        "seker_g": (0.0, 9.0),
+        "kalsiyum_mg": (455.0, 1500.0),
+        "vitamin_d_mcg": (5.0, 15.0),
+        "demir_mg": (2.8, 35.0),
+        "cinko_mg": (2.8, 25.0),
+        "iyot_mcg": (42.0, 800.0),
+    },
+    "Hamile / Emziren": {
+        # ACOG (demir, kalsiyum, folat) + USDA 2020-2025 kilavuzu
+        # (kalori/protein artisi) + WHO/ATA (iyot 250mcg/gun -- hamilelikte
+        # en kritik eksiklik risklerinden biri, fetal beyin gelisimi).
+        "kalori": (805.0, 945.0),
+        "protein": (25.0, 45.0),
+        "lif_g": (9.0, 13.0),
+        "demir_mg": (9.0, 35.0),
+        "kalsiyum_mg": (350.0, 1500.0),
+        "vitamin_b9_mcg": (210.0, 800.0),
+        "vitamin_d_mcg": (5.0, 15.0),
+        "vitamin_c_mg": (30.0, 250.0),
+        "vitamin_a_mcg": (270.0, 2000.0),
+        "iyot_mcg": (87.0, 800.0),
+        "cinko_mg": (4.0, 25.0),
+    },
+    "Kalp-Damar / Hipertansiyon (DASH)": {
+        # NHLBI/Mayo Clinic DASH protokolu -- resmi klinik hedefler:
+        # sodyum 1500mg (siki hedef), potasyum >=4700mg/gun, magnezyum
+        # 450mg/gun, doymus yag ~%6 enerji, kalsiyum ~1131mg/gun,
+        # lif 28g/gun.
+        "kalori": (630.0, 770.0),
+        "sodyum_mg": (0.0, 500.0),
+        "potasyum_mg": (1600.0, 5000.0),
+        "doymus_yag_g": (0.0, 5.0),
+        "lif_g": (9.0, 13.0),
+        "kalsiyum_mg": (440.0, 1500.0),
+        "magnezyum_mg": (155.0, 700.0),
+        "seker_g": (0.0, 10.0),
+    },
+    "Akdeniz (Yaklaşık)": {
+        # PREDIMED calismasi + genel Akdeniz diyeti literaturu --
+        # DASH'in aksine RESMI bir sayisal hedef tablosu YOK, bu
+        # deger bir referans 700kcal uzerinden ORANSAL (%35-50 yag
+        # -cogu MUFA/zeytinyagi-, %35-55 karbonhidrat, %12-20 protein,
+        # yuksek lif, dusuk doymus yag) YAKLASIMDIR -- diger kaliplar
+        # kadar kesin degildir, bu yuzden adinda "(Yaklaşık)" var.
+        # Kalori bilincli olarak EKLENMEDI -- Akdeniz diyeti kaloriyi
+        # kisitlamaz, besin KALITESINE odaklanir.
+        "protein": (21.0, 35.0),
+        "yag": (27.0, 39.0),
+        "karbonhidrat": (61.0, 96.0),
+        "lif_g": (9.0, 15.0),
+        "doymus_yag_g": (0.0, 10.0),
+    },
+}

@@ -8182,3 +8182,42 @@ geregi, kalan vitamin/mineral arastirmasi tamamlandiktan sonra
 kodlanacak.
 
 **Dosya durumu:** `0_Yillik_Menu.py` guncellendi ve teslim edildi.
+
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): 8 Standart Beslenme Kalıbı Kodlandı + "Şablondan Başlat" (YUZ OTUZ DORDUNCU DUZELTME)
+
+Son arastirma turu: Akdeniz/MIND/Nordik icin PREDIMED ve ilgili
+literatur tarandi. Bulgu: DASH'in aksine, MIND ve Nordik icin
+SAYISAL bir hedef tablosu YOK (besin grubu/porsiyon sikligi olarak
+tanimlaniyorlar) -- ikisi de BILINCLI OLARAK DISLANDI (uydurma sayi
+istenmedi). Akdeniz icin sadece YAKLASIK bir makro profili var
+(PREDIMED'den %35-50 yag/%35-55 karbonhidrat/%12-20 protein), kalori
+hedefi YOK (Akdeniz kaloriyi kisitlamiyor, besin kalitesine
+odakalaniyor) -- bu yuzden "Akdeniz (Yaklaşık)" adiyla eklendi.
+
+Ayrica Bahri'nin "gruplar bunlarla sinirli olmasin, diyetisyen kendi
+grubunu ekleyebilsin" talebi incelendi: Abonelik sayfasindaki
+`isletme_porsiyon_profilleri` sistemi ZATEN tamamen sinirsiz --
+herhangi bir kullanici istedigi kadar ozel profil olusturup kendi
+hedeflerini girebiliyordu, hicbir yeni kod GEREKMEDI bu kisim icin.
+
+**Yapilan:**
+1. `besin_sabitleri.py`'ye `STANDART_PROFILLER` eklendi -- 8 arastirilmis
+   kalip: Hastane, Sporcu, Diyet/Kilo Verme, Seker Hastasi, Cocuklar
+   (9-13 yas), Hamile/Emziren, Kalp-damar/Hipertansiyon (DASH), Akdeniz
+   (Yaklasik). Her biri sadece o grubu AYIRT EDEN ogeleri iceriyor --
+   geri kalan ogeler icin genel varsayilan gecerli kalir (uydurma sayi
+   yazilmadi). Otomatik testle dogrulandi: 8 sablon, TUMU min<=alt<=ust<=maks
+   sinirlarina uygun.
+2. `6_Abonelik.py`'de "Profil Başına Besin Hedefleri" bolumune "Hazır
+   şablondan başlat" secim kutusu + "Şablonu uygula" butonu eklendi --
+   secilen sablon Ogle VE Aksam hedeflerine AYNI sekilde uygulanir
+   (kaydedilir), sonra kullanici ISTERSE asagidaki alanlardan elle
+   duzenleyip tekrar kaydedebilir. Bu, profil sisteminin ozgurlugunu
+   KISITLAMIYOR, sadece hizlandiriyor.
+
+**Sirada:** Bahri Abonelik sayfasinda bir profil secip sablonlari
+deneyecek, sonucu paylasacak.
+
+**Dosya durumu:** `besin_sabitleri.py` ve `6_Abonelik.py` guncellendi
+ve teslim edildi.

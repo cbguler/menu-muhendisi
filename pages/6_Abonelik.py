@@ -18,7 +18,7 @@
 import streamlit as st
 import pandas as pd
 
-from besin_sabitleri import TUM_BESIN_ALANLARI, BESIN_ETIKET, BESIN_ARALIK, kanonik_sirala
+from besin_sabitleri import TUM_BESIN_ALANLARI, BESIN_ETIKET, BESIN_ARALIK, kanonik_sirala, STANDART_PROFILLER
 
 # NOT (12 Agustos 2026, Oturum 11): logo artik burada AYRICA gosterilmiyor -- app.py'deki ozel menu satirinin icine tasindi, orada zaten her sayfa gecisinde render ediliyor. Burada tekrar cagirmak cift logoya yol acardi.
 
@@ -344,6 +344,29 @@ if _hedef_profil_listesi:
     # ekliyoruz -- hem sayfalar arasi hem PROFILLER ARASI carpismayi
     # onluyor.
     _anahtar_on_eki = f"abn_{_profil_id}_"
+
+    # YUZ OTUZ DORDUNCU DUZELTME (9 Eylul 2026): "Şablondan başlat" --
+    # STANDART_PROFILLER'daki arastirilmis kaliplardan birini secip
+    # BASLANGIC noktasi olarak uygulama kolayligi. Bu bir KISIT DEGIL,
+    # sadece bir kisayol -- uygulandiktan sonra asagidaki alanlar
+    # (multiselect + sayi kutulari) ile GENE serbestce degistirilebilir,
+    # kaydetmeden once. Profil sistemi zaten tamamen ozgur (herhangi bir
+    # kullanici sinirsiz sayida ozel profil/grup olusturabilir) --
+    # sablonlar bu ozgurlugu KISITLAMIYOR, sadece hizlandiriyor.
+    _sablon_secimi = st.selectbox(
+        "Hazır şablondan başlat (opsiyonel)",
+        options=["(Boş — elle gir)"] + list(STANDART_PROFILLER.keys()),
+        key=f"{_anahtar_on_eki}sablon_secimi",
+        help="Bir şablon seçip uyguladıktan sonra aşağıdaki alanları yine istediğin gibi değiştirip kaydedebilirsin.",
+    )
+    if _sablon_secimi != "(Boş — elle gir)":
+        if st.button(f"\"{_sablon_secimi}\" şablonunu uygula", key=f"{_anahtar_on_eki}sablon_uygula"):
+            _sablon_hedef = {anahtar: list(aralik) for anahtar, aralik in STANDART_PROFILLER[_sablon_secimi].items()}
+            supabase.table("isletme_porsiyon_profilleri").update(
+                {"hedefler": {"Öğle": _sablon_hedef, "Akşam": _sablon_hedef}}
+            ).eq("id", _profil_id).execute()
+            st.success(f"\"{_sablon_secimi}\" şablonu uygulandı — aşağıdan istersen düzenleyip tekrar kaydedebilirsin.")
+            st.rerun()
 
     _profil_secili_anahtarlar = kanonik_sirala(
         {anahtar for ogun in _kayitli_hedefler.values() for anahtar in ogun}
