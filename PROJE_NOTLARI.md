@@ -8029,3 +8029,39 @@ bireysel kullanıcılar" satiri eklendi.
 
 **Dosya durumu:** `0_Yillik_Menu.py` ve `app.py` guncellendi ve
 teslim edildi.
+
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): Genel Varsayilan Araliklar Duzeltilmis Kalibrasyonla Guncellendi (YUZ YIRMI DOKUZUNCU DUZELTME)
+
+Bahri `besin_kalibrasyon.py`'yi DUZELTILMIS (porsiyona bolen) haliyle
+tekrar calistirdi -- sonuclar bu sefer sagduyuya uygun cikti (medyan
+kalori ~788 kcal, medyan sodyum ~1793mg -- Aralik'taki eski sonuclarin
+aksine gercekci). TUM MEVSIMLER BIRLESIK (400.000 ornek) p10/p90
+degerleri, `besin_sabitleri.py`'deki TUM 32 alanin def_alt/def_ust
+varsayilanina DOGRUDAN uygulandi -- OTUZ IKINCI DUZELTME'nin "3 x
+medyan" tahmini formulunun yerini artik GERCEKTEN OLCULMUS dagilim
+aldi. min/maks sinirlar (number_input'un mutlak alt/ust siniri)
+DEGISMEDI, sadece def_alt/def_ust (varsayilan baslangic degerleri)
+guncellendi. Butun degerler icin min<=def_alt<=def_ust<=maks kontrolu
+otomatik dogrulandi, GECTI.
+
+En dikkat cekici degisiklik: KALORI onceden 900-1200 (dar, ve gercek
+dagilimin p50'sinden -- ~788 -- daha YUKSEK bir bant) idi, simdi
+524.6-1123.1 (daha genis, gercek medyanin cevresinde). Bu, Aralik
+ayinda kalorinin ucrlularin %91.1'inde basarisiz cikmasinin (bu sayi
+kendisi hatali olcumle bulunmustu ama YONU dogruydu) ASIL nedeninin
+dogrulanmis hali: eski aralik gercekten cok DAR ve YANLIS
+MERKEZLIYDI.
+
+Bahri bunun ARALIK ayindaki (o an calismakta olan/takilan) uretimi
+kolaylastirmasi icin ACIL olarak istedi -- menu uretimi eski dar
+araliklarla "donup duruyordu".
+
+**Sirada:** Bahri bu degisiklikle Aralik'i (veya herhangi bir ayi)
+yeniden uretip yeni "kac gun hedefte" sonucunu paylasacak. Ardindan,
+kalan vitamin/mineraller (magnezyum, cinko, fosfor, bakir, manganez,
+selenyum, iyot, B1-B12, E, K) icin TOPLULUK KALIPLARI (Hastane,
+Sporcu, Diyet, Seker Hastasi, Cocuklar, Hamile/Emziren, Kalp-damar)
+bazinda arastirma grup grup devam edecek.
+
+**Dosya durumu:** `besin_sabitleri.py` guncellendi ve teslim edildi.

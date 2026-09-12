@@ -23,45 +23,50 @@ TUM_BESIN_ALANLARI = [
     # toplami oldugu icin "3 x medyan" o besin ogesi icin TIPIK bir
     # ogun degeri olarak kullanildi, def_alt/def_ust bu tipik degerin
     # etrafinda MAKUL bir bant (cogu gercek ogunun sigabilecegi) olacak
-    # sekilde ayarlandi. Ozellikle Sodyum/Fosfor/Potasyum/Kalsiyum/Iyot
-    # onceki tahmini araliklarin COK UZERINDE, Vitamin D/B7 ise COK
-    # ALTINDA cikiyordu -- kullanicinin gelecekte hastane/huzurevi/okul
-    # gibi COK SAYIDA besin ogesini AYNI ANDA hedefleyecegi kurumsal
-    # kullanim senaryolari icin altyapinin saglam kalmasi amaciyla,
-    # TUM 27 alan (sadece sorun cikaranlar degil) gercek veriyle
-    # yeniden dogrulanip guncellendi.
-    ("kalori", "Kalori (kcal)", 0.0, 3000.0, 900.0, 1200.0),
-    ("protein", "Protein (g)", 0.0, 150.0, 20.0, 60.0),
-    ("yag", "Yağ (g)", 0.0, 120.0, 10.0, 55.0),
-    ("karbonhidrat", "Karbonhidrat (g)", 0.0, 300.0, 40.0, 120.0),
-    ("gi", "Glisemik İndeks", 0.0, 100.0, 0.0, 70.0),
-    ("sodyum_mg", "Sodyum (mg)", 0.0, 8000.0, 800.0, 5000.0),
-    ("lif_g", "Lif (g)", 0.0, 30.0, 3.0, 10.0),
-    ("seker_g", "Şeker (g)", 0.0, 80.0, 0.0, 25.0),
-    ("doymus_yag_g", "Doymuş Yağ (g)", 0.0, 50.0, 0.0, 20.0),
-    ("vitamin_a_mcg", "Vitamin A (mcg)", 0.0, 2000.0, 50.0, 400.0),
-    ("vitamin_b1_mg", "Vitamin B1 — Tiamin (mg)", 0.0, 3.0, 0.1, 0.6),
-    ("vitamin_b2_mg", "Vitamin B2 — Riboflavin (mg)", 0.0, 3.0, 0.1, 1.0),
-    ("vitamin_b3_mg", "Vitamin B3 — Niasin (mg)", 0.0, 30.0, 1.0, 12.0),
-    ("vitamin_b5_mg", "Vitamin B5 — Pantotenik Asit (mg)", 0.0, 12.0, 0.3, 3.0),
-    ("vitamin_b6_mg", "Vitamin B6 (mg)", 0.0, 4.0, 0.1, 1.2),
-    ("vitamin_b7_mcg", "Vitamin B7 — Biyotin (mcg)", 0.0, 60.0, 0.0, 8.0),
-    ("vitamin_b9_mcg", "Vitamin B9 — Folat (mcg)", 0.0, 800.0, 20.0, 200.0),
-    ("vitamin_b12_mcg", "Vitamin B12 (mcg)", 0.0, 40.0, 0.0, 3.0),
-    ("vitamin_c_mg", "Vitamin C (mg)", 0.0, 250.0, 5.0, 80.0),
-    ("vitamin_d_mcg", "Vitamin D (mcg)", 0.0, 15.0, 0.0, 3.0),
-    ("vitamin_e_mg", "Vitamin E (mg)", 0.0, 35.0, 1.0, 6.0),
-    ("vitamin_k_mcg", "Vitamin K (mcg)", 0.0, 1800.0, 2.0, 150.0),
-    ("kalsiyum_mg", "Kalsiyum (mg)", 0.0, 1500.0, 50.0, 600.0),
-    ("demir_mg", "Demir (mg)", 0.0, 35.0, 1.0, 8.0),
-    ("magnezyum_mg", "Magnezyum (mg)", 0.0, 700.0, 30.0, 180.0),
-    ("potasyum_mg", "Potasyum (mg)", 0.0, 5000.0, 300.0, 2500.0),
-    ("cinko_mg", "Çinko (mg)", 0.0, 25.0, 1.0, 8.0),
-    ("fosfor_mg", "Fosfor (mg)", 0.0, 3000.0, 100.0, 900.0),
-    ("bakir_mg", "Bakır (mg)", 0.0, 5.0, 0.05, 0.8),
-    ("manganez_mg", "Manganez (mg)", 0.0, 12.0, 0.1, 2.0),
-    ("selenyum_mcg", "Selenyum (mcg)", 0.0, 180.0, 5.0, 40.0),
-    ("iyot_mcg", "İyot (mcg)", 0.0, 800.0, 10.0, 500.0),
+    # sekilde ayarlandi.
+    #
+    # YUZ YIRMI DOKUZUNCU DUZELTME (9 Eylul 2026): OTUZ IKINCI
+    # DUZELTME'nin "3 x medyan" formulu, GERCEK 3'lu OGUN
+    # kombinasyonlarinin dagilimini yansitmiyordu (bkz. PROJE_NOTLARI,
+    # 9 Eylul XXI. Oturum) -- ozellikle kalori icin gercekte olustugu
+    # gibi degil, cok yuksek/dar bir aralik veriyordu. `besin_kalibrasyon.py`
+    # ile TUM MEVSIMLER birlestirilerek 400.000 GERCEK (rastgele, uyumlu,
+    # porsiyona DOGRU bolunmus) uclu ornegi uzerinden olculen p10/p90
+    # yuzdelik dilimleri, def_alt/def_ust olarak DOGRUDAN uygulandi --
+    # tahmini formul yerine artik doğrudan olculmus gercek dagilim
+    # kullaniliyor. min/maks sinirlar (3. ve 4. sutun) DEGISMEDI.
+    ("kalori", "Kalori (kcal)", 0.0, 3000.0, 524.6, 1123.1),
+    ("protein", "Protein (g)", 0.0, 150.0, 26.9, 61.5),
+    ("yag", "Yağ (g)", 0.0, 120.0, 21.0, 60.8),
+    ("karbonhidrat", "Karbonhidrat (g)", 0.0, 300.0, 32.8, 119.9),
+    ("gi", "Glisemik İndeks", 0.0, 100.0, 34.8, 64.2),
+    ("sodyum_mg", "Sodyum (mg)", 0.0, 8000.0, 912.5, 2834.6),
+    ("lif_g", "Lif (g)", 0.0, 30.0, 3.5, 18.8),
+    ("seker_g", "Şeker (g)", 0.0, 80.0, 3.1, 44.1),
+    ("doymus_yag_g", "Doymuş Yağ (g)", 0.0, 50.0, 6.4, 22.7),
+    ("vitamin_a_mcg", "Vitamin A (mcg)", 0.0, 2000.0, 108.5, 607.9),
+    ("vitamin_b1_mg", "Vitamin B1 — Tiamin (mg)", 0.0, 3.0, 0.2, 0.8),
+    ("vitamin_b2_mg", "Vitamin B2 — Riboflavin (mg)", 0.0, 3.0, 0.4, 0.9),
+    ("vitamin_b3_mg", "Vitamin B3 — Niasin (mg)", 0.0, 30.0, 5.8, 19.8),
+    ("vitamin_b5_mg", "Vitamin B5 — Pantotenik Asit (mg)", 0.0, 12.0, 1.2, 2.8),
+    ("vitamin_b6_mg", "Vitamin B6 (mg)", 0.0, 4.0, 0.5, 1.3),
+    ("vitamin_b7_mcg", "Vitamin B7 — Biyotin (mcg)", 0.0, 60.0, 0.2, 5.9),
+    ("vitamin_b9_mcg", "Vitamin B9 — Folat (mcg)", 0.0, 800.0, 52.7, 295.4),
+    ("vitamin_b12_mcg", "Vitamin B12 (mcg)", 0.0, 40.0, 1.0, 5.9),
+    ("vitamin_c_mg", "Vitamin C (mg)", 0.0, 250.0, 5.5, 93.7),
+    ("vitamin_d_mcg", "Vitamin D (mcg)", 0.0, 15.0, 0.1, 2.5),
+    ("vitamin_e_mg", "Vitamin E (mg)", 0.0, 35.0, 1.5, 7.2),
+    ("vitamin_k_mcg", "Vitamin K (mcg)", 0.0, 1800.0, 8.1, 293.1),
+    ("kalsiyum_mg", "Kalsiyum (mg)", 0.0, 1500.0, 80.2, 578.9),
+    ("demir_mg", "Demir (mg)", 0.0, 35.0, 2.3, 7.8),
+    ("magnezyum_mg", "Magnezyum (mg)", 0.0, 700.0, 73.2, 226.3),
+    ("potasyum_mg", "Potasyum (mg)", 0.0, 5000.0, 806.6, 2117.8),
+    ("cinko_mg", "Çinko (mg)", 0.0, 25.0, 3.0, 9.4),
+    ("fosfor_mg", "Fosfor (mg)", 0.0, 3000.0, 382.1, 861.1),
+    ("bakir_mg", "Bakır (mg)", 0.0, 5.0, 0.2, 1.0),
+    ("manganez_mg", "Manganez (mg)", 0.0, 12.0, 0.5, 2.9),
+    ("selenyum_mcg", "Selenyum (mcg)", 0.0, 180.0, 16.4, 73.7),
+    ("iyot_mcg", "İyot (mcg)", 0.0, 800.0, 91.4, 335.3),
 ]
 BESIN_ETIKET = {anahtar: etiket for anahtar, etiket, *_ in TUM_BESIN_ALANLARI}
 BESIN_ARALIK = {anahtar: (minv, maxv, def_alt, def_ust) for anahtar, _, minv, maxv, def_alt, def_ust in TUM_BESIN_ALANLARI}
