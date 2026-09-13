@@ -8545,3 +8545,17 @@ Grup2 (84) ve Grup3 (88).
 
 **Dosya durumu:** `104_uretim_asamalari_grup1_parti1.sql` (yeni)
 teslim edildi.
+
+**DOGRULAMA SORGUSU HATASI (veri DEGIL, sorgu):** Ilk dogrulama
+sorgusu `asama_malzemeleri` ile LEFT JOIN yapip `sum(sure_dakika)`
+aliyordu -- malzeme sayisi kadar SATIR COGALDIGI (fan-out) icin
+toplam sureler yanlis buyuk cikti (ornegin Fırında Dana But icin
+340 -- gercekte 100 olmali). Elle capraz kontrol: TUM 10 tarifte
+"yanlis sonuc = doğru_sure * malzeme_sayisi + hazirlik_suresi"
+formulu BIREBIR tuttu -- yani GERCEK VERI (asama sayisi, malzeme
+baglantilari, sure degerleri) DOGRU, sadece dogrulama sorgusu
+hatali yazilmisti. Alt sorgularla duzeltilmis
+`teshis_dogrulama_duzeltilmis.sql` verildi.
+
+**Dosya durumu:** `teshis_dogrulama_duzeltilmis.sql` (yeni) teslim
+edildi.
