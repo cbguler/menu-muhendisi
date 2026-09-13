@@ -8362,3 +8362,47 @@ sonucu paylasacak (bos donerse dogrudan ana dosyaya gecilir), (2)
 calisti, DOGRULAMA: **485 tarif** (dogrulandi). 1000 hedefine 515
 kaldi. Isim-cakismasi-once-tara dersi bu partide basariyla islendi --
 ilk denemede hata olmadi.
+
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): Ana Sayfa Video Kararsizligi + "Beni Hatirla" Sorunu
+
+Bahri iki hata bildirdi: (1) ana sayfadaki (Kontrol Paneli/karsilama
+ekrani) tanitim videosu ("bir cikiyor bir cikmiyor, cok kararsiz"),
+(2) "beni hatirla" calismiyor, her seferinde sifre girmek zorunda
+kaliyor.
+
+**(1) Video -- arastirildi, KOD HATASI DEGIL:** `st.video(autoplay=True,
+muted=True)` kullaniliyor. Arastirma (mux.com, Chrome resmi
+dokumantasyonu) net: tarayicilar (Chrome/Firefox/Safari) otomatik
+oynatmayi KASITLI OLARAK kararsiz/olasiliksal yapiyor -- Chrome'un
+"Media Engagement Index" (MEI) puani kullaniciya ve siteyle gecmis
+etkilesime gore degisiyor, ayni kod ayni kullanicida bile ziyaretten
+ziyarete farkli davranabilir. Sanayi standardi cozum (JS video.play()
+promise'ini takip edip basarisiz olursa "oynat" butonu gostermek)
+`st.video()`'nun VERMEDIGI bir kontrol seviyesi gerektiriyor -- ozel
+HTML/JS video enjeksiyonu bu projede DAHA ONCE IKI KEZ (6 ve 30
+Agustos) denenip MOBILDE calismadigi icin BILINCLI OLARAK terk
+edilmisti. Bahri'ye bu tradeoff acikca anlatildi, karari bekleniyor
+(mevcut davranisi kabul et, ya da mobil riskini tekrar goze alip ozel
+HTML/JS + "oynat" butonu fallback'ini yeniden dene).
+
+**(2) Beni hatirla -- GERCEK BIR KOD BOSLUGU bulundu:** Bu sorun DAHA
+ONCE de bildirilmisti (DOKUZUNCU DUZELTME, 12 Agustos) -- o zamanki
+teori: cerez yazma islemi (tarayici bileseni) bitmeden `st.rerun()`
+cagrilirsa cerez HIC YAZILMAMIS olabilir; giris ekranina bu yuzden
+`time.sleep(1.5)` eklenmisti. AMA o yorumun kendisi "henuz TEST
+EDILMEDI" diyordu -- hic dogrulanmamis. Kod incelendi: bu koruma
+SADECE giris ekraninda vardi, ROTASYONLA gelen refresh token'in
+cerezi GUNCELLEDIGI (her ziyarette calisan) ikinci yerde HIC yoktu.
+Supabase refresh token'lari TEK KULLANIMLIK oldugu icin, bu ikinci
+yazma sessizce basarisiz olursa: bir sonraki ziyarette cerezde hala
+ESKI (zaten gecersiz kilinmis) token kalir, yenileme basarisiz olur,
+kullanici HER SEFERINDE tekrar giris yapmak zorunda kalir -- TAM
+bildirilen davranis. Ayni `time.sleep(1.5)` korumasi bu ikinci yere
+de eklendi (YUZ OTUZ SEKIZINCI DUZELTME).
+
+**DURUSTCE:** Bu da DOKUZUNCU DUZELTME gibi HENUZ dogrulanmadi --
+Bahri'nin birkac gun boyunca "beni hatirla" ile giris yapip
+gercekten kalici olup olmadigini test etmesi gerekiyor.
+
+**Dosya durumu:** `app.py` guncellendi ve teslim edildi.

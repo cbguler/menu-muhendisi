@@ -229,6 +229,22 @@ if st.session_state.oturum is None:
                 expires_at=datetime.now(timezone.utc) + timedelta(days=BENI_HATIRLA_GUN),
                 key="refresh_token_yenile",
             )
+            # YUZ OTUZ SEKIZINCI DUZELTME (9 Eylul 2026): Bahri "beni
+            # hatirla her seferinde calismiyor" dedi -- DOKUZUNCU
+            # DUZELTME'nin (12 Agustos) giris ekranina ekledigi
+            # time.sleep(1.5) korumasi, BURADA (oturum YENILEME yolunda)
+            # hic yoktu. Teori AYNI: cerez yazma islemi (tarayici
+            # bileseni) bitmeden sayfa render'i devam ederse, YENI
+            # (rotasyonla gelen) token HIC YAZILMAMIS olabilir -- bir
+            # sonraki ziyarette cerezde hala ESKI (Supabase tarafindan
+            # zaten gecersiz kilinmis) token kalir, yenileme basarisiz
+            # olur, kullanici HER SEFERINDE tekrar giris yapmak zorunda
+            # kalir -- tam bildirilen davranis. Ayni koruma buraya da
+            # eklendi. DOKUZUNCU DUZELTME'deki gibi bu da HENUZ gercek
+            # tarayicida DOGRULANMADI -- Bahri'nin bir sonraki ziyarette
+            # gercekten kalici olup olmadigini kontrol etmesi gerekiyor
+            # (bkz. asagidaki test talimati).
+            time.sleep(1.5)
         except Exception:
             # refresh token geçersiz/süresi dolmuş -- sessizce temizleyip
             # normal giriş ekranına düş
