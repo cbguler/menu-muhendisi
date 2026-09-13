@@ -8406,3 +8406,57 @@ Bahri'nin birkac gun boyunca "beni hatirla" ile giris yapip
 gercekten kalici olup olmadigini test etmesi gerekiyor.
 
 **Dosya durumu:** `app.py` guncellendi ve teslim edildi.
+
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): rendeleme_sogan.png Yeniden Uretildi ve Islendi -- Video Karari Kesinlesti
+
+Bahri video konusunda kesin karar verdi: **"asla oynat butonu
+istemiyorum"** -- mevcut `st.video(autoplay=True, muted=True)`
+davranisi (kararsiz ama cogu zaman calisan) AYNEN KALACAK, ozel
+HTML/JS + oynat-butonu fallback'i YAPILMAYACAK. Bu konu KAPANDI.
+
+Bahri yeniden-uretim prompt'uyla uretilen YENI `rendeleme_sogan.png`
+gorselini gonderdi -- gorsel DOGRU (soganin kesit yapisi halka halka/
+konsantrik, havuca hic benzemiyor, tam istenen sekilde).
+
+**Isleme surecinde ONEMLI bir zorluk cikti ve cozuldu:** Ilk
+denemede (kenara-baglilik SADECE gri/dama icin, yesil/turuncu icin
+DOGRUDAN renk eslesmesi), turuncu zemin rengi ile soganin KENDI
+KABUGUNUN rengi (ikisi de "warm terracotta orange" palet rengi)
+COK YAKIN cikti -- bu, soganin gercek gorunen kabuk kismini da
+yanlislikla seffaflastirdi (kucuk bir "isirik" gibi). KOK NEDEN:
+renk eslestirmesi TEK BASINA yeterli degil, ayni renk hem arka
+planda hem konuda kullanilinca ayirt edemiyor.
+
+**Dogru cozum:** butun aday arka plan pikselleri (gri+yesil+turuncu)
+ONCE 4 piksel GENISLETILEREK (anti-alias gecis bandini kopruleyip)
+etiketlendi, KENARA BAGLI bilesenler bulundu, ama nihai seffaflik
+kararinda SADECE orijinal (genisletilmemis) aday piksel VE kenara-
+bagli-genisletilmis-etiket kesisimi kullanildi -- yani "hangi
+bolgenin kenara ULASTIGI" sorusu genisletilmis maskeyle cozulup,
+"hangi PIKSELIN gercekten kaldirilacagi" orijinal maskeyle
+sinirlandirildi. Sonuc: zemin/duvar arka plani VE sapin ic bosluk
+sizintisi dogru seffaflasti, soganin kendi kabugu (ayni renk olsa
+da, kenara baglı olmadigi icin) korundu -- iki nokta da (soğan
+kabugu, zemin turuncusu) programatik olarak dogrulandi.
+
+2048x2048 -> 512x512 kucultuldu (227KB, diger ikonlarla tutarli).
+
+**Dosya durumu:** `assets/rendeleme_sogan.png` (yeniden uretildi,
+eskisinin uzerine yazilacak) teslim edildi.
+
+**DUZELTME (ayni gun, devam):** Bahri ilk teslimde sapin ic bosluguyla
+elin soğana degdigi noktada hala YESIL kaldigini bildirdi. Kok neden:
+onceki (v3) yontem, turuncu icin dogru olan "kenara baglilik" sartini
+YESIL icin de uygulamisti -- ama yesil figurde HICBIR YERDE gercek
+konu olarak gecmiyor (turuncunun aksine, sogan kabuguyla renk
+CAKISMASI yok), yani yesil icin bu kisitlama GEREKSIZ ve HATALIYDI.
+Duzeltme: gri+turuncu icin kenara-baglilik sarti KORUNDU (sogan
+kabugunu korumak icin hala gerekli), ama yesil ARTIK DOGRUDAN
+(kapali bolgeler DAHIL) kaldiriliyor -- programatik kontrol: kalan
+yesilimsi opak piksel sayisi 0. Ayrica Bahri "login artik takilmadan
+aciliyor" dedi -- YUZ OTUZ SEKIZINCI DUZELTME'nin (beni hatirla)
+olumlu bir yan etkisi/dogrulamasi olabilir, kesin degil.
+
+**Dosya durumu:** `assets/rendeleme_sogan.png` (NIHAI, tum yesil
+temizlenmis hali) teslim edildi.
