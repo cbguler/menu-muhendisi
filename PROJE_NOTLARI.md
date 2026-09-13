@@ -8460,3 +8460,51 @@ olumlu bir yan etkisi/dogrulamasi olabilir, kesin degil.
 
 **Dosya durumu:** `assets/rendeleme_sogan.png` (NIHAI, tum yesil
 temizlenmis hali) teslim edildi.
+
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): ONEMLI DERS -- Iddia Etmeden Once DOGRULA + Uretim Asamasi Eksikligi Arastirmasi Basladi
+
+**DERS (gelecekte HER ZAMAN uygulanacak):** Claude, limon/biber icin 8
+ikonun "hic teslim alindigi dogrulanmadi" diyerek Bahri'ye YENIDEN
+uretmesi icin prompt listesi verdi -- ama Bahri assets/ klasorunun
+GERCEK ekran goruntusunu paylasinca, o 8 dosyanin ZATEN ORADA
+oldugu gorüldü (30 Agustos'ta zaten teslim alinip islenmisti, sadece
+PROJE_NOTLARI'nda Claude'un aradigi TAM ifadeyle bir "teslim alindi"
+notu yoktu). SONUC: "log'da onay bulamadim" ile "gercekten yok" AYNI
+SEY DEGIL -- bu ikisini birbirine karistirmak ciddi bir guven
+sorunu yaratti (Bahri "tek basima kalmis gibi hissettim" dedi).
+Ayni hatanin BIR DAHA olmamasi icin: (1) "X eksik/yapilmadi" gibi bir
+iddiada bulunmadan once PROJE_NOTLARI'nda ARANDIGI KADAR genis
+terimlerle (esanlamlilar dahil) aranacak, (2) hala emin olunamiyorsa
+Bahri'den GERCEK durumu (dosya/ekran goruntusu) DOGRULAMASI istenecek,
+asla "muhtemelen eksik" diye sunulmayacak, (3) HER degisiklik/karar
+notlara islenmeye DEVAM edilecek (bu zaten yapiliyordu, Bahri'nin
+istegiyle teyit edildi).
+
+**Ikinci konu -- Isıl İşlem/Uretim Asamasi verisi:** Bahri "formulleri
+kaybettin mi" diye sordu, TAM arastirma yapildi -- HICBIR SEY
+KAYBOLMADI. Formul (Q=m·c·ΔT), metodoloji (aktif/pasif iscilik
+ayrimi, paralel DAG hesaplama, bilincli v1 siniri -- ekipmanin kendi
+isinma enerjisi haric) TAMAMI PROJE_NOTLARI'nda, 30 Temmuz (III.
+Oturum) ve 3 Agustos'tan (VII. Oturum) beri eksiksiz duruyor. "Şehriyeli
+Bahar Pilavı"nda eksik olmasinin nedeni: VII. Oturum sonunda SADECE
+orijinal 75'lik "Klasik" kutuphanenin I. Grup (ana yemek) 30 tarifi
+tamamlanmisti, kalan II./III. Grup ve butun cesitlilik partileri icin
+"kademeli eklenecek" diye NOT edilmisti -- kutuphane 75'ten 485'e
+buyurken bu is hic yetismedi, kaybolan degil sadece GERI KALAN bir is.
+
+**Baslatilan:** Bahri'nin talebi -- "tarifleri kontrol et, buna benzer
+tariflerin dolmasini sagla, bu is bitince yeni tarife bakariz" (yani
+1000 tarif hedefi GECICI OLARAK DURDURULDU, once mevcut 485 tarifin
+uretim asamasi/isil islem verisini doldurmaya odaklanilacak).
+`teshis_uretim_asamasi_eksik.sql` yazildi -- `recete_asamalari`
+tablosunda HIC kaydi olmayan tum global tarifleri (grup bazinda
+sayimla) listeler.
+
+**Sirada:** Bahri bu teshis sorgusunu calistirip sonucu paylasacak --
+ondan sonra, VII. Oturum'daki AYNI yontemle (asamalar_partiN.py
+kalibi -- gercek/standart pisirme sicaklik-sure degerleriyle, uydurma
+degil) doldurma islemi baslayacak.
+
+**Dosya durumu:** `teshis_uretim_asamasi_eksik.sql` (yeni) teslim
+edildi.
