@@ -8271,3 +8271,58 @@ bir menu sunmak anlamina gelir -- bu, Aralik'taki guven sorununu
 baska bir sekilde geri getirir. Bahri onayladi. STANDART_PROFILLER 8
 sablonla (Hastane, Sporcu, Diyet, Seker Hastasi, Cocuklar,
 Hamile/Emziren, Kalp-damar, Akdeniz) NIHAI kabul edildi.
+
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): Tarif Kutuphanesi Buyutmeye Devam -- Parti16 (453 -> 469)
+
+Bahri "1000 tarif hedefine devam edelim" dedi. Once ONEMLI bir
+duzeltme yapildi: Claude, malzeme adlarini dogrulamak icin YENI bir
+export scripti (`malzeme_listesi_disa_aktar.py`) yazmaya basladi, ama
+Bahri bunun ZATEN cok kez ele alinan, PROJE_NOTLARI'nda (v2'den v29'a)
+uzun bir gecmisi olan `kaynak_duzeltilmis_vN.xlsx` malzeme katalogu
+oldugunu hatirlatti. Script'te de bir hata cikti (`kategori` sutunu
+yok, `kategori_id` varmis) -- duzeltilip calistirildi, sonuc: 564
+malzeme (DB) dogrulandi.
+
+Bahri hem `kaynak_duzeltilmis_v29.xlsx`'i (572 isimli satir, kategori+
+mevsim+tam besin verisi) hem `malzeme_listesi.txt`'yi (DB'den disa
+aktarilan KESIN 564 isim) paylasti. Iki kaynak karsilastirildi:
+**422 malzeme hicbir tarifte hic kullanilmamis** (564'ten sadece 142'si
+kullanilmis) -- bu, yeni tariflerde GERCEK cesitlilik icin buyuk bir
+firsat oldu.
+
+**Yapilan:** `102_cesitlilik_tarifleri_parti16.sql` -- 16 yeni tarif
+(Grup1: 5, Grup2: 5, Grup3: 6), ONCELIKLE daha once HIC kullanilmamis
+malzemelerle (KOYUN TANDIR, PİLİÇ BUT, SIĞIR KABURGA, ÇİPURA, DANA
+ROSTO, KESTANE MANTARI, KARNIBAHAR, ARPA, BRÜKSEL LAHANASI, KIRMIZI
+LAHANA, KEÇİ PEYNİRİ, NAR gibi). Onceki parti15 ile BIREBIR ayni SQL
+kalibi kullanildi (do $$ blok, v_grup1/2/3 kategori id'leri, malzeme
+adi join'i, DOGRULAMA select'i sonda).
+
+**Guvenlik onlemi:** Yazilan dosyadaki HER malzeme adi, programatik
+olarak (grep ile) `malzeme_listesi.txt`'deki 564 isimle TEK TEK
+karsilastirildi -- 37/37 gercek malzeme adi dogrulandi (3 "bulunamadi"
+sonucu aslinda bolge adiydi -- Ege/Genel/Güneydoğu Anadolu -- malzeme
+degil, beklenen). Sifir yanlis-yazim/sessiz-atlama riski.
+
+Yeni toplam: 453 + 16 = 469 tarif (1000 hedefine 531 kaldi).
+
+**Dosya durumu:** `102_cesitlilik_tarifleri_parti16.sql` (yeni) teslim
+edildi.
+
+**ISIM CAKISMASI (bu projede tekrarlayan bir sorun, "teshis_isim_
+cakismasi_partiN.sql" gecmisi zaten var):** Ilk calistirmada
+"Kırmızı Lahana Salatası" ZATEN VAR hatasi alindi -- `do $$ ... end $$`
+tek transaction oldugu icin butun 16 tarif geri alindi (hicbiri
+kaydedilmedi). Ayni partideki ISIM YERLESIK KALIBA UYGUN sekilde
+cozuldu: (1) `teshis_isim_cakismasi_parti16.sql` ile CAKISMA TARANDI
+(ayni sorgu kalibi, sadece bu partinin 16 ismiyle) -- diger 15 isimde
+cakisma YOKTU ("Success. No rows returned"); (2) sadece coken isim
+"Cevizli Kırmızı Lahana Salatası" olarak yeniden adlandirildi (CEVİZ
+(İÇ) eklenerek, malzeme_listesi.txt'ye karsi dogrulanarak); (3) parti16
+BASARIYLA calisti, DOGRULAMA: **469 tarif** (dogrulandi).
+
+**Ders (gelecek partiler icin):** Yeni tarif ismi yazmadan once, o
+partinin TUM isimlerini `teshis_isim_cakismasi_partiN.sql` kalibiyla
+ONCEDEN taramak, "do $$ tek transaction geri alir" riskini basta
+onler -- bundan sonraki partilerde bu adim EN BASTA yapilacak.
