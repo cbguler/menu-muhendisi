@@ -8326,3 +8326,39 @@ BASARIYLA calisti, DOGRULAMA: **469 tarif** (dogrulandi).
 partinin TUM isimlerini `teshis_isim_cakismasi_partiN.sql` kalibiyla
 ONCEDEN taramak, "do $$ tek transaction geri alir" riskini basta
 onler -- bundan sonraki partilerde bu adim EN BASTA yapilacak.
+
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): Parti17 Hazirlandi + Ikon Siniflandirma Paralel Baslatildi
+
+Bahri "resimler ile paralel gidelim" dedi -- bu, hazirlik ikonlari
+(pisirme adimi ikonlari, `ikon_siniflandirma_calistir.py`) sinif-
+landirma islemi anlamina geliyor (bu oturumun EN BASINDA, Groq model
+degisikligiyle -- `openai/gpt-oss-20b`, gunluk 200K TOKEN duvari --
+yarim kalmisti). Plan: bu, gunluk kota siniri yuzunden zaten
+gunler suren bir arka plan islemi -- Bahri bunu ARALIKLI olarak (her
+gun bir kez) calistirirken, Claude paralel olarak yeni tarif partileri
+yazmaya devam edecek.
+
+**Yapilan:** `103_cesitlilik_tarifleri_parti17.sql` -- 16 yeni tarif
+(Grup1: 5, Grup2: 5, Grup3: 6), yine hic kullanilmamis malzemelerle
+(KUZU PİRZOLA, KALKAN, PİLİÇ GÖĞÜS DERİSİZ, KEÇİ ETİ BUT, SIĞIR
+PİRZOLA, KARABUĞDAY, SİYAH FASULYE, REZENE, QUINOA, MUNG FASULYESİ,
+ARMUT KIŞLIK, ROKFOR PEYNİRİ, KEFİR, GREYFURT, HURMA, KIZILCIK, KAJU).
+
+**YUZ OTUZ YEDINCI DUZELTME dersi UYGULANDI:** Bu partide, tarifler
+YAZILMADAN ONCE `teshis_isim_cakismasi_parti17.sql` ile TUM 16 isim
+tarandi (henuz Bahri'nin calistirmasi bekleniyor) VE tum malzeme
+adlari programatik olarak dogrulandi (16/16 recete, sifir hatali
+malzeme adi).
+
+**Sirada:** Bahri (1) `teshis_isim_cakismasi_parti17.sql`'i calistirip
+sonucu paylasacak (bos donerse dogrudan ana dosyaya gecilir), (2)
+`ikon_siniflandirma_calistir.bat`'i paralel calistirmaya baslayacak.
+
+**Dosya durumu:** `teshis_isim_cakismasi_parti17.sql` (yeni),
+`103_cesitlilik_tarifleri_parti17.sql` (yeni) teslim edildi.
+
+**SONUC:** Isim cakismasi taramasi temiz cikti, parti17 basariyla
+calisti, DOGRULAMA: **485 tarif** (dogrulandi). 1000 hedefine 515
+kaldi. Isim-cakismasi-once-tara dersi bu partide basariyla islendi --
+ilk denemede hata olmadi.
