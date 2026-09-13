@@ -8246,3 +8246,28 @@ satirini sayfanin daha yukarisina -- Bolge/Beslenme tarzi
 filtrelerinden ONCE -- tasimak) konusulacak.
 
 **Dosya durumu:** `0_Yillik_Menu.py` guncellendi ve teslim edildi.
+
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): Keto Fizibilite Testi -- SONUC: EKLENMEYECEK (YUZ OTUZ ALTINCI DUZELTME)
+
+`hedef_fizibilite_teshis.py`, Keto hedefleriyle (yag 40-90g, protein
+25-55g, karbonhidrat 0-20g, kalori 500-1000) calistirildi (kis,
+518.698 uyumlu uclu). Sonuc: 5 tam eslesme (~1/103.740 -- 32-ogeli en
+zorlu senaryoyla AYNI nadirlik). Karbonhidrat %95.5 oranla en baskin
+engelleyici (beklendigi gibi).
+
+**KRITIK BULGU:** Bulunan 5 eslesmenin HEPSI ayni kalibi paylasiyor
+-- et (ozellikle "Fırında Dana But") + karbonhidratsiz bir corba +
+peynir/zeytin bazli bir meze. Pilav/bulgur/ekmek/makarna iceren
+HICBIR kombinasyon Keto hedefini gecemiyor (Turk mutfaginin
+cogunlugu bu grupta). Yani teorik olarak "bulunabilir" olsa bile,
+gercek kullanimda (1) neredeyse HEP AYNI ucuncu tekrar eden kalip
+cikardi, (2) haftalik tekrarsizlik kurali bu zaten dar havuzu hizla
+tuketip cogu gunu basarisiz birakirdi.
+
+**KARAR: Keto STANDART_PROFILLER'a EKLENMEYECEK.** Teknik olarak
+calistirilabilir hale getirmek, kullaniciya tekduze/gercekci olmayan
+bir menu sunmak anlamina gelir -- bu, Aralik'taki guven sorununu
+baska bir sekilde geri getirir. Bahri onayladi. STANDART_PROFILLER 8
+sablonla (Hastane, Sporcu, Diyet, Seker Hastasi, Cocuklar,
+Hamile/Emziren, Kalp-damar, Akdeniz) NIHAI kabul edildi.
