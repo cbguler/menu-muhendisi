@@ -8508,3 +8508,40 @@ degil) doldurma islemi baslayacak.
 
 **Dosya durumu:** `teshis_uretim_asamasi_eksik.sql` (yeni) teslim
 edildi.
+
+**SONUC:** 485 tarifin 240'inda asama verisi VAR, 245'inde YOK (Grup1:
+73, Grup2: 84, Grup3: 88 eksik). Bahri tam listeyi (grup+ad+mevsim+
+bolge) paylasti.
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): Uretim Asamasi Doldurma -- Grup1 Parti1 (10/73)
+
+Grup 1'deki 73 eksik tariften ilk 10'u icin `104_uretim_asamalari_
+grup1_parti1.sql` yazildi: Fırında Dana But, Izgara Kuzu Pirzola,
+Kerevizli Tavuk Sote, Etli Kuru Fasulye (Kış), Domates Dolması (Etli),
+Sucuklu Yumurta (Tava), Karadeniz Usulü Hamsi Tava, Nohutlu Tavuk
+Güveç, Fırında Somon Sebzeli, Ispanaklı Kıyma (Tavada).
+
+**Yontem (VII. Oturum'daki AYNI metodoloji):** Her tarif icin Hazırlık
+(isil islem DEGIL) + tek birlestirilmis Isil Islem asamasi (ardisik
+ayni-kap adimlar icin, VII. Oturum kuralina uygun). Iki asamanin
+sure_dakika toplami, tarifin KENDI hazirlik_dakika alanina esit
+tutuldu (tutarlilik kontrolu olarak). baslangic/hedef_sicaklik
+YEMEGIN ic sicakligi (firin AYARI degil) -- yaygin bilinen pisirme
+sonuclarina dayanir (kirmizi et rosto ~75C, tavuk ~90C guvenlik,
+somon ~65C nemli kalmasi, kaynatma/haslama 100C). enerji_kaynagi:
+firin=elektrik, ocak/tava/izgara=dogalgaz. verimlilik_orani: acik
+ocak/izgara icin dusuk (0.45-0.55), kapali firin icin yuksek (0.65).
+
+Her tarifin GERCEK malzeme listesi (SQL migration dosyalarindan)
+bulunup asama_malzemeleri baglantisi SADECE o tarifte gercekten olan
+malzemelerle kuruldu. Tum 22 benzersiz malzeme adi programatik
+dogrulandi. Yapisal kontrol: 10 tarif, 20 asama (her biri Hazirlik+
+Isil Islem), 10 asama-malzeme baglantisi -- hepsi beklenen sayida.
+
+**Sirada:** Bahri SQL'i calistirip DOGRULAMA sonucunu (her tarif icin
+asama sayisi, malzeme baglanti sayisi, toplam sure) paylasacak.
+Basariliysa Grup1'in kalan 63 tarifi icin devam edilecek, sonra
+Grup2 (84) ve Grup3 (88).
+
+**Dosya durumu:** `104_uretim_asamalari_grup1_parti1.sql` (yeni)
+teslim edildi.
