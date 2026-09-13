@@ -8559,3 +8559,24 @@ hatali yazilmisti. Alt sorgularla duzeltilmis
 
 **Dosya durumu:** `teshis_dogrulama_duzeltilmis.sql` (yeni) teslim
 edildi.
+
+**SONUC:** Duzeltilmis sorgu Parti1'in TAMAMEN dogru oldugunu
+kanitladi -- 10/10 tarifte toplam sure kendi hazirlik_dakika alanina
+birebir esitti (100/30/35/70/60/15/30/45/30/30). Parti1 KAPANDI.
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): Uretim Asamasi Doldurma -- Grup1 Parti2 (20/73)
+
+Ayni yontemle 10 tarif daha: Antep Fıstıklı Kavurma, Bademli Fırın
+Tavuk But, Bahar Sebzeli Tavuk Sote, Bezelyeli Dana Yahnisi,
+Bezelyeli Kuzu Yemeği, Biber Dolması (Etli), Brokolili Tavuk Sote
+(Sporcu), Enginar Dolması (Etli), Enginar Kalpli Tavuk Güveç,
+Enginarlı Kuzu Yahnisi. `105_uretim_asamalari_grup1_parti2.sql`.
+Bu kez DOGRULAMA sorgusu bastan alt-sorgulu (fan-out hatasi
+olmayan) yazildi. 15 benzersiz malzeme adi programatik dogrulandi,
+yapisal kontrol (20 asama, 10 baglanti bloğu) gecti.
+
+**Sirada:** Bahri calistirip sonucu paylasacak. Grup1'de 53 tarif
+kaldi (73-20).
+
+**Dosya durumu:** `105_uretim_asamalari_grup1_parti2.sql` (yeni)
+teslim edildi.
