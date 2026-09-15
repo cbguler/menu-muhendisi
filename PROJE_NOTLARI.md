@@ -8600,3 +8600,67 @@ kaldi (73-30).
 
 **Dosya durumu:** `106_uretim_asamalari_grup1_parti3.sql` (yeni)
 teslim edildi.
+
+**SONUC:** Parti3 10/10 dogrulandi. KAPANDI.
+
+**Bahri'nin sorusu:** "neden 10'ar 10'ar, 100'er yapsak daha kolay
+biter?" Cevap verildi: (1) `do $$` tek transaction -- hata olursa
+TUM parti geri alinir (parti16'daki isim cakismasi ornegi), (2)
+her partiden sonra dogrulama donguru var, (3) her tarif icin GERCEK
+dusunce/culinary bilgi gerekiyor, kalite riski var. KARAR: yontem
+3/3 parti sifir hatayla kanitlandigi icin artik **20'lik partilere**
+gecildi (100 cok riskli, 10 cok yavas -- orta yol).
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): Uretim Asamasi Doldurma -- Grup1 Parti4 (50/73, ILK 20'LIK PARTI)
+
+20 tarif: Baharatlı Izgara Piliç Göğüs, Fırında Tavuk Kanat, Havuçlu
+Fırın Tavuk But (Bahar), Hindi Sote (Ev Usulü), Ispanaklı Yumurta,
+Izgara Ahtapot, Izgara Dana Böbrek, Izgara Dana Pirzola, Izgara
+Kalamar, Izgara Palamut (Sonbahar), Izgara Piliç But, Izgara Somon
+Fileto, Izgara Sığır Bonfile, Izgara Sığır Pirzola, Kabak Dolması
+(Etli), Karides Güveç (Ege Usulü), Kerevizli Kuzu Yahnisi, Keçi Eti
+Güveç, Kuzu Etli Kırmızı Mercimek Yemeği, Kuşkonmazlı Dana Bonfile.
+`107_uretim_asamalari_grup1_parti4.sql`. 25 malzeme dogrulandi,
+yapisal kontrol (40 asama, 20 baglanti) gecti.
+
+**Sirada:** Bahri calistirip sonucu paylasacak. Grup1'de 23 tarif
+kaldi (73-50).
+
+**Dosya durumu:** `107_uretim_asamalari_grup1_parti4.sql` (yeni)
+teslim edildi.
+
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): Animasyonlu Ikon Denemesi -- Gemini "Videos" Sekmesi Kirilma Noktasi
+
+Ayri bir konu (uretim asamasi doldurma isinin yaninda, paralel):
+Bahri hazirlik ikonlarini PNG yerine kisa donen ANIMASYONLU (WebP)
+yapmayi denedi. Ilk ornek ("soğan doğrama") basariliydi, stil
+mevcut ikonlarla birebir uyumluydu. Sonraki denemelerde Gemini
+promptu/gorseli TAMAMEN reddetmeye basladi ("hicbir aciklama
+olmadan refuze").
+
+**Teshis sureci:** Once bicak/referans-gorsel hipotezi test edildi
+(yanlisti -- ayni davranis referanssiz/dun calisan promptla da
+cikti). Asil sebep muhtemelen GUNLUK KOTA (Gemini/Veo ucretsiz
+katmaninin bilinen bir davranisi -- kota dolunca net bir mesaj
+vermeden sessizce reddediyor).
+
+**KIRILMA NOKTASI:** Bahri Gemini'de AYRI bir "Videos" sekmesi
+buldu (genel sohbet arayuzunden farkli) -- oradan ayni (uzun,
+detayli) prompt'la deneyince HEM reddedilme sorunu COZULDU HEM
+kompozisyon istegi (icerik ortada kare bir alanda, kenarlarda
+bosluk) ilk kez TAM istenildigi gibi cikti. Tek fark: arka plan
+BEYAZ degil SIYAH geldi (720x720 kare, 1280x720 cerceve icinde
+280px beyaz kenar bosluguyla) -- ayni yontemle (esik degeri siyaha
+cevrilerek) sorunsuz islendi.
+
+**SONUC:** 4 ornek (doğrama, soyma, yıkama, çırpma) artik calisir
+durumda dogrulandi -- islem hattı (kare cikar -> arka plan sil ->
+400px'e kucult -> 12fps WebP'ye birlestir) kanitlandi, ~350-870KB/
+ikon araligi.
+
+**Sirada:** Bahri "Videos" sekmesinden daha fazla eylem icin video
+uretmeye devam edecek. Yeterli sayida (Bahri'nin oncelik verdigi
+dograma/izgara/firinlama gibi en sik kullanilanlar) biriktiginde,
+gosterim kodu (`st.image(..., width=260)` -- GIF/WebP animasyonunu
+donduran bilinen Streamlit siniri) duzeltilecek.
