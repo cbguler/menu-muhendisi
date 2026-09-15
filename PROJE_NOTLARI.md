@@ -8672,3 +8672,14 @@ arka plani sil -> kareyi ortala -> 400px'e kucult -> 12fps WebP)
 sorunsuz gecti, boyutlar 360KB-870KB arasinda. Bahri bunlari
 dogrudan assets/ klasorune ekliyor. Gosterim kodu duzeltmesi icin
 yeterli sayiya ulasilip ulasilmadigina Bahri karar verecek.
+
+**Guncelleme -- şiş_dizme mantik hatalari duzeltildi:** Ilk sis_dizme
+denemesinde IKI ciddi mantik hatasi bulundu: (1) et kupleri arasinda
+fiziksel olarak imkansiz bosluklar/kopuk parcalar, (2) 5. saniyede
+UCUNCU bir kol/el beliriyordu (anatomik surekliligi bozan bir hata),
+ayrica kasedeki et miktari hic azalmiyordu. Duzeltilmis prompt (ac
+uc/bosluksuz gecirme + "SADECE IKI EL" + kasenin gorunur sekilde
+azalmasi kisitlari eklenerek) ile YENIDEN denendi -- bu sefer 6 kare
+(0-10sn) tek tek kontrol edildi, uc sorun da COZULMUS gorundu (ucuncu
+el yok, bosluk yok, kase tutarli azaliyor). Islenip teslim edildi --
+8. ornek tamamlandi.
