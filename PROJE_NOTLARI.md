@@ -8664,3 +8664,11 @@ uretmeye devam edecek. Yeterli sayida (Bahri'nin oncelik verdigi
 dograma/izgara/firinlama gibi en sik kullanilanlar) biriktiginde,
 gosterim kodu (`st.image(..., width=260)` -- GIF/WebP animasyonunu
 donduran bilinen Streamlit siniri) duzeltilecek.
+
+**Guncelleme (ayni gun):** 7 ornek islenip WebP olarak teslim edildi
+-- doğrama (soğan), soyma (soğan), yıkama, çırpma, doldurma, yoğurma,
+kırma_yumurta. Hepsi ayni islem hattindan (kare cikar -> beyaz/siyah
+arka plani sil -> kareyi ortala -> 400px'e kucult -> 12fps WebP)
+sorunsuz gecti, boyutlar 360KB-870KB arasinda. Bahri bunlari
+dogrudan assets/ klasorune ekliyor. Gosterim kodu duzeltmesi icin
+yeterli sayiya ulasilip ulasilmadigina Bahri karar verecek.
