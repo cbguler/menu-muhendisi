@@ -8683,3 +8683,12 @@ azalmasi kisitlari eklenerek) ile YENIDEN denendi -- bu sefer 6 kare
 (0-10sn) tek tek kontrol edildi, uc sorun da COZULMUS gorundu (ucuncu
 el yok, bosluk yok, kase tutarli azaliyor). Islenip teslim edildi --
 8. ornek tamamlandi.
+
+**Guncelleme:** 3 yeni ornek islendi -- baharatlama, kızartma,
+marine_etme. Ayni partide gelen `yogurma.mp4`/`yikama.mp4` dosya
+boyutu ONCEKI yuklenenlerle BIREBIR ayniydi (tekrar yukleme,
+atlandi); `sis_dizme.mp4` (adinda "1" olmayan) muhtemelen duzeltilen
+UC-EL-HATALI ILK versiyon, ISLENMEDI (Bahri onay verirse veya farkli
+oldugunu belirtirse bakilacak). **Toplam hazir: 11** -- doğrama,
+soyma, yıkama, çırpma, doldurma, yoğurma, kırma_yumurta, şiş_dizme,
+baharatlama, kızartma, marine_etme.
