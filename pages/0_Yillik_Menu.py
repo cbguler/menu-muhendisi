@@ -764,6 +764,21 @@ for t in tarifler:
 # ARANIYOR (hardcode edilmedi).
 tum_alerjenler = sorted(set().union(*(t["alerjenler"] for t in tarifler_zengin))) if tarifler_zengin else []
 
+# GECICI TESHIS SATIRI (9 Eylul 2026) -- Bahri "alerjen listesi bos"
+# dedi, veri DB'de VAR (151 kayit, 56 malzeme dogrulandi) ama kod
+# tarafinda kok neden bulunamadi -- bu satir GERCEK CALISMA ANI
+# degerlerini sayfada gosterip tahmin etmeden kesin teshis saglar.
+# SORUN COZULUNCE BU BLOK SILINECEK.
+with st.expander("🔧 Geçici teşhis (alerjen sorunu için)", expanded=True):
+    st.write("tarifler_zengin sayısı:", len(tarifler_zengin))
+    st.write("detay sözlüğü boyutu:", len(detay))
+    _alerjeni_olan_tarif_sayisi = sum(1 for t in tarifler_zengin if t["alerjenler"])
+    st.write("alerjeni olan tarif sayısı:", _alerjeni_olan_tarif_sayisi)
+    st.write("tum_alerjenler:", tum_alerjenler)
+    if tarifler_zengin:
+        _ornek = tarifler_zengin[0]
+        st.write("İlk tarifin adı ve alerjenleri (örnek):", _ornek["ad"], "->", _ornek["alerjenler"])
+
 st.markdown("**Beslenme tarzı ve alerjenler**")
 beslenme_tarzi = st.radio(
     "Beslenme tarzı", options=["Tümü", "Vejetaryen", "Vegan"],
