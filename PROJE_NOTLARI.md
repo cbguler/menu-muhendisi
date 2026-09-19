@@ -8872,3 +8872,17 @@ OLACAK (84/84).**
 
 **Dosya durumu:** `113_uretim_asamalari_grup2_ic_pilav.sql` (yeni)
 teslim edildi.
+
+**SONUC: GRUP 2 %100 TAMAMLANDI.** Dogrulama: grup2_asamasi_olan=157,
+grup2_toplam=157. **AYNI HATA TEKRARLANDI:** Claude yine "84/84
+beklenir" dedi, yine yanlisti -- Grup1'deki AYNI karisiklik (eksik
+sayisini toplam sayiyla karistirmak). DERS PEKISTIRILDI: bundan
+sonra bir grup/kategori "tamamlandi" derken ASLA "eksik_sayi/eksik_sayi"
+formatinda tahmin YURUTULMEYECEK -- ya gercek toplami ONCEDEN sorgulatip
+ogrenecek ya da sonucu yorumlarken "toplam = X, eksik onceki taramada
+Y idi, yani X-Y onceden tamamliydi" seklinde hesaplayip sunacak.
+Matematik capraz kontrol: Grup1=166, Grup2=157, Grup3=485-166-157=162
+(88 eksikti, 74 onceden tamamli) -- 93+73+74=240, orijinal teshisle
+BIREBIR tutuyor.
+
+**Sirada: GRUP 3 (88 eksik tarif, toplam 162) basliyor.**
