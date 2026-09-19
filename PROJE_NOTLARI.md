@@ -8937,3 +8937,30 @@ degistiren bir islem, Bahri'ye acikca belirtildi. 3 silme+3 guncelleme+
 
 **Dosya durumu:** `115_grup3_ahtapot_enginar_duzeltme.sql` (yeni)
 teslim edildi.
+
+**SONUC 115:** Temiz cikti (2 asama, dogru sure) -- DELETE-once oncesi
+konulan koruma isini gordugunu KANITLADI.
+
+**CIDDI SORUN BULUNDU (114):** Dogrulama sonucu TUM 30 tarifte
+asama_sayisi VE toplam_sure TAM 3 KATI cikti (ornegin Cevizli Pekmez
+1 asama/5dk olmasi gerekirken 3 asama/15dk) -- migration muhtemelen
+3 KEZ CALISTIRILMIS, insert'lerde tekrar-calistirmaya karsi koruma
+(DELETE-once) YOKTU. `116_grup3_parti1_temizlik_ve_duzeltme.sql`
+yazildi: Ahtapot/Enginar/Enginarlı Yoğurt HARIC kalan 27 tarif icin
+once mevcut kirli veri silinip TEK SEFER temiz veri eklendi.
+
+**YENI KALICI KURAL (bundan sonraki TUM uretim asamasi migration'lari
+icin):** Her tarif icin INSERT'ten HEMEN ONCE `delete from
+recete_asamalari where recete_id = v_recete_id;` eklenecek -- boylece
+migration kazayla birden fazla kez calistirilsa bile veri ASLA
+katlanmaz (idempotent). 104-113 dosyalari bu korumayi ICERMIYORDU --
+eger onlar da birden fazla kez calistirildiysa AYNI sorun cikabilir,
+Bahri'nin dikkatli olmasi/tek sefer calistirmasi onemli.
+
+**BAHRI'NIN YENI STANDART TALIMATI:** Bundan sonra HICBIR tarifte
+"on-pismis/hazir malzeme" varsayimi YAPILMAYACAK -- her sey SIFIRDAN
+hazirlaniyor kabul edilecek (Ahtapot/Enginar ozelinde zaten boyleydi,
+ama bu artik TUM Grup3 ve gelecekteki tum tarifler icin GENEL ilke).
+
+**Dosya durumu:** `116_grup3_parti1_temizlik_ve_duzeltme.sql` (yeni)
+teslim edildi.
