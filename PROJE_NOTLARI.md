@@ -9112,3 +9112,32 @@ sadece `cd` + `git add/commit/push` verecek (indirmeler zaten doğru
 klasore dusuyor). Ayrica API anahtari/sir iceren dosyalarin (`API.txt`
 gibi) HICBIR ZAMAN git'e eklenmemesi gerektigi ogrenildi -- boyle bir
 dosyaya rastlanirsa .gitignore'da oldugundan emin olunacak.
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): Aylık Menü Sayfasi Canli Testinde 2 Sorun Bulundu
+
+Bahri canli "Aylık Menü" sayfasinda (bu, `0_Yillik_Menu.py`'nin
+st.Page baslik degisikligiyle "Aylık Menü" olarak gorunen hali --
+UI metinleri birebir eslesiyor) test yaparken 2 gercek sorun buldu
+(ekran goruntusu + PDF ile):
+
+**SORUN 1 -- "Boş Profil porsiyon sayısı" degistirilince ustteki
+"(X porsiyon)" etiketi guncellenmiyor (COZULDU):** Kok neden:
+selectbox'in etiket listesi (`_profil_etiketleri_sayfa`), asagidaki
+number_input widget'i HENUZ OLUSTURULMADAN, SABIT
+`_bos_profil_porsiyon_varsayilan` (10) ile kuruluyordu -- kullanicinin
+onceki rerun'da girdigi deger session_state'te durmasina ragmen hic
+okunmuyordu. Duzeltme: `st.session_state.get("bos_profil_porsiyon_
+sayisi", ...)` ile GUNCEL degeri okuyacak sekilde degistirildi.
+`0_Yillik_Menu.py` guncellendi.
+
+**SORUN 2 -- "Hariç tutulacak alerjenler" cok-secim kutusu bos/tepkisiz
+(ARASTIRILIYOR):** Kod TARAFI incelendi -- mantik, daha once basariyla
+test edilmis (vejetaryen/vegan filtresi 453->289 tarif) AYNI veri
+yoluna (`malzeme_alerjen` tablosu -> `t["alerjenler"]`) dayaniyor,
+kod HATASI bulunamadi. Bu, VERI tarafinda bir sorun oldugunu
+dusundurdu -- `teshis_alerjen_listesi_bos.sql` yazildi (malzeme_alerjen
+kayit sayisi, tanimli alerjen sayisi, 485 tarifin gercekten alerjenli
+malzeme kullanip kullanmadigi kontrol ediliyor). SONUC BEKLENIYOR.
+
+**Dosya durumu:** `0_Yillik_Menu.py` (guncellendi),
+`teshis_alerjen_listesi_bos.sql` (yeni) teslim edildi.

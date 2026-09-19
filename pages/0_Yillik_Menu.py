@@ -836,8 +836,15 @@ with sag2:
     # Profil" secildiginde porsiyon sayisi ARTIK KULLANICIDAN
     # SORULUYOR (asagida), sabit 10 degil.
     _bos_profil_porsiyon_varsayilan = 10
+    # YUZ OTUZ DOKUZUNCU DUZELTME (9 Eylul 2026): Bahri "porsiyon sayisini
+    # 4'e degistirdim ama ustteki etiket hala 10 porsiyon yaziyor" dedi --
+    # kok neden: bu etiket, asagidaki number_input HENUZ OLUSTURULMADAN
+    # sabit _bos_profil_porsiyon_varsayilan (10) ile kuruluyordu, kullanicinin
+    # ONCEKI rerun'da girdigi deger (session_state'te duruyor olsa bile)
+    # hic OKUNMUYORDU. Simdi session_state'ten (varsa) okunuyor.
+    _bos_profil_porsiyon_guncel = st.session_state.get("bos_profil_porsiyon_sayisi", _bos_profil_porsiyon_varsayilan)
     _porsiyon_profilleri_sayfa = _porsiyon_profilleri_sayfa + [
-        {"id": None, "ad": "Boş Profil (özel/geçici hedef)", "porsiyon_sayisi": _bos_profil_porsiyon_varsayilan, "hedefler": None}
+        {"id": None, "ad": "Boş Profil (özel/geçici hedef)", "porsiyon_sayisi": _bos_profil_porsiyon_guncel, "hedefler": None}
     ]
     _profil_etiketleri_sayfa = [f"{p['ad']} ({p['porsiyon_sayisi']} porsiyon)" for p in _porsiyon_profilleri_sayfa]
     _sayfa_secili_index = st.selectbox(
