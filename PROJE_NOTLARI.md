@@ -8766,3 +8766,24 @@ kaldi (84-20).
 
 **Dosya durumu:** `109_uretim_asamalari_grup2_parti1.sql` (yeni)
 teslim edildi.
+
+**SONUC:** Parti1 20/20 dogrulandi. KAPANDI.
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): Uretim Asamasi Doldurma -- Grup2 Parti2 (40/84)
+
+20 tarif daha: Karnıbahar Çorbası, Kaşarlı Bulgur Pilavı, Kaşarlı
+Fırın Makarna, Kaşarlı Şehriyeli Pilav, Kerevizli Çorba, Kestaneli
+Sonbahar Pilavı, Konserve Bezelyeli Makarna, Kuşkonmaz Çorbası,
+Kırmızı Mercimek Çorbası (Ev Usulü), Kırmızı Mercimekli Pilav,
+Mercimekli Bulgur Pilavı, Mısır Çorbası, Mısırlı Yaz Pilavı, Naneli
+Bulgur Pilavı, Nohutlu Pilav (Ev Usulü), Pancar Çorbası, Patatesli
+Sebze Çorbası, Kestane Mantarlı Pirinç Pilavı, Mung Fasulyeli Pilav,
+Pazılı Nohut Yemeği (son 4'u Claude'un parti16/17'de ekledigi
+tarifler). `110_uretim_asamalari_grup2_parti2.sql`. 21 malzeme
+dogrulandi, yapisal kontrol (40 asama, 20 baglanti) gecti.
+
+**Sirada:** Bahri calistirip sonucu paylasacak. Grup2'de 44 tarif
+kaldi (84-40).
+
+**Dosya durumu:** `110_uretim_asamalari_grup2_parti2.sql` (yeni)
+teslim edildi.
