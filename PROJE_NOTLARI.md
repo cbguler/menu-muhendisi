@@ -8886,3 +8886,54 @@ Matematik capraz kontrol: Grup1=166, Grup2=157, Grup3=485-166-157=162
 BIREBIR tutuyor.
 
 **Sirada: GRUP 3 (88 eksik tarif, toplam 162) basliyor.**
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): Uretim Asamasi Doldurma -- Grup3 Parti1 (30/88, ILK 30'LUK PARTI)
+
+Bahri'nin istegiyle parti buyuklugu 30'a cikarildi (yontem kanitlandigi
+icin). Grup 3 (salata/cacik/tursu/tatli) ONCEKI gruplardan FARKLI bir
+dogaya sahip -- 14/30 tarif HIC ISIL ISLEM icermiyor (Ayran, cig
+salatalar, cacik cesitleri -- TEK asamali). 16/30 tarif isil islem
+iceriyor (tursu=salamura kaynatma, tatli=serbet/sut pisirme, vb.).
+
+**Onemli varsayim (Bahri'ye acikca belirtildi):** Ahtapot Salatası,
+Enginar Salatası, Enginarlı Yoğurt -- normalde uzun haslama gerektiren
+malzemeler (ahtapot/enginar) icin toplam hazirlik_dakika COK KISA
+(15-20dk) oldugundan, ON-PISMIS/hazir malzeme kullanildigi varsayilip
+NON-THERMAL isaretlendi. Tursu tarifleri icin salamura (sebze+
+sarımsak+sirke, TUZ haric) kaynatma asamasina baglandi.
+
+30 tarif: Ahtapot Salatası (Soğuk), Armutlu Cevizli Salata, Ayran (Ev
+Usulü), Ayva Tatlısı (Kış), Badem Ezmesi Tabağı, Bahar Cacığı,
+Barbunya Turşusu (Bahar), Bezelyeli Yoğurt Salatası, Cevizli Kırmızı
+Lahana Salatası, Cevizli Pekmez, Domates Turşusu, Domatesli Cacık,
+Ekmek Kadayıfı (Kaymaklı), Elma Kompostosu (Ev Usulü), Elmalı Cevizli
+Bahar Salatası, Enginar Salatası, Enginarlı Yoğurt, Greyfurtlu Roka
+Salatası, Güllaç (Ev Usulü), Havuç Turşusu, Haşlanmış Yumurta
+Salatası, Hurma ve Süt Tatlısı, Ispanaklı Cacık, Ispanaklı Yoğurt
+(Borani), Kabak Turşusu, Kabaklı Yoğurt Salatası, Kadayıflı Süt
+Tatlısı, Kajulu Havuç Salatası, Karnabahar Turşusu, Karışık Meyve
+Kompostosu. `114_uretim_asamalari_grup3_parti1.sql`.
+
+18 malzeme dogrulandi (parantezli+virgullu "ARMUT (YAZLIK, SANTA
+MARİA ÇEŞİDİ)" adi dahil ozel kontrol edildi), yapisal kontrol (46
+asama -- 14 tek+16 cift, 16 baglanti) gecti.
+
+**Sirada:** Bahri calistirip sonucu paylasacak. Grup3'te 58 tarif
+kaldi (88-30).
+
+**Dosya durumu:** `114_uretim_asamalari_grup3_parti1.sql` (yeni)
+teslim edildi.
+
+**DUZELTME:** Bahri "on-pismis malzeme" varsayimini ONAYLAMADI --
+Ahtapot Salatası (Soğuk), Enginar Salatası, Enginarlı Yoğurt gercekten
+CIGDEN pisiriliyor. `115_grup3_ahtapot_enginar_duzeltme.sql` yazildi:
+eski tek-asamali kayitlar silinip gercekci haslama sureli 2 asamali
+veri eklendi. ONEMLI YAN ETKI: gercekci sureler (40/30/30 dk) kayitli
+hazirlik_dakika'dan (20/15/20) UZUN oldugu icin, TUTARLILIK icin
+`receteler.hazirlik_dakika` alani da bu 3 tarif icin GUNCELLENDI --
+bu, sadece uretim asamasi eklemenin otesinde, TARIFIN KENDI kaydini
+degistiren bir islem, Bahri'ye acikca belirtildi. 3 silme+3 guncelleme+
+6 asama+3 baglanti yapisal olarak dogrulandi.
+
+**Dosya durumu:** `115_grup3_ahtapot_enginar_duzeltme.sql` (yeni)
+teslim edildi.
