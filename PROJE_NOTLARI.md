@@ -8989,3 +8989,39 @@ baglanti) ve malzeme adlari dogrulandi.
 
 **Dosya durumu:** `117_kasarli_firin_makarna_duzeltme.sql` (yeni)
 teslim edildi.
+
+**SONUC 117:** Dogrulandi (3 asama, 40dk, 4 baglanti). Grup1/Grup2
+TAMAMEN temiz.
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): Uretim Asamasi Doldurma -- Grup3 Parti2 (60/88)
+
+30 tarif daha, ARTIK HER INSERT'TEN ONCE DELETE korumasi standart
+(114'teki 3x-calisma sorunu bir daha olmasin diye). Bahri'nin "hicbir
+yerde on-pismis/hazir malzeme varsayma" kuralina gore ozenle
+degerlendirildi: kereviz/pancar/kuskonmaz gibi CIG YENMEYEN sebzeler
+THERMAL (Zeytinyağlı Kereviz/Pancar kardesleriyle tutarli), havuc/
+lahana/ispanak gibi CIG YENEBILEN (standart Turk salata malzemesi)
+NON-THERMAL birakildi -- bu ikisi arasindaki fark acikca not edildi:
+"on-pismis varsayimi" ile "gercekten cig servis edilen yemek" FARKLI
+seyler. Kisir/Mercimek Koftesi'nde bulgurun sicak su/salcayla
+haslanmasi da gercek isil islem sayildi.
+
+30 tarif: Karışık Turşu (Ev Usulü, Sirkeli), Kayısı Kompostosu (Ev
+Usulü), Kayısılı Yoğurt, Kefirli Salatalık, Kerevizli Yoğurt Salatası,
+Keçi Peynirli Pancar Salatası, Keşkül (Ev Usulü), Kuru Fasulye Piyazı
+(Ev Usulü), Kuru Kayısılı Kış Kompostosu, Kuru Üzümlü Komposto,
+Kuşkonmaz Salatası, Kırmızı Biber Turşusu, Kızılcık Kompostosu, Kış
+Lahana Turşusu, Lahana Salatası, Limonlu Zeytinyağlı Havuç Salatası,
+Mandalina Kompostosu, Maydanozlu Bulgur Salatası (Kısır), Mercimek
+Köftesi (Ev Usulü), Mevsim Yeşillik Salatası, Muhallebi (Ev Usulü),
+Muzlu Meyve Salatası, Muzlu Yoğurt (Ev Usulü), Mısırlı Salata, Naneli
+Cacık (Klasik), Naneli Yoğurt, Nar Ekşili Kısır, Narlı Ispanak
+Salatası, Nohut Ezmesi (Ev Usulü), Pancar Salatası (Yoğurtlu).
+`118_uretim_asamalari_grup3_parti2.sql`. 20 malzeme dogrulandi, 30
+DELETE + 30 tarif yapisal olarak dogrulandi.
+
+**Sirada:** Bahri calistirip sonucu paylasacak. Grup3'te 28 tarif
+kaldi (88-60).
+
+**Dosya durumu:** `118_uretim_asamalari_grup3_parti2.sql` (yeni)
+teslim edildi.
