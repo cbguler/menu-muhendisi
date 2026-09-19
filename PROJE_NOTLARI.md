@@ -8787,3 +8787,15 @@ kaldi (84-40).
 
 **Dosya durumu:** `110_uretim_asamalari_grup2_parti2.sql` (yeni)
 teslim edildi.
+
+**SONUC:** Parti2 20/20 dogrulandi. KAPANDI.
+
+**Ara -- 5 yeni animasyonlu ikon:** buharda_pisirme, demleme,
+dilimleme_biber, ezme, kozleme islendi. **Toplam hazir: 16.**
+Kucuk bir kalite notu: demleme'deki buhar bulutunun rengi beyaza
+COK yakin oldugu icin bazi ic kisimlari da yanlislikla seffaflasti
+(kucuk "delikler") -- kabul edilebilir ama daha siki bir esik
+degeriyle duzeltilebilir, Bahri karar verecek. Ayrica kozleme'nin
+WebP kaydi ilk denemede (method=6) 300 saniye siniri asip takildi --
+method=4'e dusurulerek cozuldu (daha basit/hizli sikistirma
+aramasi).
