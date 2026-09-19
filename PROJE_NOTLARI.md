@@ -9141,3 +9141,31 @@ malzeme kullanip kullanmadigi kontrol ediliyor). SONUC BEKLENIYOR.
 
 **Dosya durumu:** `0_Yillik_Menu.py` (guncellendi),
 `teshis_alerjen_listesi_bos.sql` (yeni) teslim edildi.
+
+**ONEMLI DERS + DUZELTME (saatler sonra):** Ilk duzeltme (SORUN 1)
+push edilip DOGRULANDI (dosyada mevcuttu), AMA sorun DEVAM ETTI --
+Claude'un "biraz bekle, dagitim gecikmesi olabilir" seklindeki
+ilk aciklamasi YANLISTI (saatler gecti, degismedi) -- bu ONEMLI bir
+DERS: "dagitim gecikmesi" gibi kontrol edilemeyen bir aciklamaya
+siginmadan once GERCEK VERI/DOSYA kontrolu yapilmali.
+
+Bahri GERCEK CANLI DOSYAYI yukledi -- dogrudan incelendi. Duzeltmenin
+DOSYADA MEVCUT oldugu dogrulandi (yanlis dosya degil). Kod tekrar tekrar
+tarandi, "iste bu satir" diyebilecek KESIN bir ikinci hata bulunamadi
+-- AMA secim kutusunun profili SIRA NUMARASINA (index, `range(len(liste))`)
+gore takip ettigi, listenin HER rerun'da bastan kuruldugu goz onune
+alinirsa bunun KIRILGAN bir yontem oldugu tespit edildi. YUZ KIRKINCI
+DUZELTME: index yerine PROFILIN KENDI ID'SINE gore takip edecek sekilde
+yeniden yazildi (Streamlit'in onerdigi, DAHA SAGLAM yontem) -- "hangi
+profil secili" artik listenin sirasindan/uzunlugundan tamamen bagimsiz.
+DURUSTCE: bu, %100 dogrulanmis "iste kok neden buydu" degil, ama
+BUYUK OLASILIKLA sorunu (ve onunla AYNI SINIFTAN gelecek baska
+sorunlari) kokten cozer.
+
+**Alerjen sorunu (SORUN 2) hala BEKLEMEDE** -- Bahri'nin 3 ayri SQL
+sorgusunu calistirip sonucu paylasmasi gerekiyor (teshis dosyasi zaten
+verildi). Kod tarafinda (veri getirme + sayfalama) tekrar tarandi,
+ekstra hata bulunamadi.
+
+**Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- YUZ
+KIRKINCI DUZELTME) teslim edildi.

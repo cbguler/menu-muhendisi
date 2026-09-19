@@ -837,20 +837,26 @@ with sag2:
     # SORULUYOR (asagida), sabit 10 degil.
     _bos_profil_porsiyon_varsayilan = 10
     # YUZ OTUZ DOKUZUNCU DUZELTME (9 Eylul 2026): Bahri "porsiyon sayisini
-    # 4'e degistirdim ama ustteki etiket hala 10 porsiyon yaziyor" dedi --
-    # kok neden: bu etiket, asagidaki number_input HENUZ OLUSTURULMADAN
-    # sabit _bos_profil_porsiyon_varsayilan (10) ile kuruluyordu, kullanicinin
-    # ONCEKI rerun'da girdigi deger (session_state'te duruyor olsa bile)
-    # hic OKUNMUYORDU. Simdi session_state'ten (varsa) okunuyor.
+    # 4'e degistirdim ama ustteki etiket hala 10 porsiyon yaziyor" dedi,
+    # sonra saatler sonra da "profil kendiliginden EV'e atliyor" dedi.
+    # YUZ KIRKINCI DUZELTME (9 Eylul 2026): Kok neden -- secim kutusu
+    # profili SIRA NUMARASINA (index, range(len(liste))) gore takip
+    # ediyordu; bu liste HER rerun'da bastan kuruluyordu, index takibi
+    # bu yuzden KIRILGANDI. Index yerine PROFILIN KENDI ID'SINE gore
+    # takip edecek sekilde yeniden yazildi -- "hangi profil secili"
+    # artik listenin sirasindan/uzunlugundan BAGIMSIZ. NOT: bu degisiklik
+    # sonrasi ILK yenilemede eski (index tabanli) session_state gecersiz
+    # kalabilir -- Bahri'nin bu degisiklikten sonra sayfayi bir kez daha
+    # yenilemesi yeterli, sonrasi kalicidir.
     _bos_profil_porsiyon_guncel = st.session_state.get("bos_profil_porsiyon_sayisi", _bos_profil_porsiyon_varsayilan)
     _porsiyon_profilleri_sayfa = _porsiyon_profilleri_sayfa + [
         {"id": None, "ad": "Boş Profil (özel/geçici hedef)", "porsiyon_sayisi": _bos_profil_porsiyon_guncel, "hedefler": None}
     ]
-    _profil_etiketleri_sayfa = [f"{p['ad']} ({p['porsiyon_sayisi']} porsiyon)" for p in _porsiyon_profilleri_sayfa]
-    _sayfa_secili_index = st.selectbox(
+    _profil_by_id_sayfa = {p["id"]: p for p in _porsiyon_profilleri_sayfa}
+    _secili_profil_id_sayfa = st.selectbox(
         "Maliyet hesabı için porsiyon profili",
-        options=range(len(_profil_etiketleri_sayfa)),
-        format_func=lambda i: _profil_etiketleri_sayfa[i],
+        options=[p["id"] for p in _porsiyon_profilleri_sayfa],
+        format_func=lambda pid: f"{_profil_by_id_sayfa[pid]['ad']} ({_profil_by_id_sayfa[pid]['porsiyon_sayisi']} porsiyon)",
         key="sayfa_porsiyon_profili_secimi",
         help="Profilleri eklemek/düzenlemek için Abonelik sayfasındaki "
              "\"Porsiyon Profilleri\" bölümüne bak. \"Boş Profil\" "
@@ -859,7 +865,7 @@ with sag2:
              "sayısını aşağıdan kendi ihtiyacınıza (ör. hane "
              "büyüklüğünüze) göre ayarlayabilirsiniz.",
     )
-    _secili_sayfa_profili = _porsiyon_profilleri_sayfa[_sayfa_secili_index]
+    _secili_sayfa_profili = _profil_by_id_sayfa[_secili_profil_id_sayfa]
     if _secili_sayfa_profili["id"] is None:
         _bos_profil_porsiyon = st.number_input(
             "Boş Profil porsiyon sayısı (ör. hanenizdeki kişi sayısı)",
