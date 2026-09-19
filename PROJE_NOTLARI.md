@@ -8849,3 +8849,8 @@ paylasirsa (veya bir sorguyla cekip verirse) tamamlanir.
 
 **Dosya durumu:** `112_uretim_asamalari_grup2_parti4.sql` (yeni)
 teslim edildi.
+
+**SONUC:** Parti3 (20/20) ve Parti4 (23/23) IKISI DE dogrulandi.
+**GRUP 2: 83/84 tamamlandi -- sadece "İç Pilav" bekliyor** (malzeme
+listesi bu zip'te bulunamadigi icin islenemedi). Grup 3 (88 tarif)
+baslamaya hazir.
