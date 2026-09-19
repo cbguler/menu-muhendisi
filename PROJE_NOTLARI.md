@@ -8799,3 +8799,53 @@ degeriyle duzeltilebilir, Bahri karar verecek. Ayrica kozleme'nin
 WebP kaydi ilk denemede (method=6) 300 saniye siniri asip takildi --
 method=4'e dusurulerek cozuldu (daha basit/hizli sikistirma
 aramasi).
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): Uretim Asamasi Doldurma -- Grup2 Parti3 (60/84)
+
+20 tarif daha: Peynirli Kabak Böreği, Peynirli Yaz Böreği, Roka
+Soslu Makarna, Sade Ispanak Çorbası, Sarımsaklı Domates Soslu
+Makarna, Soya Kıymalı Zeytinyağlı Dolma, Sucuklu Pilav, Tarhana
+Çorbası (Ev Usulü), Tavuk Suyu Çorbası (Sade), Yayla Çorbası (Ev
+Usulü), Yaz Domates Çorbası, Yer Elması Zeytinyağlısı, Yulaflı
+Çorba, Zeytinyağlı Bamya (Yaz), Zeytinyağlı Barbunya Pilaki (Ev
+Usulü), Zeytinyağlı Bezelyeli Havuç, Zeytinyağlı Biber Dolması,
+Zeytinyağlı Domates Dolması, Rezene Çorbası, Sebzeli Quinoa Pilavı
+(son 2'si Claude'un parti17'de ekledigi tarifler).
+`111_uretim_asamalari_grup2_parti3.sql`. 24 malzeme dogrulandi,
+yapisal kontrol (40 asama, 20 baglanti) gecti.
+
+**Sirada:** Bahri calistirip sonucu paylasacak. Grup2'de 24 tarif
+kaldi (84-60).
+
+**Dosya durumu:** `111_uretim_asamalari_grup2_parti3.sql` (yeni)
+teslim edildi.
+
+**SONUC:** Parti3 20/20 dogrulandi. KAPANDI.
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): Uretim Asamasi Doldurma -- Grup2 Parti4 (83/84, "İç Pilav" HARIC)
+
+23 tarif: Zeytinyağlı Enginar (İlkbahar), Zeytinyağlı Havuç,
+Zeytinyağlı Ispanak, Zeytinyağlı Kabak (Yaz), Zeytinyağlı Kabak
+Dolması, Zeytinyağlı Karalahana (Sonbahar), Zeytinyağlı Kereviz
+(Bahar), Zeytinyağlı Kuru Fasulye (Soğuk), Zeytinyağlı Lahana
+Dolması, Zeytinyağlı Patatesli Havuç, Zeytinyağlı Patlıcan (Yaz),
+Zeytinyağlı Pırasa (Bahar), Zeytinyağlı Semizotu, Zeytinyağlı Soya
+Fasulyesi, Zeytinyağlı Taze Bakla, Zeytinyağlı Taze Fasulye (Ev
+Usulü), Zeytinyağlı Yaprak Sarma (Ev Usulü), İrmik Çorbası (Ev
+Usulü), İşkembe Çorbası, Şehriye Çorbası (Sade), **Şehriyeli Bahar
+Pilavı** (Bahri'nin oturumun basindaki EKRAN GORUNTUSUNDEKI tarif --
+o dongu simdi kapaniyor), Şehriyeli Bulgur Pilavı (Ev Usulü),
+Zeytinyağlı Siyah Fasulye (Claude'un parti17'de ekledigi tarif).
+`112_uretim_asamalari_grup2_parti4.sql`.
+
+**EKSIK KALAN:** "İç Pilav" bu partiye DAHIL EDILEMEDI -- bu zip'teki
+HICBIR sql dosyasinda (82-102 arasi tum "cesitlilik/ilkbahar/yaz_
+sonbahar_kis" partileri tarandi) malzeme listesi bulunamadi -- migration
+bu oturuma yuklenmemis. Uydurmadim. Grup2 bu partiden sonra 83/84
+olacak, "İç Pilav" tek eksik kalacak -- Bahri malzeme listesini
+paylasirsa (veya bir sorguyla cekip verirse) tamamlanir.
+
+26 malzeme dogrulandi, yapisal kontrol (46 asama, 23 baglanti) gecti.
+
+**Dosya durumu:** `112_uretim_asamalari_grup2_parti4.sql` (yeni)
+teslim edildi.
