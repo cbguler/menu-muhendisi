@@ -8723,3 +8723,46 @@ TAMAMLANMIS OLACAK (73/73)**. Ardindan Grup 2 (84 tarif) baslayacak.
 
 **Dosya durumu:** `108_uretim_asamalari_grup1_parti5.sql` (yeni)
 teslim edildi.
+
+**SONUC: GRUP 1 %100 TAMAMLANDI.** Dogrulama: grup1_asamasi_olan=166,
+grup1_toplam=166 (Claude'un "73/73 beklenir" ifadesi HATALIYDI --
+73 sadece O ANKI eksik sayisiydi, Grup 1'in GERCEK toplami hep 166'ydi,
+93'u zaten onceden tamamlanmisti). Matematik capraz kontrol edildi:
+485 toplam tarifin 240'i (93 Grup1 + 147 Grup2/3) zaten tamamliydi,
+245'i (73+84+88) eksikti -- 166=93+73 birebir tutuyor.
+
+**Sirada: GRUP 2 (84 eksik tarif) basliyor.**
+
+**Dosya durumu:** yok (sadece dogrulama, yeni dosya yok).
+
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): Uretim Asamasi Doldurma -- Grup2 Parti1 (20/84)
+
+Grup 2'nin ilk 20 tarifi: Antep Fıstıklı Bulgur Pilavı, Bademli
+Pirinç Pilavı, Bahar Ispanaklı Böreği, Bezelyeli Pilav, Brokoli
+Çorbası (Ev Usulü), Domatesli Patates Yemeği (Etsiz), Domatesli
+Şehriye Çorbası, Enginar Kalpli Pilav, Enginar Çorbası, Et Suyu
+Çorbası (Sade), Havuç ve Kereviz Çorbası, Havuç Çorbası (Bahar),
+Humus (Ev Usulü), Ispanaklı Mercimek Çorbası (Kış), Kabak Çorbası,
+Karidesli Makarna, Karnabahar Çorbası (Sonbahar), Arpa Çorbası,
+Brüksel Lahanalı Zeytinyağlı, Karabuğday Pilavı (son 3'u Claude'un
+parti16/17'de ekledigi tarifler). `109_uretim_asamalari_grup2_parti1.sql`.
+
+**Ozel not -- Humus (Ev Usulü):** Hic isil islem gerektirmiyor (soguk
+meze, hazir humus + zeytinyagi/limon/maydanoz karistirma) -- TEK
+asamali (sadece Hazırlık, isil_islem_mi=false), asama_malzemeleri
+baglantisi YOK. Bu, Yoğurtlu Kebap'taki "sadece gercekten isitilan
+kismi baglama" ilkesinin dogal bir uzantisi.
+
+**Genel gozlem:** Grup 2 agirlikli olarak corba/pilav -- coguın isil
+islem hedef sicakligi kaynama noktasi (100C), firin/izgara degil
+(Bahar Ispanaklı Böreği istisna, o firinda pisen bir borek).
+
+25 malzeme dogrulandi, yapisal kontrol (39 asama -- Humus tek asamali
+oldugu icin 40 degil, 19 malzeme baglantisi -- Humus haric) gecti.
+
+**Sirada:** Bahri calistirip sonucu paylasacak. Grup2'de 64 tarif
+kaldi (84-20).
+
+**Dosya durumu:** `109_uretim_asamalari_grup2_parti1.sql` (yeni)
+teslim edildi.
