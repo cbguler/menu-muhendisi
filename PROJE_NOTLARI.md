@@ -9193,3 +9193,23 @@ ediyor. SONUC BEKLENIYOR -- dogrulanirsa fix (GRANT/policy ekleme)
 hazirlanacak.
 
 **Dosya durumu:** `teshis_alerjenler_rls.sql` (yeni) teslim edildi.
+
+**KOK NEDEN KESIN DOGRULANDI:** `alerjenler` tablosunda RLS ACIKTI
+ama HICBIR POLITIKA YOKTU (0 satir) -- `malzeme_alerjen`'de ise
+dogru bir politika ("alerjen iliskisi oku") zaten vardi. PostgreSQL
+varsayilani: RLS acikken politika yoksa GRANT'ler ne olursa olsun
+TUM erisim REDDEDILIR. Bu yuzden `malzeme_alerjen -> alerjenler(ad)`
+JOIN'i UYGULAMADAN (anon/authenticated rol, RLS'e tabi) hep NULL
+donuyordu -- Bahri'nin SQL Editor'u ise `postgres` (RLS'i atlayan)
+rolle calistigi icin veriyi hep gormustu, bu YANILTICI bir "veri var"
+izlenimi yaratmisti.
+
+`120_alerjenler_rls_okuma_politikasi_ekle.sql` yazildi --
+`malzeme_alerjen`'deki politikanin ESIYLE (public/SELECT/qual=true)
+`alerjenler`'e de bir okuma politikasi ekliyor (14 satirlik sade bir
+referans tablosu, herkese acik okunmasi guvenlik riski degil).
+`0_Yillik_Menu.py`'deki gecici teshis paneli KALDIRILDI (artik
+gerek yok).
+
+**Dosya durumu:** `120_alerjenler_rls_okuma_politikasi_ekle.sql`
+(yeni), `0_Yillik_Menu.py` (teshis paneli kaldirildi) teslim edildi.
