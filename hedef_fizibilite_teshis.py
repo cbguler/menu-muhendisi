@@ -61,16 +61,26 @@ if not supabase_url or not supabase_service_key:
 supabase = create_client(supabase_url, supabase_service_key)
 
 # ---- AYARLANMASI GEREKENLER ----
-MUTFAK_KODU = None   # None birakirsan mevcut mutfaklar listelenir.
-OGUN_ADI_ETIKETI = "Öğle (Aralık / kış varsayımıyla)"
-MEVSIM = "kis"        # Aralik = kis
+MUTFAK_KODU = "turk"   # bir onceki testte bulundugu gibi -- farkliysa degistir.
+OGUN_ADI_ETIKETI = "Öğle (KETO fizibilite testi)"
+MEVSIM = "kis"        # istersen "yaz"/"ilkbahar"/"sonbahar" ile de dene
 
-# Aralik'ta VARSAYILAN aralik degerlerini degil, KENDI girdigin ozel
-# sayilari kullandiysan HEDEF'i ELLE doldur -- aksi halde script
-# besin_sabitleri.py'deki varsayilan (def_alt/def_ust) araliklari
-# kullanir (bu, "boş hedef profili + tüm ögeler" secimiyle AYNI
-# olmali, cunku o durumda number_input'lar varsayilan degerle dolar).
-HEDEF = None
+# YUZ OTUZ ALTINCI DUZELTME (9 Eylul 2026): Keto fizibilite testi --
+# STANDART_PROFILLER'a eklemeden ONCE, Turk mutfagi tarif havuzunun
+# gercekten bu kadar dusuk karbonhidratli kombinasyon barindirip
+# barindirmadigini KANITLAMAK icin. Standart Keto orani (~%70 yag,
+# %20-25 protein, %5-10 karbonhidrat), 700kcal referans uzerinden:
+#   yag: %70 = 490kcal/9 = ~54g (genis pencere birakildi: 40-90g)
+#   protein: %20-25 = 140-175kcal/4 = 35-44g (genis pencere: 25-55g)
+#   karbonhidrat: %5-10 = 35-70kcal/4 = 9-18g (BU ASIL TEST EDILEN --
+#     genel varsayilanin p5'i bile (kalibrasyondan) 21.4g idi, yani
+#     bu esikten daha dusuk -- fizibilite ciddi supheli)
+HEDEF = {
+    "kalori": (500.0, 1000.0),
+    "yag": (40.0, 90.0),
+    "protein": (25.0, 55.0),
+    "karbonhidrat": (0.0, 20.0),
+}
 # Ornek ozel hedef (sadece birkac oge icin):
 # HEDEF = {"kalori": (900.0, 1200.0), "protein": (20.0, 60.0)}
 
@@ -139,8 +149,9 @@ def sayfalayarak_getir(sorgu_fn, sayfa_boyu=1000):
 # ---- BESIN DETAYI (0_Yillik_Menu.py:_tarif_detaylarini_getir ile AYNI hesaplama,
 #      fiyat/alerjen kismi CIKARILDI -- bu script icin gereksiz) ----
 def besin_detaylarini_getir():
-    receteler = supabase.table("receteler").select("id, ad").is_("isletme_id", "null").execute().data
+    receteler = supabase.table("receteler").select("id, ad, porsiyon_sayisi").is_("isletme_id", "null").execute().data
     id_to_ad = {r["id"]: r["ad"] for r in receteler}
+    porsiyon_by_id = {r["id"]: (r["porsiyon_sayisi"] or 1) for r in receteler}
     malzeme_kalemleri = sayfalayarak_getir(
         lambda: supabase.table("recete_malzemeleri").select(
             "recete_id, malzeme_id, miktar_gram, "
@@ -156,6 +167,7 @@ def besin_detaylarini_getir():
         m = kalem.get("malzemeler") or {}
         oran = kalem["miktar_gram"] / 100.0
         girdi = ham.setdefault(ad, {
+            "recete_id": kalem["recete_id"],
             "kalori": 0.0, "protein": 0.0, "yag": 0.0, "karbonhidrat": 0.0,
             "gi_agirlikli": 0.0, "gi_karb_toplam": 0.0,
             **{k: 0.0 for k in _GENISLETILMIS_KOLONLAR},
@@ -177,11 +189,20 @@ def besin_detaylarini_getir():
                 girdi[f"{kolon}_var_mi"] = True
     sonuc = {}
     for ad, v in ham.items():
+        # KRITIK DUZELTME (YUZ YIRMI YEDINCI DUZELTME, 9 Eylul 2026):
+        # tarifler PARTI (batch) toplami olarak saklaniyor --
+        # 0_Yillik_Menu.py:_tarif_detaylarini_getir ile AYNI sekilde
+        # porsiyon_sayisi'na BOLUNMEDEN kullanmak tum besin degerlerini
+        # sisirir. Bu duzeltmeden once bu script porsiyona bolmuyordu --
+        # "1/103.740 nadirlik" bulgusu ve "kalori %91.1 basarisiz"
+        # istatistigi bu YUZDEN guvenilmezdi (gercek uretim kodu
+        # etkilenmedi, sadece bu teshis scripti).
+        porsiyon = porsiyon_by_id.get(v["recete_id"], 1)
         gi = (v["gi_agirlikli"] / v["gi_karb_toplam"]) if v["gi_karb_toplam"] > 0 else None
         sonuc[ad] = {
-            "kalori": v["kalori"], "protein": v["protein"], "yag": v["yag"],
-            "karbonhidrat": v["karbonhidrat"], "gi": gi,
-            **{k: (v[k] if v[f"{k}_var_mi"] else None) for k in _GENISLETILMIS_KOLONLAR},
+            "kalori": v["kalori"] / porsiyon, "protein": v["protein"] / porsiyon,
+            "yag": v["yag"] / porsiyon, "karbonhidrat": v["karbonhidrat"] / porsiyon, "gi": gi,
+            **{k: (v[k] / porsiyon if v[f"{k}_var_mi"] else None) for k in _GENISLETILMIS_KOLONLAR},
         }
     return sonuc
 

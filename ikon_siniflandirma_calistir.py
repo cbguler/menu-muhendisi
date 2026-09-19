@@ -97,6 +97,15 @@
 # dusuruldu (TPM 8000 tavaninda daha fazla guvenlik payi birakmak
 # icin -- prompt + max_tokens toplami hala rahatca sigiyor).
 #
+# YETMIS YEDINCI DUZELTME (6 Eylul 2026): Bahri gercek bir tarif
+# uzerinden (Adana Kebap) VE/VEYA karismasini kanitladi -- "Soğanı
+# rendeleyin (ya da robotta çekip ezin)" gibi bir satir, IKI ALTERNATIF
+# YONTEM sunuyor (SADECE biri secilecek), ama sistem HER İKİSİNİ de
+# (rendeleme VE ezme) atadigi icin sanki ikisi de SIRAYLA yapilacakmis
+# gibi goruniyordu. SISTEM_PROMPTU'na acik bir kural eklendi: parantez
+# ici "ya da/veya/yahut" ile sunulan alternatif yontemlerde SADECE ILK
+# bahsedilen yontem atansin, ikincisi (alternatif) atanmasin.
+#
 # CALISTIRMA: python ikon_siniflandirma_calistir.py
 # GEREKEN SIRLAR: GROQ_API_KEY_IKON, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
 
@@ -137,12 +146,24 @@ KURALLAR (cok onemli, dikkatli ol):
    anlaminda kullanildiginda "yogurma" ata.
 3. Bir satirda birden fazla gercek islem varsa (ör. "kavurup
    bulguru ekleyin, su cekilene kadar pisirin" -- hem kavurma hem
-   haslama/kaynatma) HEPSINI listele.
-4. Sadece yukaridaki SABIT listeden eylem adi kullan, baska hicbir
+   haslama/kaynatma) HEPSINI listele -- ANCAK bu kural SADECE
+   BIRBIRI ARDINDAN GERCEKTEN YAPILAN (sirali) islemler icindir.
+4. **VE/VEYA AYRIMI (YETMIS YEDINCI DUZELTME, kritik):** Bir satir
+   "X yapin (ya da Y yapin)", "X veya Y yapin", "X yahut Y" gibi IKI
+   ALTERNATIF YONTEM sunuyorsa (ikisi de GECERLI ama SADECE BIRI
+   secilecek, ikisi ARDIŞIK yapilmayacak) -- bu durumda SADECE ILK
+   BAHSEDILEN yontemin eylemini ata, IKINCI (alternatif) yontemi
+   ATAMA. Ornek: "Soğanı rendeleyin (ya da robotta çekip ezin)" ->
+   SADECE "rendeleme" ata, "ezme" atama (ezme burada bir ALTERNATIF,
+   ayrica yapilan bir islem DEGIL). Ayirt etmek icin bak: parantez
+   ici bir yontem + "ya da/veya/yahut" ifadesi -> ALTERNATIF (SADECE
+   ilki). Virgul/"ve" ile ayrilan, ikisi de fiilen olacakmis gibi
+   yazilmis ardisik adimlar -> SIRALI (HEPSI, madde 3 gecerli).
+5. Sadece yukaridaki SABIT listeden eylem adi kullan, baska hicbir
    kelime uydurma.
-5. Bir satirda hicbir gercek mutfak islemi talimati yoksa (baslikler,
+6. Bir satirda hicbir gercek mutfak islemi talimati yoksa (baslikler,
    malzeme listeleri, notlar, ozetler) bos liste dondur.
-6. Her tarifi BAGIMSIZ degerlendir -- bir tarifteki bir kelime baska
+7. Her tarifi BAGIMSIZ degerlendir -- bir tarifteki bir kelime baska
    bir tarifin siniflandirmasini ETKILEMEMELI.
 
 SADECE gecerli JSON ile cevap ver, baska hicbir metin ekleme:
