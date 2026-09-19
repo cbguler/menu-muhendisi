@@ -9169,3 +9169,27 @@ ekstra hata bulunamadi.
 
 **Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- YUZ
 KIRKINCI DUZELTME) teslim edildi.
+
+**ALERJEN SORUNU -- KOK NEDEN BULUNDU (buyuk ihtimalle RLS):** Sayfaya
+GECICI TESHIS PANELI eklendi (expander icinde canli degerler). Sonuc
+KESIN konustu: `detay sozlugu boyutu: 485` (isim eslestirmesi TAMAMEN
+DOGRU calisiyor), AMA `alerjeni olan tarif sayisi: 0` -- TUM 485
+tarifte alerjen seti BOS ("Fırında Dana But" bile `set()`). SQL
+diagnostiginde (Bahri'nin SQL Editor'den calistirdigi sorgular) veri
+KESINLIKLE VAR (151 kayit, 14 alerjen, 56 malzeme eslesmis).
+
+**HIPOTEZ:** SQL Editor superuser/service-role ile calisiyor (RLS'i
+ATLAR), ama CANLI UYGULAMA anon/authenticated rolle baglaniyor (RLS'e
+TABI). Eger `alerjenler` tablosunda bu rollere SELECT izni yoksa,
+uygulamadan yapilan JOIN (`malzeme_alerjen -> alerjenler(ad)`) HATA
+VERMEDEN sessizce NULL doner -- gozlemlenen belirtiyle BIREBIR
+uyuyor. Muhtemel sucllu: migration 93 (`guvenlik_uyarilarini_
+duzelt.sql`) gibi bir GEÇMİŞ guvenlik sikilastirmasi, `alerjenler`
+tablosundan yanlislikla SELECT iznini kaldirmis olabilir.
+
+`teshis_alerjenler_rls.sql` yazildi -- RLS acik mi, politikalar neler,
+anon/authenticated rollerinin GRANT SELECT izni var mi kontrol
+ediyor. SONUC BEKLENIYOR -- dogrulanirsa fix (GRANT/policy ekleme)
+hazirlanacak.
+
+**Dosya durumu:** `teshis_alerjenler_rls.sql` (yeni) teslim edildi.
