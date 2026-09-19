@@ -8854,3 +8854,21 @@ teslim edildi.
 **GRUP 2: 83/84 tamamlandi -- sadece "İç Pilav" bekliyor** (malzeme
 listesi bu zip'te bulunamadigi icin islenemedi). Grup 3 (88 tarif)
 baslamaya hazir.
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): "İç Pilav" Bulundu -- GRUP 2 TAMAMLANDI (84/84)
+
+"İç Pilav"in SQL kaynagi bu zip'te yoktu ama PROJE_NOTLARI'nin
+KENDISINDE (3 Agustos, VII. Oturum -- `ek_tarifler.py`/`tarif_verisi.py`
+ile eklenmis) malzeme listesi ZATEN KAYITLIYDI: pirinç, çam fıstığı,
+kuş üzümü, kuru soğan, tereyağı, yenibahar. Uydurulmadi -- gecmis kayittan
+bulundu. hazirlik_dakika (35) Bahri tarafindan dogrudan sorgulanip
+teyit edildi. `113_uretim_asamalari_grup2_ic_pilav.sql` yazildi, 6
+malzeme dogrulandi.
+
+**SONUC (beklenen):** Bu SQL calisirsa **GRUP 2 %100 TAMAMLANMIS
+OLACAK (84/84).**
+
+**Sirada: GRUP 3 (88 eksik tarif) baslayacak.**
+
+**Dosya durumu:** `113_uretim_asamalari_grup2_ic_pilav.sql` (yeni)
+teslim edildi.
