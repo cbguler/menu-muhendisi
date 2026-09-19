@@ -8692,3 +8692,34 @@ UC-EL-HATALI ILK versiyon, ISLENMEDI (Bahri onay verirse veya farkli
 oldugunu belirtirse bakilacak). **Toplam hazir: 11** -- doğrama,
 soyma, yıkama, çırpma, doldurma, yoğurma, kırma_yumurta, şiş_dizme,
 baharatlama, kızartma, marine_etme.
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): Uretim Asamasi Doldurma -- Grup1 Parti5 (73/73, GRUP 1 TAMAMLANDI)
+
+Grup 1'in SON 23 tarifi: Kırmızı Biberli Kıyma Sote, Lahana Dolması
+(Etli), Limonlu Fırın Levrek, Madımaklı Kavurma, Midye Dolma
+(Pilavlı), Mısırlı Tavuk Sote, Nohutlu Sığır Kavurma (Bahar),
+Pastırmalı Kavurma, Patatesli Dana Güveç, Patlıcanlı Kıyma Musakka,
+Pırasalı Kıymalı Bahar Yemeği, Roka Soslu Izgara Tavuk, Sade Kuzu
+Güveç (Et Suyu ile), Semizotlu Etli Yemek, Soya Kıymalı Patlıcan
+Musakka (Etsiz), Soyalı Biberli Sote (Etsiz), Taze Bakla Kavurma
+(Etli), Taze Fasulyeli Kuzu Güveç (İlkbahar), Taze Fasulyeli Tavuk
+Güveç, Yer Elmalı Kuzu Yahnisi, Yoğurtlu Kebap (Ev Usulü), Nar Ekşili
+Dana Rosto, Otlu Izgara Çipura (son 2'si Claude'un parti16'da
+eklediği tarifler). `108_uretim_asamalari_grup1_parti5.sql`.
+
+**Ozel not -- Yoğurtlu Kebap:** Yoğurt SOĞUK servis edilir varsayimiyla
+isil islem asamasindan (asama_malzemeleri baglantisi) BILINCLI olarak
+CIKARILDI -- sadece DANA KIYMA/DOMATES/TEREYAĞI izgara/pisirme
+asamasina baglandi, YOĞURT hazirlik (soguk sos) asamasinda kaldi.
+Bu, projenin "gercekci fizik" ilkesine (Q=mcDeltaT sadece GERCEKTEN
+isitilan kutleyi hesaba katmali) uygun bir incelik.
+
+33 malzeme dogrulandi, yapisal kontrol (46 asama, 23 baglanti) gecti.
+Bu parti receteler tablosuna YENI KAYIT EKLEMIYOR (sadece MEVCUT
+tariflere asama ekliyor) -- isim cakismasi riski YOK.
+
+**Sirada:** Bahri calistirip sonucu paylasacak -- basariliysa **GRUP 1
+TAMAMLANMIS OLACAK (73/73)**. Ardindan Grup 2 (84 tarif) baslayacak.
+
+**Dosya durumu:** `108_uretim_asamalari_grup1_parti5.sql` (yeni)
+teslim edildi.
