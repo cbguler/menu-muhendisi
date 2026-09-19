@@ -8964,3 +8964,28 @@ ama bu artik TUM Grup3 ve gelecekteki tum tarifler icin GENEL ilke).
 
 **Dosya durumu:** `116_grup3_parti1_temizlik_ve_duzeltme.sql` (yeni)
 teslim edildi.
+
+**SONUC 116:** 30/30 tarif TERTEMIZ dogrulandi (hepsi tek seferlik
+dogru asama sayisi/sure/baglanti). Grup3 Parti1 KAPANDI.
+
+**GERIYE DONUK TARAMA (Bahri'nin istegiyle):** 104-113 arasindaki TUM
+Grup1 (73) + Grup2 (84) = 157 tarif, "on-pismis/hazir malzeme"
+varsayimi acisindan programatik tarandi -- (1) pisirme fiili iceren
+ama isil_islem_mi=false isaretli asama adlari arandi, (2) tek-asamali
+(muhtemelen atlanmis pisirme) tarifler listelendi.
+
+**SONUC:** SADECE 1 gercek sorun bulundu -- **Kaşarlı Fırın Makarna**
+(migration 110): "Hazırlık (Haşlama+Karıştırma)" asamasi ISIL ISLEM
+OLARAK ISARETLENMEMISTI, makarnanin haslanma enerjisi hesaba
+katilmiyordu. Digger 156 tarifin HICBIRINDE sorun yok -- Humus (Ev
+Usulü) TEK istisna olarak dogru sekilde tek-asamali (gercekten
+pismiyor).
+
+`117_kasarli_firin_makarna_duzeltme.sql` yazildi: 3 asamaya bolundu
+(Hazırlık-Rendeleme 5dk isilislemsiz + Haşlama 10dk 100C + Fırınlama
+25dk 90C), toplam 40dk tarifin kendi hazirlik_dakika'siyla AYNI
+kaldi (degistirmeye gerek yoktu). Yapisal kontrol (3 asama, 2
+baglanti) ve malzeme adlari dogrulandi.
+
+**Dosya durumu:** `117_kasarli_firin_makarna_duzeltme.sql` (yeni)
+teslim edildi.
