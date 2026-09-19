@@ -9077,3 +9077,38 @@ sorgulanmali.
 
 **1000 tarif hedefine (485 tarif var, 515 kaldi) DONME ZAMANI GELDI**
 -- Bahri karar verecek.
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): Git Senkronizasyon Sorunu Cozuldu -- ONEMLI KOK SEBEP OGRENILDI
+
+Bahri'nin git ekran goruntusunde "on gelen" bir hata: `git commit`
+hicbir sey commit etmedi, sonra COK BUYUK bir "Untracked files"
+listesi (onlarca sql/ teshis dosyasi, assets/ dosyasi) gorundu --
+aylardir git'e hic eklenmemis dosyalar birikmisti.
+
+**KOK SEBEP bulundu:** Claude'un her teslimden sonra verdigi
+`copy /Y [indirilen_yol]\dosya dosya` komutu HER ZAMAN GEREKSIZDI --
+Bahri'nin tarayicisi indirmeleri DOGRUDAN dosya turune gore doğru
+klasore indiriyor (sql/*.sql -> sql/ klasorune, PROJE_NOTLARI.md ->
+repo koku, vb.) -- ayri bir kopyalama adimi hic gerekmiyormus. Bu
+yanlis anlasilma nedeniyle muhtemelen GECMIS OTURUMLARDA da bircok
+dosya hic git'e eklenmemis olabilir.
+
+**DUZELTME:**
+1. Bahri'ye `git add -A` ile TUM birikmis dosyalar (98 dosya) tek
+   seferde eklendi, commit edildi.
+2. Push SIRASINDA GitHub'in kendi Secret Scanning korumasi devreye
+   girdi -- `API.txt` icinde bir GROQ API ANAHTARI commit'e girmeye
+   calisiyordu, GitHub PUSH'U REDDETTI (sizinti onlendi). `git rm
+   --cached API.txt` + `.gitignore`'a eklenerek cozuldu.
+3. Commit'te yanlislikla 2 TrendSurf Optima dosyasi (Bahri'nin AYRI
+   projesi) da vardi (`upcoming_ipo_client.py`,
+   `.github/workflows/update_tefas_evening.yml`) -- `git rm` ile
+   kaldirildi. `emre.jpeg` (Bahri'nin oglu icin) BILEREK birakildi.
+4. Her iki push da SORUNSUZ tamamlandi -- repo artik GERCEK klasorle
+   senkronize.
+
+**YENI KALICI KURAL:** Claude bundan sonra `copy` adimi ONERMEYECEK --
+sadece `cd` + `git add/commit/push` verecek (indirmeler zaten doğru
+klasore dusuyor). Ayrica API anahtari/sir iceren dosyalarin (`API.txt`
+gibi) HICBIR ZAMAN git'e eklenmemesi gerektigi ogrenildi -- boyle bir
+dosyaya rastlanirsa .gitignore'da oldugundan emin olunacak.
