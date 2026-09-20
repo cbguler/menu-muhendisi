@@ -9268,3 +9268,109 @@ uygulandi, HALA DOGRULANMADI -- test icin gunler gerekiyor (tam
 bilgisayar kapat-ac dongusu).**
 
 **Dosya durumu:** `app.py` (YUZ KIRK IKINCI DUZELTME) teslim edildi.
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): Porsiyon Etiketi Dogrulandi + Resmi Alerjen Listesi + Ek Alerjenler + "Özel Davet" Yeniden Adlandirma
+
+**Porsiyon etiketi:** Bahri "Boş Profil" secip alttaki sayiyi
+degistirince ustteki etiketin hala guncellenmedigini bildirdi.
+Guncel dosya (YUZ KIRKINCI DUZELTME -- ID tabanli secim) DOGRUDAN
+incelendi, duzeltme DOSYADA MEVCUTTU. Kod tarafinda ek bir sorun
+bulunamadi -- bu konu ayri, cozulmemis durumda kaldi (asagidaki
+"Özel Davet" yeniden adlandirmasiyla ayni koda tekrar dokunuldu,
+umulur ki dolayli sekilde de dogrulanir).
+
+**Resmi alerjen listesi karsilastirmasi:** Bahri, T.C. Tarim ve
+Orman Bakanligi'nin ZORUNLU 14 maddelik listesini (guvenilirgida.
+tarimorman.gov.tr/Haber/Detay/15071) paylasti. Karsilastirma: mevcut
+14 alerjen KATEGORI olarak zaten TAM (14/14) ortustu -- sadece
+ISIMLENDIRME resmi metinden farkliydi. `121_alerjen_isimleri_resmi_
+metinle_esitle.sql` yazildi -- 10 alerjenin adi resmi metinle BIREBIR
+esitlendi (4'u zaten aynıydı: Yumurta, Balık, Kereviz, Hardal).
+
+**Ek (zorunlu olmayan ama sik bildirilen) alerjenler:** Bahri bir
+Excel (`digerallerjenler.xlsx`, 6 grup: Baklagiller, Diğer tahıllar,
+Tohumlar, Meyve ve sebzeler, Et ve hayvansal ürünler, Baharatlar,
+toplam 25 madde) + polen-gida sendromu (oral alerji sendromu) bilgisi
+paylasti (FARE/foodallergy.org ve NHS kaynak gosterdi -- cig
+elma/seftali/havuc/domates/muz polen alerjisi olanlarda agiz-bogaz
+kasintisi yapabilir, pismisi genelde sorun degil).
+`122_diger_sik_bildirilen_alerjenler_ekle.sql` yazildi: `alerjenler`
+tablosuna `kategori` sutunu eklendi (resmi 14'ten ayirt etmek icin,
+kategori=NULL onlar icin), 25 yeni alerjen eklendi (23'u projede
+GERCEKTEN eslesen malzemeye sahip -- 45 malzeme adi dogrulandi;
+Ayçekirdeği ve Domuz Eti icin eslesen malzeme YOK, yine de secenek
+olarak eklendi). KUZU KULAĞI (sorrel bitkisi) ve KUZUKEMİRDİ BILEREK
+"Kuzu Eti" alerjenine BAGLANMADI -- bunlar et degil, ayri bitki
+turleri. TAVUK YUMURTASI da "Tavuk" alerjenine baglanmadi (zaten
+ayri "Yumurta" alerjeni altinda).
+
+**"Boş Profil" -> "Özel Davet" yeniden adlandirma:** Bahri'nin
+istegiyle senaryo yeniden kurgulandi -- artik "diyetisyen/hane
+takibi" degil, tek seferlik bir davet/etkinlik cercevesi. Etiket,
+yardim metni ve porsiyon sayisi giris etiketi guncellendi.
+`0_Yillik_Menu.py` guncellendi. NOT: bu isim `6_Abonelik.py` gibi
+baska bir dosyada da geciyor olabilir, Bahri'nin ayrica kontrol
+etmesi gerekebilir.
+
+**Dosya durumu:** `121_alerjen_isimleri_resmi_metinle_esitle.sql`
+(yeni), `122_diger_sik_bildirilen_alerjenler_ekle.sql` (yeni),
+`0_Yillik_Menu.py` (guncellendi) teslim edildi.
+
+**121 SONUCU -- KISMEN BASARILI:** 10 guncellemeden 4'u calisti,
+6'si (Kabuklu Deniz Ürünü, Sert Kabuklu Yemiş, Sülfit, Süt, Yer
+Fıstığı, Yumuşakça) BUYUK/KUCUK HARF uyumsuzlugu yuzunden SESSIZCE
+0 satir etkiledi (hata vermedi). `121b_alerjen_isimleri_kalan_
+duzeltme.sql` yazildi -- case-INSENSITIVE (`lower()`) eslestirmeyle
+kalan 6'si duzeltildi.
+
+**122 HATASI:** `insert into alerjenler (ad, kategori)` -- id sutunu
+belirtilmemisti VE bu tabloda `receteler`'in aksine bir DEFAULT
+(gen_random_uuid()) YOKMUS -- "null value in column id" hatasi
+verdi. `id` sutunu `gen_random_uuid()` ile ACIKCA eklenerek
+duzeltildi, 25 satir da yapisal olarak dogrulandi.
+
+**YENI KALICI KURAL:** Bundan sonra herhangi bir tabloya (sadece
+`receteler` degil) YENI SATIR eklerken, `id` sutununu HER ZAMAN
+ACIKCA `gen_random_uuid()` ile belirt -- her tablonun DEFAULT'u
+oldugu varsayilmayacak.
+
+**Dosya durumu:** `121b_alerjen_isimleri_kalan_duzeltme.sql` (yeni),
+`122_diger_sik_bildirilen_alerjenler_ekle.sql` (duzeltildi) teslim
+edildi.
+
+**121b SONUCU -- YINE BASARISIZ, GERCEK KOK NEDEN BULUNDU:**
+Case-insensitive eslestirme de calismadi -- sorun buyuk/kucuk harf
+degil, veritabaninda bu alerjenlerin TURKCE KARAKTERSIZ (ASCII)
+kayitli olmasiymis: "Balik" (Balık degil), "Sut" (Süt degil),
+"Kabuklu Deniz Urunu" (Ürünü degil) vb. `121c_alerjen_isimleri_
+kesin_duzeltme.sql` yazildi -- bu sefer teshis ciktisinda GERCEKTEN
+gorulen ASCII degerler kullanildi (7 satir, Balık da dahil edildi
+cunku o da "Balik" olarak hatali kayitliymis).
+
+**122 -- IKINCI HATA:** `alerjenler.id` UUID DEGIL, SMALLINT --
+malzemeler semasi sorgusundan (istem disi) bu ortaya cikti.
+Gen_random_uuid() smallint sutununa yazilamiyor. Duzeltme: ID'ler
+artik CTE + `row_number() over ()` ile MEVCUT MAX(id)'den devam
+eden GERCEK smallint degerler olarak dinamik hesaplaniyor -- hangi
+ID'nin bos oldugunu tahmin etmeye gerek yok. AYRICA do $$ blogundaki
+`v_alerjen_id` degiskeni de `uuid` degil `smallint` olarak
+duzeltildi (aksi halde ayni tur hatasi malzeme-eslestirme
+kisminda da cikardi).
+
+**GENEL DERS:** Bu proje boyunca UUID id varsayimi genel dogruydu
+(receteler, malzemeler UUID) ama `alerjenler` bir ISTISNA (smallint)
+cikti -- BUNDAN SONRA her tablonun id turu, PL/pgSQL DECLARE
+bolumunde kullanmadan once ONCE dogrulanacak, varsayilmayacak.
+
+**Dosya durumu:** `121c_alerjen_isimleri_kesin_duzeltme.sql` (yeni),
+`122_diger_sik_bildirilen_alerjenler_ekle.sql` (tekrar duzeltildi --
+smallint ID + row_number()) teslim edildi.
+
+**AYÇEKİRDEĞİ MALZEME EKLEME -- BEKLEMEDE:** malzemeler semasi
+alindi (49 sutun) -- Bahri'nin istedigi 29 gercek besin degeri
+(USDA'dan dogrulandi, Biyotin/Iyot haric) hazir. AMA tabloda besin
+disi 9 proje-ozel alan da var (kategori_id, yoğunluk, özgül_ısı,
+bozulma_süresi, fire_oranı, saklama_ısısı, ısı_iletkenlik,
+yüzey_alanı, varsayılan_fiyat_eur) -- bunlar icin kaynak/yontem
+YOK, Bahri'den bilgi/benzer bir malzeme (ör. HAŞHAŞ, KETEN TOHUMU)
+referans olarak istenecek.
