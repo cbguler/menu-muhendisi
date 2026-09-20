@@ -9251,3 +9251,20 @@ sunuldu (Bahri henuz karar vermedi).
 
 **Dosya durumu:** `app.py` (sure 1.5s -> 5s, YUZ KIRK BIRINCI
 DUZELTME) teslim edildi.
+
+**YUZ KIRK IKINCI DUZELTME (ayni gun, Bahri'nin talebiyle hemen
+uygulandi):** Giris ekranindaki ZORLA `st.rerun()` cagrisi
+KALDIRILDI. Gerekce: `st.button(...)` tiklamasi Streamlit'in KENDI
+DOGAL rerun'unu zaten tetikler -- kendi rerun'umuzu EKSTRA
+cagirmak, cerez bilesenin bu calismanin NORMAL render/flush
+dongusunu TAMAMLAMASINA firsat vermeden yeni bir calismaya
+zorluyor olabilir. st.rerun() kaldirilip script'in DOGAL sekilde
+bitmesine izin verildi -- gecis, butonun kendi rerun'uyla zaten
+olacak. BILINEN KUCUK YAN ETKI: giris sonrasi eski giris ekraninin
+kisa bir "yanip sonmesi" gorulebilir (kabul edilebilir bedel).
+
+**DURUM: Iki katmanli duzeltme (5s bekleme + rerun kaldirma) birlikte
+uygulandi, HALA DOGRULANMADI -- test icin gunler gerekiyor (tam
+bilgisayar kapat-ac dongusu).**
+
+**Dosya durumu:** `app.py` (YUZ KIRK IKINCI DUZELTME) teslim edildi.

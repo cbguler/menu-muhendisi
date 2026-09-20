@@ -301,7 +301,21 @@ if st.session_state.oturum is None:
                         # olmasi icin 6-14 saniyeye kadar bekleme gerektirdigini
                         # kanitliyor -- sure o olcege cekildi.
                         time.sleep(5)
-                    st.rerun()
+                    # YUZ KIRK IKINCI DUZELTME (9 Eylul 2026, ayni gun):
+                    # Bahri'nin talebiyle DAHA KOKTEN bir degisiklik --
+                    # asagida ZORLA cagirdigimiz kendi st.rerun()'umuz
+                    # KALDIRILDI. Gerekce: st.button(...) tiklamasi zaten
+                    # Streamlit'in KENDI DOGAL rerun'unu tetikler (bu script
+                    # bitince). Kendi st.rerun()'umuzu EKSTRA cagirmak,
+                    # cerez bilesenin bu calismanin NORMAL render/flush
+                    # dongusunu TAMAMLAMASINA firsat vermeden yeni bir
+                    # calismaya zorluyor olabilir -- yani sorun "ne kadar
+                    # beklendigi" degil "zorla rerun'un mevcut calismayi
+                    # YARIDA KESMESI" olabilir. st.rerun()'u kaldirip
+                    # script'in bu calismayi DOGAL SEKILDE bitirmesine
+                    # (digeri sekme icerikleri render edilse bile zararsiz)
+                    # izin veriyoruz -- gecis, butonun kendi dogal
+                    # rerun'uyla bir sonraki calismada zaten olacak.
                 except Exception as e:
                     # ON ALTINCI DUZELTME (12 Agustos 2026, Oturum 11):
                     # bu blok her turlu exception'i (yanlis sifre, ag
