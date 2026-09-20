@@ -837,44 +837,56 @@ with sag2:
     # SORULUYOR (asagida), sabit 10 degil.
     _bos_profil_porsiyon_varsayilan = 10
     # YUZ OTUZ DOKUZUNCU DUZELTME (9 Eylul 2026): Bahri "porsiyon sayisini
-    # 4'e degistirdim ama ustteki etiket hala 10 porsiyon yaziyor" dedi,
-    # sonra saatler sonra da "profil kendiliginden EV'e atliyor" dedi.
-    # YUZ KIRKINCI DUZELTME (9 Eylul 2026): Kok neden -- secim kutusu
-    # profili SIRA NUMARASINA (index, range(len(liste))) gore takip
-    # ediyordu; bu liste HER rerun'da bastan kuruluyordu, index takibi
-    # bu yuzden KIRILGANDI. Index yerine PROFILIN KENDI ID'SINE gore
-    # takip edecek sekilde yeniden yazildi -- "hangi profil secili"
-    # artik listenin sirasindan/uzunlugundan BAGIMSIZ. NOT: bu degisiklik
-    # sonrasi ILK yenilemede eski (index tabanli) session_state gecersiz
-    # kalabilir -- Bahri'nin bu degisiklikten sonra sayfayi bir kez daha
-    # yenilemesi yeterli, sonrasi kalicidir.
+    # YUZ KIRK DORDUNCU DUZELTME (9 Eylul 2026): Bahri "Özel Davet"
+    # ismini "Özel Hizmet Profili" olarak degistirdi ve daha detayli
+    # bir senaryo verdi: (1) ust etikette "(X porsiyon)" yerine
+    # "Hizmet Verilecek kişi sayısı: X" yazsin, (2) sayi giris kutusu
+    # SADECE onaylanana kadar gorunsun -- deger girilip Enter'a
+    # basildiktan (ya da +/- ile degistirildikten) SONRA kutu
+    # KAYBOLSUN, yerine sadece onaylanmis deger + "Değiştir" linki
+    # gorunsun. Cocuk/yetiskin ayrimi YOK -- tek bir kisi sayisi.
     _bos_profil_porsiyon_guncel = st.session_state.get("bos_profil_porsiyon_sayisi", _bos_profil_porsiyon_varsayilan)
     _porsiyon_profilleri_sayfa = _porsiyon_profilleri_sayfa + [
-        {"id": None, "ad": "Boş Profil (özel/geçici hedef)", "porsiyon_sayisi": _bos_profil_porsiyon_guncel, "hedefler": None}
+        {"id": None, "ad": "Özel Hizmet Profili", "porsiyon_sayisi": _bos_profil_porsiyon_guncel, "hedefler": None}
     ]
     _profil_by_id_sayfa = {p["id"]: p for p in _porsiyon_profilleri_sayfa}
+
+    def _sayfa_profil_etiketi(pid):
+        _p = _profil_by_id_sayfa[pid]
+        if pid is None:
+            return f"{_p['ad']} -- Hizmet Verilecek kişi sayısı: {_p['porsiyon_sayisi']}"
+        return f"{_p['ad']} ({_p['porsiyon_sayisi']} porsiyon)"
+
     _secili_profil_id_sayfa = st.selectbox(
         "Maliyet hesabı için porsiyon profili",
         options=[p["id"] for p in _porsiyon_profilleri_sayfa],
-        format_func=lambda pid: f"{_profil_by_id_sayfa[pid]['ad']} ({_profil_by_id_sayfa[pid]['porsiyon_sayisi']} porsiyon)",
+        format_func=_sayfa_profil_etiketi,
         key="sayfa_porsiyon_profili_secimi",
         help="Profilleri eklemek/düzenlemek için Abonelik sayfasındaki "
-             "\"Porsiyon Profilleri\" bölümüne bak. \"Boş Profil\" "
-             "diyetisyen/doktorlar veya kendi hanesi için besin takibi "
-             "yapan bireysel kullanıcılar için de uygundur -- porsiyon "
-             "sayısını aşağıdan kendi ihtiyacınıza (ör. hane "
-             "büyüklüğünüze) göre ayarlayabilirsiniz.",
+             "\"Porsiyon Profilleri\" bölümüne bak. \"Özel Hizmet "
+             "Profili\" seçeneği, standart profillerinizin dışında -- "
+             "özel bir davet, tek seferlik bir etkinlik/organizasyon "
+             "gibi -- geçici bir ihtiyaç için kullanılır; hizmet "
+             "vereceğiniz kişi sayısını aşağıdan girebilirsiniz.",
     )
     _secili_sayfa_profili = _profil_by_id_sayfa[_secili_profil_id_sayfa]
     if _secili_sayfa_profili["id"] is None:
-        _bos_profil_porsiyon = st.number_input(
-            "Boş Profil porsiyon sayısı (ör. hanenizdeki kişi sayısı)",
-            min_value=1, max_value=500,
-            value=_bos_profil_porsiyon_varsayilan,
-            step=1,
-            key="bos_profil_porsiyon_sayisi",
-        )
-        _secili_sayfa_profili = {**_secili_sayfa_profili, "porsiyon_sayisi": _bos_profil_porsiyon}
+        if not st.session_state.get("hizmet_kisi_sayisi_onaylandi", False):
+            _bos_profil_porsiyon = st.number_input(
+                "Hizmet Verilecek kişi sayısı",
+                min_value=1, max_value=500,
+                value=_bos_profil_porsiyon_varsayilan,
+                step=1,
+                key="bos_profil_porsiyon_sayisi",
+                on_change=lambda: st.session_state.update(hizmet_kisi_sayisi_onaylandi=True),
+            )
+        else:
+            _onayli_sayi = st.session_state["bos_profil_porsiyon_sayisi"]
+            st.caption(f"Hizmet Verilecek kişi sayısı: {_onayli_sayi}")
+            if st.button("Değiştir", key="hizmet_kisi_sayisi_degistir_buton"):
+                st.session_state["hizmet_kisi_sayisi_onaylandi"] = False
+                st.rerun()
+        _secili_sayfa_profili = {**_secili_sayfa_profili, "porsiyon_sayisi": _bos_profil_porsiyon_guncel}
     st.session_state["secili_porsiyon_profil_id"] = _secili_sayfa_profili["id"]
     st.session_state["secili_porsiyon_sayisi"] = _secili_sayfa_profili["porsiyon_sayisi"]
 
