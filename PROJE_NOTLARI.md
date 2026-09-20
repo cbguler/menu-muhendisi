@@ -9374,3 +9374,80 @@ bozulma_süresi, fire_oranı, saklama_ısısı, ısı_iletkenlik,
 yüzey_alanı, varsayılan_fiyat_eur) -- bunlar icin kaynak/yontem
 YOK, Bahri'den bilgi/benzer bir malzeme (ör. HAŞHAŞ, KETEN TOHUMU)
 referans olarak istenecek.
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): Ayçekirdeği/Domuz Kararlari + "Özel Hizmet Profili" Nihai Senaryo
+
+**Ayçekirdeği:** Bahri, 9 proje-ozel alan icin Haşhaş'in degerlerini
+AYNEN kullanmaya karar verdi (benzer kuru tohum).
+
+**Domuz eti:** Bahri, Sığır/Kuzu gibi COK KESIMLI (biftek, bonfile,
+but, kaburga, kıyma, kol, kontrfile, pirzola + bacon/pastırma = 9
+urun) eklenmesini istedi, HER BIRI icin TAM BAGIMSIZ arastirma
+istendi. Arastirma baslatildi (bonfile icin USDA verisi kismen
+bulundu) ama IKINCIL KAYNAKLAR (myfooddata, recipal vb.) COK
+TUTARSIZ/EKSIK cikti (bazilari "enhanced"/tuzlu-su-enjekteli
+varyantlar, bazilari mikro-besinlerin cogunu bos birakiyor). Bahri'ye
+acikca belirtildi: 9 urun x 29 alan = 261 veri noktasini guvenilir
+sekilde toplamak COK daha uzun surecek. **KARAR: PARCA PARCA
+ilerlenecek (onceki tarif partileri gibi)** -- bu oturumda TAMAMLANMADI,
+GELECEK oturumda 2-3 kesimle baslanacak.
+
+**"Özel Hizmet Profili" NIHAI senaryo (isim ucuncu kez degisti --
+Boş Profil -> Özel Davet -> Özel Hizmet Profili):** Bahri detayli bir
+UX senaryosu verdi:
+1. Isim: "Özel Hizmet Profili"
+2. Sayi giris etiketi: "Hizmet Verilecek kişi sayısı" (cocuk/yetiskin
+   ayrimi YOK, tek sayi)
+3. **YENI DAVRANIS:** Sayi girilip Enter'a basilana (ya da +/-
+   kullanilana) KADAR sayi kutusu GORUNUR; onaylandiktan SONRA kutu
+   KAYBOLUR, yerine sadece "Hizmet Verilecek kişi sayısı: X" yazisi +
+   bir "Değiştir" linki/butonu gorunur (tekrar acmak icin).
+4. Ust (secim kutusu) etiketi de "(X porsiyon)" yerine "Özel Hizmet
+   Profili -- Hizmet Verilecek kişi sayısı: X" formatina gecti.
+
+Uygulama: `on_change` callback ile session_state'e "hizmet_kisi_
+sayisi_onaylandi" bayragi yazildi, bu bayrak True olunca number_input
+GIZLENIYOR (yerine st.caption + "Değiştir" butonu), False'a donerse
+tekrar goruntuleniyor. `_secili_sayfa_profili["porsiyon_sayisi"]` her
+iki durumda da dogru degeri okuyacak sekilde kod disina alindi --
+menu maliyeti hesaplarina (secili_porsiyon_sayisi) dogru sekilde
+akmaya devam ediyor. Syntax dogrulandi.
+
+**Dosya durumu:** `0_Yillik_Menu.py` (guncellendi -- YUZ KIRK
+DORDUNCU DUZELTME) teslim edildi.
+
+### 20 Eylul 2026 -- XXI. Oturum (devam): ACIL GUVENLIK + 6 Hata Duzeltmesi
+
+**ACIL GUVENLIK:** GitGuardian, GitHub'a push edilen bir SUPABASE
+SERVICE ROLE JWT (RLS'i atlayan tam yetkili anahtar) tespit etti --
+19 Eylul 14:42 UTC push'unda (muhtemelen o gunku "birikmis dosyalari
+senkronize et" buyuk commit'te) sizmis. Bahri'ye ANINDA (1) Supabase
+Dashboard'dan anahtari DONDURMESI (rotate), (2) kodda nerede sabit
+yazili oldugunu bulmasi, (3) .gitignore'a eklenmesi soylendi. SONUC
+BEKLENIYOR -- bu, projedeki EN KRITIK acik konu.
+
+**6 hata/istek (0_Yillik_Menu.py, YUZ KIRK BESINCI/ALTINCI/YEDINCI
+DUZELTMELER):**
+
+1. **CRASH (KeyError):** "Özel Hizmet Profili" onaylandiktan sonra
+   (number_input gizlenince) session_state["bos_profil_porsiyon_
+   sayisi"] anahtari Streamlit tarafindan TEMIZLENIYORDU -- sonraki
+   HERHANGI bir rerun'da (alerjen "Select all" dahil) KeyError ile TUM
+   SAYFA cokuyordu. Duzeltme: onaylanan deger artik WIDGET'A BAGLI
+   OLMAYAN ayri bir anahtarda (hizmet_kisi_sayisi_degeri) saklaniyor.
+2. Etiket "(X porsiyon)" formatina donduruldu (tasma sorunu cozuldu).
+3. Alttaki tekrarlayan caption kaldirildi.
+4. "Değiştir" -> "Düzelt", secim kutusunun saginda (st.columns[5,1]).
+5. "Ay" dropdown'i icin eklenen 220px bosluk 70px'e indirildi, "Öğün
+   başına besin hedefi" checkbox'i kalinlastirilip ust baslik eklendi.
+6. **ALERJEN LISTESI EKSIK (Yer Fıstığı):** Kok neden -- `tum_alerjenler`
+   485 tarifin GERCEKTEN KULLANDIGI malzemelerden turetiliyordu (union)
+   -- Turk mutfaginda yer fistigi kullanilmadigi icin (0 eslesme) HICBIR
+   ZAMAN listede cikmiyordu (Domuz Eti/Ayçekirdeği de ayni durumda).
+   Bahri'nin talebiyle bu KOKTEN degistirildi: artik `alerjenler`
+   tablosunun TAMAMI dogrudan cekiliyor, mevcut tarif kullanimindan
+   BAGIMSIZ -- resmi 14 + ek 25 alerjenin HEPSI her zaman secilebilir
+   (gelecekte eklenecek tarifler icin de hazir).
+
+**Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- YUZ KIRK
+BESINCI/ALTINCI/YEDINCI DUZELTMELER) teslim edildi.

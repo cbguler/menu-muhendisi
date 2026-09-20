@@ -762,7 +762,22 @@ for t in tarifler:
 # (Turkce karakter, "ve urunleri" eki vb.) varsaymamak icin gercekte
 # VEROTABANINDA GECEN adlar arasindan "sut"/"yumurta" gecen kelimeler
 # ARANIYOR (hardcode edilmedi).
-tum_alerjenler = sorted(set().union(*(t["alerjenler"] for t in tarifler_zengin))) if tarifler_zengin else []
+# YUZ KIRK ALTINCI DUZELTME (20 Eylul 2026): Bahri "resmi 14 zorunlu
+# alerjenden Yer Fıstığı listede hic gorunmuyor" dedi -- KOK NEDEN:
+# bu liste O ANKI 485 tarifin GERCEKTEN KULLANDIGI malzemelerden
+# turetiliyordu (union), Turk mutfaginda yer fistigi hemen hic
+# kullanilmadigi icin (0 eslesen malzeme) hicbir zaman goruntude
+# CIKMIYORDU -- ayni durum Domuz Eti ve Ayçekirdeği icin de gecerli.
+# Ama Bahri'nin haklı olarak belirttigi gibi, T.C. Tarim Bakanligi'nin
+# 14 ZORUNLU alerjeni (ve digger "sik bildirilen" 25 tanesi) gelecekte
+# eklenecek tarifler icin ONCEDEN secilebilir olmali -- su anki tarif
+# kullanimindan BAGIMSIZ. Bu yuzden artik dogrudan alerjenler
+# tablosunun TAMAMI cekiliyor (recipe-kullanim filtrelemesi
+# KALDIRILDI).
+_tum_alerjen_kayitlari = _sayfalayarak_getir(
+    lambda: supabase.table("alerjenler").select("ad")
+)
+tum_alerjenler = sorted(set(a["ad"] for a in _tum_alerjen_kayitlari))
 
 st.markdown("**Beslenme tarzı ve alerjenler**")
 beslenme_tarzi = st.radio(
@@ -836,16 +851,26 @@ with sag2:
     # Profil" secildiginde porsiyon sayisi ARTIK KULLANICIDAN
     # SORULUYOR (asagida), sabit 10 degil.
     _bos_profil_porsiyon_varsayilan = 10
-    # YUZ OTUZ DOKUZUNCU DUZELTME (9 Eylul 2026): Bahri "porsiyon sayisini
-    # YUZ KIRK DORDUNCU DUZELTME (9 Eylul 2026): Bahri "Özel Davet"
-    # ismini "Özel Hizmet Profili" olarak degistirdi ve daha detayli
-    # bir senaryo verdi: (1) ust etikette "(X porsiyon)" yerine
-    # "Hizmet Verilecek kişi sayısı: X" yazsin, (2) sayi giris kutusu
-    # SADECE onaylanana kadar gorunsun -- deger girilip Enter'a
-    # basildiktan (ya da +/- ile degistirildikten) SONRA kutu
-    # KAYBOLSUN, yerine sadece onaylanmis deger + "Değiştir" linki
-    # gorunsun. Cocuk/yetiskin ayrimi YOK -- tek bir kisi sayisi.
-    _bos_profil_porsiyon_guncel = st.session_state.get("bos_profil_porsiyon_sayisi", _bos_profil_porsiyon_varsayilan)
+    # YUZ KIRK BESINCI DUZELTME (20 Eylul 2026): Bahri 4 sorun bildirdi:
+    # (1) KeyError CRASH -- "bos_profil_porsiyon_sayisi" session_state
+    # anahtari, number_input widget'i artik CIZILMEYINCE (onaylandi=True
+    # oldugunda) Streamlit tarafindan otomatik TEMIZLENIYOR, sonraki bir
+    # rerun'da (ornegin alerjen "Select all" tiklamasi) bu anahtara
+    # erismeye calisan kod KeyError verip TUM SAYFAYI COKERTIYORDU.
+    # DUZELTME: onaylanan deger artik AYRI, WIDGET'A BAGLI OLMAYAN bir
+    # session_state anahtarinda (hizmet_kisi_sayisi_degeri) saklaniyor --
+    # widget cizilmese bile kaybolmuyor.
+    # (2) Etiket cok uzundu, pencereden tasiyordu -- "(X porsiyon)"
+    # formatina donduruldu (diger profillerle tutarli).
+    # (3) Asagidaki ayri "Hizmet Verilecek kişi sayısı: X" caption'i
+    # fazlaydi (etiket zaten gosteriyor) -- kaldirildi.
+    # (4) "Değiştir" -> "Düzelt" olarak degistirildi, secim kutusunun
+    # SAGINA alindi (st.columns ile).
+    _hizmet_onaylandi = st.session_state.get("hizmet_kisi_sayisi_onaylandi", False)
+    if _hizmet_onaylandi:
+        _bos_profil_porsiyon_guncel = st.session_state.get("hizmet_kisi_sayisi_degeri", _bos_profil_porsiyon_varsayilan)
+    else:
+        _bos_profil_porsiyon_guncel = _bos_profil_porsiyon_varsayilan
     _porsiyon_profilleri_sayfa = _porsiyon_profilleri_sayfa + [
         {"id": None, "ad": "Özel Hizmet Profili", "porsiyon_sayisi": _bos_profil_porsiyon_guncel, "hedefler": None}
     ]
@@ -853,39 +878,42 @@ with sag2:
 
     def _sayfa_profil_etiketi(pid):
         _p = _profil_by_id_sayfa[pid]
-        if pid is None:
-            return f"{_p['ad']} -- Hizmet Verilecek kişi sayısı: {_p['porsiyon_sayisi']}"
         return f"{_p['ad']} ({_p['porsiyon_sayisi']} porsiyon)"
 
-    _secili_profil_id_sayfa = st.selectbox(
-        "Maliyet hesabı için porsiyon profili",
-        options=[p["id"] for p in _porsiyon_profilleri_sayfa],
-        format_func=_sayfa_profil_etiketi,
-        key="sayfa_porsiyon_profili_secimi",
-        help="Profilleri eklemek/düzenlemek için Abonelik sayfasındaki "
-             "\"Porsiyon Profilleri\" bölümüne bak. \"Özel Hizmet "
-             "Profili\" seçeneği, standart profillerinizin dışında -- "
-             "özel bir davet, tek seferlik bir etkinlik/organizasyon "
-             "gibi -- geçici bir ihtiyaç için kullanılır; hizmet "
-             "vereceğiniz kişi sayısını aşağıdan girebilirsiniz.",
-    )
+    _col_secim, _col_duzelt = st.columns([5, 1])
+    with _col_secim:
+        _secili_profil_id_sayfa = st.selectbox(
+            "Maliyet hesabı için porsiyon profili",
+            options=[p["id"] for p in _porsiyon_profilleri_sayfa],
+            format_func=_sayfa_profil_etiketi,
+            key="sayfa_porsiyon_profili_secimi",
+            help="Profilleri eklemek/düzenlemek için Abonelik sayfasındaki "
+                 "\"Porsiyon Profilleri\" bölümüne bak. \"Özel Hizmet "
+                 "Profili\" seçeneği, standart profillerinizin dışında -- "
+                 "özel bir davet, tek seferlik bir etkinlik/organizasyon "
+                 "gibi -- geçici bir ihtiyaç için kullanılır; hizmet "
+                 "vereceğiniz kişi sayısını aşağıdan girebilirsiniz.",
+        )
     _secili_sayfa_profili = _profil_by_id_sayfa[_secili_profil_id_sayfa]
     if _secili_sayfa_profili["id"] is None:
-        if not st.session_state.get("hizmet_kisi_sayisi_onaylandi", False):
-            _bos_profil_porsiyon = st.number_input(
+        if _hizmet_onaylandi:
+            with _col_duzelt:
+                st.write("")
+                if st.button("Düzelt", key="hizmet_kisi_sayisi_degistir_buton"):
+                    st.session_state["hizmet_kisi_sayisi_onaylandi"] = False
+                    st.rerun()
+        else:
+            def _hizmet_sayisi_onayla():
+                st.session_state["hizmet_kisi_sayisi_onaylandi"] = True
+                st.session_state["hizmet_kisi_sayisi_degeri"] = st.session_state["bos_profil_porsiyon_sayisi"]
+            st.number_input(
                 "Hizmet Verilecek kişi sayısı",
                 min_value=1, max_value=500,
                 value=_bos_profil_porsiyon_varsayilan,
                 step=1,
                 key="bos_profil_porsiyon_sayisi",
-                on_change=lambda: st.session_state.update(hizmet_kisi_sayisi_onaylandi=True),
+                on_change=_hizmet_sayisi_onayla,
             )
-        else:
-            _onayli_sayi = st.session_state["bos_profil_porsiyon_sayisi"]
-            st.caption(f"Hizmet Verilecek kişi sayısı: {_onayli_sayi}")
-            if st.button("Değiştir", key="hizmet_kisi_sayisi_degistir_buton"):
-                st.session_state["hizmet_kisi_sayisi_onaylandi"] = False
-                st.rerun()
         _secili_sayfa_profili = {**_secili_sayfa_profili, "porsiyon_sayisi": _bos_profil_porsiyon_guncel}
     st.session_state["secili_porsiyon_profil_id"] = _secili_sayfa_profili["id"]
     st.session_state["secili_porsiyon_sayisi"] = _secili_sayfa_profili["porsiyon_sayisi"]
@@ -971,9 +999,12 @@ with sag3:
 # bilinen bir sinir, guvenilir/resmi bir CSS cozumu yok. Gercek
 # dunyada onerilen (ve burada uygulanan) cozum: acilir kutunun HEMEN
 # ALTINA bosluk eklemek -- boylece tarayicinin kaydiracak GERCEK yeri
-# oluyor, liste tam gorunebiliyor. Bu, ozellikle "Ay" (12 secenekli,
-# en uzun liste) icin onemliydi.
-st.markdown('<div style="height: 220px;"></div>', unsafe_allow_html=True)
+# oluyor, liste tam gorunebiliyor.
+# YUZ KIRK YEDINCI DUZELTME (20 Eylul 2026): Bahri "bu bosluk cok
+# fazla, alttaki 'Öğün başına besin hedefi' cok asagida kaliyor" dedi
+# -- 220px'ten 70px'e dusuruldu (Ay dropdown'inin kesilmesini onlemeye
+# hala yeter, ama gereksiz bosluk cok azaldi).
+st.markdown('<div style="height: 70px;"></div>', unsafe_allow_html=True)
 
 # SEKSEN BESINCI DUZELTME (4 Eylul 2026): Bahri'nin talebi -- secili
 # profilin ZATEN kayitli besin hedefleri varsa, "Ogun basina besin
@@ -993,8 +1024,13 @@ if _profil_kayitli_hedefleri:
     )
     hedefler = _profil_kayitli_hedefleri
 else:
+    # YUZ KIRK YEDINCI DUZELTME (20 Eylul 2026): Bahri bu bolumun daha
+    # gorunur olmasini istedi -- kucuk bir baslik eklendi, checkbox
+    # metni kalinlastirildi (markdown ile, native checkbox'in kendi
+    # yazi tipi buyutulemedigi icin).
+    st.markdown("#### Besin Hedefi")
     besin_hedefi_kullan = st.checkbox(
-        "Öğün başına besin hedefi uygula (opsiyonel)", key="besin_hedefi_kullan",
+        "**Öğün başına besin hedefi uygula (opsiyonel)**", key="besin_hedefi_kullan",
     )
 
     if besin_hedefi_kullan:
