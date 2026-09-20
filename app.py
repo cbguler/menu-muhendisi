@@ -240,11 +240,19 @@ if st.session_state.oturum is None:
             # zaten gecersiz kilinmis) token kalir, yenileme basarisiz
             # olur, kullanici HER SEFERINDE tekrar giris yapmak zorunda
             # kalir -- tam bildirilen davranis. Ayni koruma buraya da
-            # eklendi. DOKUZUNCU DUZELTME'deki gibi bu da HENUZ gercek
-            # tarayicida DOGRULANMADI -- Bahri'nin bir sonraki ziyarette
-            # gercekten kalici olup olmadigini kontrol etmesi gerekiyor
-            # (bkz. asagidaki test talimati).
-            time.sleep(1.5)
+            # eklendi. DOKUZUNCU DUZELTME'deki gibi bu da dogrulanamadi --
+            # Bahri bir kac gun sonra "beni hatirla yine calismadi" dedi,
+            # cerez tarayicida HIC YOKTU (didik didik arandi, "refresh_
+            # token" adinda bir satir bulunamadi) -- yani sorun OKUMADA
+            # degil, YAZMANIN kendisinde. YUZ KIRK BIRINCI DUZELTME (9
+            # Eylul 2026): Bu DOSYANIN KENDI belgeledigi kanit (asagidaki
+            # "Beni hatırla çerezinden oturumu geri yukle" bolumu) ayni
+            # bilesenin OKUMA tarafinin guvenilir olmasi icin 6-14 saniyeye
+            # kadar bekleme/tekrar deneme gerektirdigini gosteriyor -- 1.5
+            # saniyelik bir YAZMA beklemesi, ayni bilesen icin muhtemelen
+            # COK KISA. Sure, bu dosyanin kendi kanitladigi olcege
+            # cekildi (5 saniye). HALA REVERSE-TEST EDILMEDI.
+            time.sleep(5)
         except Exception:
             # refresh token geçersiz/süresi dolmuş -- sessizce temizleyip
             # normal giriş ekranına düş
@@ -286,9 +294,13 @@ if st.session_state.oturum is None:
                         # bitirmeden kesintiye ugratabilir -- yani cerez hic
                         # yazilmamis olabilir. Zorla rerun'dan once kisa bir
                         # bekleme ekleyip bilesene bu isi bitirmesi icin firsat
-                        # taniyoruz (henuz TEST EDILMEDI, bir sonraki adim gercek
-                        # tarayicida dogrulama).
-                        time.sleep(1.5)
+                        # taniyoruz. YUZ KIRK BIRINCI DUZELTME (9 Eylul 2026):
+                        # 1.5 saniye YETERSIZ CIKTI -- Bahri "cerez tarayicida
+                        # hic yok" dedi (didik didik arandi, dogrulandi). Bu
+                        # dosyanin KENDI OKUMA tarafi ayni bilesenin guvenilir
+                        # olmasi icin 6-14 saniyeye kadar bekleme gerektirdigini
+                        # kanitliyor -- sure o olcege cekildi.
+                        time.sleep(5)
                     st.rerun()
                 except Exception as e:
                     # ON ALTINCI DUZELTME (12 Agustos 2026, Oturum 11):

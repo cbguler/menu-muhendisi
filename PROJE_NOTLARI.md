@@ -9213,3 +9213,41 @@ gerek yok).
 
 **Dosya durumu:** `120_alerjenler_rls_okuma_politikasi_ekle.sql`
 (yeni), `0_Yillik_Menu.py` (teshis paneli kaldirildi) teslim edildi.
+
+**SONUC: ALERJEN SORUNU TAMAMEN COZULDU (Bahri dogruladi).**
+
+### 9 Eylul 2026 -- XXI. Oturum (devam): "Beni Hatırla" YENIDEN Basarisiz -- YUZ KIRK BIRINCI DUZELTME
+
+Bahri "dun aksam test ettim calisiyordu, bilgisayari tamamen kapatip
+bu sabah actigimda beni hatirlamadi" dedi. Tarayici ayarlari (cerez
+temizleme) kontrol edildi -- YOK, o ihtimal elendi. Tarayicinin
+GERCEK cerez deposu (Ayarlar > Cerezler) DOGRUDAN incelendi: sitenin
+9 cerezi var ama **"refresh_token" adinda BIR TANESI BILE YOK**
+(Bahri didik didik aradi, dogruladi). Bu KESIN olarak OKUMA
+tarafinda degil YAZMA tarafinda bir sorun oldugunu kanitliyor.
+
+Gercek `app.py` incelendi -- dosyanin KENDI belgeledigi tarihce
+carpici: bu AYNI bilesenin (extra-streamlit-components CookieManager)
+OKUMA tarafi (tarayicidan cerez bilgisini Python'a bildirmesi) COK
+YAVAS ve guvenilmez oldugu icin zaten 6 saniyelik bekleme + en fazla
+2 kez 4 saniyelik zorla yeniden deneme (toplam ~14 saniye butce)
+gerektiriyordu (ALTINCI/YEDINCI DUZELTME, Agustos). Ama YAZMA
+tarafinda (giris + refresh) SADECE 1.5 saniyelik bir `time.sleep()`
+korumasi vardi -- muhtemelen COK KISA.
+
+**YUZ KIRK BIRINCI DUZELTME:** Her iki `time.sleep(1.5)` cagrisi
+`time.sleep(5)`'e cikarildi (dosyanin kendi kanitladigi olcege
+yakinlastirildi). AMA BUNU ACIKCA BELIRTTIM: bu, AYNI turden bir
+tahmin -- 1.5 saniye de "test edilmedi" notuyla birakilip basarisiz
+olmustu. Ayrica DAHA TEMEL bir ihtimal Bahri'ye sunuldu: `time.sleep()`
+Python'u durdurur ama bilesenin tarayiciya giden MESAJININ
+GONDERILMESINI hizlandirmaz -- eger asil sorun "cerez talimati hic
+gonderilmeden `st.rerun()` render'i kesiyor" ise, sure ne olursa
+olsun cozmeyebilir. Alternatif olarak giris sonrasi `st.rerun()`'u
+TAMAMEN KALDIRIP script'in dogal akisina birakma secenegi de
+sunuldu (Bahri henuz karar vermedi).
+
+**DURUM: HALA DOGRULANMADI -- bu, AYNI konuda UCUNCU deneme.**
+
+**Dosya durumu:** `app.py` (sure 1.5s -> 5s, YUZ KIRK BIRINCI
+DUZELTME) teslim edildi.
