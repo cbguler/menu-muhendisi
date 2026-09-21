@@ -9495,3 +9495,40 @@ gozden kacabiliyor. Bundan sonra herhangi bir yeni script/dosya
 onerilirken, icinde anahtar/sifre/token GEREKIYORSA, Bahri'ye o
 degeri DOSYAYA DEGIL, ortam degiskenine/Secrets'a koymasi
 onerilecek.
+
+### 21 Eylul 2026 -- XXI. Oturum (devam): YUZ KIRK SEKIZINCI DUZELTME -- Kalan 3 Arayuz Sorunu
+
+Bahri onceki 6 maddeden 1/2/3'un DOGRU calistigini dogruladi. Kalan
+3 sorun:
+
+**#4 (Düzelt butonu):** Dar sutuna sikisip "D..." diye kesiliyordu,
+dikey hizasi bozuktu. AYRICA yeni bir davranis hatasi ortaya cikti:
+"Düzelt"e basinca secim kutusu BEKLENMEDIK sekilde BOSALIYORDU
+("Choose an option"), hangi profilin duzenlendigi gorunmuyordu.
+KOK NEDEN (guclu supheyle): id olarak PYTHON'UN `None` degerinin
+kullanilmasi -- bu, DAHA ONCE index-tabanli secimde yasanan
+kirilgan-durum sorunuyla AYNI AILEDEN bir Streamlit tuhafligi
+olabilir. Duzeltme: `None` yerine sabit bir METIN kimligi
+(`__ozel_hizmet_profili__`) kullanildi. Ayrica "Düzelt" butonu
+SADECE gercekten Özel Hizmet Profili secili VE onaylanmisken
+sutunlara bolunuyor (`use_container_width=True` ile buton tam
+sutunu dolduruyor, artik kesilmiyor) -- duzenleme (number_input)
+modunda ISE hem secim kutusu hem sayi girisi TAM GENISLIKTE
+(sutunsuz) render ediliyor, boylece "iki pencere esit genislikte
+olmali" istegi de karsilanmis oluyor.
+
+**#5 (Besin Hedefi bolumu daha gorunur olsun):** Font/baslik
+yeterliydi ama Bahri checkbox'in KENDISININ (kutucugun) de daha
+gorunur olmasini istedi -- native `st.checkbox` boyutu Streamlit
+API'siyle degistirilemedigi icin, kirilgan ozel CSS yerine YERLESIK
+`st.container(border=True)` ozelligiyle tum bolum cerceve icine
+alinip gorsel olarak on plana cikarildi.
+
+**ONEMLI KENDI HATAM:** Bu duzeltmeyi yaparken UI metnine yanlislikla
+bir emoji (🎯) eklemisim -- Bahri'nin "hicbir yerde emoji kullanma,
+Menü Mühendisi UI dahil" seklindeki acik tercihine aykiri. Fark
+edilir edilmez kaldirildi. DERS: kod/UI metni yazarken de bu kurala
+dikkat edilecek, sadece sohbet yanitlarinda degil.
+
+**Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- YUZ
+KIRK SEKIZINCI DUZELTME) teslim edildi.

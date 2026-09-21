@@ -851,28 +851,26 @@ with sag2:
     # Profil" secildiginde porsiyon sayisi ARTIK KULLANICIDAN
     # SORULUYOR (asagida), sabit 10 degil.
     _bos_profil_porsiyon_varsayilan = 10
-    # YUZ KIRK BESINCI DUZELTME (20 Eylul 2026): Bahri 4 sorun bildirdi:
-    # (1) KeyError CRASH -- "bos_profil_porsiyon_sayisi" session_state
-    # anahtari, number_input widget'i artik CIZILMEYINCE (onaylandi=True
-    # oldugunda) Streamlit tarafindan otomatik TEMIZLENIYOR, sonraki bir
-    # rerun'da (ornegin alerjen "Select all" tiklamasi) bu anahtara
-    # erismeye calisan kod KeyError verip TUM SAYFAYI COKERTIYORDU.
-    # DUZELTME: onaylanan deger artik AYRI, WIDGET'A BAGLI OLMAYAN bir
-    # session_state anahtarinda (hizmet_kisi_sayisi_degeri) saklaniyor --
-    # widget cizilmese bile kaybolmuyor.
-    # (2) Etiket cok uzundu, pencereden tasiyordu -- "(X porsiyon)"
-    # formatina donduruldu (diger profillerle tutarli).
-    # (3) Asagidaki ayri "Hizmet Verilecek kişi sayısı: X" caption'i
-    # fazlaydi (etiket zaten gosteriyor) -- kaldirildi.
-    # (4) "Değiştir" -> "Düzelt" olarak degistirildi, secim kutusunun
-    # SAGINA alindi (st.columns ile).
+    _OZEL_HIZMET_ID = "__ozel_hizmet_profili__"
+    # YUZ KIRK SEKIZINCI DUZELTME (21 Eylul 2026): Bahri 3 kalan sorun
+    # daha bildirdi: (1) "Düzelt" butonu cok dar bir sutuna sikisip
+    # "D..." diye kesiliyordu VE dikey hizasi bozuktu; (2) "Düzelt"e
+    # basinca secim kutusu BEKLENMEDIK sekilde BOSALIYORDU ("Choose an
+    # option") -- kok neden muhtemelen "id" olarak PYTHON'UN None
+    # degerini kullanmamdi (bu, index-tabanli secimde daha once
+    # yasanan kirilgan-durum sorunuyla AYNI AILEDEN bir Streamlit
+    # tuhafligi olabilir) -- None yerine sabit bir METIN kimligi
+    # (_OZEL_HIZMET_ID) kullanildi; (3) duzenleme (number_input) modu
+    # ile secim kutusu FARKLI genisliklerdeydi -- artik SADECE
+    # onaylanmis + Düzelt butonu gosterilen durumda sutunlara
+    # bolunuyor, duzenleme sirasinda IKISI DE tam genislikte (sutunsuz).
     _hizmet_onaylandi = st.session_state.get("hizmet_kisi_sayisi_onaylandi", False)
     if _hizmet_onaylandi:
         _bos_profil_porsiyon_guncel = st.session_state.get("hizmet_kisi_sayisi_degeri", _bos_profil_porsiyon_varsayilan)
     else:
         _bos_profil_porsiyon_guncel = _bos_profil_porsiyon_varsayilan
     _porsiyon_profilleri_sayfa = _porsiyon_profilleri_sayfa + [
-        {"id": None, "ad": "Özel Hizmet Profili", "porsiyon_sayisi": _bos_profil_porsiyon_guncel, "hedefler": None}
+        {"id": _OZEL_HIZMET_ID, "ad": "Özel Hizmet Profili", "porsiyon_sayisi": _bos_profil_porsiyon_guncel, "hedefler": None}
     ]
     _profil_by_id_sayfa = {p["id"]: p for p in _porsiyon_profilleri_sayfa}
 
@@ -880,29 +878,45 @@ with sag2:
         _p = _profil_by_id_sayfa[pid]
         return f"{_p['ad']} ({_p['porsiyon_sayisi']} porsiyon)"
 
-    _col_secim, _col_duzelt = st.columns([5, 1])
-    with _col_secim:
+    _secim_yardim_metni = (
+        "Profilleri eklemek/düzenlemek için Abonelik sayfasındaki "
+        "\"Porsiyon Profilleri\" bölümüne bak. \"Özel Hizmet "
+        "Profili\" seçeneği, standart profillerinizin dışında -- "
+        "özel bir davet, tek seferlik bir etkinlik/organizasyon "
+        "gibi -- geçici bir ihtiyaç için kullanılır; hizmet "
+        "vereceğiniz kişi sayısını aşağıdan girebilirsiniz."
+    )
+    # Duzelt butonunu SADECE su an GERCEKTEN Özel Hizmet Profili secili
+    # VE onaylanmisken goster -- bu durumda sutunlara bol, aksi halde
+    # (duzenleme modu dahil) tam genislik kullan.
+    _onceki_secim = st.session_state.get("sayfa_porsiyon_profili_secimi")
+    _duzelt_butonu_gosterilecek = _hizmet_onaylandi and _onceki_secim == _OZEL_HIZMET_ID
+    if _duzelt_butonu_gosterilecek:
+        _col_secim, _col_duzelt = st.columns([4, 1])
+        with _col_secim:
+            _secili_profil_id_sayfa = st.selectbox(
+                "Maliyet hesabı için porsiyon profili",
+                options=[p["id"] for p in _porsiyon_profilleri_sayfa],
+                format_func=_sayfa_profil_etiketi,
+                key="sayfa_porsiyon_profili_secimi",
+                help=_secim_yardim_metni,
+            )
+        with _col_duzelt:
+            st.markdown("<div style='height: 28px'></div>", unsafe_allow_html=True)
+            if st.button("Düzelt", key="hizmet_kisi_sayisi_degistir_buton", use_container_width=True):
+                st.session_state["hizmet_kisi_sayisi_onaylandi"] = False
+                st.rerun()
+    else:
         _secili_profil_id_sayfa = st.selectbox(
             "Maliyet hesabı için porsiyon profili",
             options=[p["id"] for p in _porsiyon_profilleri_sayfa],
             format_func=_sayfa_profil_etiketi,
             key="sayfa_porsiyon_profili_secimi",
-            help="Profilleri eklemek/düzenlemek için Abonelik sayfasındaki "
-                 "\"Porsiyon Profilleri\" bölümüne bak. \"Özel Hizmet "
-                 "Profili\" seçeneği, standart profillerinizin dışında -- "
-                 "özel bir davet, tek seferlik bir etkinlik/organizasyon "
-                 "gibi -- geçici bir ihtiyaç için kullanılır; hizmet "
-                 "vereceğiniz kişi sayısını aşağıdan girebilirsiniz.",
+            help=_secim_yardim_metni,
         )
     _secili_sayfa_profili = _profil_by_id_sayfa[_secili_profil_id_sayfa]
-    if _secili_sayfa_profili["id"] is None:
-        if _hizmet_onaylandi:
-            with _col_duzelt:
-                st.write("")
-                if st.button("Düzelt", key="hizmet_kisi_sayisi_degistir_buton"):
-                    st.session_state["hizmet_kisi_sayisi_onaylandi"] = False
-                    st.rerun()
-        else:
+    if _secili_sayfa_profili["id"] == _OZEL_HIZMET_ID:
+        if not _hizmet_onaylandi:
             def _hizmet_sayisi_onayla():
                 st.session_state["hizmet_kisi_sayisi_onaylandi"] = True
                 st.session_state["hizmet_kisi_sayisi_degeri"] = st.session_state["bos_profil_porsiyon_sayisi"]
@@ -1026,12 +1040,18 @@ if _profil_kayitli_hedefleri:
 else:
     # YUZ KIRK YEDINCI DUZELTME (20 Eylul 2026): Bahri bu bolumun daha
     # gorunur olmasini istedi -- kucuk bir baslik eklendi, checkbox
-    # metni kalinlastirildi (markdown ile, native checkbox'in kendi
-    # yazi tipi buyutulemedigi icin).
-    st.markdown("#### Besin Hedefi")
-    besin_hedefi_kullan = st.checkbox(
-        "**Öğün başına besin hedefi uygula (opsiyonel)**", key="besin_hedefi_kullan",
-    )
+    # metni kalinlastirildi. YUZ KIRK SEKIZINCI DUZELTME (21 Eylul
+    # 2026): "font gorunuyor ama (checkbox'in kendisi/kutucugu) daha
+    # gorunur olmali" -- native st.checkbox kutusunun boyutu Streamlit
+    # API'siyle degistirilemiyor, bunun yerine SINIRLI/CERCEVELI bir
+    # kutu (st.container border=True, kirilgan ozel CSS'e gerek
+    # birakmayan YERLESIK bir Streamlit ozelligi) ile TUM bolum
+    # gorsel olarak on plana cikarildi.
+    with st.container(border=True):
+        st.markdown("#### Besin Hedefi")
+        besin_hedefi_kullan = st.checkbox(
+            "**Öğün başına besin hedefi uygula (opsiyonel)**", key="besin_hedefi_kullan",
+        )
 
     if besin_hedefi_kullan:
         st.caption(
