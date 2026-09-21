@@ -1114,9 +1114,9 @@ else:
     # birakmayan YERLESIK bir Streamlit ozelligi) ile TUM bolum
     # gorsel olarak on plana cikarildi.
     with st.container(border=True):
-        st.markdown("#### Besin Hedefi")
+        st.markdown("#### Besin Değerleri Hedefi")
         besin_hedefi_kullan = st.checkbox(
-            "**Öğün başına besin hedefi uygula (opsiyonel)**", key="besin_hedefi_kullan",
+            "**Öğün başına besin değerleri hedefi uygula (opsiyonel)**", key="besin_hedefi_kullan",
         )
 
     if besin_hedefi_kullan:

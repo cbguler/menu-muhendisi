@@ -9669,3 +9669,7 @@ tekrar test etmesi gerekiyor).
 
 **Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- YUZ
 ELLI UCUNCU DUZELTME) teslim edildi.
+
+**Kucuk metin degisikligi (ayni gun):** "Besin Hedefi" -> "Besin
+Değerleri Hedefi", "Öğün başına besin hedefi uygula" -> "Öğün başına
+besin değerleri hedefi uygula".
