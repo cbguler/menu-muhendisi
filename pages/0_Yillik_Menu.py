@@ -898,7 +898,30 @@ with sag2:
     # bunun TAMAMEN YENI bir widget oldugunu (onbellek geçersiz)
     # soyluyor. Kullanicinin secimini KAYBETMEMEK icin, key degisiminden
     # HEMEN ONCE mevcut secim degeri yeni key'e ELLE tasiniyor.
+    #
+    # YUZ ELLI UCUNCU DUZELTME (21 Eylul 2026): Bahri "Aylık Menü
+    # sayfasindan bir tarife tiklayip Tarif Kütüphanesi'ne gidip GERI
+    # DONUNCE (tarayici geri tusuyla VEYA ust nav butonlariyla -- IKISI
+    # DE) porsiyon profili secimi 'EV'e sifirlaniyor, uretilen menu de
+    # kayboluyor" dedi. KOK NEDEN: Streamlit, BASKA BIR SAYFAYA
+    # gidildiginde bu sayfanin widget'larinin session_state kayitlarini
+    # ("bu calismada dokunulmadi" sayip) TEMIZLIYOR -- DINAMIK KEY'imiz
+    # de bir WIDGET KEY'I oldugu icin bu temizlikten MUAF DEGIL, sayfaya
+    # geri donulunce _secim_key'in session_state'i SIFIRLANMIS oluyor.
+    # (Bu, DAHA ONCE "bos_profil_porsiyon_sayisi" icin bulunan/cozulen
+    # AYNI kok neden ailesi.) COZUM: WIDGET'A BAGLI OLMAYAN, sayfalar
+    # arasi KALICI ayri bir takip degiskeni (_KALICI_SECIM_ANAHTARI)
+    # tutuluyor -- selectbox'in KENDI key'i sayfa degisince silinse
+    # bile, bu kalici deger HAYATTA KALIYOR (cunku bir WIDGET key'i
+    # degil, duz bir session_state degeri). Widget'i CIZMEDEN HEMEN
+    # ONCE, eger dinamik key'in session_state'i EKSIKSE (sayfa yeni
+    # donulmus demektir), kalici degerden GERI YUKLENIYOR.
+    _KALICI_SECIM_ANAHTARI = "secili_porsiyon_profil_id_kalici"
     _secim_key = f"sayfa_porsiyon_profili_secimi__v{_bos_profil_porsiyon_guncel}"
+    if _secim_key not in st.session_state:
+        _kalici_deger = st.session_state.get(_KALICI_SECIM_ANAHTARI)
+        if _kalici_deger is not None and _kalici_deger in _profil_by_id_sayfa:
+            st.session_state[_secim_key] = _kalici_deger
     _onceki_aktif_key = st.session_state.get("_sayfa_porsiyon_profili_aktif_key")
     if _onceki_aktif_key and _onceki_aktif_key != _secim_key and _onceki_aktif_key in st.session_state:
         st.session_state[_secim_key] = st.session_state[_onceki_aktif_key]
@@ -932,6 +955,9 @@ with sag2:
             key=_secim_key,
             help=_secim_yardim_metni,
         )
+    # Her calismada KALICI takipciyi guncelle -- bir sonraki sayfa
+    # ziyaretinde buradan geri yuklenecek.
+    st.session_state[_KALICI_SECIM_ANAHTARI] = _secili_profil_id_sayfa
     _secili_sayfa_profili = _profil_by_id_sayfa[_secili_profil_id_sayfa]
     if _secili_sayfa_profili["id"] == _OZEL_HIZMET_ID:
         if not _hizmet_onaylandi:

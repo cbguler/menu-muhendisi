@@ -9632,3 +9632,40 @@ durumu da DESTEKLE ama farkli/guvenli sekilde ele al" olmali, sadece
 
 **Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- YUZ
 ELLI BIRINCI DUZELTME) teslim edildi.
+
+### 21 Eylul 2026 -- Baslik Banner (Ertelendi) + YUZ ELLI UCUNCU DUZELTME: Sayfa Degisince Profil Sifirlanmasi
+
+**Baslik banner videosu:** Bahri yeni bir video yukledi (`baslik_
+banner.mp4`, Menü Mühendisi logo+"taze malzemeler" animasyonu).
+Kirpma (bos ust/alt beyaz alan -- eskisiyle AYNI yapida) + masaustu/
+mobil ayri dosyalar (296px/148px yukseklik, eski "~400px cok yer
+kapliyor" sikayetini TEKRARLAMAMAK icin BILINCLI kucuk tutuldu)
+hazirlanip `app.py`'ye KOLAYCA GERI ALINABILIR sekilde (dosya varsa
+video, yoksa eski logo+yazi) entegre edildi. **Bahri "simdilik dursun"
+dedi -- ERTELENDI, henuz test edilmedi/karar verilmedi.**
+
+**YUZ ELLI UCUNCU DUZELTME (kritik):** Bahri "Aylık Menü'den bir
+tarife tiklayip Tarif Kütüphanesi'ne gidip GERI DONUNCE (tarayici geri
+tusu VEYA ust nav butonlari -- IKISI DE test edildi, IKISINDE DE
+oluyor) 'Özel Hizmet Profili (5 porsiyon)' secimi 'EV (2 porsiyon)'a
+sifirlaniyor, uretilen menu de kaybolmus gibi gorunuyor" dedi.
+
+**KOK NEDEN:** Streamlit, BASKA SAYFAYA gidildiginde o sayfanin
+widget'larinin session_state kayitlarini temizliyor -- DINAMIK
+secim-kutusu KEY'imiz de bir WIDGET KEY'I oldugu icin bu temizlikten
+MUAF DEGILDI (DAHA ONCE "bos_profil_porsiyon_sayisi" icin bulunan
+AYNI kok neden ailesi, bu kez FARKLI bir widget'ta).
+
+**DUZELTME:** Widget'a BAGLI OLMAYAN, sayfalar arasi KALICI ayri bir
+takip degiskeni (`secili_porsiyon_profil_id_kalici`) eklendi --
+selectbox'in HER calismasinda bu deger guncelleniyor, VE sayfaya
+DONULDUGUNDE (dinamik key'in session_state'i eksikse) bu kalici
+degerden GERI YUKLENIYOR. `yillik_menu_aylik` (uretilen menu) DUZ bir
+session_state anahtari (widget degil) oldugu icin kendiliginden
+etkilenmemis olmali -- "menu kayboldu" izlenimi muhtemelen SADECE
+profil yanlis gorundugu icin baglantili bir goruntudeki yan etkidir,
+ayri bir kod degisikligi GEREKMEDI (ama Bahri'nin ikisini BIRLIKTE
+tekrar test etmesi gerekiyor).
+
+**Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- YUZ
+ELLI UCUNCU DUZELTME) teslim edildi.
