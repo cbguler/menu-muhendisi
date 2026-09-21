@@ -9800,3 +9800,28 @@ yontem (gercek zamanli teshis paneli) checkbox icin de eklendi
 
 **Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- checkbox
 icin gecici teshis paneli eklendi) teslim edildi.
+
+**TESHIS SONUCU COK NET (ve saskirtici):** Bahri paylasti -- kalici
+yedek=True, widget'in KENDI session_state'i=True (BACKEND TAMAMEN
+DOGRU), AMA checkbox GORSEL olarak UNCHECKED gorunuyordu. Bu, DAHA
+ONCE porsiyon-profili SECIM KUTUSUNDA yasanan VE STATIK key yerine
+DINAMIK (degisen) key kullanilarak BASARIYLA COZULEN AYNI hastalik
+ailesi -- React/Streamlit bazi widget'larda STATIK bir key'e
+PROGRAMATIK yazilan session_state'i, widget SAYFA GECISI SONRASI
+YENIDEN DOGDUGUNDA guvenilir sekilde yansitmiyor.
+
+**YUZ ELLI YEDINCI DUZELTME:** Porsiyon-profili'nde KANITLANMIS yontem
+GENEL bir yardimci ciftine donusturuldu -- `_yenilenen_anahtar(temel_
+anahtar, varsayilan)` (widget'tan once cagrilir, "sayfaya yeni
+donuldu" tespit edilince key'i DEGISTIRIR, kalici yedekten deger
+DOGRU tasinir) ve `_yenilenen_anahtar_kaydet(temel_anahtar, dinamik_
+key)` (widget'tan sonra cagrilir). Bu, HEM besin_hedefi_kullan
+checkbox'ina HEM yillik_menu_secili_besin_anahtarlari multiselect'ine
+uygulandi -- ikisinin de gecici teshis panelleri KALDIRILDI. Diger
+widget'lar (Yıl/Ay/alerjenler/beslenme_tarzi -- Bahri'nin DOGRU
+calistigini onayladigi) SIMDILIK eski (basit) yontemde birakildi --
+"bozuk olmayani duzeltme" ilkesi, ama gelecekte ONLAR da benzer
+sorun yasarsa AYNI dinamik-key yontemi uygulanabilir.
+
+**Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- YUZ
+ELLI YEDINCI DUZELTME, teshis panelleri kaldirildi) teslim edildi.

@@ -807,6 +807,46 @@ def _sayfalar_arasi_kaydet(widget_key):
         st.session_state[_kalici] = st.session_state[widget_key]
 
 
+# YUZ ELLI YEDINCI DUZELTME (21 Eylul 2026): `_sayfalar_arasi_geri_
+# yukle`/`_kaydet` cifti, HARIC ALERJENLER gibi bazi widget'lar icin
+# calisti, ama BESIN HEDEFI CHECKBOX'I icin CALISMADI -- teshis paneli
+# KANITLADI ki backend (session_state) HER ZAMAN dogruydu (True), AMA
+# WIDGET'IN GORSEL HALI hala eski/bayat (unchecked) kaliyordu. Bu, DAHA
+# ONCE porsiyon-profili SECIM KUTUSUNDA yasanan VE index/None-tabanli
+# STATIK bir key yerine DEGISEN (dinamik) bir key kullanilarak BASARIYLA
+# COZULEN AYNI hastalik ailesi -- React/Streamlit, BAZI widget turlerinde
+# STATIK bir key'e PROGRAMATIK olarak yazilan session_state degerini,
+# widget YENIDEN DOGDUGUNDA (sayfa gecisi sonrasi ilk render) GUVENILIR
+# sekilde yansitmiyor. COZUM: porsiyon-profili'nde kanitlanan YONTEM
+# GENEL bir yardimciya donusturuldu -- "sayfaya YENI DONULDU" tespit
+# edilince widget'in KEY'I de degisir (React'a TAMAMEN YENI bir widget
+# oldugu mesaji verilir), deger ONCEKI kalici yedekten dogru sekilde
+# tasinir.
+def _yenilenen_anahtar(temel_anahtar, varsayilan):
+    """Widget OLUSTURULMADAN ONCE cagir -- KULLANILACAK (dinamik) key'i
+    dondurur. `temel_anahtar` sayfa disinda/asagi akan kodda okunan
+    SABIT/PLAIN isim olarak kalir (bkz. _yenilenen_anahtar_kaydet)."""
+    _kalici = f"_kalici__{temel_anahtar}"
+    _nesil_anahtari = f"_nesil__{temel_anahtar}"
+    if temel_anahtar not in st.session_state:
+        st.session_state[_nesil_anahtari] = st.session_state.get(_nesil_anahtari, 0) + 1
+    _nesil = st.session_state.get(_nesil_anahtari, 0)
+    _dinamik_key = f"{temel_anahtar}__n{_nesil}"
+    if _dinamik_key not in st.session_state:
+        st.session_state[_dinamik_key] = st.session_state.get(_kalici, varsayilan)
+    return _dinamik_key
+
+
+def _yenilenen_anahtar_kaydet(temel_anahtar, dinamik_key):
+    """Widget OLUSTURULDUKTAN SONRA cagir -- guncel degeri hem SABIT/
+    PLAIN isme (asagi akan kodun okuyabilmesi icin) hem kalici yedege
+    yazar."""
+    _kalici = f"_kalici__{temel_anahtar}"
+    if dinamik_key in st.session_state:
+        st.session_state[temel_anahtar] = st.session_state[dinamik_key]
+        st.session_state[_kalici] = st.session_state[dinamik_key]
+
+
 
 st.markdown("**Beslenme tarzı ve alerjenler**")
 _sayfalar_arasi_geri_yukle("beslenme_tarzi_secimi")
@@ -1161,18 +1201,11 @@ else:
     # gorsel olarak on plana cikarildi.
     with st.container(border=True):
         st.markdown("#### Besin Değerleri Hedefi")
-        # GECICI TESHIS (21 Eylul 2026) -- checkbox da sifirlaniyor,
-        # bu SORUN COZULUNCE SILINECEK.
-        with st.expander("Geçici teşhis (checkbox sıfırlanması)", expanded=True):
-            st.write("Kalici yedek VAR MI (once):", "_kalici__besin_hedefi_kullan" in st.session_state)
-            st.write("Kalici yedek degeri:", st.session_state.get("_kalici__besin_hedefi_kullan"))
-            st.write("Widget key session_state'te VAR MI (once):", "besin_hedefi_kullan" in st.session_state)
-            st.write("Widget key degeri (once):", st.session_state.get("besin_hedefi_kullan"))
-        _sayfalar_arasi_geri_yukle("besin_hedefi_kullan")
+        _bhk_key = _yenilenen_anahtar("besin_hedefi_kullan", False)
         besin_hedefi_kullan = st.checkbox(
-            "**Öğün başına besin değerleri hedefi uygula (opsiyonel)**", key="besin_hedefi_kullan",
+            "**Öğün başına besin değerleri hedefi uygula (opsiyonel)**", key=_bhk_key,
         )
-        _sayfalar_arasi_kaydet("besin_hedefi_kullan")
+        _yenilenen_anahtar_kaydet("besin_hedefi_kullan", _bhk_key)
 
     if besin_hedefi_kullan:
         st.caption(
@@ -1180,25 +1213,17 @@ else:
             "gibi temel değerler varsayılan olarak seçili) — sadece seçtiklerin "
             "için aşağıda min/maks aralığı gösterilecek."
         )
-        _sayfalar_arasi_geri_yukle("yillik_menu_secili_besin_anahtarlari")
-        # YUZ ELLI ALTINCI DUZELTME (21 Eylul 2026): KOK NEDEN TESHIS
-        # PANELIYLE KESIN BULUNDU -- geri yukleme kodu widget'tan ONCE
-        # session_state'i DOGRU sekilde (32 maddelik tam liste) dolduruyordu,
-        # AMA widget'in KENDISI bunu YOK SAYIP kendi sabit `default=[...]`
-        # parametresini (5 madde) kullaniyordu. Bu, Streamlit'in bilinen bir
-        # davranisi: `default=` VE onceden ayarlanmis session_state AYNI ANDA
-        # verilince `default=` KAZANIYOR. COZUM: `default=` widget'tan
-        # TAMAMEN KALDIRILDI -- "ilk kez goruluyor" mantigi artik widget'tan
-        # ONCE, session_state'e DOGRUDAN yazarak yonetiliyor.
-        if "yillik_menu_secili_besin_anahtarlari" not in st.session_state:
-            st.session_state["yillik_menu_secili_besin_anahtarlari"] = ["kalori", "protein", "yag", "karbonhidrat", "gi"]
+        _besin_key = _yenilenen_anahtar(
+            "yillik_menu_secili_besin_anahtarlari",
+            ["kalori", "protein", "yag", "karbonhidrat", "gi"],
+        )
         secili_besin_anahtarlari = st.multiselect(
             "Hedeflenecek besin değerleri",
             options=[anahtar for anahtar, *_ in TUM_BESIN_ALANLARI],
             format_func=lambda a: BESIN_ETIKET[a],
-            key="yillik_menu_secili_besin_anahtarlari",
+            key=_besin_key,
         )
-        _sayfalar_arasi_kaydet("yillik_menu_secili_besin_anahtarlari")
+        _yenilenen_anahtar_kaydet("yillik_menu_secili_besin_anahtarlari", _besin_key)
         hedefler = {}
         for ogun_adi in ("Öğle", "Akşam"):
             with st.expander(f"{ogun_adi} hedefleri", expanded=False):
