@@ -9751,3 +9751,16 @@ gerekiyor.
 
 **Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- YUZ
 ELLI BESINCI DUZELTME, DOGRULANMADI) teslim edildi.
+
+**YUZ ELLI BESINCI DUZELTME YANLIS CIKTI:** Bahri "Özel Hizmet
+Profili" kullandigini DOGRULADI -- bu profilin `hedefler` alani HER
+ZAMAN None oldugu icin `_hedef_imzasi` mekanizmasi zaten hic devreye
+GIRMIYORDU, duzeltme YANLIS HIPOTEZE dayaniyordu (zararsizdi ama
+COZMEDI). GECICI TESHIS PANELI eklendi (widget key + kalici yedek
+degerlerini DOGRUDAN gosteren) -- bu SORUN COZULUNCE SILINECEK.
+ONEMLI KENDI HATA: yine UI metnine emoji eklenmis, HEMEN fark edilip
+kaldirildi (BU, AYNI oturumda IKINCI kez yasanan ayni hata --
+ozel dikkat gerekiyor).
+
+**Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- gecici
+teshis paneli eklendi) teslim edildi.

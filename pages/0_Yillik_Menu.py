@@ -1174,6 +1174,14 @@ else:
             "için aşağıda min/maks aralığı gösterilecek."
         )
         _sayfalar_arasi_geri_yukle("yillik_menu_secili_besin_anahtarlari")
+        # GECICI TESHIS (21 Eylul 2026) -- "Hedeflenecek besin değerleri"
+        # sayfa gecisinde sifirlaniyor, kok neden bulunamadi -- bu
+        # SORUN COZULUNCE SILINECEK.
+        with st.expander("Geçici teşhis (besin değerleri sıfırlanması)", expanded=True):
+            st.write("Widget key session_state'te VAR MI (once):", "yillik_menu_secili_besin_anahtarlari" in st.session_state)
+            st.write("Widget key degeri (varsa):", st.session_state.get("yillik_menu_secili_besin_anahtarlari"))
+            st.write("Kalici yedek VAR MI:", "_kalici__yillik_menu_secili_besin_anahtarlari" in st.session_state)
+            st.write("Kalici yedek degeri:", st.session_state.get("_kalici__yillik_menu_secili_besin_anahtarlari"))
         secili_besin_anahtarlari = st.multiselect(
             "Hedeflenecek besin değerleri",
             options=[anahtar for anahtar, *_ in TUM_BESIN_ALANLARI],
