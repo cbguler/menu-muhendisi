@@ -203,7 +203,21 @@ varsayilan_index = isimler_sirali.index(query_tarif) if query_tarif in isimler_s
 secilen_ad = st.selectbox("Tarif", isimler_sirali, index=varsayilan_index)
 tarif = next(t for t in filtrelenmis if t["ad"] == secilen_ad)
 
-porsiyon = st.number_input("Porsiyon sayısı", min_value=1, max_value=200, value=10, step=1)
+# YUZ ELLI DORDUNCU DUZELTME (21 Eylul 2026): Bahri "Aylık Menü'den bir
+# yemege tiklayinca Tarif Kütüphanesi'nde HER ZAMAN sabit 10 porsiyon
+# aciliyor, aktif porsiyon profilindeki (ör. 15) sayiyla degil" dedi.
+# "tarif" query param'iyla AYNI yontem: 0_Yillik_Menu.py artik tarif
+# linklerine "porsiyon" query param'ini da ekliyor -- burada okunup
+# GECERLI bir tamsayiysa varsayilan deger olarak kullaniliyor, gecersiz/
+# yoksa eski sabit 10'a dusuluyor.
+query_porsiyon = st.query_params.get("porsiyon")
+try:
+    varsayilan_porsiyon = int(query_porsiyon) if query_porsiyon else 10
+    if not (1 <= varsayilan_porsiyon <= 200):
+        varsayilan_porsiyon = 10
+except (TypeError, ValueError):
+    varsayilan_porsiyon = 10
+porsiyon = st.number_input("Porsiyon sayısı", min_value=1, max_value=200, value=varsayilan_porsiyon, step=1)
 
 st.subheader(tarif["ad"])
 st.caption(

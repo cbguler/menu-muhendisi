@@ -9711,3 +9711,15 @@ yuksek, ileride sorun cikarsa ayni yontemle eklenebilir.
 **Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- YUZ
 ELLI DORDUNCU DUZELTME) teslim edildi. `5_Tarif_Kutuphanesi.py`
 istendi -- alici tarafin tamamlanmasi icin gerekli.
+
+**ALICI TARAF TAMAMLANDI:** `5_Tarif_Kutuphanesi.py` alindi.
+"tarif" query param'inin okunma yontemiyle BIREBIR AYNI desen
+kullanilarak "porsiyon" query param'i da okunup (gecerli 1-200
+araliginda bir tamsayiysa) `st.number_input`'un varsayilan degeri
+olarak uygulandi -- gecersiz/yoksa eski sabit 10'a dusuyor. Artik
+Aylık Menü'den bir yemege tiklaninca Tarif Kütüphanesi o anki aktif
+porsiyon profiliyle (ör. 15) acilmali. YUZ ELLI DORDUNCU DUZELTME
+boylece TAMAMLANDI (hem gonderen hem alici taraf).
+
+**Dosya durumu:** `5_Tarif_Kutuphanesi.py` (guncellendi) teslim
+edildi.
