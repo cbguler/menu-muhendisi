@@ -903,7 +903,7 @@ with sag2:
             )
         with _col_duzelt:
             st.markdown("<div style='height: 28px'></div>", unsafe_allow_html=True)
-            if st.button("Düzelt", key="hizmet_kisi_sayisi_degistir_buton", use_container_width=True):
+            if st.button("Düzelt", key="hizmet_kisi_sayisi_degistir_buton", use_container_width=True, type="primary"):
                 st.session_state["hizmet_kisi_sayisi_onaylandi"] = False
                 st.rerun()
     else:
