@@ -779,15 +779,48 @@ _tum_alerjen_kayitlari = _sayfalayarak_getir(
 )
 tum_alerjenler = sorted(set(a["ad"] for a in _tum_alerjen_kayitlari))
 
+
+# YUZ ELLI DORDUNCU DUZELTME (21 Eylul 2026): Bahri "porsiyon profili
+# ve uretilen menu artik sayfa degisince kaliyor (dogru), AMA Yıl/Ay,
+# hariç tutulacak alerjenler, ve besin değerleri hedefi SIFIRLANIYOR"
+# dedi. Inceleme SISTEMIK bir sorun ortaya cikardi: bu sayfadaki
+# COK SAYIDA widget (bazilari key'siz -- Yıl/Ay, bazilari key'li --
+# alerjen multiselect) BASKA SAYFAYA gidilip GERI DONULUNCE
+# session_state'ini KAYBEDIYOR (porsiyon-profili'nde daha once bulunan
+# AYNI kok neden ailesi, ama bu sayfada COK DAHA YAYGIN). Tek tek
+# widget'lar icin OZEL cozum yerine, GENEL/TEKRAR KULLANILABILIR bir
+# yardimci ciftle COZULDU:
+def _sayfalar_arasi_geri_yukle(widget_key):
+    """Widget OLUSTURULMADAN HEMEN ONCE cagir. Widget'in KENDI
+    session_state'i eksikse (sayfaya yeni donulmus olabilir), ayri
+    (widget'a bagli OLMAYAN) kalici bir yedekten geri yukler."""
+    _kalici = f"_kalici__{widget_key}"
+    if widget_key not in st.session_state and _kalici in st.session_state:
+        st.session_state[widget_key] = st.session_state[_kalici]
+
+
+def _sayfalar_arasi_kaydet(widget_key):
+    """Widget OLUSTURULDUKTAN HEMEN SONRA cagir. Guncel degeri, sayfa
+    degisiminde SILINMEYECEK ayri bir kalici yedege kopyalar."""
+    _kalici = f"_kalici__{widget_key}"
+    if widget_key in st.session_state:
+        st.session_state[_kalici] = st.session_state[widget_key]
+
+
+
 st.markdown("**Beslenme tarzı ve alerjenler**")
+_sayfalar_arasi_geri_yukle("beslenme_tarzi_secimi")
 beslenme_tarzi = st.radio(
     "Beslenme tarzı", options=["Tümü", "Vejetaryen", "Vegan"],
     horizontal=True, key="beslenme_tarzi_secimi", label_visibility="collapsed",
 )
+_sayfalar_arasi_kaydet("beslenme_tarzi_secimi")
+_sayfalar_arasi_geri_yukle("haric_alerjenler_secimi")
 haric_alerjenler = st.multiselect(
     "Hariç tutulacak alerjenler", options=tum_alerjenler, key="haric_alerjenler_secimi",
     help="Seçilen alerjenlerden herhangi birini içeren tarifler menüden tamamen çıkarılır.",
 )
+_sayfalar_arasi_kaydet("haric_alerjenler_secimi")
 
 if beslenme_tarzi in ("Vejetaryen", "Vegan"):
     tarifler_zengin = [t for t in tarifler_zengin if "vejetaryen" in t["etiketler"]]
@@ -805,11 +838,16 @@ if beslenme_tarzi != "Tümü" or haric_alerjenler:
 
 sol, sag, sag2, sag3 = st.columns([1, 1, 1.4, 1.6])
 with sol:
+    _sayfalar_arasi_geri_yukle("yillik_menu_yil_secimi")
     yil_secimi = st.number_input(
         "Yıl", min_value=2024, max_value=2035, value=datetime.date.today().year, step=1,
+        key="yillik_menu_yil_secimi",
     )
+    _sayfalar_arasi_kaydet("yillik_menu_yil_secimi")
 with sag:
-    ay_secimi = st.selectbox("Ay", AYLAR_SIRALI)
+    _sayfalar_arasi_geri_yukle("yillik_menu_ay_secimi")
+    ay_secimi = st.selectbox("Ay", AYLAR_SIRALI, key="yillik_menu_ay_secimi")
+    _sayfalar_arasi_kaydet("yillik_menu_ay_secimi")
 with sag2:
     # SEKSEN BIRINCI DUZELTME (3 Eylul 2026): porsiyon profili secimi
     # pop-up'tan buraya (Yıl/Ay'ın yanina) tasindi -- Bahri'nin talebi,
@@ -1115,9 +1153,11 @@ else:
     # gorsel olarak on plana cikarildi.
     with st.container(border=True):
         st.markdown("#### Besin Değerleri Hedefi")
+        _sayfalar_arasi_geri_yukle("besin_hedefi_kullan")
         besin_hedefi_kullan = st.checkbox(
             "**Öğün başına besin değerleri hedefi uygula (opsiyonel)**", key="besin_hedefi_kullan",
         )
+        _sayfalar_arasi_kaydet("besin_hedefi_kullan")
 
     if besin_hedefi_kullan:
         st.caption(
@@ -1125,6 +1165,7 @@ else:
             "gibi temel değerler varsayılan olarak seçili) — sadece seçtiklerin "
             "için aşağıda min/maks aralığı gösterilecek."
         )
+        _sayfalar_arasi_geri_yukle("yillik_menu_secili_besin_anahtarlari")
         secili_besin_anahtarlari = st.multiselect(
             "Hedeflenecek besin değerleri",
             options=[anahtar for anahtar, *_ in TUM_BESIN_ALANLARI],
@@ -1132,6 +1173,7 @@ else:
             format_func=lambda a: BESIN_ETIKET[a],
             key="yillik_menu_secili_besin_anahtarlari",
         )
+        _sayfalar_arasi_kaydet("yillik_menu_secili_besin_anahtarlari")
         hedefler = {}
         for ogun_adi in ("Öğle", "Akşam"):
             with st.expander(f"{ogun_adi} hedefleri", expanded=False):
@@ -1735,7 +1777,7 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                 for ad in tarif_adlari:
                     st.page_link(
                         "pages/5_Tarif_Kutuphanesi.py", label=ad,
-                        query_params={"tarif": ad}, use_container_width=True,
+                        query_params={"tarif": ad, "porsiyon": str(st.session_state.get("secili_porsiyon_sayisi", ""))}, use_container_width=True,
                     )
             st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
             with st.container(key=f"cevir_{card_id}"):
@@ -2202,7 +2244,7 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
                         if j < len(liste):
                             st.page_link(
                                 "pages/5_Tarif_Kutuphanesi.py", label=liste[j],
-                                query_params={"tarif": liste[j]}, use_container_width=True,
+                                query_params={"tarif": liste[j], "porsiyon": str(st.session_state.get("secili_porsiyon_sayisi", ""))}, use_container_width=True,
                             )
                         else:
                             st.markdown("<div class='omgo-tablo-bos-hucre'>&nbsp;</div>", unsafe_allow_html=True)
@@ -2227,7 +2269,7 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
                         if j < len(liste):
                             st.page_link(
                                 "pages/5_Tarif_Kutuphanesi.py", label=liste[j],
-                                query_params={"tarif": liste[j]}, use_container_width=True,
+                                query_params={"tarif": liste[j], "porsiyon": str(st.session_state.get("secili_porsiyon_sayisi", ""))}, use_container_width=True,
                             )
                         else:
                             st.markdown("<div class='omgo-tablo-bos-hucre'>&nbsp;</div>", unsafe_allow_html=True)
@@ -2323,7 +2365,7 @@ def _hafta_kartlarini_goster_mobil(hafta, detay, fiyat_verisi_var, hedefler, ay_
                         for j, tarif_adi in enumerate(liste):
                             st.page_link(
                                 "pages/5_Tarif_Kutuphanesi.py", label=tarif_adi,
-                                query_params={"tarif": tarif_adi}, use_container_width=True,
+                                query_params={"tarif": tarif_adi, "porsiyon": str(st.session_state.get("secili_porsiyon_sayisi", ""))}, use_container_width=True,
                             )
                     else:
                         st.markdown("<div class='omgo-tablo-bos-hucre'>&nbsp;</div>", unsafe_allow_html=True)

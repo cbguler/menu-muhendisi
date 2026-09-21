@@ -9673,3 +9673,41 @@ ELLI UCUNCU DUZELTME) teslim edildi.
 **Kucuk metin degisikligi (ayni gun):** "Besin Hedefi" -> "Besin
 Değerleri Hedefi", "Öğün başına besin hedefi uygula" -> "Öğün başına
 besin değerleri hedefi uygula".
+
+### 21 Eylul 2026 -- YUZ ELLI DORDUNCU DUZELTME: Sayfa Gecisinde SISTEMIK Sifirlanma + Tarif Linkine Porsiyon Aktarimi
+
+Bahri onceki duzeltmeyi test etti: porsiyon profili VE uretilen menu
+DOGRU sekilde kaliciydi (basarili). AMA 2 YENI/EK sorun bildirdi:
+
+**1) Tarif Kütüphanesi'ne tiklanan tarifin porsiyonu aktif profille
+uyumsuz:** Takvimde bir yemege tiklayip Tarif Kütüphanesi'ne
+gidildiginde, o sayfadaki porsiyon sayisi HER ZAMAN sabit 10 (varsayilan)
+gosteriyordu, aktif profildeki (ornegin 15) sayiyla degil. DUZELTME:
+tum `st.page_link(..., query_params={"tarif": ...})` cagrilarina
+(4 yerde bulundu) `"porsiyon": str(st.session_state.get("secili_
+porsiyon_sayisi", ""))` eklendi -- artik tarif linkine tiklaninca
+aktif porsiyon sayisi da URL'de tasiniyor. ALICI TARAF (5_Tarif_
+Kutuphanesi.py) bu parametreyi henuz OKUMUYOR -- o dosya istendi,
+SONUC BEKLENIYOR.
+
+**2) Yıl/Ay/alerjenler/besin hedefi de sayfa degisince SIFIRLANIYORDU:**
+Inceleme, bunun porsiyon-profiline OZGU degil, bu sayfadaki (0_Yillik_
+Menu.py) COK SAYIDA widget'i etkileyen SISTEMIK bir sorun oldugunu
+ortaya cikardi -- BASKA SAYFAYA gidilip GERI DONULUNCE session_state
+kayboluyor (bazilarinin key'i bile YOKTU -- Yıl/Ay). GENEL/TEKRAR
+KULLANILABILIR bir cift yardimci fonksiyon eklendi:
+`_sayfalar_arasi_geri_yukle(key)` (widget'tan ONCE cagrilir, kalici
+yedekten geri yukler) ve `_sayfalar_arasi_kaydet(key)` (widget'tan
+SONRA cagrilir, kalici yedege kopyalar). Su widget'lara uygulandi:
+beslenme_tarzi_secimi, haric_alerjenler_secimi, Yıl (yeni key eklendi:
+yillik_menu_yil_secimi), Ay (yeni key eklendi: yillik_menu_ay_secimi),
+besin_hedefi_kullan, yillik_menu_secili_besin_anahtarlari.
+
+**NOT:** Besin hedefi expander'lari icindeki (Öğle/Akşam) TEK TEK
+min/maks number_input'lari HENUZ bu tedaviyi almadi -- kapsam disi
+birakildi (Bahri raporlamadi), ama AYNI sorunu yasama ihtimalleri
+yuksek, ileride sorun cikarsa ayni yontemle eklenebilir.
+
+**Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- YUZ
+ELLI DORDUNCU DUZELTME) teslim edildi. `5_Tarif_Kutuphanesi.py`
+istendi -- alici tarafin tamamlanmasi icin gerekli.
