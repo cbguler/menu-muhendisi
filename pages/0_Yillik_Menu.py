@@ -1161,6 +1161,13 @@ else:
     # gorsel olarak on plana cikarildi.
     with st.container(border=True):
         st.markdown("#### Besin Değerleri Hedefi")
+        # GECICI TESHIS (21 Eylul 2026) -- checkbox da sifirlaniyor,
+        # bu SORUN COZULUNCE SILINECEK.
+        with st.expander("Geçici teşhis (checkbox sıfırlanması)", expanded=True):
+            st.write("Kalici yedek VAR MI (once):", "_kalici__besin_hedefi_kullan" in st.session_state)
+            st.write("Kalici yedek degeri:", st.session_state.get("_kalici__besin_hedefi_kullan"))
+            st.write("Widget key session_state'te VAR MI (once):", "besin_hedefi_kullan" in st.session_state)
+            st.write("Widget key degeri (once):", st.session_state.get("besin_hedefi_kullan"))
         _sayfalar_arasi_geri_yukle("besin_hedefi_kullan")
         besin_hedefi_kullan = st.checkbox(
             "**Öğün başına besin değerleri hedefi uygula (opsiyonel)**", key="besin_hedefi_kullan",

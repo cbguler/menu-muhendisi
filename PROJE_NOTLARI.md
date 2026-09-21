@@ -9787,3 +9787,16 @@ ARANDI -- bulunamadi, sorun izoleydi. Gecici teshis paneli KALDIRILDI.
 **Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- YUZ
 ELLI ALTINCI DUZELTME, teshis paneliyle KESIN dogrulanmis kok neden)
 teslim edildi.
+
+**YENI/DAHA KOTU BELIRTI:** Bahri tekrar test etti (18 porsiyon) --
+bu sefer "Öğün başına besin değerleri hedefi uygula" CHECKBOX'inin
+KENDISI de sifirlanmis (once sadece icerideki multiselect sifirlaniyordu).
+Checkbox'in kalicilik kodu (`_sayfalar_arasi_geri_yukle`/`_kaydet`)
+DEGISMEMIS/BOZULMAMIS -- kod incelemesiyle dogrulandi. `_hedef_imzasi`
+mekanizmasi da (Özel Hizmet Profili'nin hedefler=None olmasi nedeniyle)
+bu key'e DOKUNMUYOR. KOK NEDEN HALA BULUNAMADI -- AYNI ISPATLANMIS
+yontem (gercek zamanli teshis paneli) checkbox icin de eklendi
+(kalici yedek + widget key degerlerini DOGRUDAN gosteriyor).
+
+**Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- checkbox
+icin gecici teshis paneli eklendi) teslim edildi.
