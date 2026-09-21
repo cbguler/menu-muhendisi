@@ -9560,3 +9560,43 @@ olarak taranmali.
 
 **Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- YUZ
 KIRK DOKUZUNCU DUZELTME) teslim edildi.
+
+### 21 Eylul 2026 -- Duzelt Butonu Rengi + YUZ ELLINCI DUZELTME (Kalici Porsiyon Etiketi Cozumu) + Takvim Teshisi
+
+**Düzelt butonu rengi:** `type="primary"` eklendi (diger butonlarla
+ayni Streamlit native tema mekanizmasi) -- Bahri DOGRULADI, calisiyor.
+
+**Takvim "3 kez tekrarlaniyor" sorunu -- MUHTEMELEN GERCEK BIR HATA
+DEGIL:** Kod incelendi -- masaustu VE mobil kart fonksiyonlari HER
+hafta icin BIRLIKTE cagriliyor, hangisinin GORUNECEGI tamamen CSS
+`@media (max-width/min-width)` kurallarina birakiliyor. Bahri'nin
+gonderdigi ekran goruntusu bir "screencapture" PDF'i -- boyle
+capture araclari CSS medya sorgularini bazen dogru yorumlamayip HER
+IKI versiyonu birden gosterebilir. Bahri'den CANLI SAYFADA (PDF
+almadan) kontrol etmesi istendi -- SONUC BEKLENIYOR, hicbir kod
+degisikligi yapilmadi (calisan bir seyi bozma riski).
+
+**Alerjen secince yavaslama:** Bahri "his" olarak bildirdi, olcum
+yok. Muhtemel ZARARSIZ aciklama: filtreleme 485 tarifi 47'ye
+dusuruyor (ekran goruntusunde gorulmustu) -- kucuk havuzdan aylik
+cesitlilik kisitini saglamak algoritmanin daha fazla deneme yapmasini
+gerektirebilir. Olcum istendi, hicbir kod degisikligi yapilmadi.
+
+**YUZ ELLINCI DUZELTME -- porsiyon etiketi KALICI COZUM (umuluyor):**
+Bahri sert yenileme sonrasi bile "acilir liste doğru (5) ama KAPALI
+kutu hala eski (10)" dedi -- backend HER SEY DOGRU hesapliyordu
+(listenin kendisi dogru cikmasi bunu kanitliyor), bu yuzden KOK NEDEN
+Streamlit'in ALTINDAKI React/BaseWeb Select bileseninin AYNI widget
+key'i icin "deger->etiket" eslesmesini ONBELLEKTE tutmasi (deger ayni
+kalirken SADECE etiket degisince guncellemeyi atlamasi) olarak
+degerlendirildi. KOKTEN COZUM: porsiyon sayisi her degistiginde
+widget'in KEY'I de degisiyor (`sayfa_porsiyon_profili_secimi__v{sayi}`)
+-- bu, React'a "tamamen yeni bir widget" oldugunu soyleyip onbellegi
+gecersiz kilar. Kullanicinin secimi KAYBOLMAMASI icin, key
+degisiminden HEMEN ONCE mevcut deger yeni key'e ELLE tasiniyor.
+
+**DURUM: Bu, AYNI konuda DORDUNCU deneme (index->ID->sentinel->
+dinamik-key). HALA DOGRULANMADI.**
+
+**Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- YUZ
+ELLINCI DUZELTME) teslim edildi.

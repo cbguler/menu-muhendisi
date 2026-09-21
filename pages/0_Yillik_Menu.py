@@ -886,10 +886,28 @@ with sag2:
         "gibi -- geçici bir ihtiyaç için kullanılır; hizmet "
         "vereceğiniz kişi sayısını aşağıdan girebilirsiniz."
     )
+    # YUZ ELLINCI DUZELTME (21 Eylul 2026): Bahri "acilir listede dogru
+    # sayi (5) gorunuyor ama KAPALI kutuda hala ESKI sayi (10) yaziyor"
+    # dedi -- backend HER SEY DOGRU hesapliyordu (bu, listenin kendisinin
+    # DOGRU cikmasindan belliydi), bu yuzden bu, Streamlit'in ALTINDAKI
+    # React/BaseWeb Select bileseninin, AYNI widget key'i icin "secili
+    # deger->etiket" eslesmesini bir onceki render'dan ONBELLEKTE
+    # TUTMASI (deger AYNI kalirken SADECE etiketi degisince guncellemeyi
+    # atlamasi) sonucu olabilir. KOKTEN cozum: porsiyon sayisi her
+    # degistiginde widget'in KEY'INI de degistiriyoruz -- bu, React'a
+    # bunun TAMAMEN YENI bir widget oldugunu (onbellek geçersiz)
+    # soyluyor. Kullanicinin secimini KAYBETMEMEK icin, key degisiminden
+    # HEMEN ONCE mevcut secim degeri yeni key'e ELLE tasiniyor.
+    _secim_key = f"sayfa_porsiyon_profili_secimi__v{_bos_profil_porsiyon_guncel}"
+    _onceki_aktif_key = st.session_state.get("_sayfa_porsiyon_profili_aktif_key")
+    if _onceki_aktif_key and _onceki_aktif_key != _secim_key and _onceki_aktif_key in st.session_state:
+        st.session_state[_secim_key] = st.session_state[_onceki_aktif_key]
+    st.session_state["_sayfa_porsiyon_profili_aktif_key"] = _secim_key
+
     # Duzelt butonunu SADECE su an GERCEKTEN Özel Hizmet Profili secili
     # VE onaylanmisken goster -- bu durumda sutunlara bol, aksi halde
     # (duzenleme modu dahil) tam genislik kullan.
-    _onceki_secim = st.session_state.get("sayfa_porsiyon_profili_secimi")
+    _onceki_secim = st.session_state.get(_secim_key)
     _duzelt_butonu_gosterilecek = _hizmet_onaylandi and _onceki_secim == _OZEL_HIZMET_ID
     if _duzelt_butonu_gosterilecek:
         _col_secim, _col_duzelt = st.columns([3, 1])
@@ -898,7 +916,7 @@ with sag2:
                 "Maliyet hesabı için porsiyon profili",
                 options=[p["id"] for p in _porsiyon_profilleri_sayfa],
                 format_func=_sayfa_profil_etiketi,
-                key="sayfa_porsiyon_profili_secimi",
+                key=_secim_key,
                 help=_secim_yardim_metni,
             )
         with _col_duzelt:
@@ -911,7 +929,7 @@ with sag2:
             "Maliyet hesabı için porsiyon profili",
             options=[p["id"] for p in _porsiyon_profilleri_sayfa],
             format_func=_sayfa_profil_etiketi,
-            key="sayfa_porsiyon_profili_secimi",
+            key=_secim_key,
             help=_secim_yardim_metni,
         )
     _secili_sayfa_profili = _profil_by_id_sayfa[_secili_profil_id_sayfa]
