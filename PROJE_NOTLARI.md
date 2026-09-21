@@ -9600,3 +9600,35 @@ dinamik-key). HALA DOGRULANMADI.**
 
 **Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- YUZ
 ELLINCI DUZELTME) teslim edildi.
+
+**SONUC: YUZ ELLINCI DUZELTME (dinamik widget key) BASARILI --
+Bahri dogruladi, "Özel Hizmet Profili (5 porsiyon)" artik dogru
+gorunuyor.** Dort denemelik porsiyon-etiketi sagasi NIHAYET kapandi.
+
+### 21 Eylul 2026 -- YUZ ELLI BIRINCI DUZELTME: "Aylık Menüyü Kaydet" Özel Hizmet Profili icin de Acildi
+
+Bahri "Özel Hizmet Profili secili VE bir menu URETILMIS olsa bile
+kaydet butonu hala devre disi" dedi -- KOK NEDEN: YUZ KIRK DOKUZUNCU
+DUZELTME (crash onleme) bu profili "hic profil secilmemis" gibi ele
+alip kaydetmeyi de YASAKLAMISTI -- bu, crash'i onlerken ISTENMEYEN
+bir KISITLAMA getirmisti (asiri-duzeltme). Bahri'nin gercek istegi bu
+profille de kaydedebilmek.
+
+**DUZELTME:** Buton artik Özel Hizmet Profili icin de AKTIF. Ama
+veritabaninda bu profil icin GERCEK bir SATIR olmadigindan, sahte
+metin kimligi yerine `porsiyon_profil_id` sutununa NULL yaziliyor
+(UUID hatasi boylece onleniyor). TUTARLILIK icin, "Bu Profil için
+Kayıtlı Aylık Menüler" LISTELEME sorgusu da ayni sekilde genisletildi
+(`(.is_("porsiyon_profil_id", "null"))`) -- aksi halde boyle
+kaydedilen bir menu bir daha HIC bulunamazdi. NOT: NULL paylasimli
+oldugu icin, Özel Hizmet Profili ile AYNI yil/ay icin ikinci kez
+kaydetme, ONCEKI kaydin uzerine yazar (farkli porsiyon sayilariyla
+olsa bile) -- bu, profilin "gecici" dogasiyla tutarli kabul edildi.
+
+**DERS (tekrar):** Bir crash'i "guard'i daraltarak" onlemek, KOLAY
+ama bazen ASIRI KISITLAYICI olabiliyor -- dogru cozum genelde "bu
+durumu da DESTEKLE ama farkli/guvenli sekilde ele al" olmali, sadece
+"bu durumu tamamen ENGELLE" degil.
+
+**Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- YUZ
+ELLI BIRINCI DUZELTME) teslim edildi.

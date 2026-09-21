@@ -966,7 +966,21 @@ with sag3:
     # gecersiz bir metin gondererek postgrest.exceptions.APIError
     # firlatiyordu. Artik ACIKCA _OZEL_HIZMET_ID'den FARKLI mi diye
     # kontrol ediliyor.
-    if _secili_sayfa_profili["id"] and _secili_sayfa_profili["id"] != _OZEL_HIZMET_ID:
+    # YUZ ELLI BIRINCI DUZELTME (21 Eylul 2026): "Aylık Menüyü Kaydet"
+    # butonu artik Özel Hizmet Profili icin de calisiyor (NULL
+    # porsiyon_profil_id ile) -- TUTARLILIK icin bu listeleme de ayni
+    # sekilde genisletildi, yoksa boyle kaydedilen bir menu BIR DAHA
+    # HIC BULUNAMAZDI.
+    if _secili_sayfa_profili["id"] == _OZEL_HIZMET_ID:
+        _kayitli_menuler = (
+            supabase.table("kayitli_aylik_menuler")
+            .select("id, yil, ay, menu_verisi")
+            .eq("isletme_id", st.session_state.isletme_id)
+            .is_("porsiyon_profil_id", "null")
+            .order("yil", desc=True)
+            .execute()
+        ).data or []
+    elif _secili_sayfa_profili["id"]:
         _kayitli_menuler = (
             supabase.table("kayitli_aylik_menuler")
             .select("id, yil, ay, menu_verisi")
@@ -2435,6 +2449,18 @@ if aylik:
     _secili_profil_id_kaydet = st.session_state.get("secili_porsiyon_profil_id")
 
     st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+    # YUZ ELLI BIRINCI DUZELTME (21 Eylul 2026): Bahri "Özel Hizmet
+    # Profili secili VE bir menu URETILMIS olsa bile 'Aylık Menüyü
+    # Kaydet' butonu hala devre disi, 'once profil sec' uyarisi
+    # cikiyor" dedi -- onceki (YUZ KIRK DOKUZUNCU) duzeltme bu profili
+    # de "profil secilmemis" gibi ELE ALIP crash'i onlemisti, ama bu
+    # ASIRI KISITLAYICIYDI -- Bahri bu profille de KAYDETMEK istiyor.
+    # DUZELTME: buton artik Özel Hizmet Profili icin de AKTIF -- ama
+    # veritabaninda gercek bir profil SATIRI olmadigi icin, sahte
+    # metin kimligi yerine NULL (None) kaydediliyor -- "porsiyon_
+    # profil_id" sutunu boylece bu tur menuler icin bos kalir (ozel/
+    # gecici oldugunu isaretler), Postgres UUID hatasi da onlenir.
+    _kayit_icin_profil_id = None if _secili_profil_id_kaydet == "__ozel_hizmet_profili__" else _secili_profil_id_kaydet
     if _hedef_disi_kayitlar:
         st.warning(
             f"Bu ayı kaydetmeden önce hedef dışı kalan {len(_hedef_disi_kayitlar)} "
@@ -2447,23 +2473,27 @@ if aylik:
             + (" ..." if len(_hedef_disi_kayitlar) > 16 else "")
         )
         st.button("Aylık Menüyü Kaydet", disabled=True, key="btn_aylik_kaydet_disabled")
-    elif not _secili_profil_id_kaydet or _secili_profil_id_kaydet == "__ozel_hizmet_profili__":
+    elif not _secili_profil_id_kaydet:
         st.button("Aylık Menüyü Kaydet", disabled=True, key="btn_aylik_kaydet_disabled",
                    help="Önce yukarıdan bir porsiyon profili seç.")
     else:
         if st.button("💾 Aylık Menüyü Kaydet", key="btn_aylik_kaydet", type="primary"):
-            _mevcut_kayit = (
+            _profil_sorgusu = (
                 supabase.table("kayitli_aylik_menuler")
                 .select("id")
                 .eq("isletme_id", st.session_state.isletme_id)
-                .eq("porsiyon_profil_id", _secili_profil_id_kaydet)
                 .eq("yil", aylik["yil"])
                 .eq("ay", aylik["ay"])
-                .execute()
-            ).data
+            )
+            _profil_sorgusu = (
+                _profil_sorgusu.is_("porsiyon_profil_id", "null")
+                if _kayit_icin_profil_id is None
+                else _profil_sorgusu.eq("porsiyon_profil_id", _kayit_icin_profil_id)
+            )
+            _mevcut_kayit = _profil_sorgusu.execute().data
             _kayit_govdesi = {
                 "isletme_id": st.session_state.isletme_id,
-                "porsiyon_profil_id": _secili_profil_id_kaydet,
+                "porsiyon_profil_id": _kayit_icin_profil_id,
                 "yil": aylik["yil"],
                 "ay": aylik["ay"],
                 "menu_verisi": {"haftalar": aylik["haftalar"]},
