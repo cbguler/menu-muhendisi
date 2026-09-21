@@ -1177,16 +1177,36 @@ with open("assets/logo.png", "rb") as _f:
 # yapip logoyu `position:absolute; left:0` ile SOLA SABITLEDIK,
 # yaziyi ise `width:100%; text-align:center` ile TUM SATIRIN
 # ORTASINA (logonun konumundan BAGIMSIZ) yerlestirdik.
-st.markdown(
-    "<div style='position:relative; min-height:144px; padding:0.1rem 0;'>"
-    f"<img src='data:image/png;base64,{_logo_b64}' style='width:144px; height:auto; "
-    "position:absolute; left:0; top:50%; transform:translateY(-50%);'/>"
-    "<div style='width:100%; text-align:center;'>"
-    "<span style='font-size:4rem; font-weight:700; color:#0F6E56; "
-    "line-height:1; white-space:nowrap;'>Menü Mühendisi</span></div>"
-    "</div>",
-    unsafe_allow_html=True,
-)
+#
+# YUZ ELLI IKINCI DUZELTME (21 Eylul 2026): Bahri KIRK SEKIZINCI
+# DUZELTME'de (banner "cok yer kapliyor" gerekcesiyle) TAMAMEN
+# kaldirilan video banner'i YENI bir videoyla TEKRAR denemek istedi.
+# KOLAYCA GERI ALINABILIR sekilde kuruldu: assets/baslik_video_
+# masaustu.mp4 dosyasi VARSA video gosterilir, YOKSA (veya
+# begenilmeyip dosya silinirse) otomatik olarak ASAGIDAKI eski
+# logo+buyuk-yazi tasarimina DUSULUR -- kod degistirmeye GEREK YOK,
+# sadece dosyayi silmek yeterli. Video, ESKI denemedeki gibi TAM
+# GENISLIKTE ~400px yukseklige CIKMASIN diye bilincli olarak KUCUK
+# islendi (960x296, ~144px logo satirinin sadece bir miktar uzeri) --
+# yine de nihai boyut/begeni kararini Bahri kendi gozlemleyip verecek.
+# BEDEL: st.video() nativ oynatici KONTROL CUBUGU gosterebilir (eski
+# gizli/temiz video hilesinde yoktu) -- bu, mobil uyumluluk icin
+# BILINCLI kabul edilen bir taviz (bkz. _video_varsa_goster yorumu).
+_baslik_video_masaustu_yolu = "assets/baslik_video_masaustu.mp4"
+if os.path.exists(_baslik_video_masaustu_yolu):
+    with open(_baslik_video_masaustu_yolu, "rb") as _f:
+        st.video(_f.read(), format="video/mp4", autoplay=True, loop=True, muted=True)
+else:
+    st.markdown(
+        "<div style='position:relative; min-height:144px; padding:0.1rem 0;'>"
+        f"<img src='data:image/png;base64,{_logo_b64}' style='width:144px; height:auto; "
+        "position:absolute; left:0; top:50%; transform:translateY(-50%);'/>"
+        "<div style='width:100%; text-align:center;'>"
+        "<span style='font-size:4rem; font-weight:700; color:#0F6E56; "
+        "line-height:1; white-space:nowrap;'>Menü Mühendisi</span></div>"
+        "</div>",
+        unsafe_allow_html=True,
+    )
 
 with st.container(key="masaustu_nav"):
     # ELLI UCUNCU DUZELTME (30 Agustos 2026): kullanici -- (1) butonlar
@@ -1211,13 +1231,21 @@ with st.container(key="mobil_nav"):
     # risk yok -- logo+yazi ve popover butonu ayni satirda kalabilir.
     _logo_yazi_kolonu, _menu_kolonu = st.columns([3, 2], vertical_alignment="center")
     with _logo_yazi_kolonu:
-        st.markdown(
-            f"<div style='display:flex; align-items:center; gap:8px;'>"
-            f"<img src='data:image/png;base64,{_logo_b64}' style='width:72px; height:auto; flex-shrink:0;'/>"
-            "<span style='font-size:1.05rem; font-weight:700; color:#0F6E56; "
-            "white-space:nowrap;'>Menü Mühendisi</span></div>",
-            unsafe_allow_html=True,
-        )
+        # YUZ ELLI IKINCI DUZELTME (21 Eylul 2026): masaustundeki AYNI
+        # geri-alinabilir mantik -- dosya varsa video, yoksa eski
+        # logo+yazi.
+        _baslik_video_mobil_yolu = "assets/baslik_video_mobil.mp4"
+        if os.path.exists(_baslik_video_mobil_yolu):
+            with open(_baslik_video_mobil_yolu, "rb") as _f:
+                st.video(_f.read(), format="video/mp4", autoplay=True, loop=True, muted=True)
+        else:
+            st.markdown(
+                f"<div style='display:flex; align-items:center; gap:8px;'>"
+                f"<img src='data:image/png;base64,{_logo_b64}' style='width:72px; height:auto; flex-shrink:0;'/>"
+                "<span style='font-size:1.05rem; font-weight:700; color:#0F6E56; "
+                "white-space:nowrap;'>Menü Mühendisi</span></div>",
+                unsafe_allow_html=True,
+            )
     with _menu_kolonu:
         with st.popover("Menü"):
             for _sayfa in sayfa_listesi:
