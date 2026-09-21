@@ -9451,3 +9451,47 @@ DUZELTMELER):**
 
 **Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- YUZ KIRK
 BESINCI/ALTINCI/YEDINCI DUZELTMELER) teslim edildi.
+
+### 20-21 Eylul 2026 -- GUVENLIK OLAYI TAM COZULDU: Sizan Supabase Service Role JWT
+
+**KAYNAK BULUNDU:** GitGuardian'in kendi panelinden (Bahri'nin
+"Fix this secret leak" linkine tiklamasiyla) KESIN konum tespit
+edildi: `asama_yukle_calistir.bat` dosyasi, satir 6, commit
+814312f (19 Eylul'deki buyuk "birikmis dosyalari senkronize et"
+commit'i). Uygulamanin kendisi bu anahtari HIC KULLANMIYORDU (sadece
+`SUPABASE_ANON_KEY` kullaniyordu) -- yani ana site risk altinda
+degildi, ama anahtarin kendisi (RLS'i atlayan tam yetki) gercekten
+sizmisti.
+
+**COZUM SIRASI (Supabase'in yeni "publishable/secret" anahtar
+sistemine gecis gerektirdi -- eski sistemde artik dogrudan "rotate"
+butonu yok, 2026 sonunda tamamen kaldiriliyor):**
+1. Yeni bir `secret` API anahtari olusturuldu (sb_secret_...) --
+   eski service_role'un yerine.
+2. Yeni bir `publishable` API anahtari olusturuldu (sb_publishable_...)
+   -- eski anon'un yerine.
+3. Streamlit Cloud Secrets'ta `SUPABASE_ANON_KEY` degeri yeni
+   publishable anahtarla degistirildi, uygulama test edildi -- SORUNSUZ.
+4. `asama_yukle_calistir.bat` icindeki eski anahtar yeni secret
+   anahtarla degistirilmeye calisilirken GITHUB PUSH PROTECTION bu
+   sefer YENI anahtari da yakalayip push'u reddetti (koruma dogru
+   calisti, hicbir sey sizmadi) -- bunun uzerine dosya TAMAMEN git
+   takibinden cikarildi (`git rm --cached` + `.gitignore`), gercek
+   anahtar SADECE Bahri'nin bilgisayarinda kaldi.
+5. Settings -> API Keys -> "Disable JWT-based legacy API keys"
+   tiklanip eski sistem devre disi birakildi (bu adim, JWT sirrinin
+   iptal edilebilmesi icin ON KOSULDU -- Supabase dogrudan iptale
+   izin vermiyor).
+6. JWT Keys -> Previously used keys -> sizan Legacy HS256 anahtari
+   **REVOKE edildi -- KALICI OLARAK GECERSIZ.**
+
+**SONUC: Guvenlik olayi TAM ve DOGRU sekilde kapatildi.** Sizan
+anahtar artik hicbir sekilde kullanilamaz, uygulama yeni anahtarlarla
+sorunsuz calisiyor, git gecmisinde hicbir gercek sir kalmadi.
+
+**DERS:** `.bat`/betik dosyalarina anahtar/sir YAZARKEN bile DIKKATLI
+olunmali -- boyle dosyalar genelde "yardimci script" sayilip
+gozden kacabiliyor. Bundan sonra herhangi bir yeni script/dosya
+onerilirken, icinde anahtar/sifre/token GEREKIYORSA, Bahri'ye o
+degeri DOSYAYA DEGIL, ortam degiskenine/Secrets'a koymasi
+onerilecek.
