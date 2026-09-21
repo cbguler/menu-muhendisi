@@ -9532,3 +9532,31 @@ dikkat edilecek, sadece sohbet yanitlarinda degil.
 
 **Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- YUZ
 KIRK SEKIZINCI DUZELTME) teslim edildi.
+
+**YUZ KIRK DOKUZUNCU DUZELTME (21 Eylul 2026, ayni gun): CRASH --
+postgrest.exceptions.APIError:** YUZ KIRK SEKIZINCI DUZELTME'nin
+KENDISI yeni bir cokme yaratti! Kok neden: `id` alanini `None`'dan
+sabit bir metne (`__ozel_hizmet_profili__`) degistirmek, ` if
+_secili_sayfa_profili["id"]:` gibi TRUTHINESS'e dayanan ESKI
+guard'lari BOZDU -- `None` FALSY'ydi (sorgu dogru sekilde
+atlaniyordu), ama herhangi bir METIN HER ZAMAN truthy'dir (sorgu artik
+YANLISLIKLA calisip UUID sutununa gecersiz bir deger gonderiyordu).
+2 yerde bulunup duzeltildi: (1) kayitli aylik menuleri listeleme
+sorgusu (`with sag3:` blogu), (2) "Aylık Menüyü Kaydet" butonunun
+aktif/pasif kontrolu. Her ikisi de artik ACIKCA "ve Özel Hizmet
+Profili DEGILSE" kontrolu icin genisletildi. Ayrica buton genisligi
+[4,1] -> [3,1] yapilarak "Düzelt" yazisinin daha rahat sigmasi
+saglandi.
+
+**ONEMLI DERS:** Bir "sentinel" degeri (None -> ozel bir sabit)
+degistirirken, o eski degerin TRUTHINESS'ine (falsy/truthy) dayanan
+TUM guard'lar da GOZDEN GECIRILMELI -- sadece "== None" / "is None"
+karsilastirmalarini degil, `if x:` tarzi ORTUK truthiness kontrollerini
+de aramak gerekiyor. Bu oturumda AYNI hata sinifi (bir degisiklik
+yeni, farkli bir cokmeye yol aciyor) art arda birkac kez yasandi --
+her boyle bir sentinel/id degisikliginden sonra TUM dosyada o
+degiskenin GECEBILECEGI her sorgu/karsilastirma noktasi sistematik
+olarak taranmali.
+
+**Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- YUZ
+KIRK DOKUZUNCU DUZELTME) teslim edildi.

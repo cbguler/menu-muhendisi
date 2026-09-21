@@ -892,7 +892,7 @@ with sag2:
     _onceki_secim = st.session_state.get("sayfa_porsiyon_profili_secimi")
     _duzelt_butonu_gosterilecek = _hizmet_onaylandi and _onceki_secim == _OZEL_HIZMET_ID
     if _duzelt_butonu_gosterilecek:
-        _col_secim, _col_duzelt = st.columns([4, 1])
+        _col_secim, _col_duzelt = st.columns([3, 1])
         with _col_secim:
             _secili_profil_id_sayfa = st.selectbox(
                 "Maliyet hesabı için porsiyon profili",
@@ -940,7 +940,15 @@ with sag3:
     # rerun ediliyor -- boylece ayni sayfanin ALTINDAKI goruntuleme/
     # Excel/kaydet mantigi HICBIR DEGISIKLIK gerektirmeden calisir.
     _kayitli_menuler = []
-    if _secili_sayfa_profili["id"]:
+    # YUZ KIRK DOKUZUNCU DUZELTME (21 Eylul 2026): "id" artik Özel
+    # Hizmet Profili icin None DEGIL, sabit bir metin (_OZEL_HIZMET_ID)
+    # -- eskiden `if _secili_sayfa_profili["id"]:` kontrolu None'un
+    # FALSY olmasina guveniyordu, ama bir METIN degeri HER ZAMAN
+    # truthy'dir -- bu yuzden sorgu YANLISLIKLA calisip UUID sutununa
+    # gecersiz bir metin gondererek postgrest.exceptions.APIError
+    # firlatiyordu. Artik ACIKCA _OZEL_HIZMET_ID'den FARKLI mi diye
+    # kontrol ediliyor.
+    if _secili_sayfa_profili["id"] and _secili_sayfa_profili["id"] != _OZEL_HIZMET_ID:
         _kayitli_menuler = (
             supabase.table("kayitli_aylik_menuler")
             .select("id, yil, ay, menu_verisi")
@@ -2421,7 +2429,7 @@ if aylik:
             + (" ..." if len(_hedef_disi_kayitlar) > 16 else "")
         )
         st.button("Aylık Menüyü Kaydet", disabled=True, key="btn_aylik_kaydet_disabled")
-    elif not _secili_profil_id_kaydet:
+    elif not _secili_profil_id_kaydet or _secili_profil_id_kaydet == "__ozel_hizmet_profili__":
         st.button("Aylık Menüyü Kaydet", disabled=True, key="btn_aylik_kaydet_disabled",
                    help="Önce yukarıdan bir porsiyon profili seç.")
     else:
