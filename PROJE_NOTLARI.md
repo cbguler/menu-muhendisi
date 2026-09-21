@@ -9764,3 +9764,26 @@ ozel dikkat gerekiyor).
 
 **Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- gecici
 teshis paneli eklendi) teslim edildi.
+
+**KOK NEDEN TESHIS PANELIYLE KESIN BULUNDU (YUZ ELLI ALTINCI
+DUZELTME):** Teshis ciktisi ACIKCA gosterdi -- widget'tan HEMEN ONCE
+`session_state["yillik_menu_secili_besin_anahtarlari"]` DOGRU sekilde
+TAM 32 maddelik listeyi iceriyordu (geri yukleme kodu MUKEMMEL
+calisiyordu), AMA widget'in KENDISI bunu YOK SAYIP kendi sabit
+`default=["kalori","protein","yag","karbonhidrat","gi"]` parametresini
+(5 madde) kullaniyordu. KOK NEDEN: Streamlit'te bir widget'a HEM
+`default=` HEM ONCEDEN AYARLANMIS `session_state[key]` AYNI ANDA
+verilirse, `default=` KAZANIR. Bu, `haric_alerjenler_secimi`
+multiselect'inin NEDEN calistigini da aciklar -- onda HIC `default=`
+yoktu.
+
+**DUZELTME:** `default=` parametresi widget'tan TAMAMEN KALDIRILDI.
+"Ilk kez goruluyor" (hem gecici hem kalici hafiza da bossa) durumu
+artik widget'tan ONCE, `if key not in st.session_state: st.session_
+state[key] = [varsayilan 5 madde]` seklinde ELLE yonetiliyor. Dosya
+genelinde AYNI cakisma (hem default= hem key=) olan BASKA widget
+ARANDI -- bulunamadi, sorun izoleydi. Gecici teshis paneli KALDIRILDI.
+
+**Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- YUZ
+ELLI ALTINCI DUZELTME, teshis paneliyle KESIN dogrulanmis kok neden)
+teslim edildi.

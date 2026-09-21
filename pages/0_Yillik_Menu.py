@@ -1174,18 +1174,20 @@ else:
             "için aşağıda min/maks aralığı gösterilecek."
         )
         _sayfalar_arasi_geri_yukle("yillik_menu_secili_besin_anahtarlari")
-        # GECICI TESHIS (21 Eylul 2026) -- "Hedeflenecek besin değerleri"
-        # sayfa gecisinde sifirlaniyor, kok neden bulunamadi -- bu
-        # SORUN COZULUNCE SILINECEK.
-        with st.expander("Geçici teşhis (besin değerleri sıfırlanması)", expanded=True):
-            st.write("Widget key session_state'te VAR MI (once):", "yillik_menu_secili_besin_anahtarlari" in st.session_state)
-            st.write("Widget key degeri (varsa):", st.session_state.get("yillik_menu_secili_besin_anahtarlari"))
-            st.write("Kalici yedek VAR MI:", "_kalici__yillik_menu_secili_besin_anahtarlari" in st.session_state)
-            st.write("Kalici yedek degeri:", st.session_state.get("_kalici__yillik_menu_secili_besin_anahtarlari"))
+        # YUZ ELLI ALTINCI DUZELTME (21 Eylul 2026): KOK NEDEN TESHIS
+        # PANELIYLE KESIN BULUNDU -- geri yukleme kodu widget'tan ONCE
+        # session_state'i DOGRU sekilde (32 maddelik tam liste) dolduruyordu,
+        # AMA widget'in KENDISI bunu YOK SAYIP kendi sabit `default=[...]`
+        # parametresini (5 madde) kullaniyordu. Bu, Streamlit'in bilinen bir
+        # davranisi: `default=` VE onceden ayarlanmis session_state AYNI ANDA
+        # verilince `default=` KAZANIYOR. COZUM: `default=` widget'tan
+        # TAMAMEN KALDIRILDI -- "ilk kez goruluyor" mantigi artik widget'tan
+        # ONCE, session_state'e DOGRUDAN yazarak yonetiliyor.
+        if "yillik_menu_secili_besin_anahtarlari" not in st.session_state:
+            st.session_state["yillik_menu_secili_besin_anahtarlari"] = ["kalori", "protein", "yag", "karbonhidrat", "gi"]
         secili_besin_anahtarlari = st.multiselect(
             "Hedeflenecek besin değerleri",
             options=[anahtar for anahtar, *_ in TUM_BESIN_ALANLARI],
-            default=["kalori", "protein", "yag", "karbonhidrat", "gi"],
             format_func=lambda a: BESIN_ETIKET[a],
             key="yillik_menu_secili_besin_anahtarlari",
         )
