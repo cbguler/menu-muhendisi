@@ -9825,3 +9825,15 @@ sorun yasarsa AYNI dinamik-key yontemi uygulanabilir.
 
 **Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- YUZ
 ELLI YEDINCI DUZELTME, teshis panelleri kaldirildi) teslim edildi.
+
+**SONUC: YUZ ELLI YEDINCI DUZELTME BASARILI -- Bahri dogruladi ("simdi
+tamam").** Aylık Menü sayfasindaki TUM "sayfa gecisinde sifirlanma"
+sagasi (porsiyon profili -> Yıl/Ay/alerjenler -> besin hedefi
+checkbox+listesi, ve Tarif Kütüphanesi'ne porsiyon aktarimi) NIHAYET
+TAM olarak kapandi. Bu, cok sayida yanlis hipotez (default= cakismasi,
+_hedef_imzasi mekanizmasi) ve GECICI TESHIS PANELLERININ (2 kez)
+gercek calisma-ani verisiyle KESIN kok nedene ulastirdigi uzun bir
+surecti -- KALICI DERS: bir sayfa-gecisi/widget-hafizasi sorununda
+2. tahminden sonra HALA cozulmuyorsa, DOGRUDAN teshis paneli ekleyip
+GERCEK veriyi gormek, daha fazla spekülasyondan cok daha hizli sonuc
+veriyor.
