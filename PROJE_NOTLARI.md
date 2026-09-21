@@ -9723,3 +9723,31 @@ boylece TAMAMLANDI (hem gonderen hem alici taraf).
 
 **Dosya durumu:** `5_Tarif_Kutuphanesi.py` (guncellendi) teslim
 edildi.
+
+**Kalan sorun: "Hedeflenecek besin değerleri" hala sifirlaniyordu.**
+Bahri tekrar test etti: porsiyon aktarimi + Yıl/Ay/alerjenler/
+besin_hedefi_kullan HEPSI dogru kaliciydi, AMA "Hedeflenecek besin
+değerleri" multiselect'i (ör. "select all" ile 32 tanesi secilmisken)
+sayfaya geri donunce SADECE ILK 5 VARSAYILANA (Kalori/Protein/Yağ/
+Karbonhidrat/Glisemik İndeks) donuyordu -- BOS DEGIL, tam olarak
+widget'in KENDI hardcoded `default=[...]` degerine.
+
+**YUZ ELLI BESINCI DUZELTME -- HIPOTEZ (DOGRULANMADI):** Kod
+incelemesi, `_hedef_imzasi` adli AYRI bir mekanizma buldu -- profil
+DEGISTIGINDE o profilin KENDI kayitli besin hedeflerini otomatik
+YUKLEYIP kullanicinin secimini EZEN bir ozellik (SEKSEN UCUNCU
+DUZELTME'den beri var). Bu mekanizmanin "onceki durum" takipcisi
+(`_onceki_profil_imza_aylik_menu`) DE plain bir session_state
+anahtari ama sayfa gecisinde HAYATTA KALMAYABILIRDI -- bu durumda
+sistem "profil degisti" sanip Bahri'nin MANUEL secimini profilin
+KAYITLI hedefleriyle EZIYOR olabilirdi. Ayni kalici-yedek yontemi
+(`_sayfalar_arasi_geri_yukle`/`_kaydet`) bu takipciye de uygulandi.
+
+**DURUSTCE:** Bu KESIN dogrulanmis bir kok neden DEGIL -- reverted
+olunan "5 temel deger" hem widget'in SABIT varsayilani hem de
+KULLANILAN PROFILIN kendi kayitli hedefleri olabilir, ikisi
+BIRBIRINDEN AYIRT EDILEMEDI. Bahri'nin SONUCU acikca raporlamasi
+gerekiyor.
+
+**Dosya durumu:** `0_Yillik_Menu.py` (YENIDEN guncellendi -- YUZ
+ELLI BESINCI DUZELTME, DOGRULANMADI) teslim edildi.

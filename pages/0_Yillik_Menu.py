@@ -1095,8 +1095,16 @@ with sag3:
     # "imza" olusturuyor -- profilin ALTINDAKI VERI degisse bile
     # (ID ayni kalsa dahi) yeniden yukleme tetikleniyor.
     _hedef_imzasi = (_secili_sayfa_profili["id"], json.dumps(_secili_sayfa_profili.get("hedefler"), sort_keys=True))
+    # YUZ ELLI BESINCI DUZELTME (21 Eylul 2026): "_onceki_profil_imza_
+    # aylik_menu" da (diger COK SAYIDA anahtar gibi) sayfa gecisinde
+    # kayboluyor olabilirdi -- bu durumda "profil degisti" sanilip
+    # Bahri'nin MANUEL "select all" secimi, profilin KENDI kayitli
+    # hedefleriyle EZILIYORDU. Ayni kalici-yedek yontemi buna da
+    # uygulandi.
+    _sayfalar_arasi_geri_yukle("_onceki_profil_imza_aylik_menu")
     if st.session_state.get("_onceki_profil_imza_aylik_menu") != _hedef_imzasi:
         st.session_state["_onceki_profil_imza_aylik_menu"] = _hedef_imzasi
+        _sayfalar_arasi_kaydet("_onceki_profil_imza_aylik_menu")
         _profil_hedefleri = _secili_sayfa_profili.get("hedefler") or {}
         if _profil_hedefleri:
             st.session_state["besin_hedefi_kullan"] = True
