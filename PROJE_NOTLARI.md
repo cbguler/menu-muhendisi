@@ -9910,3 +9910,29 @@ sadece YANLIS/tamamlanmamis mantik icindi.
 **Dosya durumu:** `0_Yillik_Menu.py` (guncellendi -- eksik fonksiyon
 tanimi duzeltildi) teslim edildi. Ozelligin GENEL testi hala
 BEKLENIYOR.
+
+**SONUC: CRASH DUZELDI, OZELLIK CALISTI.** Bahri 3 kozmetik sorun
+bildirdi:
+
+**YUZ ELLI DOKUZUNCU DUZELTME:**
+1. **Buton genisligi:** `st.columns(3)` (esit/genis) -> `st.columns([2,2,2,5])`
+   (3 dar esit buton + kalan alani yutan bosluk sutunu).
+2. **Pop-up hizalama:** Miktar/birim/fiyat HTML TABLOSUNA (sutunlar
+   halinde) tasindi -- eskiden HER SATIR ayri bir `st.markdown` ile
+   `display:flex` kullaniyordu, bu SADECE O SATIR icinde hizaliydi,
+   SATIRLAR ARASI hizasizdi. "—" ayraci kaldirildi, "Ara toplam"/
+   "Genel Toplam" buyuk+bold, rakamlari fiyat sutunuyla hizali.
+3. **Print BOS SAYFA -- IKI kok neden bulundu:** (a) yazdirma
+   alaninin acilis/kapanis etiketleri AYRI st.markdown() cagrilarindaydi
+   -- Streamlit HER cagriyi KENDI BAGIMSIZ DOM parcasi olarak render
+   ettigi icin hedef div GERCEKTEN BOSTU; (b) yazdirma butonu
+   `st.components.v1.html` ile bir IFRAME icinde calisiyordu --
+   oradaki `window.print()` IFRAME'IN KENDISINI (bos) yazdiriyordu,
+   ANA sayfayi degil. COZUM: TUM ozet TEK BIR HTML metni olarak
+   birlestirilip TEK bir st.markdown() cagrisiyla basiliyor (hem
+   hizalama hem GERCEKTEN TEK PARCA DOM icin -- ikisi de AYNI kokten
+   cozuldu), VE `window.print()` yerine `window.parent.print()`
+   kullanildi (ANA sayfayi yazdirsin diye).
+
+**Dosya durumu:** `0_Yillik_Menu.py` (guncellendi -- YUZ ELLI
+DOKUZUNCU DUZELTME) teslim edildi.

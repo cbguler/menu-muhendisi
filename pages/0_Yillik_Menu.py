@@ -2554,21 +2554,38 @@ def _aylik_malzeme_ihtiyaci_hesapla(aylik, porsiyon_sayisi, isletme_id):
     }
 
 
-def _malzeme_miktar_metni(gram):
+def _malzeme_miktar_parcala(gram):
+    """Miktari (sayi, birim) ikilisine ayirir -- ayri HTML sutunlarinda
+    dogru hizalanabilmesi icin."""
     if gram >= 1000:
-        return f"{gram / 1000:.2f} kg"
-    return f"{round(gram)} g"
+        return f"{gram / 1000:.2f}", "kg"
+    return f"{round(gram)}", "g"
 
 
-def _malzeme_satiri_ciz(kayit):
-    _fiyat_metni = f"{kayit['fiyat_eur']:.2f} €" if kayit["fiyat_eur"] is not None else "fiyat yok"
-    st.markdown(
-        f"<div style='display:flex; justify-content:space-between; padding:2px 0;'>"
-        f"<span>{kayit['ad']}</span>"
-        f"<span>{_malzeme_miktar_metni(kayit['miktar_gram'])} — {_fiyat_metni}</span>"
-        f"</div>",
-        unsafe_allow_html=True,
+def _malzeme_tablosu_html(kayitlar, ara_toplam_eur):
+    """Bir malzeme grubunun (dayanikli ya da bir haftanin) TEK PARCA
+    HTML tablosunu uretir -- satir satir ayri st.markdown yerine TEK
+    bir <table> icinde -- boylece miktar/birim/fiyat sutunlari GERCEK
+    HTML tablo semantigiyle dikey hizali olur."""
+    _satirlar = ""
+    for _kayit in kayitlar:
+        _sayi, _birim = _malzeme_miktar_parcala(_kayit["miktar_gram"])
+        _fiyat_metni = f"{_kayit['fiyat_eur']:.2f} €" if _kayit["fiyat_eur"] is not None else "fiyat yok"
+        _satirlar += (
+            f"<tr>"
+            f"<td style='padding:2px 8px 2px 0;'>{_kayit['ad']}</td>"
+            f"<td style='padding:2px 4px; text-align:right;'>{_sayi}</td>"
+            f"<td style='padding:2px 24px 2px 2px; text-align:left;'>{_birim}</td>"
+            f"<td style='padding:2px 0; text-align:right;'>{_fiyat_metni}</td>"
+            f"</tr>"
+        )
+    _satirlar += (
+        "<tr>"
+        "<td colspan='3' style='padding-top:8px; font-size:1.15em; font-weight:bold;'>Ara toplam:</td>"
+        f"<td style='padding-top:8px; text-align:right; font-weight:bold;'>{ara_toplam_eur:.2f} €</td>"
+        "</tr>"
     )
+    return f"<table style='width:100%; border-collapse:collapse;'>{_satirlar}</table>"
 
 
 @st.dialog("Aylık Malzeme Listesi")
@@ -2579,31 +2596,51 @@ def _aylik_malzeme_listesi_dialog(aylik, porsiyon_sayisi, isletme_id):
     if not _veri["tam_fiyatli"]:
         st.caption("Not: bazı malzemelerin güncel fiyatı tanımlı değil — bunlar toplama dahil edilmedi (\"fiyat yok\" olarak işaretli).")
 
-    st.markdown("<div id='aylik-malzeme-yazdir-alani'>", unsafe_allow_html=True)
-    st.markdown(f"#### Dayanıklı Malzemeler (Aylık — {aylik['ay']} {aylik['yil']})")
-    st.caption("En az 30 gün bozulmadan saklanabilen malzemeler — ay başında tek seferde alınabilir.")
+    # YUZ ELLI DOKUZUNCU DUZELTME (21 Eylul 2026): Bahri 3 kozmetik
+    # sorun bildirdi: (1) miktar/birim hizasizdi -- ayri sutunlara
+    # ayrildi; (2) miktar-fiyat arasindaki "—" kaldirildi, ara/genel
+    # toplam buyuk+bold ve fiyat sutunuyla hizali; (3) Print BOS SAYFA
+    # veriyordu -- IKI kok neden bulundu: (a) yazdirma alaninin acilis/
+    # kapanis etiketleri AYRI st.markdown() cagrilarindaydi -- Streamlit
+    # HER markdown cagrisini KENDI BAGIMSIZ DOM parcasi olarak render
+    # ettigi icin aralari GERCEKTEN TEK bir kapsayici OLMUYORDU (hedef
+    # div GERCEKTEN BOSTU); (b) yazdirma butonu `st.components.v1.html`
+    # ile bir IFRAME icinde calisiyordu -- oradaki `window.print()`
+    # IFRAME'IN KENDISINI (bos) yazdiriyordu, ANA sayfayi degil. COZUM:
+    # TUM ozet TEK BIR HTML metni olarak birlestirilip TEK bir
+    # st.markdown() cagrisiyla basiliyor (hem hizalama hem gercekten
+    # TEK PARCA DOM icin), VE `window.print()` yerine `window.parent.
+    # print()` kullanildi (ANA sayfayi yazdirsin diye).
+    _html_parcalari = ["<div id='aylik-malzeme-yazdir-alani'>"]
+    _html_parcalari.append(f"<h4>Dayanıklı Malzemeler (Aylık — {aylik['ay']} {aylik['yil']})</h4>")
+    _html_parcalari.append(
+        "<p style='color:#666; font-size:0.9em;'>En az 30 gün bozulmadan "
+        "saklanabilen malzemeler — ay başında tek seferde alınabilir.</p>"
+    )
     if _veri["dayanikli"]:
-        for _kayit in _veri["dayanikli"]:
-            _malzeme_satiri_ciz(_kayit)
-        st.markdown(f"**Ara toplam: {_veri['dayanikli_toplam_eur']:.2f} €**")
+        _html_parcalari.append(_malzeme_tablosu_html(_veri["dayanikli"], _veri["dayanikli_toplam_eur"]))
     else:
-        st.caption("Bu ay için dayanıklı malzeme yok.")
+        _html_parcalari.append("<p style='color:#666;'>Bu ay için dayanıklı malzeme yok.</p>")
 
     for _hafta_no in sorted(_veri["haftalik_taze"].keys()):
-        st.markdown(f"#### {_hafta_no}. Hafta — Taze Malzemeler")
-        for _kayit in _veri["haftalik_taze"][_hafta_no]:
-            _malzeme_satiri_ciz(_kayit)
-        st.markdown(f"**Ara toplam: {_veri['haftalik_toplam_eur'][_hafta_no]:.2f} €**")
+        _html_parcalari.append(f"<h4 style='margin-top:20px;'>{_hafta_no}. Hafta — Taze Malzemeler</h4>")
+        _html_parcalari.append(_malzeme_tablosu_html(_veri["haftalik_taze"][_hafta_no], _veri["haftalik_toplam_eur"][_hafta_no]))
 
-    st.markdown("---")
-    st.markdown(f"### Genel Toplam: {_veri['genel_toplam_eur']:.2f} €")
-    st.markdown("</div>", unsafe_allow_html=True)
+    _html_parcalari.append("<hr style='margin-top:20px;'>")
+    _html_parcalari.append(
+        "<table style='width:100%; border-collapse:collapse;'><tr>"
+        "<td colspan='3' style='font-size:1.4em; font-weight:bold;'>Genel Toplam:</td>"
+        f"<td style='text-align:right; font-size:1.4em; font-weight:bold;'>{_veri['genel_toplam_eur']:.2f} €</td>"
+        "</tr></table>"
+    )
+    _html_parcalari.append("</div>")
+    st.markdown("".join(_html_parcalari), unsafe_allow_html=True)
 
     # YAZDIRMA: SADECE yukaridaki #aylik-malzeme-yazdir-alani bolumunu
-    # gorunur birakan bir @media print kurali + window.print() tetikleyen
-    # bir buton. NOT: bu, Streamlit'in dialog/modal yapisi icinde ILK
-    # DENEME -- tarayicidan tarayiciya (ozellikle mobil) davranisi
-    # DEGISEBILIR, Bahri'nin test etmesi gerekiyor.
+    # gorunur birakan bir @media print kurali + ANA sayfayi yazdiran
+    # (window.parent.print()) bir buton. NOT: Streamlit'in dialog/modal
+    # yapisi icinde ILK deneme, tarayicidan tarayiciya (ozellikle
+    # mobil) davranisi DEGISEBILIR, Bahri'nin test etmesi gerekiyor.
     st.markdown(
         """
         <style>
@@ -2617,7 +2654,7 @@ def _aylik_malzeme_listesi_dialog(aylik, porsiyon_sayisi, isletme_id):
         unsafe_allow_html=True,
     )
     if st.button("Print", key="btn_aylik_malzeme_yazdir", use_container_width=True):
-        st.components.v1.html("<script>window.print();</script>", height=0)
+        st.components.v1.html("<script>window.parent.print();</script>", height=0)
 
 
 def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
@@ -2802,7 +2839,11 @@ if aylik:
 
     excel_verisi = _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, kayitli_hedefler)
 
-    _col_kaydet, _col_excel, _col_malzeme = st.columns(3)
+    # YUZ ELLI DOKUZUNCU DUZELTME (21 Eylul 2026): Bahri "butonlar cok
+    # genis, en uzun yazi olan 'Aylık Menüyü Kaydet'e sigacak kadar
+    # daralt" dedi -- esit genislikte 3 DAR sutun + kalan alani yutan
+    # bir bosluk sutunu.
+    _col_kaydet, _col_excel, _col_malzeme, _ = st.columns([2, 2, 2, 5])
     with _col_kaydet:
         if _kaydet_durumu == "hedef_disi":
             st.button("Aylık Menüyü Kaydet", disabled=True, key="btn_aylik_kaydet_disabled", use_container_width=True)
