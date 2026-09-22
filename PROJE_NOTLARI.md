@@ -9883,3 +9883,7 @@ tarayiciya davranisi DEGISEBILIR, Bahri'nin test etmesi gerekiyor.
 **Dosya durumu:** `0_Yillik_Menu.py` (guncellendi -- YUZ ELLI
 SEKIZINCI DUZELTME), `teshis_bozulma_kolonu.sql` (yeni) teslim
 edildi. SONUC (hem kolon adi hem ozelligin genel testi) BEKLENIYOR.
+
+**KOLON ADI DOGRULANDI:** `bozulma_suresi` -- tahmin dogruymus, kod
+degisikligi GEREKMEDI. Ozelligin GENEL testi (gercek pop-up davranisi,
+hesaplama dogrulugu, Print butonu) hala BEKLENIYOR.
