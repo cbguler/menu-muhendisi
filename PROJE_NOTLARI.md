@@ -9887,3 +9887,26 @@ edildi. SONUC (hem kolon adi hem ozelligin genel testi) BEKLENIYOR.
 **KOLON ADI DOGRULANDI:** `bozulma_suresi` -- tahmin dogruymus, kod
 degisikligi GEREKMEDI. Ozelligin GENEL testi (gercek pop-up davranisi,
 hesaplama dogrulugu, Print butonu) hala BEKLENIYOR.
+
+**KENDI HATAM -- CRASH (NameError):** "Ay için menü üret"ne basinca
+`name '_aylik_menu_excel_olustur' is not defined` hatasi cikti.
+Teshis: bu fonksiyonun `def` SATIRININ KENDISI, yeni malzeme-listesi
+kodunu EKLERKEN yapilan str_replace isleminde YANLISLIKLA DUSMUSTU --
+docstring+govde duruyordu ama `def _aylik_menu_excel_olustur(...):`
+satiri KAYIPTI. TEK SATIRLIK duzeltmeyle geri eklendi. GUVENLIK
+KONTROLU: dosyadaki TUM fonksiyon isimleri orijinal dosyayla
+karsilastirildi -- BASKA hicbir fonksiyon KAYIP degil, sadece bu tek
+olay yasanmis (ve simdi duzeltilmis).
+
+**DERS:** Bir fonksiyon TANIMININ HEMEN ONUNE yeni kod eklerken,
+`old_str` olarak sadece `def ... :` satirini kullanip ayni satiri
+`new_str`'nin SONUNA tekrar eklemek RISKLI -- boyle buyuk/karmasik
+ekleme islemlerinden SONRA, en azindan "bu fonksiyon hala `def` ile
+basliyor mu" seklinde HIZLI bir dogrulama (grep) YAPILACAK, sadece
+`ast.parse()` (sozdizimi gecerliligi) YETERLI DEGIL -- bu, GECERLI
+Python sozdizimiydi (docstring tek basina bile GECERLI bir ifade),
+sadece YANLIS/tamamlanmamis mantik icindi.
+
+**Dosya durumu:** `0_Yillik_Menu.py` (guncellendi -- eksik fonksiyon
+tanimi duzeltildi) teslim edildi. Ozelligin GENEL testi hala
+BEKLENIYOR.
