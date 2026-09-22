@@ -2800,7 +2800,14 @@ if aylik:
     else:
         _kaydet_durumu = "aktif"
 
-    excel_verisi = _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, kayitli_hedefler)
+    try:
+        excel_verisi = _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, kayitli_hedefler)
+    except NameError as _ne:
+        # GECICI TESHIS (21 Eylul 2026) -- Bahri NameError bildirdi,
+        # Streamlit gercek mesaji gizliyor -- bu SORUN COZULUNCE
+        # SILINECEK.
+        st.error(f"GECICI TESHIS -- gercek hata: {_ne}")
+        st.stop()
 
     _col_kaydet, _col_excel, _col_malzeme = st.columns(3)
     with _col_kaydet:
