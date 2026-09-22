@@ -2421,7 +2421,206 @@ def _hafta_kartlarini_goster_mobil(hafta, detay, fiyat_verisi_var, hedefler, ay_
                         st.markdown("<div class='omgo-tablo-bos-hucre'>&nbsp;</div>", unsafe_allow_html=True)
 
 
-def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
+# YUZ ELLI SEKIZINCI DUZELTME (21 Eylul 2026): Bahri'nin istegi --
+# "Aylık Malzeme Listesi" ozelligi. Dayanikli (>=30 gun bozulmayan --
+# ör. zeytinyagi) malzemeler AYLIK TEK LISTE, taze (kisa omurlu)
+# malzemeler ise HAFTALIK ayri listeler halinde, miktar+fiyat+alt
+# toplam+genel toplamla gosteriliyor.
+#
+# ONEMLI VARSAYIM (Bahri'ye acikca belirtildi): `bozulma_suresi`
+# alani BOS/NULL olan malzemeler icin GUVENLI tarafta kalinip
+# "TAZE" (haftalik) olarak ele alindi -- yanlislikla "dayanikli"
+# sayilip yanlis alisveris tavsiyesi verilmesindense, daha sik
+# alinmasi onerilen bir malzeme daha az riskli.
+_DAYANIKLILIK_ESIGI_GUN = 30
+
+
+def _aylik_malzeme_ihtiyaci_hesapla(aylik, porsiyon_sayisi, isletme_id):
+    """Bir ayin TUM haftalarindaki tariflerin malzeme ihtiyacini,
+    aktif porsiyon sayisina gore olcekleyip toplar. Donen sozluk:
+    {"dayanikli": [...], "haftalik_taze": {1: [...], ...},
+     "dayanikli_toplam_eur": X, "haftalik_toplam_eur": {1: X, ...},
+     "genel_toplam_eur": X, "tam_fiyatli": bool}
+    Her malzeme kaydi: {"ad", "miktar_gram", "fiyat_eur" (None ise
+    fiyat eksik demektir)}."""
+    # 1) Bu ayda kullanilan (hafta_no, tarif_adi) ciftlerini topla --
+    # ayni tarif ayni haftada birden fazla kez, ya da farkli
+    # haftalarda da gecebilir, hepsi ayri ayri sayiliyor.
+    _kullanim = []  # [(hafta_no, tarif_adi), ...]
+    for hafta_no, hafta in enumerate(aylik["haftalar"], start=1):
+        for gun in hafta:
+            for _ogun_adi, tarif_adlari in (gun.get("ogunler") or {}).items():
+                for tarif_adi in tarif_adlari:
+                    _kullanim.append((hafta_no, tarif_adi))
+
+    _tum_tarif_adlari = sorted(set(ad for _, ad in _kullanim))
+    if not _tum_tarif_adlari:
+        return {
+            "dayanikli": [], "haftalik_taze": {}, "dayanikli_toplam_eur": 0.0,
+            "haftalik_toplam_eur": {}, "genel_toplam_eur": 0.0, "tam_fiyatli": True,
+        }
+
+    # 2) Bu tariflerin ID'lerini ve malzeme listelerini (1 porsiyon
+    # bazli miktar_gram -- bkz. 5_Tarif_Kutuphanesi.py'deki AYNI not)
+    # cek.
+    _receteler = (
+        supabase.table("receteler").select("id, ad")
+        .is_("isletme_id", "null").in_("ad", _tum_tarif_adlari).execute()
+    ).data
+    _id_to_ad = {r["id"]: r["ad"] for r in _receteler}
+    _recete_idleri = list(_id_to_ad.keys())
+
+    _malzeme_kalemleri = _sayfalayarak_getir(
+        lambda: supabase.table("recete_malzemeleri")
+        .select("recete_id, malzeme_id, miktar_gram, malzemeler(ad, bozulma_suresi, fire_orani)")
+        .in_("recete_id", _recete_idleri)
+    )
+
+    _fiyat_kayitlari = _sayfalayarak_getir(
+        lambda: supabase.table("malzeme_guncel_fiyat")
+        .select("malzeme_id, fiyat_eur")
+        .eq("isletme_id", isletme_id)
+    )
+    _fiyat_by_malzeme = {f["malzeme_id"]: f["fiyat_eur"] for f in _fiyat_kayitlari}
+
+    # tarif_adi -> [{"malzeme_id","ad","miktar_gram_1p","bozulma_suresi","fire_orani"}, ...]
+    _tarif_malzemeleri = {}
+    for kalem in _malzeme_kalemleri:
+        _ad = _id_to_ad.get(kalem["recete_id"])
+        if _ad is None:
+            continue
+        _m = kalem.get("malzemeler") or {}
+        _tarif_malzemeleri.setdefault(_ad, []).append({
+            "malzeme_id": kalem["malzeme_id"],
+            "ad": _m.get("ad") or "?",
+            "miktar_gram_1p": kalem["miktar_gram"],
+            "bozulma_suresi": _m.get("bozulma_suresi"),
+            "fire_orani": _m.get("fire_orani") or 0,
+        })
+
+    # 3) Kullanim listesindeki HER (hafta_no, tarif_adi) ciftini kendi
+    # malzemeleriyle genisletip, dayanikli/taze kovalarina TOPLA.
+    _dayanikli_toplam = {}  # malzeme_id -> {"ad","miktar_gram","fire_orani"}
+    _haftalik_taze_toplam = {}  # hafta_no -> {malzeme_id -> {...}}
+    _tam_fiyatli = True
+
+    for _hafta_no, _tarif_adi in _kullanim:
+        for _kalem in _tarif_malzemeleri.get(_tarif_adi, []):
+            _miktar = _kalem["miktar_gram_1p"] * porsiyon_sayisi
+            _bozulma = _kalem["bozulma_suresi"]
+            _dayanikli_mi = _bozulma is not None and _bozulma >= _DAYANIKLILIK_ESIGI_GUN
+            _hedef_kova = _dayanikli_toplam if _dayanikli_mi else _haftalik_taze_toplam.setdefault(_hafta_no, {})
+            _girdi = _hedef_kova.setdefault(
+                _kalem["malzeme_id"],
+                {"ad": _kalem["ad"], "miktar_gram": 0.0, "fire_orani": _kalem["fire_orani"]},
+            )
+            _girdi["miktar_gram"] += _miktar
+
+    def _kova_isle(kova):
+        """Bir kovadaki (malzeme_id -> {ad,miktar_gram,fire_orani})
+        girdileri fiyatlandirip liste + alt toplam dondurur."""
+        nonlocal _tam_fiyatli
+        _liste = []
+        _alt_toplam = 0.0
+        for _malzeme_id, _g in kova.items():
+            _fiyat = _fiyat_by_malzeme.get(_malzeme_id)
+            _fire = _g["fire_orani"]
+            _brut_gram = _g["miktar_gram"] / (1 - _fire) if _fire < 1 else _g["miktar_gram"]
+            _fiyat_eur = None
+            if _fiyat is not None:
+                _fiyat_eur = (_brut_gram / 1000.0) * _fiyat
+                _alt_toplam += _fiyat_eur
+            else:
+                _tam_fiyatli = False
+            _liste.append({"ad": _g["ad"], "miktar_gram": _g["miktar_gram"], "fiyat_eur": _fiyat_eur})
+        _liste.sort(key=lambda x: x["ad"])
+        return _liste, _alt_toplam
+
+    _dayanikli_liste, _dayanikli_toplam_eur = _kova_isle(_dayanikli_toplam)
+    _haftalik_taze = {}
+    _haftalik_toplam_eur = {}
+    for _hafta_no in sorted(_haftalik_taze_toplam.keys()):
+        _liste, _alt_toplam = _kova_isle(_haftalik_taze_toplam[_hafta_no])
+        _haftalik_taze[_hafta_no] = _liste
+        _haftalik_toplam_eur[_hafta_no] = _alt_toplam
+
+    return {
+        "dayanikli": _dayanikli_liste,
+        "haftalik_taze": _haftalik_taze,
+        "dayanikli_toplam_eur": _dayanikli_toplam_eur,
+        "haftalik_toplam_eur": _haftalik_toplam_eur,
+        "genel_toplam_eur": _dayanikli_toplam_eur + sum(_haftalik_toplam_eur.values()),
+        "tam_fiyatli": _tam_fiyatli,
+    }
+
+
+def _malzeme_miktar_metni(gram):
+    if gram >= 1000:
+        return f"{gram / 1000:.2f} kg"
+    return f"{round(gram)} g"
+
+
+def _malzeme_satiri_ciz(kayit):
+    _fiyat_metni = f"{kayit['fiyat_eur']:.2f} €" if kayit["fiyat_eur"] is not None else "fiyat yok"
+    st.markdown(
+        f"<div style='display:flex; justify-content:space-between; padding:2px 0;'>"
+        f"<span>{kayit['ad']}</span>"
+        f"<span>{_malzeme_miktar_metni(kayit['miktar_gram'])} — {_fiyat_metni}</span>"
+        f"</div>",
+        unsafe_allow_html=True,
+    )
+
+
+@st.dialog("Aylık Malzeme Listesi")
+def _aylik_malzeme_listesi_dialog(aylik, porsiyon_sayisi, isletme_id):
+    with st.spinner("Malzeme listesi hesaplanıyor..."):
+        _veri = _aylik_malzeme_ihtiyaci_hesapla(aylik, porsiyon_sayisi, isletme_id)
+
+    if not _veri["tam_fiyatli"]:
+        st.caption("Not: bazı malzemelerin güncel fiyatı tanımlı değil — bunlar toplama dahil edilmedi (\"fiyat yok\" olarak işaretli).")
+
+    st.markdown("<div id='aylik-malzeme-yazdir-alani'>", unsafe_allow_html=True)
+    st.markdown(f"#### Dayanıklı Malzemeler (Aylık — {aylik['ay']} {aylik['yil']})")
+    st.caption("En az 30 gün bozulmadan saklanabilen malzemeler — ay başında tek seferde alınabilir.")
+    if _veri["dayanikli"]:
+        for _kayit in _veri["dayanikli"]:
+            _malzeme_satiri_ciz(_kayit)
+        st.markdown(f"**Ara toplam: {_veri['dayanikli_toplam_eur']:.2f} €**")
+    else:
+        st.caption("Bu ay için dayanıklı malzeme yok.")
+
+    for _hafta_no in sorted(_veri["haftalik_taze"].keys()):
+        st.markdown(f"#### {_hafta_no}. Hafta — Taze Malzemeler")
+        for _kayit in _veri["haftalik_taze"][_hafta_no]:
+            _malzeme_satiri_ciz(_kayit)
+        st.markdown(f"**Ara toplam: {_veri['haftalik_toplam_eur'][_hafta_no]:.2f} €**")
+
+    st.markdown("---")
+    st.markdown(f"### Genel Toplam: {_veri['genel_toplam_eur']:.2f} €")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # YAZDIRMA: SADECE yukaridaki #aylik-malzeme-yazdir-alani bolumunu
+    # gorunur birakan bir @media print kurali + window.print() tetikleyen
+    # bir buton. NOT: bu, Streamlit'in dialog/modal yapisi icinde ILK
+    # DENEME -- tarayicidan tarayiciya (ozellikle mobil) davranisi
+    # DEGISEBILIR, Bahri'nin test etmesi gerekiyor.
+    st.markdown(
+        """
+        <style>
+        @media print {
+            body * { visibility: hidden; }
+            #aylik-malzeme-yazdir-alani, #aylik-malzeme-yazdir-alani * { visibility: visible; }
+            #aylik-malzeme-yazdir-alani { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+    if st.button("Print", key="btn_aylik_malzeme_yazdir", use_container_width=True):
+        st.components.v1.html("<script>window.print();</script>", height=0)
+
+
+
     """Aylık menüyü ekrandaki kart görünümüyle AYNI düzende Excel'e döker:
     her gün bir sütun, altında Öğle/Akşam blokları (yemekler + besin +
     alerjen + maliyet) aynı sırayla. Bir finansal model degil -- formul
@@ -2579,6 +2778,11 @@ if aylik:
     # profil_id" sutunu boylece bu tur menuler icin bos kalir (ozel/
     # gecici oldugunu isaretler), Postgres UUID hatasi da onlenir.
     _kayit_icin_profil_id = None if _secili_profil_id_kaydet == "__ozel_hizmet_profili__" else _secili_profil_id_kaydet
+    # YUZ ELLI SEKIZINCI DUZELTME (21 Eylul 2026): Bahri'nin talebi --
+    # "Aylık Menüyü Kaydet"/"Excel'e indir"/(yeni) "Aylık Malzeme
+    # Listesi" TEK SIRADA, esit boyutlu gosterilsin. "Ay için menü
+    # üret" butonu kendi dogal (uretim-oncesi) yerinde birakildi --
+    # Bahri onayladi (kod tasima riski buyuktu).
     if _hedef_disi_kayitlar:
         st.warning(
             f"Bu ayı kaydetmeden önce hedef dışı kalan {len(_hedef_disi_kayitlar)} "
@@ -2590,57 +2794,75 @@ if aylik:
             + _hedef_disi_liste_metni(_hedef_disi_kayitlar[:16], yil_secimi, ay_secimi)
             + (" ..." if len(_hedef_disi_kayitlar) > 16 else "")
         )
-        st.button("Aylık Menüyü Kaydet", disabled=True, key="btn_aylik_kaydet_disabled")
+        _kaydet_durumu = "hedef_disi"
     elif not _secili_profil_id_kaydet:
-        st.button("Aylık Menüyü Kaydet", disabled=True, key="btn_aylik_kaydet_disabled",
-                   help="Önce yukarıdan bir porsiyon profili seç.")
+        _kaydet_durumu = "profil_yok"
     else:
-        if st.button("💾 Aylık Menüyü Kaydet", key="btn_aylik_kaydet", type="primary"):
-            _profil_sorgusu = (
-                supabase.table("kayitli_aylik_menuler")
-                .select("id")
-                .eq("isletme_id", st.session_state.isletme_id)
-                .eq("yil", aylik["yil"])
-                .eq("ay", aylik["ay"])
-            )
-            _profil_sorgusu = (
-                _profil_sorgusu.is_("porsiyon_profil_id", "null")
-                if _kayit_icin_profil_id is None
-                else _profil_sorgusu.eq("porsiyon_profil_id", _kayit_icin_profil_id)
-            )
-            _mevcut_kayit = _profil_sorgusu.execute().data
-            _kayit_govdesi = {
-                "isletme_id": st.session_state.isletme_id,
-                "porsiyon_profil_id": _kayit_icin_profil_id,
-                "yil": aylik["yil"],
-                "ay": aylik["ay"],
-                "menu_verisi": {"haftalar": aylik["haftalar"]},
-            }
-            if _mevcut_kayit:
-                supabase.table("kayitli_aylik_menuler").update(_kayit_govdesi).eq("id", _mevcut_kayit[0]["id"]).execute()
-                st.success(f"\"{aylik['ay']} {aylik['yil']}\" güncellenerek kaydedildi (önceki kayıt üzerine yazıldı).")
-            else:
-                supabase.table("kayitli_aylik_menuler").insert(_kayit_govdesi).execute()
-                st.success(f"\"{aylik['ay']} {aylik['yil']}\" kaydedildi.")
+        _kaydet_durumu = "aktif"
 
     excel_verisi = _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, kayitli_hedefler)
-    # OTUZ DORDUNCU DUZELTME (24 Agustos 2026): kod incelemesinde bulundu --
-    # bu sayfada veritabanina yazma OLMADIGI icin "salt_okunur" hic
-    # kullanilmamisti, ama bu buton bir ISTISNA: odeme onayi bekleyen
-    # kullanici, sinirsiz sayida aylik menu uretip GERCEK, disari
-    # tasinabilir bir Excel ciktisi alabiliyordu -- diger 3 sayfadaki
-    # ("goruntule ama islem yapma") kurali fiilen boşa cikaran tek nokta
-    # buydu. Menu ONIZLEMESI (ekrandaki kartlar) bilerek disabled
-    # BIRAKILDI -- sadece disariya TASINABILIR/KALICI cikti (Excel)
-    # engelleniyor, ayni Recete Uretimi/Ozel Menu Uretimi'ndeki "olustur/
-    # kaydet" butonlarinin gated olup form alanlarinin gated olmamasi gibi.
-    st.download_button(
-        "Excel'e indir",
-        data=excel_verisi,
-        file_name=f"yillik_menu_{aylik['ay']}.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        disabled=st.session_state.get("salt_okunur", False),
-    )
+
+    _col_kaydet, _col_excel, _col_malzeme = st.columns(3)
+    with _col_kaydet:
+        if _kaydet_durumu == "hedef_disi":
+            st.button("Aylık Menüyü Kaydet", disabled=True, key="btn_aylik_kaydet_disabled", use_container_width=True)
+        elif _kaydet_durumu == "profil_yok":
+            st.button("Aylık Menüyü Kaydet", disabled=True, key="btn_aylik_kaydet_disabled",
+                       help="Önce yukarıdan bir porsiyon profili seç.", use_container_width=True)
+        else:
+            if st.button("Aylık Menüyü Kaydet", key="btn_aylik_kaydet", type="primary", use_container_width=True):
+                _profil_sorgusu = (
+                    supabase.table("kayitli_aylik_menuler")
+                    .select("id")
+                    .eq("isletme_id", st.session_state.isletme_id)
+                    .eq("yil", aylik["yil"])
+                    .eq("ay", aylik["ay"])
+                )
+                _profil_sorgusu = (
+                    _profil_sorgusu.is_("porsiyon_profil_id", "null")
+                    if _kayit_icin_profil_id is None
+                    else _profil_sorgusu.eq("porsiyon_profil_id", _kayit_icin_profil_id)
+                )
+                _mevcut_kayit = _profil_sorgusu.execute().data
+                _kayit_govdesi = {
+                    "isletme_id": st.session_state.isletme_id,
+                    "porsiyon_profil_id": _kayit_icin_profil_id,
+                    "yil": aylik["yil"],
+                    "ay": aylik["ay"],
+                    "menu_verisi": {"haftalar": aylik["haftalar"]},
+                }
+                if _mevcut_kayit:
+                    supabase.table("kayitli_aylik_menuler").update(_kayit_govdesi).eq("id", _mevcut_kayit[0]["id"]).execute()
+                    st.success(f"\"{aylik['ay']} {aylik['yil']}\" güncellenerek kaydedildi (önceki kayıt üzerine yazıldı).")
+                else:
+                    supabase.table("kayitli_aylik_menuler").insert(_kayit_govdesi).execute()
+                    st.success(f"\"{aylik['ay']} {aylik['yil']}\" kaydedildi.")
+
+    with _col_excel:
+        # OTUZ DORDUNCU DUZELTME (24 Agustos 2026): kod incelemesinde bulundu --
+        # bu sayfada veritabanina yazma OLMADIGI icin "salt_okunur" hic
+        # kullanilmamisti, ama bu buton bir ISTISNA: odeme onayi bekleyen
+        # kullanici, sinirsiz sayida aylik menu uretip GERCEK, disari
+        # tasinabilir bir Excel ciktisi alabiliyordu -- diger 3 sayfadaki
+        # ("goruntule ama islem yapma") kurali fiilen boşa cikaran tek nokta
+        # buydu. Menu ONIZLEMESI (ekrandaki kartlar) bilerek disabled
+        # BIRAKILDI -- sadece disariya TASINABILIR/KALICI cikti (Excel)
+        # engelleniyor, ayni Recete Uretimi/Ozel Menu Uretimi'ndeki "olustur/
+        # kaydet" butonlarinin gated olup form alanlarinin gated olmamasi gibi.
+        st.download_button(
+            "Excel'e indir",
+            data=excel_verisi,
+            file_name=f"yillik_menu_{aylik['ay']}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            disabled=st.session_state.get("salt_okunur", False),
+            use_container_width=True,
+        )
+
+    with _col_malzeme:
+        if st.button("Aylık Malzeme Listesi", key="btn_aylik_malzeme_listesi", use_container_width=True):
+            _aylik_malzeme_listesi_dialog(
+                aylik, st.session_state.get("secili_porsiyon_sayisi", 1), st.session_state.isletme_id
+            )
 
     for i, hafta in enumerate(aylik["haftalar"], start=1):
         _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, kayitli_hedefler, aylik["ay"], i, aylik["yil"])

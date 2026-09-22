@@ -9837,3 +9837,49 @@ surecti -- KALICI DERS: bir sayfa-gecisi/widget-hafizasi sorununda
 2. tahminden sonra HALA cozulmuyorsa, DOGRUDAN teshis paneli ekleyip
 GERCEK veriyi gormek, daha fazla spekülasyondan cok daha hizli sonuc
 veriyor.
+
+### 21 Eylul 2026 -- YUZ ELLI SEKIZINCI DUZELTME: "Aylık Malzeme Listesi" Ozelligi + Buton Duzeni
+
+Bahri'nin istegi: (1) "Aylık Menüyü Kaydet"/"Excel'e indir"/"Ay için
+menü üret" TEK SIRADA, esit boyutlu olsun; (2) yeni bir "Aylık
+Malzeme Listesi" butonu eklensin, tiklaninca bir pop-up acilsin --
+dayanikli (1 ay bozulmayan, ör. zeytinyagi) malzemeler AYLIK TEK
+liste, taze malzemeler ise HAFTALIK ayri listeler halinde, miktar+
+fiyat+ara toplam+genel toplamla gosterilsin, en altta "Print" butonu
+olsun.
+
+**Kod incelemesi ONEMLI bir yanlis varsayimimi duzeltti:** "Ay için
+menü üret" ile digger 2 buton arasinda ~1300 satir takvim kodu VAR --
+bunlar GERCEKTEN uzak (biri uretim ONCESI tetikleyici, digerleri
+uretim SONRASI islemler). Bahri'ye bu acikca anlatildi, "üret"
+butonu kendi yerinde birakilip SADECE diger 3'u (kaydet/excel/YENI
+malzeme listesi) tek sirada birlestirildi -- Bahri onayladi.
+
+**"Aylık Malzeme Listesi" NASIL HESAPLANDI:**
+1. `5_Tarif_Kutuphanesi.py`'deki ONEMLI bir NOTTAN yararlanildi:
+   `recete_malzemeleri.miktar_gram` ZATEN 1 PORSIYON BAZLI -- olcekleme
+   sadece `miktar_gram * porsiyon_sayisi`, ayri bir "taban porsiyon"
+   alanina gerek YOK.
+2. Ayin TUM haftalarindaki (hafta_no, tarif_adi) ciftleri toplanip,
+   HER tarifin malzemeleri (`recete_malzemeleri` + `malzemeler(ad,
+   bozulma_suresi, fire_orani)`) cekildi.
+3. Siniflandirma: `bozulma_suresi >= 30 gun` ise DAYANIKLI (aylik tek
+   toplam), degilse (VEYA alan BOSSA -- GUVENLI TARAFTA KALINDI) TAZE
+   (o haftaya ozel toplam).
+4. Fiyat: mevcut `malzeme_guncel_fiyat` + fire_orani formulu (AYNI,
+   `_tarif_detaylarini_getir` ve `5_Tarif_Kutuphanesi.py` ile TUTARLI)
+   kullanildi.
+
+**DOGRULANMAMIS VARSAYIM:** `bozulma_suresi` kolon adinin dogrulugu
+icin `teshis_bozulma_kolonu.sql` verildi -- SONUC BEKLENIYOR. Eger
+gercek kolon adi farkliysa (ör. "bozulma_suresi_gun") kod
+guncellenecek.
+
+**Print butonu:** `@media print` CSS kurali (sadece malzeme listesi
+alanini gorunur birakan) + `window.print()` tetikleyen buton --
+Streamlit'in @st.dialog (modal) YAPISI icinde ILK deneme, tarayicidan
+tarayiciya davranisi DEGISEBILIR, Bahri'nin test etmesi gerekiyor.
+
+**Dosya durumu:** `0_Yillik_Menu.py` (guncellendi -- YUZ ELLI
+SEKIZINCI DUZELTME), `teshis_bozulma_kolonu.sql` (yeni) teslim
+edildi. SONUC (hem kolon adi hem ozelligin genel testi) BEKLENIYOR.
