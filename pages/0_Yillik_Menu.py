@@ -2624,7 +2624,14 @@ def _aylik_malzeme_listesi_dialog(aylik, porsiyon_sayisi, isletme_id):
         _html_parcalari.append("<p style='color:#666;'>Bu ay için dayanıklı malzeme yok.</p>")
 
     for _hafta_no in sorted(_veri["haftalik_taze"].keys()):
-        _html_parcalari.append(f"<h4 style='margin-top:20px;'>{_hafta_no}. Hafta — Taze Malzemeler</h4>")
+        # YUZ ALTMIS BIRINCI DUZELTME (21 Eylul 2026): Bahri'nin
+        # yazdirma kurali -- 1. sayfada Dayanıklı+1.Hafta, SONRAKI HER
+        # hafta kendi sayfasinda. `page-break-before` (eski) + modern
+        # `break-before` birlikte -- tarayici uyumlulugu icin ikisi de
+        # eklendi. 1. hafta HARIC (o, dayanikli ile AYNI ilk sayfada
+        # kalir).
+        _sayfa_kirilma_stili = "page-break-before: always; break-before: page;" if _hafta_no > 1 else ""
+        _html_parcalari.append(f"<h4 style='margin-top:20px; {_sayfa_kirilma_stili}'>{_hafta_no}. Hafta — Taze Malzemeler</h4>")
         _html_parcalari.append(_malzeme_tablosu_html(_veri["haftalik_taze"][_hafta_no], _veri["haftalik_toplam_eur"][_hafta_no]))
 
     _html_parcalari.append("<hr style='margin-top:20px;'>")

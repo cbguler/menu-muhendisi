@@ -9962,3 +9962,13 @@ TUM sayfa dahil 4 sayfa" yazdiriyordu (hicbir ilerleme yok).
 
 **Dosya durumu:** `0_Yillik_Menu.py` (guncellendi -- YUZ ALTMISINCI
 DUZELTME) teslim edildi.
+
+**ILERLEME: Print IZOLASYONU CALISTI** ("1 sheet of paper" -- eskiden
+4). Bahri yeni bir kural verdi -- YUZ ALTMIS BIRINCI DUZELTME: 1.
+sayfada Dayanıklı+1.Hafta, SONRAKI her hafta kendi sayfasinda.
+`page-break-before`/`break-before: page` (eski+modern, tarayici
+uyumlulugu icin ikisi birden) eklendi -- 1. hafta HARIC (o, dayanikli
+ile ayni ilk sayfada kalir).
+
+**Dosya durumu:** `0_Yillik_Menu.py` (guncellendi -- YUZ ALTMIS
+BIRINCI DUZELTME) teslim edildi.
