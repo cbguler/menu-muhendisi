@@ -9993,3 +9993,26 @@ olmaya ZORLANIYOR.
 
 **Dosya durumu:** `0_Yillik_Menu.py` (guncellendi -- YUZ ALTMIS
 IKINCI DUZELTME) teslim edildi.
+
+### 22 Eylul 2026 -- YUZ ALTMIS UCUNCU DUZELTME: Print MIMARISI TAMAMEN DEGISTIRILDI
+
+Bahri'nin ekran goruntusu KESIN gosterdi: renk duzeltmesi KISMEN
+isledi (baslik/aciklama duz METIN olarak GORUNUYORDU) ama TABLO
+ICERIGI (malzeme satirlari) hala TAMAMEN BOSTU, sadece bir cizgi
+vardi. Bu, "ayni sayfada geri kalanini gizle" (visibility+renk
+zorlama) YAKLASIMININ bu ortamda GUVENILIR OLMADIGINI kesin olarak
+gosterdi -- UCUNCU basarisiz deneme.
+
+**STRATEJI TAMAMEN DEGISTIRILDI:** Artik ayni DOM'u gizlemeye
+calismak yerine, malzeme listesi icerigi `window.open()` ile
+TAMAMEN AYRI, BAGIMSIZ bir tarayici penceresinde (KENDI, Streamlit'ten
+etkilenmeyen HTML/CSS'iyle) aciliyor, SADECE O yeni pencere
+yazdiriliyor (`pencere.print()`). Icerik JS'e `json.dumps()` ile
+GUVENLI sekilde escape edilerek gomuluyor. Pop-up engelleyici
+ihtimaline karsi bir `alert()` uyarisi eklendi.
+
+**DURUM: DORDUNCU deneme, TAMAMEN FARKLI bir mimariyle -- SONUC
+BEKLENIYOR.**
+
+**Dosya durumu:** `0_Yillik_Menu.py` (guncellendi -- YUZ ALTMIS
+UCUNCU DUZELTME) teslim edildi.

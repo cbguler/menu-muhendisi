@@ -2643,43 +2643,50 @@ def _aylik_malzeme_listesi_dialog(aylik, porsiyon_sayisi, isletme_id):
         "</tr></table>"
     )
     _html_parcalari.append("</div>")
-    st.markdown("".join(_html_parcalari), unsafe_allow_html=True)
+    _yazdirma_icerigi = "".join(_html_parcalari)
+    st.markdown(_yazdirma_icerigi, unsafe_allow_html=True)
 
-    # YAZDIRMA: SADECE yukaridaki #aylik-malzeme-yazdir-alani bolumunu
-    # gorunur birakan bir @media print kurali + ANA sayfayi yazdiran
-    # bir buton. YUZ ALTMISINCI DUZELTME (21 Eylul 2026): Bahri "hala
-    # ilerleme yok, 4 sayfa (arkadaki takvim dahil TUM sayfa) yazdirmaya
-    # calisiyor" dedi -- IKI olasi kok nedene karsi GUCLENDIRILDI:
-    # (1) `window.parent` sadece TEK KATMAN yukari cikar -- eger
-    # dialog/component ic ice birden fazla katmandaysa yetersiz
-    # kalabilir; `window.top` HER ZAMAN EN UST (gercek) pencereye
-    # ulasir, katman sayisindan BAGIMSIZ -- daha saglam. (2) CSS
-    # kurallarina `!important` eklendi -- Streamlit'in KENDI dahili
-    # stilleri benimkinden daha YUKSEK ONCELIKLI olup gizleme kuralimi
-    # GECERSIZ KILIYOR olabilirdi.
-    st.markdown(
-        """
-        <style>
-        @media print {
-            body * { visibility: hidden !important; }
-            #aylik-malzeme-yazdir-alani, #aylik-malzeme-yazdir-alani * {
-                visibility: visible !important;
-                color: #000000 !important;
-                background: #ffffff !important;
-                border-color: #000000 !important;
-            }
-            #aylik-malzeme-yazdir-alani {
-                position: absolute !important; left: 0 !important; top: 0 !important;
-                width: 100% !important; z-index: 999999 !important;
-                background: #ffffff !important;
-            }
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    # YAZDIRMA -- YUZ ALTMIS UCUNCU DUZELTME (22 Eylul 2026): Bahri'nin
+    # ekran goruntusu KESIN gosterdi -- "sayfanin geri kalanini gizle"
+    # yaklasimi (visibility:hidden + tema renk zorlama) BU ORTAMDA
+    # GUVENILIR DEGIL: baslik/aciklama gorunuyordu (duz metin, benim
+    # renk kuralim isliyordu) ama TABLO ICERIGI hala tamamen bostu --
+    # Streamlit'in kendi CSS/DOM davranisiyla BEKLENMEDIK bir sekilde
+    # etkilesiyor olmali. STRATEJI TAMAMEN DEGISTIRILDI: artik ayni
+    # sayfayi gizlemeye calismak YERINE, icerik TAMAMEN AYRI, TEMIZ bir
+    # tarayici penceresinde (kendi, BAGIMSIZ HTML/CSS'iyle, Streamlit'in
+    # hicbir temasindan/stilinden ETKILENMEDEN) aciliyor, SADECE O
+    # PENCERE yazdiriliyor. Bu, ONCEKI 3 denemenin TUMUNUN dayandigi
+    # "ayni DOM icinde gizle/goster" fikrinden TAMAMEN farkli bir
+    # mimari -- ONCEKI sorunlarin KOKUNU (Streamlit'in kendi render
+    # ettigi DOM ile etkilesim) TAMAMEN by-pass ediyor.
+    # NOT: `window.open()` bazi tarayicilarda POP-UP ENGELLEYICI
+    # tarafindan durdurulabilir -- Bahri'ye acikca belirtildi, engellenirse
+    # adres cubugundaki pop-up bildirimine izin vermesi gerekecek.
+    _yazdirma_js_govde = json.dumps(_yazdirma_icerigi)
     if st.button("Print", key="btn_aylik_malzeme_yazdir", use_container_width=True, type="primary"):
-        st.components.v1.html("<script>window.top.print();</script>", height=0)
+        st.components.v1.html(
+            f"""
+            <script>
+            var icerik = {_yazdirma_js_govde};
+            var pencere = window.open('', '_blank', 'width=900,height=700');
+            if (!pencere) {{
+                alert('Yazdırma penceresi açılamadı — tarayıcının pop-up engelleyicisi bunu durdurmuş olabilir. Adres çubuğundaki pop-up bildirimine izin verip tekrar dene.');
+            }} else {{
+                pencere.document.write(
+                    '<html><head><title>Aylık Malzeme Listesi</title>' +
+                    '<style>body{{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;padding:24px;}}' +
+                    'table{{width:100%;border-collapse:collapse;}}' +
+                    'h4{{margin-top:20px;}}</style></head><body>' + icerik + '</body></html>'
+                );
+                pencere.document.close();
+                pencere.focus();
+                setTimeout(function() {{ pencere.print(); }}, 300);
+            }}
+            </script>
+            """,
+            height=0,
+        )
 
 
 def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
