@@ -5,9 +5,11 @@
 # menu uretir. Henuz eklenmeyenler: kisisel_beslenme_profili filtrelemesi,
 # menu_takvimi/menu_takvimi_ogeleri'ne yazma (sadece ekranda gosteriyor).
 
+import base64
 import datetime
 import io
 import json
+import os
 import random
 
 import streamlit as st
@@ -2590,79 +2592,93 @@ def _malzeme_tablosu_html(kayitlar, ara_toplam_eur):
 
 
 @st.dialog("Aylık Malzeme Listesi")
-def _aylik_malzeme_listesi_dialog(aylik, porsiyon_sayisi, isletme_id):
+def _aylik_malzeme_listesi_dialog(aylik, porsiyon_sayisi, isletme_id, isletme_adi):
     with st.spinner("Malzeme listesi hesaplanıyor..."):
         _veri = _aylik_malzeme_ihtiyaci_hesapla(aylik, porsiyon_sayisi, isletme_id)
 
     if not _veri["tam_fiyatli"]:
         st.caption("Not: bazı malzemelerin güncel fiyatı tanımlı değil — bunlar toplama dahil edilmedi (\"fiyat yok\" olarak işaretli).")
 
-    # YUZ ELLI DOKUZUNCU DUZELTME (21 Eylul 2026): Bahri 3 kozmetik
-    # sorun bildirdi: (1) miktar/birim hizasizdi -- ayri sutunlara
-    # ayrildi; (2) miktar-fiyat arasindaki "—" kaldirildi, ara/genel
-    # toplam buyuk+bold ve fiyat sutunuyla hizali; (3) Print BOS SAYFA
-    # veriyordu -- IKI kok neden bulundu: (a) yazdirma alaninin acilis/
-    # kapanis etiketleri AYRI st.markdown() cagrilarindaydi -- Streamlit
-    # HER markdown cagrisini KENDI BAGIMSIZ DOM parcasi olarak render
-    # ettigi icin aralari GERCEKTEN TEK bir kapsayici OLMUYORDU (hedef
-    # div GERCEKTEN BOSTU); (b) yazdirma butonu `st.components.v1.html`
-    # ile bir IFRAME icinde calisiyordu -- oradaki `window.print()`
-    # IFRAME'IN KENDISINI (bos) yazdiriyordu, ANA sayfayi degil. COZUM:
-    # TUM ozet TEK BIR HTML metni olarak birlestirilip TEK bir
-    # st.markdown() cagrisiyla basiliyor (hem hizalama hem gercekten
-    # TEK PARCA DOM icin), VE `window.print()` yerine `window.parent.
-    # print()` kullanildi (ANA sayfayi yazdirsin diye).
-    _html_parcalari = ["<div id='aylik-malzeme-yazdir-alani'>"]
-    _html_parcalari.append(f"<h4>Dayanıklı Malzemeler (Aylık — {aylik['ay']} {aylik['yil']})</h4>")
-    _html_parcalari.append(
+    # EKRANDA GOSTERILEN versiyon -- uygulama kullanicisi (isletme
+    # sahibi) icin, aciklama + Genel Toplam DAHIL, sayfa kirilmasi
+    # OLMADAN (ekranda "sayfa" kavrami yok).
+    _ekran_parcalari = [f"<h4>Dayanıklı Malzemeler (Aylık — {aylik['ay']} {aylik['yil']})</h4>"]
+    _ekran_parcalari.append(
         "<p style='color:#666; font-size:0.9em;'>En az 30 gün bozulmadan "
         "saklanabilen malzemeler — ay başında tek seferde alınabilir.</p>"
     )
     if _veri["dayanikli"]:
-        _html_parcalari.append(_malzeme_tablosu_html(_veri["dayanikli"], _veri["dayanikli_toplam_eur"]))
+        _ekran_parcalari.append(_malzeme_tablosu_html(_veri["dayanikli"], _veri["dayanikli_toplam_eur"]))
     else:
-        _html_parcalari.append("<p style='color:#666;'>Bu ay için dayanıklı malzeme yok.</p>")
-
+        _ekran_parcalari.append("<p style='color:#666;'>Bu ay için dayanıklı malzeme yok.</p>")
     for _hafta_no in sorted(_veri["haftalik_taze"].keys()):
-        # YUZ ALTMIS BIRINCI DUZELTME (21 Eylul 2026): Bahri'nin
-        # yazdirma kurali -- 1. sayfada Dayanıklı+1.Hafta, SONRAKI HER
-        # hafta kendi sayfasinda. `page-break-before` (eski) + modern
-        # `break-before` birlikte -- tarayici uyumlulugu icin ikisi de
-        # eklendi. 1. hafta HARIC (o, dayanikli ile AYNI ilk sayfada
-        # kalir).
-        _sayfa_kirilma_stili = "page-break-before: always; break-before: page;" if _hafta_no > 1 else ""
-        _html_parcalari.append(f"<h4 style='margin-top:20px; {_sayfa_kirilma_stili}'>{_hafta_no}. Hafta — Taze Malzemeler</h4>")
-        _html_parcalari.append(_malzeme_tablosu_html(_veri["haftalik_taze"][_hafta_no], _veri["haftalik_toplam_eur"][_hafta_no]))
-
-    _html_parcalari.append("<hr style='margin-top:20px;'>")
-    _html_parcalari.append(
+        _ekran_parcalari.append(f"<h4 style='margin-top:20px;'>{_hafta_no}. Hafta — Taze Malzemeler</h4>")
+        _ekran_parcalari.append(_malzeme_tablosu_html(_veri["haftalik_taze"][_hafta_no], _veri["haftalik_toplam_eur"][_hafta_no]))
+    _ekran_parcalari.append("<hr style='margin-top:20px;'>")
+    _ekran_parcalari.append(
         "<table style='width:100%; border-collapse:collapse;'><tr>"
         "<td style='font-size:1.4em; font-weight:bold;'>Genel Toplam:</td>"
         "<td></td><td></td>"
         f"<td style='text-align:right; font-size:1.4em; font-weight:bold;'>{_veri['genel_toplam_eur']:.2f} €</td>"
         "</tr></table>"
     )
-    _html_parcalari.append("</div>")
-    _yazdirma_icerigi = "".join(_html_parcalari)
-    st.markdown(_yazdirma_icerigi, unsafe_allow_html=True)
+    st.markdown("".join(_ekran_parcalari), unsafe_allow_html=True)
 
-    # YAZDIRMA -- YUZ ALTMIS UCUNCU DUZELTME (22 Eylul 2026): Bahri'nin
-    # ekran goruntusu KESIN gosterdi -- "sayfanin geri kalanini gizle"
-    # yaklasimi (visibility:hidden + tema renk zorlama) BU ORTAMDA
-    # GUVENILIR DEGIL: baslik/aciklama gorunuyordu (duz metin, benim
-    # renk kuralim isliyordu) ama TABLO ICERIGI hala tamamen bostu --
-    # Streamlit'in kendi CSS/DOM davranisiyla BEKLENMEDIK bir sekilde
-    # etkilesiyor olmali. STRATEJI TAMAMEN DEGISTIRILDI: artik ayni
-    # sayfayi gizlemeye calismak YERINE, icerik TAMAMEN AYRI, TEMIZ bir
-    # tarayici penceresinde (kendi, BAGIMSIZ HTML/CSS'iyle, Streamlit'in
-    # hicbir temasindan/stilinden ETKILENMEDEN) aciliyor, SADECE O
-    # PENCERE yazdiriliyor. Bu, ONCEKI 3 denemenin TUMUNUN dayandigi
-    # "ayni DOM icinde gizle/goster" fikrinden TAMAMEN farkli bir
-    # mimari -- ONCEKI sorunlarin KOKUNU (Streamlit'in kendi render
-    # ettigi DOM ile etkilesim) TAMAMEN by-pass ediyor.
-    # NOT: `window.open()` bazi tarayicilarda POP-UP ENGELLEYICI
-    # tarafindan durdurulabilir -- Bahri'ye acikca belirtildi, engellenirse
-    # adres cubugundaki pop-up bildirimine izin vermesi gerekecek.
+    # YUZ ALTMIS DORDUNCU DUZELTME (22 Eylul 2026): Bahri "print artik
+    # calisiyor" dedi, 4 kozmetik istek verdi -- (1) Dayanıklı ve
+    # 1.Hafta'nin TEK SAYFAYA sigmasi ISTENMIYOR ARTIK (listeler cok
+    # uzun) -- 1.Hafta da kendi sayfasina gecsin; (2) sayfa 1'deki
+    # aciklama satiri KALDIRILSIN (yer actirmak icin); (3) SON
+    # sayfada "Genel Toplam" GEREKSIZ (bu sayfa satinalmaciya rehber,
+    # aylik toplam onu ilgilendirmiyor); (4) HER sayfanin basinda logo
+    # + "Menü Mühendisi" + hangi ISLETMEYE ait oldugu (buyuk baslik).
+    #
+    # Bu YENI gereksinimler EKRANDAKI (uygulama sahibi icin -- aciklama
+    # ve Genel Toplam faydali) goruntuden FARKLI oldugu icin, YAZDIRMA
+    # icin AYRI, KENDINE OZGU bir HTML govdesi olusturuldu -- artik
+    # ekran ile print ayni icerigi PAYLASMIYOR.
+    try:
+        with open("assets/logo.png", "rb") as _f:
+            _logo_b64_print = base64.b64encode(_f.read()).decode("ascii")
+        _print_logo_img = f"<img src='data:image/png;base64,{_logo_b64_print}' style='width:56px; height:auto;'/>"
+    except OSError:
+        _print_logo_img = ""
+    _print_baslik_html = (
+        "<div style='display:flex; align-items:center; gap:14px; "
+        "border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:16px;'>"
+        f"{_print_logo_img}"
+        "<div style='line-height:1.3;'>"
+        "<div style='font-size:1em; color:#333;'>Menü Mühendisi</div>"
+        f"<div style='font-size:1.7em; font-weight:bold;'>{isletme_adi}</div>"
+        "</div></div>"
+    )
+
+    _print_parcalari = [
+        _print_baslik_html,
+        f"<h4>Dayanıklı Malzemeler (Aylık — {aylik['ay']} {aylik['yil']})</h4>",
+    ]
+    if _veri["dayanikli"]:
+        _print_parcalari.append(_malzeme_tablosu_html(_veri["dayanikli"], _veri["dayanikli_toplam_eur"]))
+    else:
+        _print_parcalari.append("<p style='color:#666;'>Bu ay için dayanıklı malzeme yok.</p>")
+
+    for _hafta_no in sorted(_veri["haftalik_taze"].keys()):
+        # ARTIK 1. hafta da DAHIL -- Bahri: "listelerin uzunluguna
+        # bakinca tek sayfa olmalari mumkun degil" -- HER hafta kendi
+        # sayfasinda.
+        _print_parcalari.append(
+            "<div style='page-break-before: always; break-before: page;'>"
+            + _print_baslik_html
+            + f"<h4>{_hafta_no}. Hafta — Taze Malzemeler</h4>"
+            + _malzeme_tablosu_html(_veri["haftalik_taze"][_hafta_no], _veri["haftalik_toplam_eur"][_hafta_no])
+            + "</div>"
+        )
+    # Genel Toplam SON sayfaya (print'e) EKLENMIYOR -- Bahri: "bu
+    # sayfa satinalmaciya rehber olacak, aylik toplam onu ilgilendirmiyor".
+    _yazdirma_icerigi = "".join(_print_parcalari)
+
+    # YAZDIRMA -- ayri pencere mimarisi (bir onceki duzeltmede
+    # kuruldu, calisiyor).
     _yazdirma_js_govde = json.dumps(_yazdirma_icerigi)
     if st.button("Print", key="btn_aylik_malzeme_yazdir", use_container_width=True, type="primary"):
         st.components.v1.html(
@@ -2679,6 +2695,7 @@ def _aylik_malzeme_listesi_dialog(aylik, porsiyon_sayisi, isletme_id):
                     'table{{width:100%;border-collapse:collapse;}}' +
                     'h4{{margin-top:20px;}}</style></head><body>' + icerik + '</body></html>'
                 );
+
                 pencere.document.close();
                 pencere.focus();
                 setTimeout(function() {{ pencere.print(); }}, 300);
@@ -2935,7 +2952,7 @@ if aylik:
     with _col_malzeme:
         if st.button("Aylık Malzeme Listesi", key="btn_aylik_malzeme_listesi", use_container_width=True, type="primary"):
             _aylik_malzeme_listesi_dialog(
-                aylik, st.session_state.get("secili_porsiyon_sayisi", 1), st.session_state.isletme_id
+                aylik, st.session_state.get("secili_porsiyon_sayisi", 1), st.session_state.isletme_id, isletme_adi
             )
 
     for i, hafta in enumerate(aylik["haftalar"], start=1):

@@ -10016,3 +10016,46 @@ BEKLENIYOR.**
 
 **Dosya durumu:** `0_Yillik_Menu.py` (guncellendi -- YUZ ALTMIS
 UCUNCU DUZELTME) teslim edildi.
+
+**SONUC: KOD TARAFI BASARILI, KALAN TEK ENGEL TARAYICI IZNI.** Bahri
+test etti -- yeni "ayri pencere" mimarisi ile tablo icerigi ARTIK
+MUKEMMEL gorunuyor (TAVUK SUYU/YUMURTASI/vb satirlari, "Ara toplam:
+2146.59 €", "Genel Toplam: 12484.55 €" -- hepsi dogru hizali ve
+kalin). SADECE tarayicinin POP-UP ENGELLEYICISI yeni pencereyi
+durdurdu -- benim eklemis oldugum `alert()` uyarisi DOGRU sekilde
+tetiklendi ("Yazdırma penceresi açılamadı..."). Bahri'ye adres
+cubugundaki pop-up bildirimine "always allow" ile izin vermesi
+soylendi -- bu, KOD SORUNU DEGIL, tek seferlik bir tarayici izni.
+
+**PRINT SAGASI (4 mimari denemeden sonra) KOD TARAFINDA KAPANMIS
+GORUNUYOR** -- Bahri'nin pop-up izni verip son dogrulamasi
+bekleniyor.
+
+**SONUC: Print CALISTI, Bahri onayladi.** Pop-up izni sorunuydu,
+kodda hicbir eksik yoktu.
+
+### 22 Eylul 2026 -- YUZ ALTMIS DORDUNCU DUZELTME: Print Ciktisi Kozmetik Duzenlemeler
+
+Bahri gercek yazdirilmis PDF'i inceleyip 4 istek verdi:
+1. Dayanıklı+1.Hafta ARTIK TEK sayfaya SIGDIRILMAK ISTENMIYOR
+   (onceki istegin TERSI -- "listelerin uzunluguna bakinca mumkun
+   degil" dedi) -- 1.Hafta da kendi sayfasina gecsin.
+2. Sayfa 1'deki "En az 30 gün bozulmadan..." aciklamasi KALDIRILSIN
+   (satir/yer tasarrufu icin).
+3. SON sayfada "Genel Toplam" GOSTERILMESIN (bu sayfa satinalmaciya
+   rehber, aylik toplam ALAKASIZ).
+4. HER sayfanin basinda logo + "Menü Mühendisi" + hangi ISLETMEYE
+   ait oldugu (buyuk baslik).
+
+**MIMARI KARAR:** Bu 4 istek EKRANDAKI (uygulama sahibi/isletme
+icin -- aciklama ve Genel Toplam FAYDALI) gorunumden FARKLI oldugu
+icin, artik EKRAN ve YAZDIRMA ayri, KENDINE OZGU HTML govdeleri
+kullaniyor (`_ekran_parcalari` vs `_print_parcalari`) -- ekran AYNI
+kaldi (aciklama+Genel Toplam dahil), print ise Bahri'nin 4 istegine
+gore YENIDEN kuruldu: her sayfa (Dayanıklı dahil) kendi basligiyla
+(`assets/logo.png` base64 gomulu + "Menü Mühendisi" + `isletme_adi`
+buyuk baslik) baslıyor, aciklama YOK, Genel Toplam YOK, HER hafta
+(1. dahil) `page-break-before` ile kendi sayfasinda.
+
+**Dosya durumu:** `0_Yillik_Menu.py` (guncellendi -- YUZ ALTMIS
+DORDUNCU DUZELTME) teslim edildi.
