@@ -2581,7 +2581,8 @@ def _malzeme_tablosu_html(kayitlar, ara_toplam_eur):
         )
     _satirlar += (
         "<tr>"
-        "<td colspan='3' style='padding-top:8px; font-size:1.15em; font-weight:bold;'>Ara toplam:</td>"
+        "<td style='padding-top:8px; font-size:1.15em; font-weight:bold;'>Ara toplam:</td>"
+        "<td></td><td></td>"
         f"<td style='padding-top:8px; text-align:right; font-weight:bold;'>{ara_toplam_eur:.2f} €</td>"
         "</tr>"
     )
@@ -2629,7 +2630,8 @@ def _aylik_malzeme_listesi_dialog(aylik, porsiyon_sayisi, isletme_id):
     _html_parcalari.append("<hr style='margin-top:20px;'>")
     _html_parcalari.append(
         "<table style='width:100%; border-collapse:collapse;'><tr>"
-        "<td colspan='3' style='font-size:1.4em; font-weight:bold;'>Genel Toplam:</td>"
+        "<td style='font-size:1.4em; font-weight:bold;'>Genel Toplam:</td>"
+        "<td></td><td></td>"
         f"<td style='text-align:right; font-size:1.4em; font-weight:bold;'>{_veri['genel_toplam_eur']:.2f} €</td>"
         "</tr></table>"
     )
@@ -2638,23 +2640,33 @@ def _aylik_malzeme_listesi_dialog(aylik, porsiyon_sayisi, isletme_id):
 
     # YAZDIRMA: SADECE yukaridaki #aylik-malzeme-yazdir-alani bolumunu
     # gorunur birakan bir @media print kurali + ANA sayfayi yazdiran
-    # (window.parent.print()) bir buton. NOT: Streamlit'in dialog/modal
-    # yapisi icinde ILK deneme, tarayicidan tarayiciya (ozellikle
-    # mobil) davranisi DEGISEBILIR, Bahri'nin test etmesi gerekiyor.
+    # bir buton. YUZ ALTMISINCI DUZELTME (21 Eylul 2026): Bahri "hala
+    # ilerleme yok, 4 sayfa (arkadaki takvim dahil TUM sayfa) yazdirmaya
+    # calisiyor" dedi -- IKI olasi kok nedene karsi GUCLENDIRILDI:
+    # (1) `window.parent` sadece TEK KATMAN yukari cikar -- eger
+    # dialog/component ic ice birden fazla katmandaysa yetersiz
+    # kalabilir; `window.top` HER ZAMAN EN UST (gercek) pencereye
+    # ulasir, katman sayisindan BAGIMSIZ -- daha saglam. (2) CSS
+    # kurallarina `!important` eklendi -- Streamlit'in KENDI dahili
+    # stilleri benimkinden daha YUKSEK ONCELIKLI olup gizleme kuralimi
+    # GECERSIZ KILIYOR olabilirdi.
     st.markdown(
         """
         <style>
         @media print {
-            body * { visibility: hidden; }
-            #aylik-malzeme-yazdir-alani, #aylik-malzeme-yazdir-alani * { visibility: visible; }
-            #aylik-malzeme-yazdir-alani { position: absolute; left: 0; top: 0; width: 100%; }
+            body * { visibility: hidden !important; }
+            #aylik-malzeme-yazdir-alani, #aylik-malzeme-yazdir-alani * { visibility: visible !important; }
+            #aylik-malzeme-yazdir-alani {
+                position: absolute !important; left: 0 !important; top: 0 !important;
+                width: 100% !important; z-index: 999999 !important;
+            }
         }
         </style>
         """,
         unsafe_allow_html=True,
     )
-    if st.button("Print", key="btn_aylik_malzeme_yazdir", use_container_width=True):
-        st.components.v1.html("<script>window.parent.print();</script>", height=0)
+    if st.button("Print", key="btn_aylik_malzeme_yazdir", use_container_width=True, type="primary"):
+        st.components.v1.html("<script>window.top.print();</script>", height=0)
 
 
 def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
@@ -2897,10 +2909,11 @@ if aylik:
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             disabled=st.session_state.get("salt_okunur", False),
             use_container_width=True,
+            type="primary",
         )
 
     with _col_malzeme:
-        if st.button("Aylık Malzeme Listesi", key="btn_aylik_malzeme_listesi", use_container_width=True):
+        if st.button("Aylık Malzeme Listesi", key="btn_aylik_malzeme_listesi", use_container_width=True, type="primary"):
             _aylik_malzeme_listesi_dialog(
                 aylik, st.session_state.get("secili_porsiyon_sayisi", 1), st.session_state.isletme_id
             )

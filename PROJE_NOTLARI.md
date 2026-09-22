@@ -9936,3 +9936,29 @@ bildirdi:
 
 **Dosya durumu:** `0_Yillik_Menu.py` (guncellendi -- YUZ ELLI
 DOKUZUNCU DUZELTME) teslim edildi.
+
+### 21 Eylul 2026 -- YUZ ALTMISINCI DUZELTME: Buton Tutarliligi + Ara/Genel Toplam Hizalama + Print (2. Deneme)
+
+Bahri test etti: butonlar kuculmustu ama FARKLI (kaydet=kirmizi
+primary, digger ikisi gri secondary) bicimdeydi; Ara/Genel Toplam
+rakamlari fiyat sutunuyla TAM hizali degildi; Print HALA "arkadaki
+TUM sayfa dahil 4 sayfa" yazdiriyordu (hicbir ilerleme yok).
+
+**Duzeltmeler:**
+1. Uc butona da `type="primary"` -- artik gorsel olarak TUTARLI.
+2. Ara toplam/Genel Toplam satirlarindaki `colspan='3'` KALDIRILDI --
+   colspan'li genis bir hucrenin, ayni tablodaki DIGER sutunlarin
+   genisligini ETKILEYIP kaymaya sebep olma ihtimaline karsi, artik
+   etiket SADECE 1. sutunda, 2-3. sutunlar BOS, deger 4. sutunda --
+   boylece fiyat sutunuyla GUVENILIR sekilde hizali.
+3. Print -- IKI ek guclendirme: (a) `window.parent.print()` ->
+   `window.top.print()` (parent SADECE bir katman yukari cikar, top
+   HER ZAMAN gercek en ust pencereye ulasir, katman sayisindan
+   bagimsiz); (b) TUM CSS kurallarina `!important` eklendi (Streamlit'in
+   kendi dahili stilleri benimkinden yuksek oncelikli olup gizleme
+   kuralimi gecersiz kiliyor olabilirdi).
+
+**DURUM: Print icin bu IKINCI deneme -- hala DOGRULANMADI.**
+
+**Dosya durumu:** `0_Yillik_Menu.py` (guncellendi -- YUZ ALTMISINCI
+DUZELTME) teslim edildi.
