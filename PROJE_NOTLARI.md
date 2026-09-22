@@ -9972,3 +9972,24 @@ ile ayni ilk sayfada kalir).
 
 **Dosya durumu:** `0_Yillik_Menu.py` (guncellendi -- YUZ ALTMIS
 BIRINCI DUZELTME) teslim edildi.
+
+### 22 Eylul 2026 -- YUZ ALTMIS IKINCI DUZELTME: Print'te Yazi RENGI Gorunmuyordu
+
+Bahri "print sorunu devam ediyor" dedi, dogru sekilde test ettigini
+(popup icindeki Print butonu + sert yenileme) dogruladi. Ekran
+goruntusu KESIN teshis sagladi: baslik+aciklama GORUNUYORDU, tablo
+kenarlik CIZGISI de vardi, ama HUCRE ICERIGI (malzeme adi/miktar/
+fiyat METNI) GORUNMUYORDU -- IZOLASYON calisiyordu (dogru bolum
+gorunur kaliyordu), ama METIN RENGI beyaz sayfada GORUNMEZ oluyordu
+(muhtemelen Streamlit'in kendi tema degiskenlerinden -- koyu tema icin
+tasarlanmis acik renkli metin -- miras alinmis olabilir).
+
+**DUZELTME:** Print CSS'ine ACIKCA `color: #000000 !important` +
+`background: #ffffff !important` + `border-color: #000000 !important`
+eklendi -- artik metin rengi TEMA'DAN BAGIMSIZ, HER ZAMAN siyah/beyaz
+olmaya ZORLANIYOR.
+
+**DURUM: Print icin UCUNCU deneme -- hala DOGRULANMADI.**
+
+**Dosya durumu:** `0_Yillik_Menu.py` (guncellendi -- YUZ ALTMIS
+IKINCI DUZELTME) teslim edildi.

@@ -2662,10 +2662,16 @@ def _aylik_malzeme_listesi_dialog(aylik, porsiyon_sayisi, isletme_id):
         <style>
         @media print {
             body * { visibility: hidden !important; }
-            #aylik-malzeme-yazdir-alani, #aylik-malzeme-yazdir-alani * { visibility: visible !important; }
+            #aylik-malzeme-yazdir-alani, #aylik-malzeme-yazdir-alani * {
+                visibility: visible !important;
+                color: #000000 !important;
+                background: #ffffff !important;
+                border-color: #000000 !important;
+            }
             #aylik-malzeme-yazdir-alani {
                 position: absolute !important; left: 0 !important; top: 0 !important;
                 width: 100% !important; z-index: 999999 !important;
+                background: #ffffff !important;
             }
         }
         </style>
