@@ -10059,3 +10059,7 @@ buyuk baslik) baslıyor, aciklama YOK, Genel Toplam YOK, HER hafta
 
 **Dosya durumu:** `0_Yillik_Menu.py` (guncellendi -- YUZ ALTMIS
 DORDUNCU DUZELTME) teslim edildi.
+
+**SONUC: Bahri "tam istediğim gibi oldu" ile ONAYLADI.** "Aylık
+Malzeme Listesi" ozelligi (hesaplama + pop-up + print, TUM kozmetik
+ince ayarlar dahil) TAMAMEN TAMAMLANDI.
