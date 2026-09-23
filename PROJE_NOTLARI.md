@@ -10411,3 +10411,46 @@ tamamen SIFIRDAN baslanacak.**
   HENUZ EKLENMEDI -- Haşhaş referans degerleriyle birlikte bekliyor.
 - **1000 tarif hedefi:** 485 tarif var, 515 kaldi -- bu hedef, 244
   eksik-talimat gorevinin ARDINDAN veya PARALEL dusunulebilir.
+
+### 23 Eylul 2026 -- Menü Mühendisi 8: Hazirlik Talimati Gorevi BASLADI -- Parti 1 (15/245)
+
+- `teshis_talimat_kaynak_veri.sql` calistirildi: eksik talimatli tarif
+  sayisi **245** cikti (onceki ozetteki 244 DEGIL -- 1 fark var, sebebi
+  netlestirilmedi). CSV'de her tarifin malzemeleri (gram) ve mevcut
+  `recete_asamalari` verisi var -- TUM talimatlar bu veriyle TUTARLI
+  yaziliyor (sure ozeti = asamalardaki aktif/toplam sureler).
+- `teshis_talimat_ornek_format.sql`: Roka/Pastirmali Yumurta gercek
+  metni alindi. GERCEK format: basliklar `**PARALEL YAPILABİLİRLİK:**`
+  ve `**SÜRE ÖZETİ:**` KALIN yaziliyor; isil islem yoksa "Isıl işlem yok."
+- **Parti buyuklugu: 15** (Bahri itiraz etmedi).
+- **YAZIM KURALLARI (bu partide uygulandi, Bahri onayi BEKLENIYOR):**
+  (1) Su hicbir tarifte malzeme olarak kayitli DEGIL -- talimatlarda
+  miktarsiz "su" kullaniliyor. (2) DB'deki `hedef_sicaklik` URUNUN
+  hedef sicakligi (enerji hesabi icin) -- firin/izgara/tava icin
+  talimatta GERCEKCI cihaz sicakligi/ates seviyesi yaziliyor (or. firin
+  200°C), haslama/kaynatma icin DB degeri. (3) Kanatli icin ic sicaklik
+  en az 75°C notu. (4) Sogutma/demlenme/olgunlasma gibi DB asamalarinda
+  olmayan beklemeler "sure ozetine dahil degildir" diye isaretleniyor.
+- **Teslim:** `sql/132_hazirlik_talimati_parti1.sql` (alfabetik 1-15:
+  Ahtapot Salatası (Soğuk) ... Barbunya Turşusu (Bahar)). SONUC BEKLENIYOR.
+  Migration numarasi 132 -- Bahri'den teyit BEKLENIYOR.
+- **SIRADAKI:** Parti 2 = alfabetik 16-30, "Bezelyeli Dana Yahnisi" ile baslar.
+
+### 23 Eylul 2026 -- Parti 1 REVIZYON 2: SU Artik Malzeme Olarak Yaziliyor
+
+Bahri ilk surumu YUKLEMEDI: "su da bir malzeme, miktari bilinmeli".
+**YENI KALICI KURAL:** Suyun girdigi HER tarifte (a) talimatta litre +
+gram olarak miktar yazilir, (b) SU malzemesi (`malzemeler.id =
+9f265c5f-7d22-43c8-8356-9f748af1c9ee`, yogunluk 1, ozgul isi 4.184)
+`recete_malzemeleri`'ne eklenir, (c) isil islem asamasi varsa
+`asama_malzemeleri`'ne de baglanir (enerji hesabi suyun kutlesini
+kapsasin). Yikama/islatma suyu SAYILMAZ. Su miktarlari Claude tahmini
+-- her partide tablo halinde Bahri'ye ONAYA sunulur.
+Parti 1 su miktarlari (10 porsiyon): Ahtapot 2000, Arpa Çorbası 2500,
+Ayva Tatlısı 500, Badem Ezmesi 30, Barbunya Turşusu 1500 g.
+**FIRIN IFADESI KURALI (Bahri):** "X°C'ye onceden isitilmis firinda Y
+dakika pisirin" kalibi kullanilir; baslik "Fırınlama (X°C, Y dk):".
+**NOT:** Talimati ZATEN olan ~240 tarifte de su recete_malzemeleri'nde
+YOK -- enerji hesabi o tariflerde de suyu kapsamiyor. Ayri bir gorev
+olarak ele alinmali (henuz karar verilmedi).
+Revize dosya: `sql/132_hazirlik_talimati_parti1.sql` (Revizyon 2), SONUC BEKLENIYOR.
