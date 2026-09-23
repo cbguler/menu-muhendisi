@@ -10063,3 +10063,351 @@ DORDUNCU DUZELTME) teslim edildi.
 **SONUC: Bahri "tam istediğim gibi oldu" ile ONAYLADI.** "Aylık
 Malzeme Listesi" ozelligi (hesaplama + pop-up + print, TUM kozmetik
 ince ayarlar dahil) TAMAMEN TAMAMLANDI.
+
+### 22 Eylul 2026 -- Oncelik Degisikligi: Domuz Etinden Once Mevcut Et Turlerindeki Eksikler Tamamlaniyor
+
+Bahri domuz eti arastirmasini ERTELEYIP once MEVCUT et turlerindeki
+(dana/sığır/koyun/kuzu/keçi/tavuk/hindi/kaz) eksik kesimleri
+tamamlamayi istedi. Kapsamli bir sorguyla TAM tablo cikarildi --
+**HINDI en eksik olan** (sadece BUT var) -- oradan baslandi.
+
+**ONEMLI BULGU:** "Biftek" ve "Bonfile" DANA/SIĞIR'da GERCEKTEN AYRI
+kayitlar (farkli degerlerle) -- daha once (domuz arastirmasi sirasinda)
+bunlarin ayni sey olabilecegi VARSAYILMISTI, bu YANLIS cikti.
+
+**IKI KENDI HATAM (ayni turda, hizli ardisik):**
+1. Migration NUMARASINI (125) sql/ klasorunu KONTROL ETMEDEN
+   TAHMIN ETTIM -- gercek son numara 122'ydi, 123 olmaliydi. Bahri
+   duzeltti.
+2. `malzemeler` tablosunun `glisemik_indeks` sutununu "gi" diye
+   KISALTARAK TAHMIN ETTIM -- gercek ad farkliydi, SQL hata verdi.
+**DERS: Hem dosya NUMARALANDIRMASI hem SUTUN ADLARI, her migration
+oncesi (varsayima dayanmadan) DOGRULANMALI** -- iki teshis sorgusuyla
+(malzemeler'in TAM sutun listesi + TAVUK GÖĞÜS/KANAT'in TAM satiri
+referans olarak) duzeltildi.
+
+**HINDI GÖĞÜS + HINDI KANAT tamamlandi ve teslim edildi**
+(`sql/123_hindi_gogus_ekle.sql`, `sql/124_hindi_kanat_ekle.sql`) --
+USDA FDC 174515 / 171497'den TAM 29+ alan, operasyonel alanlar
+(kategori_id=1, yogunluk, ozgul_isi, fire_orani, saklama_isisi,
+mevsim, isi_iletkenlik, bozulma_suresi) TAVUK'un ayni kesiminden
+REFERANS alindi. BILEREK BOS BIRAKILAN (tahmin edilmeyen) 2 alan HER
+IKI kayitta da: `yuzey_alani` (hindi tavuktan cok daha buyuk, kopyalanamaz)
+ve `varsayilan_fiyat_eur` (piyasa verisi). SONUC BEKLENIYOR.
+
+**SIRADAKI:** Hindi Bütün, sonra Hindi Kıyma; ardindan Kaz/Tavuk/
+Koyun/Kuzu/Keçi'deki digger eksikler.
+
+### 22 Eylul 2026 -- ONEMLI KESIF: "kaynak_duzeltilmis_vXX.xlsx" MASTER KAYNAK DOSYASI
+
+Bahri bir Excel dosyasi (`kaynak_duzeltilmis_v29.xlsx`, "kaynak"
+sekmesi, 587 satir, 58 sutun) paylasip BUNUN DA guncellenmesi
+gerektigini belirtti -- bu, `malzemeler` tablosunun GERCEK MASTER
+KAYNAK dosyasi (SQL migration'lardan AYRI, PARALEL tutulmasi
+gereken bir kayit). BUNDAN SONRA HER YENI MALZEME EKLEMESINDE hem SQL
+migration hem BU DOSYA guncellenmeli.
+
+**ONEMLI YAPISAL BULGU:** Dosyada IKI FARKLI "nesil" var -- ESKI/ILK
+(TAVUK/DANA/KUZU gibi) satirlarda TUM fiziksel alanlar (yogunluk,
+ozgul isi, fire orani vb.) DOLU; SONRADAN "13 Ağustos 2026: TürKomp'tan
+eklendi" notuyla eklenen bir GRUP (cogu HİNDİ/KEÇİ/KOYUN/SIĞIR/DANA
+kesimi DAHIL) ise SADECE beslenme degerlerini iceriyor, fiziksel
+alanlar BOS. Bahri'ye soruldu -- YENI Hindi kesitleri icin BENIM
+Tavuk'tan odunc aldigim YAKLASIM (fiziksel alanlari doldurmak)
+KORUNSUN dendi.
+
+**BASKA ONEMLI BULGU:** Dosyada ZATEN "HİNDİ ETİ (GÖĞÜS FİLETO,
+DERİSİZ)" diye bir satir vardi (116 kcal, henuz DB'ye GECMEMIS) --
+benim yeni ekledigim "HİNDİ ETİ (GÖĞÜS, DERİSİZ)" (114 kcal) ile
+COK YAKIN ama AYNI DEGIL. Bahri'ye soruldu -- **FARKLI URUNLER,
+IKISI DE KALSIN** dendi (yanlislikla kopya OLUSTURULMADI, ama bu tur
+COK BENZER isimli/degerli kesim CIFTLERINE dikkat edilmeli).
+
+**Hindi Bütün icin ORTALAMA yontemi:** Tek bir net USDA kaydi
+bulunamadigi icin (2 farkli kaynak %10 farkli kcal veriyordu), Bahri
+onayiyla kalori/protein/yag IKI KAYNAGIN ORTALAMASI alindi, geri
+kalan detaylar SADECE tek (daha az hassas, 1 basamak yuvarlanmis)
+kaynaktan geldi -- BU KAYIT DIGER 2 HINDI KESIMINDEN DAHA DUSUK
+KESINLIKTE, acikca belirtildi.
+
+**TAMAMLANANLAR (hem DB hem Excel'e islendi):**
+- `sql/123_hindi_gogus_ekle.sql` + Excel satir 44
+- `sql/124_hindi_kanat_ekle.sql` (DB'ye zaten eklenmis bulundu) + Excel satir 45
+- `sql/125_hindi_butun_ekle.sql` + Excel satir 46 (SONUC BEKLENIYOR)
+
+**Excel dosyasi surumleri:** v29 (orijinal) -> v30 (Göğüs+Kanat
+eklendi) -> v31 (+ Bütün eklendi, TESLIM EDILDI).
+
+**HINDI TAMAMLANDI:** `sql/126_hindi_kiyma_ekle.sql` (USDA FDC 172850,
+tek kaynak, tam veri) + Excel v32 satir 47. Bozulma_suresi icin
+DANA/SIĞIR KIYMA referans alindi (1 gun -- cekilmis etin kisa raf
+omru). **HINDI artik 4/4 kesimle TAMAMLANMIŞ** (But [onceden vardi],
+Göğüs, Kanat, Bütün, Kıyma). Excel surumleri: v29 -> v30 -> v31 -> v32
+(TESLIM EDILDI).
+
+**SIRADAKI:** Kaz/Tavuk/Koyun/Kuzu/Keçi'deki digger eksikler (bkz.
+yukaridaki eksik-kesim tablosu).
+
+### 22 Eylul 2026 -- KAZ: Kanat Atlandi (Veri Yok), Butun Tamamlandi
+
+**Kaz Kanat:** Hem USDA hem TürKomp'ta kaz kanadi icin AYRI bir kayit
+YOK -- ikisinde de kaz SADECE 1-2 genel kesimle (but, gogus) temsil
+ediliyor, "kaz neredeyse hep butun satilir, nadiren parca parca"
+gercegini dogruluyor. Bahri onayiyla **Kaz Kanat tamamen ATLANDI**
+(veri yok, gercekci degil).
+
+**IKI YENI KAYNAK YANLIS-ESLESTIRME YAKALANDI (ayni oturumda simdi
+3. ve 4.):** (1) foodnutrify.com, FDC 171082'yi "hindi gogsu, derisiz"
+diye gostermisti -- GERCEKTE bu FDC "Turkey Skin" (deri)! (2)
+foodstruct.com, FDC 172414'u "cig kaz" diye gostermisti -- GERCEKTE
+bu FDC "Roast Goose" (PISMIS)! Her ikisi de fark edilip DOGRU kayitlar
+(174515/174470 vb.) bulundu. **DERS TEKRAR DOGRULANDI: ucuncu taraf
+"nutrition" sitelerinin FDC ID eslestirmesine ASLA korlemesine
+guvenilmemeli, mumkunse HER ZAMAN myfooddata/nutritionvalue gibi
+DOGRUDAN USDA'ya baglanti veren bir sayfadan CAPRAZ dogrulama
+yapilmali.**
+
+**Kaz Butun:** USDA FDC 174470 "Goose, domesticated, meat and skin,
+raw" (85g'den 100g'e olceklendi, TAM veri). Kaz oldukca yagli bir kus
+(33.65g yag/100g) -- Bahri gercekci buldu, onayladi. Fiziksel alanlar
+mevcut KAZ ETİ (But/Göğüs) kayitlariyla TUTARLI olacak sekilde BOS
+birakildi (Hindi'nin aksine -- Bahri'nin BURADAKI tercihi FARKLIYDI,
+her tur icin bu soru AYRI ayri sorulmali).
+
+**TAMAMLANANLAR:** `sql/127_kaz_butun_ekle.sql` + Excel v33 satir 51
+(SONUC BEKLENIYOR). **KAZ artik TAMAMLANMIS SAYILIYOR** (But, Göğüs,
+Bütün var; Kanat bilerek atlandi).
+
+**SIRADAKI:** Tavuk (Kıyma eksik), Koyun/Kuzu/Keçi (Biftek, Bonfile,
+Kaburga, Kıyma, Kontrfile eksik).
+
+**TAVUK TAMAMLANDI:** `sql/128_tavuk_kiyma_ekle.sql` (USDA FDC 171116,
+tek kaynak) + Excel v34 satir 6. Bozulma_suresi icin DANA/SIĞIR/HİNDİ
+KIYMA referans alindi (1 gun), diger fiziksel alanlar TAVUK'un kendi
+CUT-LEVEL (Bütün'ün whole-bird degerleri DEGIL) deseniyle tutarli.
+**TAVUK artik TAMAMLANMIŞ** (Göğüs, But, Kanat, Bütün, Kıyma).
+
+**GENEL DURUM:** HINDI ✓ TAMAMLANDI, KAZ ✓ TAMAMLANDI (Kanat haric --
+veri yok), TAVUK ✓ TAMAMLANDI. **SIRADAKI:** Koyun/Kuzu/Keçi
+(Biftek, Bonfile, Kaburga, Kıyma, Kontrfile eksik -- 3 tur icin
+potansiyel 15 yeni kayit).
+
+### 22-23 Eylul 2026 -- ONEMLI KESIF: Kesim Şemaları + Koyun/Kuzu/Keçi'nin Gercek Kesim Setinin Yeniden Degerlendirilmesi
+
+Bahri 3 kasaplik semasi (Dana/Kuzu/Tavuk) paylasti --
+`assets/dana_et_semasi.png`, `assets/kuzu_et_semasi.png`,
+`assets/tavuk_et_semasi.png` olarak KAYDEDILDI, teslim edildi
+(git'e eklenmesi gerekiyor).
+
+**KRITIK BULGU:** Kuzu şemasinda "Biftek/Bonfile/Kontrfile" HIC
+GORUNMUYOR (bunlar SADECE Dana şemasinda var, Bonfile Kontrfile'nin
+ICINDE gosteriliyor) -- bu, TürKomp/USDA arastirmalarimda bu 3
+teriminin Koyun/Kuzu/Keçi icin bulunamamis olmasinin GERCEK bir
+kasaplik farki oldugunu (arama becerisi sorunu DEGIL) DOGRULUYOR.
+Kuzu şemasinda ayrica "SIRT" ve "BEL" de YOK -- bunlarin yerine
+PİRZOLA+FİLETO (sirt bolgesi) ve BOŞLUK (bel/lomber bolgesi, literal
+"bosluk" diye etiketlenmis) var -- veritabanindaki "KOYUN/KUZU ETİ
+(BEL/SIRT)" isimleriyle TAM birebir eslesmiyor ama muhtemelen ayni
+bolgeleri temsil ediyor.
+
+Bahri onayiyla KARAR: Yine de TUM 5 kesimi (Biftek/Bonfile/Kaburga/
+Kıyma/Kontrfile) her 3 tur icin DENEMEYE devam -- veri bulunursa
+eklenecek, bulunamazsa (Kaz Kanat gibi) atlanacak.
+
+**KUZU KIYMA TAMAMLANDI:** USDA FDC 174370 "Lamb, ground, raw" (tam
+veri, 28g'den olceklendi). Fiziksel alanlar: Kuzu'nun KENDI
+kayitlari (Bel/But/Kol/Sırt) TAMAMEN BOS oldugu icin, Bahri onayiyla
+SIĞIR KIYMA'dan referans alindi. `sql/129_kuzu_kiyma_ekle.sql` +
+Excel v35 satir 65 (SONUC BEKLENIYOR).
+
+**NOT (onemli sandbox hatirlatmasi):** Konusma cok uzadigi icin
+calisma alani (/home/claude) bir noktada SIFIRLANDI (dosyalar
+kayboldu) -- ama TUM onemli dosyalar zaten /mnt/user-data/outputs/'a
+kopyalanmis oldugundan hicbir veri KAYBOLMADI, sadece oradan geri
+yuklendi. DERS: bu, /mnt/user-data/outputs/'a HER ADIMDA kopyalamanin
+(zaten yapilan bir aliskanlik) ne kadar KRITIK oldugunu dogruluyor.
+
+**SIRADAKI:** Koyun Kıyma (muhtemelen ayri bir "mutton ground" USDA
+kaydi var mi kontrol edilecek), sonra Keçi Kıyma, sonra Kaburga
+(3 tur icin), sonra Biftek/Bonfile/Kontrfile denemeleri (veri
+bulunama ihtimali yuksek).
+
+### 23 Eylul 2026 -- OTURUM SONU: Menü Mühendisi 8'e Gecis Icin GUNCEL DURUM OZETI
+
+**Bu bolum, GORSEL/BAGLAM LIMITI nedeniyle YENI bir sohbete (Menü
+Mühendisi 8) gecilirken hazirlanmis KAPSAMLI bir durum ozetidir.
+Yeni oturum ONCE BU BOLUMU okumali.**
+
+---
+#### A) BESLENME DEGERLERI ARASTIRMASI (Et Kesimleri) -- GUNCEL DURUM
+
+**TAMAMLANANLAR:**
+- **HİNDİ:** TAMAMLANDI ✓ (But [onceden vardi], Göğüs, Kanat, Bütün,
+  Kıyma -- 5/5)
+- **KAZ:** TAMAMLANDI ✓ (But, Göğüs [onceden vardi], Bütün eklendi;
+  Kanat BILEREK ATLANDI -- ne USDA ne TürKomp'ta veri var, kaz
+  ticari olarak boyle kesilmiyor)
+- **TAVUK:** TAMAMLANDI ✓ (Göğüs, But, Kanat, Bütün [onceden vardi],
+  Kıyma eklendi -- 5/5)
+- **KUZU:** Kıyma eklendi ✓ (USDA FDC 174370, tam veri). Bel/But/Kol/
+  Sırt onceden vardi. **Kaburga/Biftek/Bonfile/Kontrfile HENUZ
+  ARASTIRILMADI.**
+- **KOYUN:** Kıyma eklendi ✓ (TAHMİNİ VERI -- ayri kaynak
+  bulunamadigi icin KUZU KIYMA degerleri kopyalandi, acikca
+  isaretlendi). Bel/But/Kol/Sırt onceden vardi. **Kaburga/Biftek/
+  Bonfile/Kontrfile HENUZ ARASTIRILMADI.**
+- **KEÇİ:** Kıyma eklendi ✓ (kiyma-spesifik veri YOK, GENEL "Keçi eti,
+  çiğ" USDA FDC 175303 kullanildi, birkac alan -- magnezyum/B5/B6/
+  D/E/K -- kaynakta yoktu). Bel/But/Kol/Sırt onceden vardi. **Kaburga/
+  Biftek/Bonfile/Kontrfile HENUZ ARASTIRILMADI.**
+
+**ONEMLI BULGU (Koyun/Kuzu/Keçi icin Biftek/Bonfile/Kontrfile/
+Kaburga hakkinda):** Bahri'nin paylastigi 3 kasaplik semasi (asagida)
+KESIN olarak gosterdi ki Kuzu/Koyun/Keçi karkasi Dana gibi
+BİFTEK/BONFİLE/KONTRFİLE diye ayrilmiyor (bunlar SADECE Dana
+semasinda var) -- TürKomp/USDA aramalarinda da bu 3 terim + Kaburga +
+Kıyma icin (Kıyma haric, o bulundu) veri BULUNAMADI. **Bahri yine de
+"hepsini dene" dedi** -- yani bu 4 kesim (Biftek/Bonfile/Kontrfile/
+Kaburga) HER 3 TUR icin (Koyun/Kuzu/Keçi) denenecek, veri
+bulunamazsa (Kaz Kanat gibi) atlanacak. Bu, potansiyel 12 deneme
+(4 kesim x 3 tur), COGUNUN veri bulunamayip atlanmasi BEKLENIYOR.
+
+**SON KULLANILAN MIGRATION NUMARASI: 131** (`sql/131_keci_kiyma_
+ekle.sql`) -- SIRADAKI numara **132** olmali. (ONEMLI DERS: migration
+numarasini ASLA tahmin etme, her seferinde Bahri'ye sql/ klasorundeki
+son numarayi sor.)
+
+**DOMUZ ETI ARASTIRMASI TAMAMEN ERTELENDI** (Bahri'nin talebiyle --
+"once mevcut turlerdeki eksikleri tamamlayalim, domuza sonra
+bakariz"). O ana kadarki durum: 3/9 kesim tamamlanmisti (DOMUZ
+KIYMA, DOMUZ PİRZOLA, DOMUZ BUT), kalan 6 kesim (Biftek/Bonfile,
+Rosto/Kol, Kaburga, Kontrfile, Sırt/tenderloin, Bacon) ARASTIRILMADI.
+"Biftek (bonfile)" ile "Sırt (tenderloin)" isimlendirmesinin AYNI mi
+FARKLI mi kesim oldugu HENUZ NETLESTIRILMEDI (Bahri "bilgim yok"
+dedi) -- domuza donulunce bu ONCE cozulmeli.
+
+**TESHIS SORGU DOSYALARI (tekrar kullanilabilir, gerekirse yeniden
+calistirilabilir):** `teshis_bozulma_kolonu.sql`, `teshis_malzemeler_
+sutunlari.sql` (TAM 46 sutun listesi icin), `teshis_kiyma_referans.sql`,
+`teshis_kuzu_referans.sql`, `teshis_kaz_referans.sql`.
+
+---
+#### B) MASTER KAYNAK DOSYASI: kaynak_duzeltilmis_v29.xlsx
+
+Bu dosya `malzemeler` tablosunun GERCEK master kaynagi -- proje kok
+dizininde duruyor (`C:\Users\bahri\Desktop\menu-muhendisi\kaynak_
+duzeltilmis_v29.xlsx`). **HER YENI malzeme eklemesinde SQL migration
+ILE PARALEL guncellenmesi GEREKIYOR** (Bahri'nin acik talebi).
+Teslim edilen SON versiyon: **v37** (131_keci_kiyma_ekle.sql'e denk
+gelen). Bahri her seferinde indirilen dosyayi `kaynak_duzeltilmis_
+v29.xlsx` ismiyle UZERINE YAZIYOR -- versiyon numaralari (v30, v31...)
+SADECE benim calisma surecimde, dosyanin GERCEK adi HER ZAMAN v29
+olarak KALIYOR.
+
+**Dosyanin YAPISAL ozelligi:** IKI "nesil" satir var -- eski (TUM
+fiziksel alanlar dolu: yogunluk/ozgul_isi/fire_orani/vb.) VS "13
+Ağustos 2026: TürKomp'tan eklendi" notlu GRUP (SADECE beslenme
+degerleri, fiziksel alanlar BOS). Yeni eklenen HER tur icin, o turun
+KENDI mevcut kayitlarinin BOS mu DOLU mu oldugu KONTROL EDILIP ona
+gore (bos birakma VEYA benzer bir turden/kesimden referans alma)
+Bahri'ye SORULMASI GEREKIYOR -- cevap turden ture DEGISTI (Hindi:
+Tavuk'tan referans alindi; Kaz: kendi BOS deseniyle tutarli birakildi).
+
+---
+#### C) assets/ KLASORU
+
+3 kasaplik semasi eklendi (Bahri'nin kendi kesim isimlendirmesinin
+DAYANDIGI referans gorseller): `assets/dana_et_semasi.png`,
+`assets/kuzu_et_semasi.png`, `assets/tavuk_et_semasi.png`. Bahri'nin
+bunlari git'e eklediginden EMIN OLUNMALI (son git komutlarinda
+verildi, calistirilmis olabilir ama DOGRULANMADI).
+
+**Semalardan cikan ONEMLI YAPISAL BILGI:** Dana=BİFTEK/BONFİLE(
+KONTRFİLE icinde)/KONTRFİLE/ANTRİKOT/SOKUM/TRANÇ/NUAR/KONTRNUAR/
+İNCİK/YUMURTA/PENÇETA/DÖŞ/KÜREK/GERDAN. Kuzu=KOL/GERDAN/PİRZOLA/
+FİLETO/BUT/BOŞLUK(muhtemelen "BEL"e denk gelen bosluk/lomber bolge)/
+İNCİK -- **SIRT ve BEL diye ayri etiketli bolge YOK** (veritabanindaki
+isimlerle TAM birebir eslesmiyor ama yakin). Tavuk=BOYUN/SIRT/KANAT/
+GÖĞÜS/BUT (mevcut veritabani adlandirmasiyla TUTARLI).
+
+---
+#### D) TARIF KÜTÜPHANESI -- IKON SISTEMI TAMAMEN KALDIRILDI
+
+Bahri, hazirlik talimati ikonlarinin (kucuk sabit bir ikon seti,
+genis kategoriye gore eslestiriliyordu) tarifle SISTEMATIK olarak
+ICERIK UYUMSUZLUGU gosterdigini bildirdi (ornekler: roka yikama
+adiminda makarna suzme ikonu, parmesan dilimlemede salatalik
+dilimleme ikonu, tavada kavurma icin kaynayan corba ikonu).
+**KARAR: ikon gosterimi TAMAMEN KALDIRILDI**, sadece talimat metni
+kaliyor. `pages/5_Tarif_Kutuphanesi.py` guncellendi ve TESLIM EDILDI
+-- Bahri'nin bunu git'e ekleyip calistirdigindan EMIN OLUNMALI
+(son mesajlarda git komutlari verildi, SONUC DOGRULANMADI).
+
+**Kalinti (kasitli DOKUNULMADI):** `asama_ikonlari.py` modulu VE
+veritabanindaki `hazirlik_ikonlari` sutunu hala DURUYOR ama artik
+HICBIR YERDE KULLANILMIYOR -- Bahri isterse ayrica temizlenebilir
+(dosya silme + `alter table malzemeler drop column hazirlik_
+ikonlari` -- HENUZ YAPILMADI, sadece bir SECENEK olarak belirtildi).
+
+---
+#### E) YENI BUYUK GOREV: 244 TARIFIN HAZIRLIK TALIMATI EKSIK
+
+**Bu, Menü Mühendisi 8'de BASLANACAK ANA GOREV.**
+
+Kapsamli bir teshis sorgusu (`teshis_eksik_talimatlar.sql`) calistirildi:
+**485 tariften 244'unde (yaklasik YARISI) HIC `hazirlik_talimati`
+YOK** (Bahri'nin ilk tahmini olan 50-150'den COK DAHA FAZLA cikti).
+Sorgu ayrica "COK KISA" (5 satirdan az) talimatlari da ariyordu ama
+sonucta HIC "KISA" kategorili satir CIKMADI -- yani mevcut TUM
+talimatli tarifler zaten yeterli uzunlukta, sorun SADECE tamamen
+eksik olanlarda.
+
+**FORMAT (mevcut iyi orneklerden -- "Roka Salatası (Parmesanlı)",
+"Pastırmalı Yumurta" -- COPYA edilecek YAPISI):**
+```
+**Hazırlık / Mise en Place**
+1. [adim metni]
+2. [adim metni]
+...
+
+**Isıl İşlem** (SADECE pisirme gerektiren tariflerde)
+1. Pişirme (~SICAKLIK°C, YONTEM, SURE dk): [adim metni]
+
+PARALEL YAPILABİLİRLİK: [aciklama VEYA "Paralel fırsatı yok."]
+
+SÜRE ÖZETİ: Aktif işçilik ~X dk · Pasif bekleme [Y dk / yok] · Toplam ~Z dk
+```
+(Not: eski surumde her adim basina ikon vardi, ARTIK KALDIRILDI --
+SADECE metin.)
+
+**SIRALAMA KARARI:** Bahri sıralamayı BANA biraktı -- **ALFABETIK
+sirayla ilerlenecek** (net "nereden devam ettik" noktasi icin en
+pratik yontem, kategori bazli siralamanin yaratacagi belirsizlikten
+kacinmak icin secildi).
+
+**ILK TARIF (alfabetik siranin basi):** "Ahtapot Salatası (Soğuk)"
+
+**TAM 244 TARIF LISTESI bu ozete DAHIL EDILMEDI** (asiri uzun olurdu)
+-- GEREKTIGINDE ayni sorgu (`teshis_eksik_talimatlar.sql`, zaten
+teslim edilmis) TEKRAR calistirilip GUNCEL liste alinabilir (bazilari
+tamamlanmis olabilecegi icin sorguyu TEKRAR calistirmak, eski listeye
+guvenmekten DAHA GUVENILIR).
+
+**BATCH BUYUKLUGU HENUZ NETLESTIRILMEDI** -- 10-15 tarif/oturum
+onerildi ama Bahri'den KESIN onay ALINMADI, yeni oturumda
+netlestirilmeli.
+
+**HENUZ HICBIR TARIFE bu gorev kapsaminda talimat YAZILMADI --
+tamamen SIFIRDAN baslanacak.**
+
+---
+#### F) DIGER ACIK/BEKLEYEN ISLER (daha dusuk oncelikli, unutulmamali)
+
+- **Başlık banner videosu:** Bahri "şimdilik dursun" demişti (video
+  hazir, `app.py`'ye entegre edilmisti ama TEST EDILMEDI/KARAR
+  VERILMEDI) -- bu, ERTELENMIS durumda, unutulmamali.
+- **Ayçekirdeği malzeme ekleme:** Cok ONCEDEN (bu oturumun daha erken
+  bir noktasinda) sema alinip besin degerleri dogrulanmisti ama
+  HENUZ EKLENMEDI -- Haşhaş referans degerleriyle birlikte bekliyor.
+- **1000 tarif hedefi:** 485 tarif var, 515 kaldi -- bu hedef, 244
+  eksik-talimat gorevinin ARDINDAN veya PARALEL dusunulebilir.
