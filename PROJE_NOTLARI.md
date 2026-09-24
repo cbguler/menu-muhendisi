@@ -10849,3 +10849,38 @@ dogrulama sorgusu icerir. SONUC BEKLENIYOR.
 - **Teslim:** `sql/142_hazirlik_talimati_parti9.sql`. SONUC BEKLENIYOR.
   Ilerleme: 210/245.
 - **SIRADAKI:** Parti 10 = alfabetik 211-245 (SON parti, 35 tarif).
+
+### 23 Eylul 2026 -- Parti 9 TAMAMLANDI (142 dogrulandi)
+
+- 142 dogrulama: 18 satir, hepsi beklenen deger/asama ile eslesiyor;
+  Semizotlu Yoğurt ve Taze Soğanlı Cacık'ta isil_asama dogru sekilde
+  null -- Parti 9 TAMAM. **Ilerleme: 210/245.**
+- **SIRADAKI:** Parti 10 (SON PARTI) = alfabetik 211-245 (35 tarif).
+
+### 23 Eylul 2026 -- PARTI 10 (SON PARTI, 143) Teslim -- 245/245 TAMAMLANDI
+
+- Alfabetik 211-245 (35 tarif, SON GRUP): Yayla Çorbası (Ev Usulü) ...
+  Zeytinyağlı Yaprak Sarma (Ev Usulü). Bu grubun cogunlugu (~29 tarif)
+  "Zeytinyağlı" sebze yemegi kategorisiydi.
+- **Zeytinyağlı yemekler icin arastirilan ortak teknik:** Yerlesik
+  tariflerle karsilastirildi -- standart prensip "az su, sebzenin/
+  domatesin kendi suyunda kisik ateste kapakli pisirme" (kaynak:
+  yemek.com/arcelik tarifleri, "mumkun oldugu kadar az su kullanarak
+  domatesin suyunda agir agir pisiriyorum" notu). Bu yuzden CIPLAK
+  sebze zeytinyaglilarinda (havuç, ıspanak, kabak, bamya, patlıcan
+  vb.) 200-400g gibi DUSUK miktarlar kullanildi; sadece KURU baklagil
+  icerenlerde (Kuru Fasulye, Siyah Fasulye) 1500-1800g gibi yuksek
+  miktar (gercek haslama gerektirdigi icin) kullanildi. Dolma tarzi
+  zeytinyaglilarda (biber/kabak/lahana/yaprak) etli versiyonlarla
+  benzer ama biraz dusuk miktarlar kullanildi (400-600g).
+- **Zeytinyağlı Patatesli Havuç:** Malzeme listesinde SOĞAN yoktu --
+  talimat ona gore (soğansiz) yazildi.
+- 29 tarife su eklendi (200-1800g araligi); 6 tarifte su YOK (Yaz
+  Domates Çorbası -- zaten yeterli, cig salatalar, yogurtlu tarifler,
+  meze tabaklari).
+- **Teslim:** `sql/143_hazirlik_talimati_parti10_SON.sql`. Dosyanin
+  SONUNDA projenin TAMAMINI kapsayan bir "Dogrulama 3" var: kutuphanede
+  (isletme_id is null) hazirlik_talimati BOS kalan tarif kalmamali,
+  0 satir donmeli -- bu, 245 tarifin TAMAMININ dolduruldugunu
+  dogrulayacak SON kontrol. SONUC BEKLENIYOR.
+- **Ilerleme: 245/245 (bu dosya calisirsa gorev TAMAMLANMIS olacak).**
