@@ -10711,3 +10711,112 @@ paylasirsa.
 - **Teslim:** `sql/138_hazirlik_talimati_parti6.sql`. SONUC BEKLENIYOR.
   Ilerleme: 120/245.
 - **SIRADAKI:** Parti 7 = alfabetik 121-150.
+
+### 23 Eylul 2026 -- Parti 6 TAMAMLANDI (138 dogrulandi)
+
+- 138 basariyla tamamlandi -- transaction'in 3. (bilgi amacli) sorgusuna
+  kadar hatasiz ulasildigi icin do $$ blogundaki TUM kontroller (30
+  talimat + 19 su eklemesi) gectigi kesinlesti.
+- Bahri'nin paylastigi sonuc, "Kırmızı Biberli Kıyma Sote" mukerrer
+  asama bulgusunu DOGRULADI (Hazırlık ve Sote asamalari gercekten
+  ikiser kez kayitli). Duzeltme KARARI Bahri'ye birakildi, HENUZ
+  YAPILMADI -- "canliya almadan once toplu veri temizligi turunda"
+  ele alinmasi onerildi.
+- **Ilerleme: 120/245.**
+- **SIRADAKI:** Parti 7 = alfabetik 121-150.
+
+### 23 Eylul 2026 -- MUKERRER ASAMA SORUNU 245 TARIFTE TARANDI: 23 TARIF ETKILENIYOR
+
+Bahri'nin talebiyle, "Kırmızı Biberli Kıyma Sote"de bulunan mukerrer
+asama sorununun (Hazırlık + Sote asamalari IKISER KEZ kayitli)
+TEK OLAY MI yoksa SISTEMATIK Mİ oldugu, `teshis_talimat_kaynak_
+veri.csv`'deki 245 tarifin `asamalar` sutunu parse edilerek TARANDI.
+
+**SONUC: 23/245 tarifte AYNI KALIP var** (2 asamasi olan bir tarifte,
+HER IKI asama da TAM OLARAK 2 kez kayitli -- 2 yerine 4 satir).
+Etkilenen 23 tarif: Kırmızı Biberli Kıyma Sote, Lahana Dolması (Etli),
+Limonlu Fırın Levrek, Madımaklı Kavurma, Midye Dolma (Pilavlı),
+Mısırlı Tavuk Sote, Nar Ekşili Dana Rosto, Nohutlu Sığır Kavurma
+(Bahar), Otlu Izgara Çipura, Pastırmalı Kavurma, Patatesli Dana
+Güveç, Patlıcanlı Kıyma Musakka, Pırasalı Kıymalı Bahar Yemeği, Roka
+Soslu Izgara Tavuk, Sade Kuzu Güveç (Et Suyu ile), Semizotlu Etli
+Yemek, Soya Kıymalı Patlıcan Musakka (Etsiz), Soyalı Biberli Sote
+(Etsiz), Taze Bakla Kavurma (Etli), Taze Fasulyeli Kuzu Güveç
+(İlkbahar), Taze Fasulyeli Tavuk Güveç, Yer Elmalı Kuzu Yahnisi,
+Yoğurtlu Kebap (Ev Usulü).
+
+**ETKI:** Bu 23 tarifin "gerçek üretim maliyeti" (enerji hesabi) tum
+isil asamalari topladigi icin CIFT SAYIYOR olmali -- gercek deger,
+gosterilenin yaklasik yarisi.
+
+**5 TANESI PARTI 7'NIN ICINDE** (Lahana Dolması, Limonlu Fırın
+Levrek, Madımaklı Kavurma, Midye Dolma, Mısırlı Tavuk Sote) -- bu
+yuzden Parti 7'ye gecmeden ONCE temizlik yapiliyor (su eklerken
+"1 isil asama olmali" kontrolu bu tariflerde 2 donup hata verirdi).
+
+**HATA/DUZELTME:** Ilk surum, silinecek asamanin malzeme baglantilarini
+UPDATE ile tutulan asamaya "tasimaya" calisirken `asama_malzemeleri`
+tekillik kisitini ihlal edip FAIL verdi -- cunku toplu yukleme hatasi
+asamayla BIRLIKTE malzeme baglantilarini da ikiser kez yazmis: tutulan
+asamanin ZATEN kendi ozdes malzeme kayitlari var, UPDATE bunlarla
+CAKISIYORDU. Revizyon 2: UPDATE yerine "once cakismayanlari kopyala
+(ON CONFLICT DO NOTHING), sonra silinecek tarafin kendi kopyalarini
+sil" yontemine gecildi -- veri kaybi yok, cakisma da yok.
+**Teslim:** `sql/139_recete_asamalari_mukerrer_temizligi.sql`
+(Revizyon 2). Once/sonra satir sayilari (92 -> 46) ve TUM kutuphanede
+(sadece bu 23'u degil) baska mukerrer kalmadigini gosteren bir
+dogrulama sorgusu icerir. SONUC BEKLENIYOR.
+
+### 23 Eylul 2026 -- Mukerrer Asama Temizligi TAMAMLANDI (139 dogrulandi)
+
+- 139 (Revizyon 2) basariyla tamamlandi -- 23 tarifin hepsi artik TAM
+  2 asamaya sahip (dogrulama 2 sonucu: hepsi "asama_sayisi: 2").
+- Dogrulama 1 (TUM 485 tariflik kutuphanede baska mukerrer var mi)
+  sonucu: "Success. No rows returned" -- SORUN TAMAMEN KAPANDI, hem
+  talimatli hem talimatsiz TUM kutuphanede baska mukerrer asama YOK.
+  Bu konu KAPANDI.
+
+### 23 Eylul 2026 -- Parti 7 (140) Teslim
+
+- Alfabetik 121-150 (30 tarif): Kış Lahana Turşusu ... Naneli Bulgur
+  Pilavı. Bunlardan 5'i (Lahana Dolması, Limonlu Fırın Levrek,
+  Madımaklı Kavurma, Midye Dolma, Mısırlı Tavuk Sote) 139'la
+  TEMIZLENEN mukerrer-asama tarifleriydi -- 140, 139'DAN SONRA
+  calistirilmali (aksi halde su eklemelerindeki "1 isil asama" kontrolu
+  bu 5 tarifte FAIL verir).
+- **Kuru Fasulye Piyazı:** DB'deki haslama suresi (15 dk) kuru fasulye
+  icin gercekci degil -- muhtemelen tarif onceden ISLATILMIS fasulye
+  varsayiyor (islatma kaliteliyse 15 dk yeterli olabilir). Talimatta
+  bir gece islatma notu eklendi, DB suresi DEGISTIRILMEDI (Bahri
+  kurali: sureyi uydurma, oldugu gibi yaz).
+- **Mung Fasulyeli Pilav:** Malzeme listesinde HIC sivi kaynagi
+  (tavuk suyu) yoktu -- standart pilav orani uygulanarak 1000g su
+  tamami eklendi.
+- 18 tarife su eklendi (100-3500g araligi); 12 tarifte su YOK
+  (standart oranli pilavlar, kavurma, sote'ler, cig salatalar, sut
+  bazli tatli).
+- **Teslim:** `sql/140_hazirlik_talimati_parti7.sql`. SONUC BEKLENIYOR.
+  Ilerleme: 150/245.
+- **SIRADAKI:** Parti 8 = alfabetik 151-180.
+
+### 23 Eylul 2026 -- Parti 8 (141) Teslim
+
+- Alfabetik 151-180 (30 tarif): Naneli Cacık (Klasik) ... Roka Marul
+  Salatası. 7 tanesi (Nar Ekşili Dana Rosto, Nohutlu Sığır Kavurma,
+  Otlu Izgara Çipura, Pastırmalı Kavurma, Patatesli Dana Güveç,
+  Patlıcanlı Kıyma Musakka, Pırasalı Kıymalı Bahar Yemeği) 139 ile
+  temizlenen mukerrer-asama tarifleriydi (zaten cozuldu).
+- **Naneli Yoğurt:** Tek malzemesi yoğurt+kuru nane+tuz -- Ayran'a
+  (sut hatasi duzeltilen) yapisal olarak COK benziyor, muhtemelen bir
+  "naneli ayran" varyanti. Ayran'daki oranla (400:800=0.5) tutarli
+  olacak sekilde 350g su (700g yogurda) eklendi -- SAUCE degil, ICECEK
+  kivaminda yazildi. Bu bir YORUM, Bahri onayi ISTENMEDI (standing su
+  onayi geregi) ama not dusuluyor.
+- **Nohut Ezmesi / Kuru Fasulye Piyazı benzeri:** Haslama suresi (15
+  dk) kuru nohut icin kisa -- onceden ISLATILMIS varsayimiyla yazildi,
+  DB suresi degistirilmedi.
+- 19 tarife su eklendi (200-2000g araligi); 11 tarifte su YOK (cig
+  salatalar, kavurma/sote, borekler, meze tabagi).
+- **Teslim:** `sql/141_hazirlik_talimati_parti8.sql`. SONUC BEKLENIYOR.
+  Ilerleme: 180/245.
+- **SIRADAKI:** Parti 9 = alfabetik 181-210.
