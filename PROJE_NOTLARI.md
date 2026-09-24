@@ -51,8 +51,10 @@
    dokunmaz ama bir tarifin ADINDA geçen mevsim ifadesiyle (ör.
    "(Bahar)") gerçek `mevsim_etiketi` sütunu arasında bir tutarsızlık
    fark edilirse sessizce geçilmez, Bahri'ye bildirilir.
-   **AÇIK DOĞRULAMA İŞİ:** Ad/etiket tutarsızlığı hiç kontrol
-   edilmedi. Şu sorgu bunu tarar:
+   **DOĞRULAMA TAMAMLANDI (23 Eylül 2026):** Ad/etiket tutarsızlığı
+   tarandı, sonuç "Success. No rows returned" -- HİÇBİR tutarsızlık
+   yok, bu konu KAPANDI. Sorgu (ileride yeni tarif eklenince tekrar
+   çalıştırılabilir, referans olarak tutuluyor):
    ```sql
    select ad, mevsim_etiketi
    from receteler
@@ -10596,10 +10598,12 @@ bolmek fark etmiyor), yeni tarifler eklenince ORTAYA CIKTI.
 sayisi=1) icin davranis DEGISMEDI (150g x 4 porsiyon = 600g, oncekiyle
 ayni); yeni tarif (porsiyon_sayisi=10, miktar=900g) icin 10 porsiyon
 istendiginde artik DOGRU sekilde 900g donuyor (eskiden 9000g idi).
-**Teslim:** duzeltilmis `pages/5_Tarif_Kutuphanesi.py`. GIT'E
-GONDERILMESI ve CANLIDA DOGRULANMASI BEKLENIYOR (bir tarif acip
-porsiyon sayisini kendi porsiyon_sayisi'sine esitleyip miktarlarin
-DEGISMEDIGINI kontrol et).
+**Teslim:** duzeltilmis `pages/5_Tarif_Kutuphanesi.py`, git'e
+gonderildi. **CANLIDA DOGRULANDI** (Bahri ekran goruntusu paylasti):
+"Enginar Kalpli Tavuk Güveç" artik dogru degerleri gosteriyor (900g
+tavuk, 500g enginar, 200g SU -- bizim ekledigimiz -- 150g sogan vb.),
+toplam maliyet 63.87 EUR'dan gercekci 7.91 EUR'ya dustu. **BU ACIK IS
+TAMAMEN KAPANDI.**
 
 ### 23 Eylul 2026 -- Parti 3 (135) Teslim -- Su Miktarlari Arastirildi + Onaylandi
 
