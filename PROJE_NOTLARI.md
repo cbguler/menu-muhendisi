@@ -10942,3 +10942,39 @@ gorevi (hazirlik talimati yazma) BASARIYLA TAMAMLANDI.
   3. Bahri onerisi: 245 tarifin bir kismini (10-15 tanesini) gercek bir
      asci/deneyimli kisiye gozden gecirtmek -- ozellikle su miktarlari
      ve pisirme sureleri.
+
+### 23 Eylul 2026 -- 1000 TARIF HEDEFINE DONUS: Porsiyon Birimi Standardizasyonu (KARAR + 144)
+
+Bahri "Tarif hedefimize devam edelim" dedi (1000 tarif hedefi --
+485 tarif var, 515 kaldi, bu hedef daha once 485'teki eksik talimatlari
+tamamlamak icin GECICI DURDURULMUSTU, simdi geri donuluyor).
+
+**ONEMLI BULGU (devam etmeden once):** Kutuphanenin ORIJINAL mimari
+karari "porsiyon_sayisi kutuphane genelinde 1 (kisi basi)" idi (1
+Agustos 2026 notu). Ama bu oturumda doldurdugumuz 244 tarif (Ic Pilav
+haric) porsiyon_sayisi=10 (10 kisilik TOPLU miktar) ile girilmisti --
+kutuphanede IKI FARKLI BIRIM sistemi bir arada duruyordu. Sorgu
+dogruladi: 241 tarif porsiyon_sayisi=1, 244 tarif porsiyon_sayisi=10
+(241+244=485, TAM ikiye ayriliyor, baska istisna yok).
+
+**BAHRI'NIN KARARI (KALICI KURAL):** Butun kutuphane AYNI porsiyon
+biriminde olmali. Yeni tarifler ZIHINDE gercekci 10 kisilik miktarla
+TASARLANACAK (kucuk baharat miktarlarini olceklemek kolay olsun diye),
+ama VERITABANINA 10'a BOLUNEREK, porsiyon_sayisi=1 olarak YAZILACAK.
+Talimat METNI ise (ör. "2 litre su") BILEREK degistirilmiyor -- gercekci
+bir 10 kisilik pisirme surecini anlatan bagimsiz bir tarif karti gibi
+kalacak; veritabani sadece maliyet/besin degeri hesabi icin DOGRUSAL
+bir referans (Bahri onayladi: "restoran tarif karti + ayri maliyet
+sistemi" mantigi).
+
+**144 MIGRATION:** `miktar_gram` sutunu `numeric` (sinirsiz hassasiyet,
+dogrulandi) oldugu icin kucuk miktarlar (3g -> 0.3g) KAYBOLMUYOR. 244
+tarifin TUM recete_malzemeleri.miktar_gram'i 10'a bolundu, porsiyon_
+sayisi 1'e cekildi. **Teslim:** `sql/144_244_tarifi_1_porsiyona_
+olcekle.sql`. SONUC BEKLENIYOR. Basarili olursa kutuphanenin TAMAMI
+(485/485) porsiyon_sayisi=1 olacak.
+
+**SIRADAKI (144 dogrulandiktan sonra):** Bu dogrulanirsa 1000 tarif
+hedefine devam -- kac tarif/hangi kategoriler/hangi parti buyuklugu
+konusulacak, `yukle_yeni_tarifler.py` script'inin mevcut deseni
+(onceki oturumlarda kullanilan) referans alinabilir.
