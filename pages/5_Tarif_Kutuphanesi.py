@@ -6,10 +6,15 @@
 # degerlerini olceklenmis olarak gorme, ve (doldurulduysa) adim adim
 # hazirlik talimatini okuma.
 #
-# NOT: Malzeme miktarlari (recete_malzemeleri.miktar_gram) 1 porsiyon
-# baz alinarak tasarlandi -- porsiyon olcekleme sadece bu miktarlari ve
-# besin/maliyet toplamlarini carpar. Glisemik indeks bir oran oldugu
-# icin olceklenmez (porsiyon sayisindan bagimsizdir).
+# NOT (23 Eylul 2026 DUZELTMESI): Malzeme miktarlari (recete_
+# malzemeleri.miktar_gram) HER TARIFIN KENDI porsiyon_sayisi'si icin
+# kayitli -- sabit "1 porsiyon" varsayimi DEGIL. Eski ~241 kutuphane
+# tarifinde bu deger genelde 1'di (tesadufen sadece o yuzden eski
+# `* porsiyon` formulu dogru sonuc veriyordu); sonradan eklenen
+# tariflerin cogu 10 porsiyonluk TOPLU miktar olarak girildi. Bu
+# yuzden gercek olcekleme orani `porsiyon / porsiyon_sayisi`'dir --
+# koddaki `olcek` degiskenine bakin. Glisemik indeks bir oran oldugu
+# icin hicbir sekilde olceklenmez (porsiyon sayisindan bagimsizdir).
 
 import streamlit as st
 
@@ -67,7 +72,7 @@ def _tarif_kutuphanesi_detayli_getir():
     grup_by_kategori = {k["id"]: k["sira"] for k in kategoriler}
 
     receteler = _sayfalayarak_getir(lambda: supabase.table("receteler")
-        .select("id, ad, mutfak_kategori_id, mevsim_etiketi, ozel_etiketler, bolge, hazirlik_talimati")
+        .select("id, ad, mutfak_kategori_id, mevsim_etiketi, ozel_etiketler, bolge, hazirlik_talimati, porsiyon_sayisi")
         .is_("isletme_id", "null")
     )
 
@@ -156,6 +161,15 @@ def _tarif_kutuphanesi_detayli_getir():
             "bolge": r["bolge"] or "Genel",
             "mevsim_etiketi": r["mevsim_etiketi"] or "yil_boyunca",
             "hazirlik_talimati": r["hazirlik_talimati"],
+            # YUZ ELLI BESINCI DUZELTME (23 Eylul 2026): recete_malzemeleri
+            # ve isitilan_kutle_gram DEGERLERI bu tarifin KENDI
+            # porsiyon_sayisi'si icin kayitli (241 eski kutuphane tarifi
+            # icin bu her zaman 1'di, ama sonradan eklenen 245 tarifin
+            # neredeyse tamami 10 porsiyonluk TOPLU miktar olarak
+            # girildi). Olcekleme artik `porsiyon / porsiyon_sayisi`
+            # oranini kullanmali, sadece `porsiyon` DEGIL -- asagida
+            # tanimlanan `olcek` degiskenine bakin.
+            "porsiyon_sayisi": r.get("porsiyon_sayisi") or 1,
             "malzemeler": sorted(malzeme_listesi, key=lambda x: -x["miktar_gram"]),
             "kalori": kalori, "protein": protein, "yag": yag, "karbonhidrat": karbonhidrat,
             "gi": gi, "maliyet_eur": maliyet_eur, "tam_fiyatli": tam_fiyatli,
@@ -215,6 +229,16 @@ except (TypeError, ValueError):
     varsayilan_porsiyon = 10
 porsiyon = st.number_input("Porsiyon sayısı", min_value=1, max_value=200, value=varsayilan_porsiyon, step=1)
 
+# YUZ ELLI BESINCI DUZELTME (23 Eylul 2026): asagidaki TUM olcekleme
+# `porsiyon` DEGIL, bu `olcek` oranini kullanmali. Sebep: recete_
+# malzemeleri.miktar_gram (ve isitilan_kutle_gram) bu tarifin KENDI
+# porsiyon_sayisi'si icin kayitli -- cogu eski kutuphane tarifinde bu
+# 1'di (bu yuzden eskiden dogrudan `* porsiyon` yeterliydi), ama
+# sonradan eklenen tariflerin cogu 10 porsiyonluk TOPLU miktar olarak
+# girildi. `porsiyon_sayisi` alani hicbir zaman 0 olmamali ama
+# savunma amacli `or 1` ile bolme hatasi onleniyor.
+olcek = porsiyon / (tarif["porsiyon_sayisi"] or 1)
+
 st.subheader(tarif["ad"])
 st.caption(
     f"{GRUP_ADI[tarif['grup']]} · {KISA_BOLGE_ADI.get(tarif['bolge'], tarif['bolge'])} · "
@@ -226,15 +250,15 @@ sutun_malzeme, sutun_bilgi = st.columns([1, 1])
 with sutun_malzeme:
     st.write(f"**Malzemeler ({porsiyon} porsiyon için)**")
     for m in tarif["malzemeler"]:
-        st.write(f"- {m['ad']}: {round(m['miktar_gram'] * porsiyon)} g")
+        st.write(f"- {m['ad']}: {round(m['miktar_gram'] * olcek)} g")
 
 with sutun_bilgi:
     st.write("**Besin değerleri (toplam)**")
-    st.write(f"{round(tarif['kalori'] * porsiyon)} kcal")
+    st.write(f"{round(tarif['kalori'] * olcek)} kcal")
     st.write(
-        f"Protein {round(tarif['protein'] * porsiyon)}g · "
-        f"Yağ {round(tarif['yag'] * porsiyon)}g · "
-        f"Karbonhidrat {round(tarif['karbonhidrat'] * porsiyon)}g"
+        f"Protein {round(tarif['protein'] * olcek)}g · "
+        f"Yağ {round(tarif['yag'] * olcek)}g · "
+        f"Karbonhidrat {round(tarif['karbonhidrat'] * olcek)}g"
     )
     gi_metin = f"{round(tarif['gi'])}" if tarif["gi"] is not None else "-"
     st.write(f"Glisemik İndeks: {gi_metin} (porsiyon sayısından bağımsız, bir orandır)")
@@ -307,13 +331,13 @@ def _maliyet_ayarlarini_getir(isletme_id):
     }
 
 
-def _gercek_maliyet_hesapla(asamalar, ayarlar, porsiyon):
+def _gercek_maliyet_hesapla(asamalar, ayarlar, olcek):
     enerji_eur = 0.0
     iscilik_dk = 0.0
     for a in asamalar:
         iscilik_dk += a["aktif_dakika"] if a["aktif_dakika"] is not None else a["sure_dakika"]
         if a["isil_islem_mi"] and a["agirlikli_ozgul_isi"] and a["isitilan_kutle_gram"]:
-            kutle = a["isitilan_kutle_gram"] * porsiyon  # 1 porsiyon baz -> istenen porsiyona olcekle
+            kutle = a["isitilan_kutle_gram"] * olcek  # tarifin kendi porsiyon_sayisi'sine gore olceklenir
             delta_t = a["hedef_sicaklik"] - a["baslangic_sicaklik"]
             joule = kutle * a["agirlikli_ozgul_isi"] * delta_t
             kwh = joule / 3_600_000.0 / a["verimlilik_orani"]
@@ -343,8 +367,8 @@ elif not fiyat_verisi_var or not tarif["tam_fiyatli"]:
     )
 else:
     ayarlar = _maliyet_ayarlarini_getir(st.session_state.isletme_id)
-    enerji_eur, iscilik_eur = _gercek_maliyet_hesapla(tarif_asamalari, ayarlar, porsiyon)
-    malzeme_eur = tarif["maliyet_eur"] * porsiyon
+    enerji_eur, iscilik_eur = _gercek_maliyet_hesapla(tarif_asamalari, ayarlar, olcek)
+    malzeme_eur = tarif["maliyet_eur"] * olcek
     toplam_eur = malzeme_eur + enerji_eur + iscilik_eur
 
     m1, m2, m3, m4 = st.columns(4)
