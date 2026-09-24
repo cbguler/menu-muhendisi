@@ -10600,3 +10600,57 @@ paylasirsa.
 - **Teslim:** `sql/136_hazirlik_talimati_parti4.sql`. SONUC BEKLENIYOR.
   Ilerleme: 60/245.
 - **SIRADAKI:** Parti 5 = alfabetik 61-75.
+
+### 23 Eylul 2026 -- Parti 4 TAMAMLANDI (136 dogrulandi) + Git Gonderimi Atlaniyordu
+
+- 136 dogrulama: 9 satir, hepsi beklenen miktar/asama ile eslesiyor --
+  Parti 4 TAMAM. **Ilerleme: 60/245.**
+- **HATA/DUZELTME (Claude):** 135 ve 136 icin git komutlari HIC
+  VERILMEMISTI (Bahri fark etti) -- SQL'i Supabase'de calistirmak onu
+  git'e gondermiyor, sql/ klasorundeki numarali gecmise ELLE
+  eklenmesi gerekiyor. **KALICI HATIRLATMA:** Her parti teslim
+  ederken (SQL dosyasi calistirilsin calistirilmasin) git add/commit/
+  push komutlarini SQL dosyasi + PROJE_NOTLARI.md icin MUTLAKA vermeli.
+- **SIRADAKI:** Parti 5 = alfabetik 61-75.
+
+### 23 Eylul 2026 -- PARTI BUYUKLUGU 15'TEN 30'A CIKARILDI + Parti 5 (137) Teslim
+
+- Bahri: "cok kucuk partiler... sayisini arttirmanin mahzuru var mi,
+  yoksa cabucak bitirelim". Claude'un cevabi: tek gercek fark, her
+  parti tek atomik `do $$` islemi oldugu icin (bir tarif adi
+  eslesmezse TUMU geri aliniyor) parti buyudukce bir hatanin
+  etkiledigi is miktari da buyuyor -- ama ilk 4 parti ilk seferde
+  sorunsuz gecti (SQL yazilmadan once her ad kaynak CSV'yle
+  karsilastiriliyor), risk dusuk. **KARAR: parti buyuklugu 30'a
+  cikarildi**, Parti 5'ten itibaren gecerli.
+- Alfabetik 61-90 (30 tarif): Havuç Turşusu ... Kabaklı Yoğurt Salatası.
+- **DIKKAT -- "İç Pilav" farkli:** Bu tarifin `porsiyon_sayisi = 1`
+  (digerleri gibi 10 DEGIL) -- kucuk bir ic harc/garnitur tarifi gibi
+  gorunuyor, eski "1 porsiyonluk" kutuphane tarifleriyle ayni desende.
+  Su miktari (90g) buna gore, 1 porsiyon bazinda hesaplandi.
+- **Izgara Ahtapot:** DB'de haslama ayri bir asama olarak KAYITLI DEGIL
+  -- tek "Izgara" asamasi (85C hedef, 35 dk, aktif20/pasif15) var.
+  Yerlesik tariflerle dogrulandi: ahtapot ONCE haslanir SONRA izgaraya
+  atilir -- pasif15 dk'yi haslama, aktif20 dk'yi izgara/muhurleme
+  olarak yorumlayip TEK asama metninde iki faz halinde yazdim, haslama
+  suyu (3000g) o asamaya baglandi.
+- **Izgara Dana Böbrek:** Koku gidermek icin tuzlu suda bekletme
+  onerildi ama bu bir YIKAMA/ISLATMA suyu oldugu icin (yerlesik kural)
+  SU malzemesi olarak KAYDEDILMEDI, sadece metinde bahsedildi, sureye
+  de dahil edilmedi.
+- 12 tarife su eklendi (90-3000g araligi, genis aralik farkli tarif
+  turlerinden kaynaklaniyor); 18 tarifte su YOK (izgaralarin cogu,
+  firin but+havuc, soteler, cig salatalar, humus, incirli yogurt).
+- **HATA/DUZELTME:** Ilk surum FAIL verdi -- "Ispanaklı Cacık" isil
+  islemsiz (soguk cacik, Bahar Cacığı/Domatesli Cacık gibi) oldugu
+  halde kod herkese "1 isil asama olmali" kontrolu uyguluyordu (parti
+  1-2'deki ISILSIZ istisnasi bu partinin kodunda UNUTULMUS). Tum parti
+  (30 tarif) transaction sayesinde SORUNSUZ geri alindi. Revizyon 2'de
+  ISILSIZ istisnasi eklendi (Ispanaklı Cacık: SU eklenir ama asama_
+  malzemeleri'ne baglanmaz). **KALICI HATIRLATMA:** Her yeni parti
+  kodunda ISILSIZ istisna listesini (o partideki isil-islemsiz ama
+  su alan tarifler) mutlaka ELLE kontrol et, kopyala-yapistir varsayilan
+  kod kalibi bunu atlar.
+- **Teslim:** `sql/137_hazirlik_talimati_parti5.sql` (Revizyon 2).
+  SONUC BEKLENIYOR. Ilerleme: 90/245.
+- **SIRADAKI:** Parti 6 = alfabetik 91-120 (yeni 30'luk boyut).
