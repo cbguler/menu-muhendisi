@@ -34,6 +34,38 @@
    Bahri'nin açık talebiyle — TrendSurf Optima'daki aynı kalıcı kuralın
    buraya da uygulanması). Buton etiketleri, başlıklar, caption'lar,
    hiçbir görünür metinde emoji ya da gereksiz widget olmayacak.
+9. **MEVSİMSELLİK ASLA UNUTULMAMALI** (23 Eylül 2026, Bahri'nin
+   hatırlatmasıyla — bkz. Proje Özeti'ndeki "asıl motivasyon" ve
+   Anayasa madde 3). Örnek: zeytinyağlı bakla SADECE bakla hasadının
+   yapıldığı ilkbaharda menüye girebilir. Bu, `uretim_algoritmasi.py`
+   içindeki `_aday_havuzu` fonksiyonuyla ZATEN UYGULANIYOR — bir tarif,
+   `mevsim_etiketi` o günün gerçek mevsimiyle eşleşmedikçe veya
+   `yil_boyunca` olmadıkça aday havuzuna GİRMİYOR (yetersiz aday
+   kalırsa kademeli gevşetiliyor). **BU FİLTRE ASLA ZAYIFLATILMAMALI
+   VEYA BYPASS EDİLMEMELİ.**
+   Bu mekanizma tamamen `mevsim_etiketi` sütunundaki DEĞERİN dogru
+   girilmiş olmasına bağlı — algoritma "doğru mevsim nedir" bilmiyor,
+   sadece etikete güveniyor. Bu yüzden: (a) yeni tarif/malzeme eklenirken
+   mevsim_etiketi gerçek hasat/mevsim takvimine bakılmadan tahmin
+   EDİLMEZ; (b) hazırlık talimatı yazma gibi görevler bu alana
+   dokunmaz ama bir tarifin ADINDA geçen mevsim ifadesiyle (ör.
+   "(Bahar)") gerçek `mevsim_etiketi` sütunu arasında bir tutarsızlık
+   fark edilirse sessizce geçilmez, Bahri'ye bildirilir.
+   **AÇIK DOĞRULAMA İŞİ:** Ad/etiket tutarsızlığı hiç kontrol
+   edilmedi. Şu sorgu bunu tarar:
+   ```sql
+   select ad, mevsim_etiketi
+   from receteler
+   where isletme_id is null
+     and (
+       (ad ilike '%(bahar)%' and mevsim_etiketi <> 'ilkbahar')
+       or (ad ilike '%(ilkbahar)%' and mevsim_etiketi <> 'ilkbahar')
+       or (ad ilike '%(yaz)%' and mevsim_etiketi <> 'yaz')
+       or (ad ilike '%(kış)%' and mevsim_etiketi <> 'kis')
+       or (ad ilike '%(sonbahar)%' and mevsim_etiketi <> 'sonbahar')
+     )
+   order by ad;
+   ```
 
 ## Teknoloji Yığını
 | Katman | Seçim |
@@ -10654,3 +10686,28 @@ paylasirsa.
 - **Teslim:** `sql/137_hazirlik_talimati_parti5.sql` (Revizyon 2).
   SONUC BEKLENIYOR. Ilerleme: 90/245.
 - **SIRADAKI:** Parti 6 = alfabetik 91-120 (yeni 30'luk boyut).
+
+### 23 Eylul 2026 -- Parti 6 (138) Teslim + Veri Kalitesi Bulgusu
+
+- Alfabetik 91-120 (30 tarif): Kadayıflı Süt Tatlısı ... Kırmızı
+  Mercimekli Pilav.
+- **VERI KALITESI BULGUSU (bu gorevin disinda, DUZELTILMEDI):**
+  "Kırmızı Biberli Kıyma Sote" tarifinin `recete_asamalari`
+  kayitlarinda MUKERRER (duplicate) satirlar var -- hem "Hazırlık
+  (Doğrama)" hem "Sote" asamasi IKISER KEZ kayitli (kaynak veri
+  sorgusunda ayni asama iki kez gorundu). Bu tarife su EKLEMEDIGIMIZ
+  icin talimat/su gorevini etkilemiyor, ama enerji hesabini CIFT
+  SAYIYOR olabilir (Tarif Kutuphanesi'ndeki maliyet hesabi tum isil
+  asamalari topluyor). 138 dosyasinin sonunda bunu gosteren bir
+  BILGI sorgusu var. Bahri karar verirse ayri bir migration'la
+  duzeltilebilir (fazla satir silinir).
+- **Kaşarlı Fırın Makarna:** 2 isil asama var (Haşlama + Fırınlama) --
+  su bu yuzden genel filtre yerine ASAMA ADINA GORE ('Haşlama')
+  baglandi, ayri islendi.
+- 19 tarife su eklendi (100-3500g araligi -- Karidesli Makarna'nin
+  3500g'i, haslanip suzulen makarna suyu oldugu icin en yuksek);
+  11 tarifte su YOK (standart oranli pilavlar, sote'ler, cig
+  salatalar, sut/kefir bazli tatlilar).
+- **Teslim:** `sql/138_hazirlik_talimati_parti6.sql`. SONUC BEKLENIYOR.
+  Ilerleme: 120/245.
+- **SIRADAKI:** Parti 7 = alfabetik 121-150.
