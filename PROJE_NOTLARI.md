@@ -10450,7 +10450,66 @@ Parti 1 su miktarlari (10 porsiyon): Ahtapot 2000, Arpa Çorbası 2500,
 Ayva Tatlısı 500, Badem Ezmesi 30, Barbunya Turşusu 1500 g.
 **FIRIN IFADESI KURALI (Bahri):** "X°C'ye onceden isitilmis firinda Y
 dakika pisirin" kalibi kullanilir; baslik "Fırınlama (X°C, Y dk):".
-**NOT:** Talimati ZATEN olan ~240 tarifte de su recete_malzemeleri'nde
-YOK -- enerji hesabi o tariflerde de suyu kapsamiyor. Ayri bir gorev
-olarak ele alinmali (henuz karar verilmedi).
+**DUZELTME:** SU, talimati olan 19 tarifte (Aşure, Tarhana, kompostolar,
+serbetli tatlilar...) ZATEN kayitli; bunlarin hepsi porsiyon_sayisi=1
+ve miktarlar porsiyon basina -- TUTARLI, duzeltme gerekmiyor.
 Revize dosya: `sql/132_hazirlik_talimati_parti1.sql` (Revizyon 2), SONUC BEKLENIYOR.
+
+### 23 Eylul 2026 -- Parti 1 TAMAMLANDI (132 dogrulandi) + Parti 2 (133) Teslim
+
+- 132 dogrulama sonucu beklenen gibi geldi -- Parti 1 TAMAM.
+- Su miktarlari icin yemek.com vb. yerlesik tariflerle KARSILASTIRMALI
+  arastirma yapildi (Bahri: "iyi arastir"); bazi tahminler revize edildi.
+- **Bahri kurallari:** (1) Su gerektiren her tarifte su yazilir; cig
+  salata, pekmez, suzme yogurtlu tatli gibi tariflere su EKLENMEZ.
+  (2) **AYRAN SU ILE YAPILIR** -- Ayran (Ev Usulü)'nde DB'de SÜT (TAM
+  YAĞ) 400 g vardi (HATALI veri), 133'te cikarilip SU 400 g eklendi.
+  (3) Cacik geleneksel sulu kivamda: Bahar Cacığı + Domatesli Cacık'a
+  300 g su.
+- **Teslim:** `sql/133_hazirlik_talimati_parti2.sql` = Parti 1
+  duzeltmeleri (Ayran, Bahar Cacığı) + alfabetik 16-30 talimatlari +
+  12 tarife SU. SONUC BEKLENIYOR. Ilerleme: 30/245.
+- **SIRADAKI:** Parti 3 = alfabetik 31-45 (CSV'deki sira_no ile).
+
+### 23 Eylul 2026 -- Ikon/Gorsel Kalintilarinin Temizligi
+
+Bahri: "Tariflerdeki resim ve videolari kaldirmadik." Zip'teki
+`pages/5_Tarif_Kutuphanesi.py` ZATEN ikonsuz (sadece talimat metni) --
+canli sitede hala gorunuyorsa bu dosya git'e gonderilmemis demektir.
+**DUZELTME (asama_ikonlari.py incelendi):** `pages/1_Recete_Uretimi.py`
+(uretim/admin ekrani) da bu modulden `tek_ikon_bul` ile ayni ikonlari
+kullaniyordu (satir 385, 431) -- ilk planda gozden kacmisti, silme
+oncesi YAKALANDI. `asama_ikonlari.py` DB'ye hic dokunmuyor (sadece
+`assets/{eylem}.png` dosya varligina bakiyor) -- SU BAKIMDAN
+`hazirlik_ikonlari` sutunu guvenle kaldirilabilir DURUMDAYDI zaten.
+
+**Bahri'nin analizi + KESIN KARAR (23 Eylul 2026):** Mantik yapisal
+olarak hatali -- once eylem fiili bulunuyor, sonra AYNI cumlede
+oncelikli 4 malzemeden (soğan/limon/biber/meyve) biri araniyor; bir
+adimda BIRDEN FAZLA malzeme gectiginde (cogu adimda boyle) yanlis
+varyant secilebiliyor. Doğru cozum eylem x malzeme matrisi gerektirir
+(23 eylem x onlarca malzeme = yuzlerce gorsel) -- SURDURULEMEZ. Bahri
+karari Claude'a birakti, **KARAR: TAMAMEN KALDIRILDI** (hem Tarif
+Kutuphanesi'nden hem Recete Uretimi'nden).
+
+**Uygulanan/teslim edilen (SONUC BEKLENIYOR):**
+- `pages/1_Recete_Uretimi.py` duzenlendi: ikon import + gosterim
+  blogu kaldirildi, aşama artik SADECE metin.
+- `pages/5_Tarif_Kutuphanesi.py`: onceki oturumda zaten ikonsuz hale
+  getirilmisti.
+- Silinecek (git rm): `asama_ikonlari.py`, `ikon_siniflandirma_
+  calistir.py/.bat`, assets/ altinda GERCEK ikon seti (dir cikan liste
+  ile dogrulandi -- 23 temel eylem + 17 malzeme varyanti = 41 dosya:
+  baharatlama/buharda_pisirme/cirpma/demleme/dilimleme(+biber/limon/
+  meyve/sogan)/dinlendirme/dograma(+biber/limon/meyve/sogan)/doldurma/
+  ezme/firinlama/haslama/izgara/karistirma/kavurma/kirma(+yumurta)/
+  kizartma/kozleme/marine_etme/rendeleme(+biber/limon/meyve/sogan)/
+  sis_dizme/soyma(+biber/limon/meyve/sogan)/suzme/yikama/yogurma.png),
+  ayrica files.zip'te gorulen 16 adet `*_ornek.webp` referans gorseli
+  (kodun bekledigi tam isimle esleşmiyorlardi -- muhtemelen Gemini
+  uretim asamasindan kalma, artik gereksiz).
+  KORUNACAK: apple-touch-icon/favicon/logo/logo_icon, baslik_susu_sag/
+  sol, dana/kuzu/tavuk_et_semasi (et kesimi semasi -- ILGISIZ), tanitim_*
+  (tanitim gorselleri -- ILGISIZ), baslik_video_* (ana sayfa).
+- `sql/134_hazirlik_ikonlari_sutununu_kaldir.sql`: ARTIK GUVENLE
+  calistirilabilir (kod tarafinda hicbir referans yok, dogrulandi).

@@ -368,21 +368,15 @@ malzeme_etiket = {
     for rm in recete_malzemeleri
 }
 
-# ELLI DORDUNCU DUZELTME (30 Agustos 2026): kullanicinin Gemini ile
-# urettigi 20 hazirlik-asamasi ikonu (doğrama/kavurma/haşlama vb.)
-# uretim asamalarina otomatik eslestiriliyor -- her asamanin ADI
-# icindeki fiile bakarak (kelime BASI eslesmesi, alt dize DEGIL --
-# ör. "ez" koku "bezeler" kelimesinin İÇİNDE var ama BASINDA degil,
-# bu yuzden yanlislikla eslesmez). Eslesme bulunamazsa ikon gosterilmez,
-# hata vermez.
-# ELLI DORDUNCU DUZELTME (30 Agustos 2026): kullanicinin Gemini ile
-# urettigi 20 hazirlik-asamasi ikonu uretim asamalarina otomatik
-# eslestiriliyor. ELLI BESINCI DUZELTME (ayni gun, devam): mantik
-# `asama_ikonlari.py` PAYLASIMLI modulune tasindi -- kullanici bu
-# ikonlarin AYRICA Tarif Kutuphanesi'nde de (241 kutuphane tarifinin
-# hazirlik_talimati metninde) gorunmesini istedi, ayni 20 satirlik
-# esleme sozlugunu iki sayfada TEKRAR YAZMAMAK icin.
-from asama_ikonlari import tek_ikon_bul as _asama_ikonu_bul
+# ALTMIS ALTINCI DUZELTME (23 Eylul 2026): ikon sistemi (asama_ikonlari.py,
+# 30 Agustos'ta buraya ve Tarif Kutuphanesi'ne eklenmisti) TAMAMEN
+# KALDIRILDI -- Bahri, eslestirmenin (once eylem fiili, sonra tek
+# malzeme onceligi) SISTEMATIK olarak yanlis ikon sectigini bildirdi
+# (bir adimda birden fazla malzeme gectiginde -- ki cogu adimda boyle --
+# yanlis malzeme varyanti secilebiliyordu). Dogru cozum eylem x malzeme
+# kombinasyonu basina ayri ikon gerektirirdi (23 eylem x onlarca
+# malzeme = yuzlerce gorsel), bu olcekte surdurulemez bulundu. Asama
+# listesi artik SADECE metin olarak gosteriliyor.
 
 
 asamalar = (
@@ -428,19 +422,11 @@ else:
         if a.get("aktif_dakika") is not None and a["aktif_dakika"] != a["sure_dakika"]:
             sure_metni += f" (aktif işçilik: {a['aktif_dakika']:.0f} dk)"
 
-        _ikon_yolu = _asama_ikonu_bul(a["ad"])
         _asama_metni = (
             f"**{a['sira']}. {a['ad']}** ({sure_metni}) — "
             f"Malzeme: {kullanilan} — Isıl işlem: {isil} — Bağımlı olduğu: {bagimlilik_metni}"
         )
-        if _ikon_yolu:
-            _asama_ikon_kolonu, _asama_metin_kolonu = st.columns([1, 11], vertical_alignment="center")
-            with _asama_ikon_kolonu:
-                st.image(_ikon_yolu, width=56)
-            with _asama_metin_kolonu:
-                st.markdown(_asama_metni)
-        else:
-            st.markdown(_asama_metni)
+        st.markdown(_asama_metni)
         if st.button("Sil", key=f"asama_sil_{a['id']}", disabled=st.session_state.get("salt_okunur", False)):
             supabase.table("recete_asamalari").delete().eq("id", a["id"]).execute()
             st.rerun()
