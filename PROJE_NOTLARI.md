@@ -10569,20 +10569,37 @@ ESKI dosya coktu. Hotfix: SADECE `pages/5_Tarif_Kutuphanesi.py` (zaten
 ikonsuz, sorgusu hazirlik_ikonlari ISTEMIYOR) tekrar git'e gonderildi.
 Bahri DOGRULADI: "Simdi tamamlandi, ikonlar artik yok."
 
-### 23 Eylul 2026 -- YENI ACIK IS: Porsiyon Olcekleme Hatasi (Tarif Kutuphanesi)
+### 23 Eylul 2026 -- COZULDU: Porsiyon Olcekleme Hatasi (Tarif Kutuphanesi)
 
-Bahri ekran goruntusu paylasti: "Enginar Kalpli Tavuk Güveç" (DB'de
-porsiyon_sayisi=10, malzemeler ör. TAVUK GÖĞÜS 900g) sayfada "10
-porsiyon icin" basligi altinda TAVUK GÖĞÜS 9000g gosteriyor -- TAM 10
-KAT SISMIS. Ekrandaki porsiyon secici zaten "10" (baz porsiyonla ayni),
-yani hic olceklenmemesi gerekirken sanki BAZ PORSIYON HER ZAMAN 1
-sayiliyormus gibi davraniyor (miktar x istenen_porsiyon / 1). Bu HENUZ
-ARASTIRILMADI -- muhtemelen porsiyon_sayisi=10 olan TUM tariflerdeki
-(tam da uzerinde calisilan 245 tariflik grup) malzeme miktarlarini VE
-maliyet/besin degeri hesaplarini etkiliyor olabilir. **Sirada:**
-`pages/5_Tarif_Kutuphanesi.py`'nin porsiyon olcekleme kodu (muhtemelen
-dosyanin gorulmeyen bir bolumu) incelenmeli -- Bahri dosyanin tamamini
-paylasirsa.
+**KOK NEDEN BULUNDU:** `pages/5_Tarif_Kutuphanesi.py` dosyanin en
+basindaki yoruma gore "malzeme miktarlari 1 porsiyon baz alinarak
+tasarlandi" varsayimiyla yazilmis -- kod HER YERDE `miktar_gram *
+porsiyon` yapiyordu (`porsiyon_sayisi` sutununu SORGULAMIYORDU bile).
+Bu varsayim eski ~241 kutuphane tarifi icin DOGRUYDU (hepsinde
+porsiyon_sayisi=1), ama sonradan eklenen 245 tarifin neredeyse tamami
+(244/245) 10 PORSIYONLUK TOPLU miktar olarak girildi
+(porsiyon_sayisi=10) -- bu yuzden kod, zaten 10 kisilik olan bir
+miktari BIR DE istenen 10 porsiyonla carpip TAM 10 KAT SISME
+yaratiyordu. Bug SADECE eski tariflerde gizliydi (1 ile carpmak/
+bolmek fark etmiyor), yeni tarifler eklenince ORTAYA CIKTI.
+
+**DUZELTME (Bahri'nin gonderdigi guncel dosya uzerinde yapildi):**
+1. `receteler` sorgusuna `porsiyon_sayisi` sutunu eklendi (once hic
+   cekilmiyordu).
+2. `tarif` sozlugune `porsiyon_sayisi` eklendi.
+3. Her yerde `* porsiyon` yerine `olcek = porsiyon / porsiyon_sayisi`
+   kullanildi (malzeme miktarlari, kalori/protein/yag/karbonhidrat,
+   `_gercek_maliyet_hesapla`'daki isitilan_kutle_gram, malzeme_eur --
+   toplam 4 yer + fonksiyon parametre adi netlestirildi).
+4. Dosya basindaki yanlis "1 porsiyon" varsayim yorumu duzeltildi.
+**GERIYE DONUK UYUMLU DOGRULANDI:** eski kutuphane tarifi (porsiyon_
+sayisi=1) icin davranis DEGISMEDI (150g x 4 porsiyon = 600g, oncekiyle
+ayni); yeni tarif (porsiyon_sayisi=10, miktar=900g) icin 10 porsiyon
+istendiginde artik DOGRU sekilde 900g donuyor (eskiden 9000g idi).
+**Teslim:** duzeltilmis `pages/5_Tarif_Kutuphanesi.py`. GIT'E
+GONDERILMESI ve CANLIDA DOGRULANMASI BEKLENIYOR (bir tarif acip
+porsiyon sayisini kendi porsiyon_sayisi'sine esitleyip miktarlarin
+DEGISMEDIGINI kontrol et).
 
 ### 23 Eylul 2026 -- Parti 3 (135) Teslim -- Su Miktarlari Arastirildi + Onaylandi
 
