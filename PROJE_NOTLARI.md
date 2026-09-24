@@ -10513,3 +10513,90 @@ Kutuphanesi'nden hem Recete Uretimi'nden).
   (tanitim gorselleri -- ILGISIZ), baslik_video_* (ana sayfa).
 - `sql/134_hazirlik_ikonlari_sutununu_kaldir.sql`: ARTIK GUVENLE
   calistirilabilir (kod tarafinda hicbir referans yok, dogrulandi).
+
+### 23 Eylul 2026 -- Parti 2 TAMAMLANDI (133 dogrulandi) + Ikon Temizligi TAMAMLANDI (134 = Success)
+
+- 133 dogrulama: 17 satir, hepsi beklenen degerlerde -- Parti 2 TAMAM.
+- 134 (receteler.hazirlik_ikonlari sutununu kaldir): Success, No rows
+  returned -- ikon sistemi (kod + assets + DB sutunu) TAMAMEN TEMIZLENDI.
+- **Ilerleme: 30/245.**
+- **SIRADAKI:** Parti 3 = alfabetik 31-45 (CSV sira_no ile), "Bulgur
+  Salatası (Domates-Biberli)" ile baslar.
+
+### 23 Eylul 2026 -- ACIL PRODUKSIYON HATASI + Duzeltme: Tarif Kutuphanesi Cokuyordu
+
+Bahri uygulamayi actiginda `pages/5_Tarif_Kutuphanesi.py` postgrest.APIError
+ile coktu -- sorgu hala olmayan `hazirlik_ikonlari` sutununu istiyordu.
+**KOK NEDEN (Claude hatasi):** Ikon temizligi sirasinda iki ayri git
+komut seti verildi; ILK sette `pages/5_Tarif_Kutuphanesi.py` vardi ama
+Bahri o anda findstr kontrolune gectigi icin commit edilmedi. Recete
+Uretimi bulgusundan sonra verilen DUZELTILMIS git komut setine bu dosya
+YENIDEN EKLENMEDI (sadece 1_Recete_Uretimi.py + sql + PROJE_NOTLARI
+vardi) -- bu yuzden 134 (sutunu kaldiran migration) calisinca canlidaki
+ESKI dosya coktu. Hotfix: SADECE `pages/5_Tarif_Kutuphanesi.py` (zaten
+ikonsuz, sorgusu hazirlik_ikonlari ISTEMIYOR) tekrar git'e gonderildi.
+Bahri DOGRULADI: "Simdi tamamlandi, ikonlar artik yok."
+
+### 23 Eylul 2026 -- YENI ACIK IS: Porsiyon Olcekleme Hatasi (Tarif Kutuphanesi)
+
+Bahri ekran goruntusu paylasti: "Enginar Kalpli Tavuk Güveç" (DB'de
+porsiyon_sayisi=10, malzemeler ör. TAVUK GÖĞÜS 900g) sayfada "10
+porsiyon icin" basligi altinda TAVUK GÖĞÜS 9000g gosteriyor -- TAM 10
+KAT SISMIS. Ekrandaki porsiyon secici zaten "10" (baz porsiyonla ayni),
+yani hic olceklenmemesi gerekirken sanki BAZ PORSIYON HER ZAMAN 1
+sayiliyormus gibi davraniyor (miktar x istenen_porsiyon / 1). Bu HENUZ
+ARASTIRILMADI -- muhtemelen porsiyon_sayisi=10 olan TUM tariflerdeki
+(tam da uzerinde calisilan 245 tariflik grup) malzeme miktarlarini VE
+maliyet/besin degeri hesaplarini etkiliyor olabilir. **Sirada:**
+`pages/5_Tarif_Kutuphanesi.py`'nin porsiyon olcekleme kodu (muhtemelen
+dosyanin gorulmeyen bir bolumu) incelenmeli -- Bahri dosyanin tamamini
+paylasirsa.
+
+### 23 Eylul 2026 -- Parti 3 (135) Teslim -- Su Miktarlari Arastirildi + Onaylandi
+
+- Alfabetik 31-45: Domatesli Şehriye Çorbası ... Fırında Bütün Tavuk
+  (Ev Usulü). Bahri: "Eger bilimsel veriye dayali olarak ekliyorsan, su
+  eklemeyi onayliyorum" -- yerlesik tariflerle karsilastirmali arastirma
+  YAPILDI (bkz. sohbet), tablo ona gore yazildi.
+- 11 tarife su eklendi (500-2200g araligi); 4 tarifte su YOK (Elmalı
+  Cevizli Bahar Salatası, Enginar Kalpli Pilav -- tavuk suyu orani zaten
+  yeterli, Fındıklı Tavuk Sote, Fırında Bütün Tavuk).
+- **Fırında Bütün Tavuk:** DB'deki hedef_sicaklik (90C) urun hedefi --
+  gercekci firin sicakligi olarak 200°C yazildi (yerlesik kural).
+- **Teslim:** `sql/135_hazirlik_talimati_parti3.sql`. SONUC BEKLENIYOR.
+  Ilerleme: 45/245.
+- **SIRADAKI:** Parti 4 = alfabetik 46-60.
+
+### 23 Eylul 2026 -- Parti 3 TAMAMLANDI (135 dogrulandi)
+
+- 135 dogrulama: 11 satir (su eklenen tarifler), hepsi beklenen
+  miktar ve isil asama adiyla eslesiyor -- Parti 3 TAMAM.
+- **Ilerleme: 45/245.**
+- **SIRADAKI:** Parti 4 = alfabetik 46-60.
+
+### 23 Eylul 2026 -- Bahri: Su Eklemek Icin STANDING ONAY + Parti 4 (136) Teslim
+
+- **KALICI KURAL (Bahri):** "Eger bilimsel veriye dayali olarak ekliyorsan,
+  su eklemeyi onayliyorum" -- artik her partide su tablosu icin onay
+  BEKLEMIYORUM, arastirmaya dayandigi surece dogrudan ekleyip yaziyorum.
+  (Yine de her partide hangi kaynak/mantiga dayandigimi ozetliyorum.)
+- Alfabetik 46-60: Fırında Dana Beyin ... Havuç Çorbası (Bahar). Bu
+  partide 11 tane "Fırında" et/balik tarifi vardi.
+- **YENI TESPIT (arastirmayla dogrulandi):** Uzun firin pisirmelerinde
+  (kuzu but, dana but, sigir kaburga, koyun tandir, hindi but) yerlesik
+  tarifler tepsiye AZ miktarda su/et suyu + folyo/kapakla pisirme
+  kullaniyor -- 1,5 kg kuzu but icin gercek bir kaynakta TAM 200 ml,
+  benzer agirlikta sigir kaburga icin ~200 ml (1 su bardagi) dogrulandi.
+  Kisa firinlamalarda (kalkan, somon, tavuk kanat -- hepsi 20-30 dk) su
+  YOK, kisa pisirme + kendi yagi yeterli.
+- Firin sicakliklari gercekci yazildi (DB hedef_sicaklik urun ic hedefi,
+  firin ayari degil -- yerlesik kural): 170-210°C arasi, kesim/turune
+  gore. Uzun pisirmelerde "folyo ile kapat, son X dk folyosuz" teknigi
+  kullanildi.
+- 9 tarife su eklendi (150-1200g araligi, Haşlanmış Yumurta Salatası ve
+  Havuç Çorbası dahil); 6 tarifte su YOK (Dana Beyin, Kalkan, Somon
+  Sebzeli, Tavuk Kanat, Greyfurtlu Roka Salatası, Güllaç -- sut zaten
+  sivi kaynagi).
+- **Teslim:** `sql/136_hazirlik_talimati_parti4.sql`. SONUC BEKLENIYOR.
+  Ilerleme: 60/245.
+- **SIRADAKI:** Parti 5 = alfabetik 61-75.
