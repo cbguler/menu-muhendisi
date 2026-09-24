@@ -10884,3 +10884,40 @@ dogrulama sorgusu icerir. SONUC BEKLENIYOR.
   0 satir donmeli -- bu, 245 tarifin TAMAMININ dolduruldugunu
   dogrulayacak SON kontrol. SONUC BEKLENIYOR.
 - **Ilerleme: 245/245 (bu dosya calisirsa gorev TAMAMLANMIS olacak).**
+
+### 23 Eylul 2026 -- GOREV TAMAMLANDI: 245/245 TARIFTE HAZIRLIK TALIMATI VAR
+
+Dogrulama 3 sonucu: "Success. No rows returned" -- kutuphanede
+(isletme_id is null) hazirlik_talimati BOS kalan HICBIR tarif yok.
+**245 tarifin TAMAMI dolduruldu.** Menü Mühendisi 8 oturumunun ana
+gorevi (hazirlik talimati yazma) BASARIYLA TAMAMLANDI.
+
+**Ozet -- bu gorev boyunca yapilanlar:**
+- 245 tarif icin hazirlik_talimati yazildi (10 parti: 132-137, 140-143),
+  parti buyuklugu 15'ten 30'a cikarildi (Bahri onayiyla, Parti 5'ten
+  itibaren).
+- Su miktari, tum su gerektiren tariflere (yerlesik/gercek tariflerle
+  arastirilarak) eklendi VE veritabanina (SU malzemesi + ilgili isil
+  asamaya baglanti) kaydedildi -- sadece metin degil, gercek veri.
+  Bahri'nin standing onayi: "bilimsel veriye dayali oldugu surece
+  su eklemeyi onayliyorum" (Parti 4'ten itibaren).
+- **Yan bulgular/duzeltmeler (bu gorevin disinda ama sirasinda
+  bulunup cozuldu):**
+  - Ikon sistemi (asama_ikonlari.py, 41+16 gorsel dosya, 
+    hazirlik_ikonlari sutunu) TAMAMEN KALDIRILDI -- hem Tarif
+    Kutuphanesi'nden hem Reçete Üretimi'nden (Bahri karari).
+  - Prodüksiyon hatasi (Tarif Kutuphanesi coktu) hotfix'lendi.
+  - 23 tarifte recete_asamalari MUKERRER kayit sorunu tespit edilip
+    (139 ile) temizlendi -- tum 485 tariflik kutuphanede dogrulandi,
+    baska mukerrer YOK.
+  - Mevsimsellik ilkesi (Anayasa madde 3, mevsim_etiketi filtreleme)
+    kalici kural olarak proje notlarina ISLENDI + acik dogrulama
+    sorgusu birakildi (ad/etiket tutarsizligi taramasi -- HENUZ
+    calistirilmadi).
+- **AÇIK/BEKLEYEN İŞLER (bu oturumdan devreden):**
+  1. Mevsim etiketi/ad tutarsizligi taramasi (bkz. Kalici Kural 9).
+  2. Porsiyon olcekleme hatasi (Tarif Kutuphanesi'nde malzeme miktarlari
+     10 kat sismis gorunuyordu) -- HENUZ ARASTIRILMADI, dosya bekleniyor.
+  3. Bahri onerisi: 245 tarifin bir kismini (10-15 tanesini) gercek bir
+     asci/deneyimli kisiye gozden gecirtmek -- ozellikle su miktarlari
+     ve pisirme sureleri.
