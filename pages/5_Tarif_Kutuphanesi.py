@@ -11,13 +11,10 @@
 # besin/maliyet toplamlarini carpar. Glisemik indeks bir oran oldugu
 # icin olceklenmez (porsiyon sayisindan bagimsizdir).
 
-import hashlib
-
 import streamlit as st
 
 # NOT (12 Agustos 2026, Oturum 11): logo artik burada AYRICA gosterilmiyor -- app.py'deki ozel menu satirinin icine tasindi, orada zaten her sayfa gecisinde render ediliyor. Burada tekrar cagirmak cift logoya yol acardi.
 
-from asama_ikonlari import tum_ikonlari_bul
 from db import get_supabase, oturumu_uygula
 
 st.set_page_config(page_title="Tarif Kütüphanesi", page_icon="assets/favicon.png", layout="wide")
@@ -70,7 +67,7 @@ def _tarif_kutuphanesi_detayli_getir():
     grup_by_kategori = {k["id"]: k["sira"] for k in kategoriler}
 
     receteler = _sayfalayarak_getir(lambda: supabase.table("receteler")
-        .select("id, ad, mutfak_kategori_id, mevsim_etiketi, ozel_etiketler, bolge, hazirlik_talimati, hazirlik_ikonlari")
+        .select("id, ad, mutfak_kategori_id, mevsim_etiketi, ozel_etiketler, bolge, hazirlik_talimati")
         .is_("isletme_id", "null")
     )
 
@@ -159,7 +156,6 @@ def _tarif_kutuphanesi_detayli_getir():
             "bolge": r["bolge"] or "Genel",
             "mevsim_etiketi": r["mevsim_etiketi"] or "yil_boyunca",
             "hazirlik_talimati": r["hazirlik_talimati"],
-            "hazirlik_ikonlari": r.get("hazirlik_ikonlari"),
             "malzemeler": sorted(malzeme_listesi, key=lambda x: -x["miktar_gram"]),
             "kalori": kalori, "protein": protein, "yag": yag, "karbonhidrat": karbonhidrat,
             "gi": gi, "maliyet_eur": maliyet_eur, "tam_fiyatli": tam_fiyatli,
@@ -373,44 +369,17 @@ else:
 
 st.write("**Hazırlık talimatı**")
 if tarif["hazirlik_talimati"]:
-    # ALTMIS BESINCI DUZELTME (30 Agustos 2026): kelime-koku eslestirmesi
-    # (asama_ikonlari.py) tekrar tekrar gercek hatalar cikardi (yoğur/
-    # yoğurt es-sesliligi, "SÜRE ÖZETİ" satirinda yanlis eslesme, "Kavurma
-    # ve Kaynatma" gibi bilesik basliklar). Bunlarin KOKU, Turkce'nin ek
-    # yapisinin basit kelime-koku eslestirmesiyle guvenilir sekilde
-    # cozulememesi. Artik `ikon_siniflandirma_calistir.py` scripti ile
-    # BIR KEZ (ve tarif metni degistiginde tekrar) yapay zeka ile
-    # siniflandirilip `hazirlik_ikonlari` sutununda ONBELLEGE ALINMIS
-    # sonuc TERCIH EDILIYOR -- hash uyusuyorsa. Henuz siniflandirilmamis
-    # (ör. yeni eklenmis, script henuz calistirilmamis) tarifler icin
-    # eski kelime-koku yontemine SESSIZCE geri donuluyor -- hicbir tarif
-    # ikon'suz kalmiyor, sadece daha az guvenilir bir kaynaktan geliyor.
-    _hazirlik_ikonlari = tarif.get("hazirlik_ikonlari") or {}
-    _mevcut_hash = hashlib.sha256(tarif["hazirlik_talimati"].encode("utf-8")).hexdigest()
-    _onbellek_gecerli = _hazirlik_ikonlari.get("hash") == _mevcut_hash
-    _onbellek_satirlari = _hazirlik_ikonlari.get("ikonlar_by_satir", [])
-
-    _IKON_HARIC_SATIR_BASLANGICLARI = (
-        "**hazırlık", "**isıl işlem", "**paralel yapılabilirlik",
-        "**süre özeti",
-    )
-    for _i, _satir in enumerate(tarif["hazirlik_talimati"].splitlines()):
-        if _satir.strip():
-            if _onbellek_gecerli and _i < len(_onbellek_satirlari):
-                _satir_ikonlari = _onbellek_satirlari[_i]
-            else:
-                _ozet_satiri_mi = _satir.strip().lower().startswith(_IKON_HARIC_SATIR_BASLANGICLARI)
-                _satir_ikonlari = [] if _ozet_satiri_mi else tum_ikonlari_bul(_satir)
-            if _satir_ikonlari:
-                _ikon_kolonlari = st.columns(
-                    len(_satir_ikonlari), gap="medium", vertical_alignment="bottom"
-                )
-                for _kolon, _ikon_yolu in zip(_ikon_kolonlari, _satir_ikonlari):
-                    with _kolon:
-                        st.image(_ikon_yolu, width=260)
-            st.write(_satir)
-        else:
-            st.write("")
+    # ALTMIS ALTINCI DUZELTME (23 Eylul 2026): Bahri, ikonlarin
+    # (hem eski kelime-koku hem yapay-zeka-siniflandirmali onbellek
+    # yontemi) tarifle ICERIK OLARAK SISTEMATIK sekilde uyusmadigini
+    # bildirdi (ör. roka yikama adiminda makarna suzme ikonu, parmesan
+    # dilimlemede salatalik dilimleme ikonu) -- bu, birkac yanlis
+    # eslesmeyi duzeltmekle cozulemeyecek YAPISAL bir sorun (kucuk,
+    # sabit bir ikon seti genis kategorilere gore eslestiriliyor,
+    # spesifik malzeme/teknige bakmiyor). KARAR: TUM ikon gosterimi
+    # KALDIRILDI, sadece talimat metni gosteriliyor.
+    for _satir in tarif["hazirlik_talimati"].splitlines():
+        st.write(_satir if _satir.strip() else "")
 else:
     st.info(
         "Bu tarif için adım adım hazırlık talimatı henüz eklenmedi. "
