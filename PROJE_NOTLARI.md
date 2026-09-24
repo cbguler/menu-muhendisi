@@ -10820,3 +10820,32 @@ dogrulama sorgusu icerir. SONUC BEKLENIYOR.
 - **Teslim:** `sql/141_hazirlik_talimati_parti8.sql`. SONUC BEKLENIYOR.
   Ilerleme: 180/245.
 - **SIRADAKI:** Parti 9 = alfabetik 181-210.
+
+### 23 Eylul 2026 -- Parti 8 TAMAMLANDI (141 dogrulandi)
+
+- 141 dogrulama: 19 satir, hepsi beklenen deger/asama ile eslesiyor;
+  Naneli Cacık ve Naneli Yoğurt'ta isil_asama dogru sekilde null --
+  Parti 8 TAMAM. **Ilerleme: 180/245.**
+- **SIRADAKI:** Parti 9 = alfabetik 181-210.
+
+### 23 Eylul 2026 -- Parti 9 (142) Teslim
+
+- Alfabetik 181-210 (30 tarif): Roka Soslu Izgara Tavuk ... Üzümlü
+  Cevizli Yoğurt Salatası (Sonbahar). 8 tanesi 139'la temizlenen
+  mukerrer-asama tarifleriydi (zaten cozuldu).
+- **YENI KALICI KURAL:** "Cacık" adli tarifler (soğuk, akiskan kivam)
+  hep sulandiriliyor (~300g su); ama sadece "Yoğurt Salatası" adli
+  CIG sebze+yogurt tarifleri (Tereli, Turplu, Üzümlü Cevizli vb.) --
+  pisirme/haslama gerektirmeyenler -- BILINCLI olarak sulandirmadan,
+  KALIN kivamda birakiliyor. Haslanmis/sotelenmis sebze+yogurt
+  "salata"larinda (Kabaklı, Kerevizli, Bezelyeli Yoğurt Salatası gibi)
+  su zaten HASLAMA suyu olarak var, bu ayri.
+- **Sade Kuzu Güveç (Et Suyu ile):** Zaten 500g ET SUYU vardi ama
+  55 dk pisirme icin yetersizdi -- 1200g su EKLENEREK toplam 1700g'a
+  cikarildi.
+- **Sebzeli Quinoa Pilavı:** Malzeme listesinde HIC sivi yoktu --
+  kinoa:su 1:2 standart orani uygulanarak 1000g su tamami eklendi.
+- 18 tarife su eklendi (100-3500g araligi); 12 tarifte su YOK.
+- **Teslim:** `sql/142_hazirlik_talimati_parti9.sql`. SONUC BEKLENIYOR.
+  Ilerleme: 210/245.
+- **SIRADAKI:** Parti 10 = alfabetik 211-245 (SON parti, 35 tarif).
