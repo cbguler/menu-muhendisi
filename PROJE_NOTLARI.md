@@ -11056,3 +11056,31 @@ uzerinden), boylece Bahri kimlik bilgilerini 7 kez degil 1 kez girecek.
 Orijinal `yukle_yeni_tarifler.py` da hala calisir durumda, degistirilmedi.
 **KALICI HATIRLATMA:** Bu projede ASLA Supabase SERVICE_ROLE_KEY veya
 baska bir kimlik bilgisi Claude'un ortamina girilmeyecek/istenmeyecek.
+
+### 23 Eylul 2026 -- 56 Yeni Tarif: Python Yerine SQL Migration (145)
+
+Bahri Python script'ini calistirmayi zor buldu ("bana zor geldi daha
+kolay bir yol bulalim"). Claude'un onerdigi toplu Python script'i
+(yukle_yeni_tarifler_toplu.py) yerine, bu oturumun BASINDAN BERI
+kullanilan ve Bahri'nin cok rahat oldugu yontem tercih edildi: TEK
+SQL migration dosyasi, Supabase SQL editorune yapistir-calistir.
+
+**Teknik yaklasim:** 56 tarifi tek tek INSERT yazmak yerine, yeniden
+kullanilabilir bir `_yeni_tarif_ekle(...)` PL/pgSQL fonksiyonu
+tanimlandi (isim varsa atla, malzeme kataloktan id eslestir, JSON
+malzeme listesini isleyip recete_malzemeleri satirlarini olustur).
+56 tarif, bu fonksiyona 56 ayri `perform` cagrisi olarak, TEK bir
+`do $$ ... end $$` bloğu icinde (atomik -- bir hata TUMUNU geri alir)
+verildi. `ozel_etiketler` sutunu JSONB VARSAYILDI (dogrulanmadi --
+tur uyusmazligi hatasi gelirse tek satirlik bir duzeltme yeterli).
+
+**HATA/DUZELTME:** Ilk surum FAIL verdi -- `ozel_etiketler` JSONB
+DEGIL, gercekte `text[]` (Bahri'nin calistirmasiyla dogrulandi).
+Fonksiyonun insert satirinda `array(select jsonb_array_elements_text(
+p_etiketler))::text[]` donusumu eklendi. Ilk deneme, do $$ blogunun
+ILK cagrisinda (Bursa İskender) patladigi icin HICBIR tarif eklenmeden
+temiz sekilde geri alindi (sadece CREATE FUNCTION kalicilasti, o da
+zararsiz -- create or replace ile tekrar calistirilinca guncelleniyor).
+**Teslim:** `sql/145_yeni_56_tarif_7_bolge.sql` (Revizyon 2). SONUC
+BEKLENIYOR. `yukle_yeni_tarifler_toplu.py` hala gecerli bir alternatif
+(Bahri Python'u tercih ederse), ama SQL yolu ANA YOL oldu.
