@@ -11195,3 +11195,16 @@ BEKLENIYOR. `yukle_yeni_tarifler_toplu.py` hala gecerli bir alternatif
 - 149 basariyla calisti -- 56/56 "YENI EKLENDI", 0 cakisma.
 - **Ilerleme: 763/1000. Kalan: 237 tarif.**
 - **SIRADAKI:** Bahri karar verirse Parti 6 hazirlanabilir.
+
+### 23 Eylul 2026 -- 1000 Tarif Hedefi: Parti 6 (150) Teslim
+
+- 56 yeni tarif daha, 7 bolgeye esit (8'er). Parti1-5 (278 tarif) ve
+  245'lik gruble isim CAKISMASI KONTROL EDILDI -- YOK. Tum malzemeler
+  DOGRUDAN katalogda dogrulandi.
+- **ACIK SORU (Bahri'den):** "Uygulamada 762 tarif bulundu" diye
+  yazdi, ama 149 sonrasi beklenen 763'tu (485+54+56+56+56+56). Fark
+  onemsiz olabilir (uygulama onbellegi reboot sonrasi guncellenmemis
+  olabilir) ama net sayim icin `select count(*) from receteler where
+  isletme_id is null;` istendi -- SONUC HENUZ GELMEDI.
+- **Teslim:** `sql/150_yeni_56_tarif_7_bolge_parti6.sql`. SONUC
+  BEKLENIYOR. Basarili olursa kutuphane ~763 -> ~819 civarina cikacak.
