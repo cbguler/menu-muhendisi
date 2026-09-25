@@ -11148,3 +11148,29 @@ BEKLENIYOR. `yukle_yeni_tarifler_toplu.py` hala gecerli bir alternatif
 - **Ilerleme: 651/1000. Kalan: 349 tarif.**
 - **SIRADAKI:** Bahri karar verirse Parti 4 hazirlanabilir -- ayni
   yontem devam ediyor.
+
+### 23 Eylul 2026 -- 1000 Tarif Hedefi: Parti 4 (148) Teslim
+
+- 56 yeni tarif daha, 7 bolgeye esit (8'er) -- bu partide oncekilerde
+  az kullanilan sehirlere agirlik verildi (Yalova, Bilecik, Sakarya,
+  Manisa, Denizli, Usak, Isparta, Burdur, Osmaniye, Eskisehir, Bingol,
+  Tunceli, Hakkari, Ardahan, Adiyaman, Gumushane, Kastamonu, Bartin,
+  Karabuk vb.).
+- **Risk onceden giderildi:** "YER FISTIĞI" katalogda dogrulanamadi --
+  tek bir eksik malzeme TUM 56 tarifi geri aldirabilecegi icin (atomik
+  transaction), sunulmadan once FINDIK (İÇ) ile degistirildi.
+- Parti1/2/3 (54+56+56=166) ve 245'lik gruble isim CAKISMASI KONTROL
+  EDILDI -- YOK.
+- **HATA/DUZELTME:** Ilk surum FAIL verdi -- "ARMUT" (duz isim)
+  katalogda YOK, sadece "ARMUT (KIŞLIK, DEVECİ ÇEŞİDİ)" ve "ARMUT
+  (YAZLIK, SANTA MARİA ÇEŞİDİ)" var. Claude'un "ARMUT daha once Parti
+  1'de calisti" varsayimi YANLIS cikti (kontrol edilince Parti 1'de
+  hic kullanilmamis, bir onceki taslaktan kalma yanlis bir hatira).
+  Marmara'nin 8. tarifinde patladigi icin TUM Parti 4 (56 tarif)
+  hicbir sey eklenmeden geri alindi -- "Marmara Usulü Armutlu Ceviz
+  Tatlısı" duzeltildi ("ARMUT (KIŞLIK, DEVECİ ÇEŞİDİ)" yapildi).
+  **KALICI DERS:** Bir malzemenin "daha once calistigini" varsaymak
+  yerine HER ZAMAN dogrudan katalog dosyasinda ara; senonim varligina
+  guvenerek varsayimda bulunma.
+  **Teslim:** `sql/148_yeni_56_tarif_7_bolge_parti4.sql` (Revizyon 2),
+  artik TUM malzemeler katalogda DOGRUDAN dogrulandi. SONUC BEKLENIYOR.
