@@ -11131,3 +11131,13 @@ BEKLENIYOR. `yukle_yeni_tarifler_toplu.py` hala gecerli bir alternatif
 - **Ilerleme: 595/1000. Kalan: 405 tarif.**
 - **SIRADAKI:** Bahri karar verirse Parti 3 hazirlanabilir -- ayni
   yontem (7 bolge x 8 tarif, SQL migration, gomulu dogrulama sorgusu).
+
+### 23 Eylul 2026 -- 1000 Tarif Hedefi: Parti 3 (147) Teslim
+
+- 56 yeni tarif daha, 7 bolgeye esit (8'er). Parti1 (54), Parti2 (56)
+  ve 245'lik gruble isim CAKISMASI KONTROL EDILDI -- YOK. Orijinal
+  ~240 kutuphaneyle cakisma ihtimali hala var (goruntu alani disinda).
+- Ayni format/yapi (145/146 ile ayni _yeni_tarif_ekle fonksiyonu,
+  text[] donusumu dahil, gomulu dogrulama sorgusu).
+- **Teslim:** `sql/147_yeni_56_tarif_7_bolge_parti3.sql`. SONUC
+  BEKLENIYOR. Basarili olursa kutuphane 595 -> ~651 civarina cikacak.
