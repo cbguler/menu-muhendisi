@@ -11495,3 +11495,10 @@ degismedi, sadece Grup3'un kendi sayisi 55 oldu).
   (tum degerler zaten gercekci).
 - **Teslim:** `sql/159_talimat_ve_asama_grup5.sql`. SONUC BEKLENIYOR.
   **Ilerleme (basarili olursa): 221/515.**
+
+### 23 Eylul 2026 -- 159 DOGRULANDI: Grup 5 (Parti 4) Bitti
+
+- 159 basariyla calisti -- "No rows returned", 56/56 tarif dogru.
+- **Ilerleme: 221/515.**
+- **SIRADAKI:** Parti5(tarif-ekleme)'nin 56 tarifi -- Grup 6 olarak
+  hazirlanabilir.
