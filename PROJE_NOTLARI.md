@@ -11260,3 +11260,16 @@ Bu yontem collation/siralama sorunundan ETKILENMIYOR, guvenilir.
 **SIRADAKI:** Bahri karar verirse Parti 7 hazirlanabilir -- artik
 182 tarif kaldigi icin belki daha kucuk partilerle (ör. 3-4 parti
 daha, 45-50'ser tarif) tamamlanabilir.
+
+### 23 Eylul 2026 -- 1000 Tarif Hedefi: Parti 7 (151) Teslim
+
+- 56 yeni tarif daha, 7 bolgeye esit (8'er). Parti1-6 (334 deneme) ve
+  245'lik gruble isim CAKISMASI KONTROL EDILDI -- YOK. Tum malzemeler
+  DOGRUDAN katalogda dogrulandi.
+- **ILK KEZ:** Dogrulama sorgusu artik SAYIM DEGIL, saglam UC-SAYI
+  yontemini kullaniyor (denetim2_saglam.sql'deki HATA -- HAVING/GROUP
+  BY sirasi -- DUZELTILEREK dogrudan bu migration'a gomuldu). 0 satir
+  donmesi bekleniyor.
+- **Teslim:** `sql/151_yeni_56_tarif_7_bolge_parti7.sql`. SONUC
+  BEKLENIYOR. Basarili olursa kutuphane 818 -> ~874 civarina cikacak
+  (182 kalanin cogu bu partiyle biter, ~126 kalir).
