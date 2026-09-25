@@ -11218,14 +11218,18 @@ onceden var olan FARKLI bir tarifle ayni isimde carpisirsa VE o eski
 tarifin malzeme sayisi TESADUFEN benimkiyle ayniysa, sayim-bazli
 kontrol bunu "YENI EKLENDI" diye YANLIS raporluyor.
 
-**BULUNAN GERCEK UCUNCU CAKISMA:** "Karadeniz Usulü Hamsi Buğulama"
-(Parti 4) -- benim onerdigim malzemeler (HAMSİ 120g, KURU SOĞAN 15g,
-MAYDANOZ 2g, TUZ 0.8g, ZEYTİNYAĞI 3g) ile DB'deki (HAMSİ 180g, KURU
-SOĞAN 30g, "MAYDONOZ" [farkli yazim] 5g, TUZ 3g, ZEYTİNYAĞİ 10g)
-TAMAMEN FARKLI -- ayni isimde ONCEDEN VAR OLAN baska bir tarif,
-ikisi de 5 malzemeli oldugu icin Parti 4'un kendi kontrolu bunu
-kacirmisti. **DUZELTME:** Parti 4 aslinda 56 degil 55 yeni tarif
-eklemis: 485+54+56+56+55+56 = 762 -- TAM DOGRU SAYI.
+**BULUNAN GERCEK UCUNCU CAKISMA:** "Karadeniz Usulü Hamsi Buğulama" --
+benim onerdigim malzemeler (HAMSİ 120g, KURU SOĞAN 15g, MAYDANOZ 2g,
+TUZ 0.8g, ZEYTİNYAĞI 3g) ile DB'deki (HAMSİ 180g, KURU SOĞAN 30g,
+"MAYDONOZ" [farkli yazim] 5g, TUZ 3g, ZEYTİNYAĞİ 10g) TAMAMEN FARKLI --
+ayni isimde ONCEDEN VAR OLAN baska bir tarif, ikisi de 5 malzemeli
+oldugu icin ilk kontrol bunu kacirmisti. **DUZELTME (23 Eylul, Grup 3
+sirasinda kesinlestirildi): bu isim SADECE Parti2'nin kaynak dosyasinda
+var -- yani gercek cakisma PARTI 2'DEYDI, ilk arastirmada yanlislikla
+"Parti 4" diye not edilmisti (toplam sayi/sonuc [762] o zaman da
+DOGRUYDU, sadece hangi parti oldugu yanlisti).** Parti 2 aslinda 56
+degil 55 yeni tarif eklemis: 485+54+55+56+56+56 = 762 -- TAM DOGRU
+SAYI (partilerin sirasi/hangisi 55 oldugu duzeltildi, ama toplam ayni).
 
 **Ilk denetim denemesi (string sirali karsilastirma) BASARISIZ oldu**
 -- Python'un sort() ile Postgres'in collation'i Turkce karakterlerde
@@ -11426,3 +11430,27 @@ Kek 50->55.
 - **Ilerleme: 54/515. Kalan: 461 tarif.**
 - **SIRADAKI:** Parti2(tarif-ekleme)'nin 56 tarifi -- Grup 3 olarak
   hazirlanabilir.
+
+### 23 Eylul 2026 -- Grup 3 (157) Teslim: Parti 2'nin Tamami (56 tarif)
+
+- Parti2(tarif-ekleme)'nin tum 56 tarifi icin talimat+asama yazildi.
+  Ayni _talimat_ve_asama_ekle_v2 fonksiyonu (155/156 ile ayni --
+  isil asamalarda TUM malzemeler bagli).
+- **156'daki ders uygulandi:** Su eklemeleri, orijinal Parti2 malzeme
+  listeleriyle programatik CAPRAZ KONTROL edilerek dogrulandi -- ayni
+  hata (unutulan su_ekle) bu partide YOK.
+- **Teslim:** `sql/157_talimat_ve_asama_grup3.sql`. SONUC BEKLENIYOR.
+  **Ilerleme (basarili olursa): 110/515.**
+
+### 23 Eylul 2026 -- 157 HATA/DUZELTME: Karadeniz Usulü Hamsi Buğulama Cikarildi
+
+157'nin ilk denemesi "Bu tarifte ZATEN asama kayitli" hatasiyla
+"Karadeniz Usulü Hamsi Buğulama"da patladi (hicbir sey eklenmeden
+temiz geri alindi). Arastirinca: bu isim Parti2'nin kendi orijinal
+yuklemesinde ONCEDEN VAR OLAN bir tarifle carpisip sessizce
+atlanmisti (yukarida duzeltilen 762/763 bulgusuyla ayni olay --
+yanlislikla "Parti 4" diye not edilmisti, gercekte Parti 2). Bu isim
+Grup 3'ten CIKARILDI -- **Grup 3 artik 56 degil 55 tarif.**
+**Teslim:** `sql/157_talimat_ve_asama_grup3.sql` (Revizyon 2). SONUC
+BEKLENIYOR. **Ilerleme (basarili olursa): 109/515** (515 hedefi
+degismedi, sadece Grup3'un kendi sayisi 55 oldu).
