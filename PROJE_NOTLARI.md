@@ -11368,3 +11368,12 @@ Kek 50->55.
 **Grup 1 (16 tarif -- Parti1'in Marmara+Ege'si) teslim edildi:**
 `sql/154_talimat_ve_asama_grup1.sql`. SONUC BEKLENIYOR.
 **Ilerleme: 16/515.**
+
+### 23 Eylul 2026 -- Grup 1 TAMAMLANDI (154 dogrulandi)
+
+- 154 basariyla calisti -- 16/16 tarifte hazirlik_dakika = asama_toplami
+  (5 duzeltilen dahil), talimat_uzunlugu hepsinde dolu, asama_sayisi
+  beklenen (1-3 arasi). **Ilerleme: 16/515.**
+- **SIRADAKI:** Grup 2 -- Parti1(tarif-ekleme)'in kalani (Akdeniz 7 +
+  İç Anadolu 7 + Karadeniz 8 + Doğu Anadolu 8 + Güneydoğu Anadolu 8 =
+  38 tarif) veya daha kucuk bir alt grup, Bahri'nin tercihine gore.
