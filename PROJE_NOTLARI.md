@@ -11084,3 +11084,24 @@ zararsiz -- create or replace ile tekrar calistirilinca guncelleniyor).
 **Teslim:** `sql/145_yeni_56_tarif_7_bolge.sql` (Revizyon 2). SONUC
 BEKLENIYOR. `yukle_yeni_tarifler_toplu.py` hala gecerli bir alternatif
 (Bahri Python'u tercih ederse), ama SQL yolu ANA YOL oldu.
+
+### 23 Eylul 2026 -- Parti 1 (145) DOGRULANDI: 54/56 Eklendi, 539 Tarif
+
+- 145 basariyla calisti. Toplam kutuphane 485 -> 539 (54 yeni, 2 atlandi).
+- **Atlanan 2 tarif (isim cakismasi, ONCEDEN VAR):** "Adana Kebap"
+  (DB'de 4 malzeme, bizimki 5 malzeme) ve "Kayseri Mantısı" (DB'de 6
+  malzeme, bizimki 9 malzeme, DB hazirlik_dakika=70 bizimki 60) --
+  ikisi de orijinal ~240 tariflik kutuphaneden, kendi malzeme
+  listeleriyle ZATEN mevcuttu. Script bunlari GUVENLE atladi (bu,
+  dedupe mekanizmasinin dogru calistigini gosteriyor, hata degil).
+- **Dogrulama metodu (kayit altina alindi):** Isimle kontrol tek
+  basina yetersiz kaliyor (onceden var olan ayni isimli bir tarif de
+  eslesir); `beklenen_malzeme_sayisi` ile DB'deki gercek sayiyi
+  karsilastiran bir "values(...) as beklenen" sorgusu, hangi
+  tariflerin GERCEKTEN yeni eklendigini kesin olarak ayirt ediyor --
+  benzer partilerde bu yontem tekrar kullanilabilir.
+- **Ilerleme: 539/1000. Kalan: 461 tarif.**
+- **SIRADAKI:** Bahri karar verirse Parti 2 (bir sonraki ~56 tarif)
+  hazirlanabilir; ayni 7 bolgeye esit dagitim + SQL migration + ayni
+  cift-dogrulama (toplam sayi + malzeme sayisi karsilastirmasi)
+  yontemiyle devam edilecek.
