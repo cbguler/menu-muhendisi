@@ -11454,3 +11454,11 @@ Grup 3'ten CIKARILDI -- **Grup 3 artik 56 degil 55 tarif.**
 **Teslim:** `sql/157_talimat_ve_asama_grup3.sql` (Revizyon 2). SONUC
 BEKLENIYOR. **Ilerleme (basarili olursa): 109/515** (515 hedefi
 degismedi, sadece Grup3'un kendi sayisi 55 oldu).
+
+### 23 Eylul 2026 -- 157 DOGRULANDI: Grup 3 (Parti 2) Bitti
+
+- 157 (Revizyon 2) basariyla calisti -- "No rows returned", 55/55
+  tarif dogru (sure tutarli + hicbir isil asama bos degil).
+- **Ilerleme: 109/515 (Grup1+2=54 [Parti1] + Grup3=55 [Parti2]).**
+- **SIRADAKI:** Parti3(tarif-ekleme)'nin 56 tarifi -- Grup 4 olarak
+  hazirlanabilir.
