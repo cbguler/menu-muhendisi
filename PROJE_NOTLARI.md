@@ -11335,3 +11335,36 @@ Kutuphanesi'nde "Bu tarif icin adim adim hazirlik talimati henuz
 eklenmedi" gorunecek -- TAM DA bu oturumun EN BASINDA 245 tarif icin
 yaptigimiz isin AYNISI, ama bu sefer 515 tarif icin. Bahri karar
 verirse bu, projenin SONRAKI buyuk fazi olacak.
+
+### 23 Eylul 2026 -- YENI FAZ BASLADI: 515 Yeni Tarifin Talimat+Asama Yazimi
+
+1000 tarif hedefi tamamlandiktan sonra, Bahri "evet gecelim" dedi --
+yeni eklenen 515 tarifin hazirlik_talimati VE recete_asamalari YAZIMI
+basladi. **BU GOREV 245'lik ILK GOREVDEN FARKLI:** orada asama verisi
+(sure/isil islem/hedef sicaklik/enerji kaynagi) ZATEN VARDI, sadece
+METIN yazildi. Burada `yukle_yeni_tarifler.py` hic asama eklemedigi
+icin asama verisi de SIFIRDAN TASARLANIYOR.
+
+**recete_asamalari semasi dogrulandi:** id, recete_id, ad, sira
+(smallint), sure_dakika (numeric, NOT NULL), isil_islem_mi (bool,
+NOT NULL, default false), enerji_kaynagi (text), baslangic_sicaklik
+(numeric), hedef_sicaklik (numeric), verimlilik_orani (numeric,
+default 0.65 -- degistirilmedi), aktif_dakika (numeric).
+
+**Yontem:** Yeniden kullanilabilir `_talimat_ve_asama_ekle(...)`
+fonksiyonu (145'teki `_yeni_tarif_ekle` gibi) -- tarif adiyla bulur,
+zaten asama varsa HATA verir (guvenlik), talimati yazar, asamalari
+ekler, gerekiyorsa SU malzemesi ekler/gunceller ve ilgili asamaya
+baglar. Enerji kaynagi kuralı: ocak/tencere/tava/izgara = "dogalgaz",
+firin = "elektrik" (Turkiye ev/restoran mutfaklari icin gercekci).
+
+**5 tarifte hazirlik_dakika DUZELTILDI** (kendi onceki tahminim
+gercekci degildi): Bursa Kestaneli Kaz Dolması 45->180 (butun kaz
+firinlamasi gercekte ~2.5-3 saat surer), İstanbul Usulü Karnıyarık
+35->45, İzmir Köfte (Fırında) 35->45, Çeşme Usulü Ahtapot Güveç
+40->70 (ahtapot on haslama gerektiriyor), Ege Portakallı Zeytinyağlı
+Kek 50->55.
+
+**Grup 1 (16 tarif -- Parti1'in Marmara+Ege'si) teslim edildi:**
+`sql/154_talimat_ve_asama_grup1.sql`. SONUC BEKLENIYOR.
+**Ilerleme: 16/515.**
