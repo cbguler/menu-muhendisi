@@ -11462,3 +11462,14 @@ degismedi, sadece Grup3'un kendi sayisi 55 oldu).
 - **Ilerleme: 109/515 (Grup1+2=54 [Parti1] + Grup3=55 [Parti2]).**
 - **SIRADAKI:** Parti3(tarif-ekleme)'nin 56 tarifi -- Grup 4 olarak
   hazirlanabilir.
+
+### 23 Eylul 2026 -- Grup 4 (158) Teslim: Parti 3'un Tamami (56 tarif)
+
+- Parti3(tarif-ekleme)'nin tum 56 tarifi icin talimat+asama yazildi.
+  Ayni _talimat_ve_asama_ekle_v2 fonksiyonu.
+- Su eklemeleri orijinal Parti3 malzeme listeleriyle CAPRAZ KONTROL
+  edilerek dogrulandi (156'daki ders).
+- **1 tarifte hazirlik_dakika duzeltildi:** Siirt Usulü Kaburga Kavurma
+  40->60 (kemikli sigir kaburga gercekci pisirme suresi icin).
+- **Teslim:** `sql/158_talimat_ve_asama_grup4.sql`. SONUC BEKLENIYOR.
+  **Ilerleme (basarili olursa): 165/515.**
