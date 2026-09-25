@@ -11377,3 +11377,52 @@ Kek 50->55.
 - **SIRADAKI:** Grup 2 -- Parti1(tarif-ekleme)'in kalani (Akdeniz 7 +
   İç Anadolu 7 + Karadeniz 8 + Doğu Anadolu 8 + Güneydoğu Anadolu 8 =
   38 tarif) veya daha kucuk bir alt grup, Bahri'nin tercihine gore.
+
+### 23 Eylul 2026 -- Grup 1 Duzeltmesi (155) + Grup 2 (156) Teslim
+
+- **155:** Grup 1'in 16 tarifinde EKSIK KALAN malzeme-asama
+  baglantilari (sadece su degil, et/sebze/tahil dahil TUMU) eklendi
+  + "İstanbul Usulü Karnıyarık" metnindeki eksik yeşil biber duzeltildi.
+- **156 (Grup 2, 38 tarif):** Parti1'in kalani (Akdeniz 7 + İç Anadolu
+  6 + Karadeniz 8 + Doğu Anadolu 8 + Güneydoğu Anadolu 8). Yeni
+  `_talimat_ve_asama_ekle_v2` fonksiyonu BASTAN dogru -- her isil
+  asamada gercekten isitilan TUM malzemeleri (SU dahil, eger o
+  asamada ekleniyorsa) asama_malzemeleri'ne bagliyor.
+- **1 tarifte hazirlik_dakika duzeltildi:** Siirt Usulü Büryan 30->150
+  (butun kuzu but firinlamasi gercekte ~2.5 saat surer, 30dk cok kisa).
+- **Kalici KURAL (bundan sonraki TUM gruplar icin):** Her ISIL asamada
+  o asamada FIILEN pisen/isinan malzemeler mutlaka asama_
+  malzemeleri'ne baglanmali -- sadece su degil. Dogrulama sorgusu da
+  bunu kontrol ediyor (bos_isil_asama_sayisi > 0 olan satir donerse
+  sorun var demektir).
+- **155 DOGRULANDI:** 16 tarifin TUM isil asamalarinda beklenen
+  malzeme sayisi birebir tuttu.
+- **156 HATA/DUZELTME:** Ilk deneme "Ankara Tava (Kuzu Etli)"nde
+  "Malzeme tarifte yok: SU" hatasiyla patladi -- SU'yu asamaya
+  baglamayi yazmisim ama su_ekle (200g) eklemeyi UNUTMUSUM. TUM
+  38 tarif orijinal Parti1 malzeme listeleriyle CAPRAZ KONTROL
+  EDILDI -- baska hicbir eksik yok (4 komposto/mihlama tarifinde
+  SU zaten ORIJINAL malzeme listesinde vardi, onlar guvenliydi).
+  Tek eksik duzeltilip (Revizyon 2) yeniden uretildi.
+  **Teslim:** `sql/156_talimat_ve_asama_grup2.sql` (Rev.2). SONUC
+  BEKLENIYOR. **Ilerleme (156 basarili olursa): 54/515** (Parti1
+  tamami).
+
+### 23 Eylul 2026 -- 155 DOGRULANDI: Grup 1 Duzeltmesi Basarili
+
+- 155 sonucu: 16 tarifin TUM isil asamalarinda beklenen malzeme sayisi
+  BIREBIR tutuyor (ör. Bandırma Mantısı Haşlama=6, Karnıyarık Kızartma=2
+  + Pişirme=8, Izgara Köfte=6 vb.) -- hicbir isil asama 0 kalmadi.
+  Isil OLMAYAN asamalar dogru sekilde 0 gosteriyor (enerji hesabina
+  girmedikleri icin sorun degil). **Grup 1 duzeltmesi TAMAMEN BASARILI.**
+- 156 (Grup 2, 38 tarif) sonucu HENUZ GELMEDI.
+
+### 23 Eylul 2026 -- 156 DOGRULANDI: Parti 1'in TAMAMI Bitti (54/515)
+
+- 156 (Revizyon 2) basariyla calisti -- "No rows returned", 38/38 tarif
+  dogru (sure tutarli + hicbir isil asama bos degil).
+- **Grup 1 (16) + Grup 2 (38) = 54 tarif -- Parti1(tarif-ekleme)'in
+  TAMAMI artik talimat+asama+dogru enerji hesabina sahip.**
+- **Ilerleme: 54/515. Kalan: 461 tarif.**
+- **SIRADAKI:** Parti2(tarif-ekleme)'nin 56 tarifi -- Grup 3 olarak
+  hazirlanabilir.
