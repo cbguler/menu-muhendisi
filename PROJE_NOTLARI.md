@@ -11281,3 +11281,25 @@ daha, 45-50'ser tarif) tamamlanabilir.
 - **Ilerleme: 874/1000. Kalan: 126 tarif.**
 - **SIRADAKI:** Bahri karar verirse Parti 8 hazirlanabilir -- 126
   kaldigi icin belki 2 partide (63'er) bitirilebilir.
+
+### 23 Eylul 2026 -- 1000 TARIF HEDEFININ SON IKI PARTISI: 152 + 153
+
+- Kalan 126 tarif icin Parti 8 (63) + Parti 9 (SON, 63) hazirlandi --
+  esit 9'ar tarif/bolge. Kendi aralarinda ve Parti1-7 (390 tarif) +
+  245'lik gruple isim CAKISMASI KONTROL EDILDI. Ilk denemede 4 cakisma
+  bulundu (Diyarbakır Usulü Zeytinyağlı Nohutlu Havuç [Parti6 ile],
+  Kilis Usulü Zeytinyağlı Nohutlu Kereviz, Malatya Usulü Zeytinyağlı
+  Nohutlu Havuç, Ağrı Usulü Kavurmalı Yumurta [ucu Parti7 ile]) --
+  HEPSI DUZELTILDI (malzeme/isim degistirilerek), sonra YENIDEN
+  KONTROL EDILDI -- artik TAMAMEN TEMIZ.
+- **HATA (uretim script'inde):** Ilk `gen_ortak.py` denemesi REGIONS9'u
+  atlayip bos {} olarak aldi (split() yanlis noktadan kesiyordu) --
+  153 dosyasi neredeyse bos cikti. DUZELTILDI: uret_final.py'nin
+  TAMAMI calistirilip REGIONS8/REGIONS9 namespace'ten doğru alindi.
+- Her iki dosya da SAGLAM uc-sayi dogrulamasini kullaniyor.
+- **153, SON PARTI:** Sonunda ek bir "SON KONTROL" sorgusu var --
+  `select count(*) from receteler where isletme_id is null;` --
+  BASARILI OLURSA TAM 1000 DONMELI.
+- **Teslim:** `sql/152_yeni_63_tarif_7_bolge_parti8.sql` VE
+  `sql/153_yeni_63_tarif_7_bolge_parti9_SON.sql`. Sirayla (once 152,
+  sonra 153) calistirilmali. SONUC BEKLENIYOR.
