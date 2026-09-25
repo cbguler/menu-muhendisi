@@ -11473,3 +11473,15 @@ degismedi, sadece Grup3'un kendi sayisi 55 oldu).
   40->60 (kemikli sigir kaburga gercekci pisirme suresi icin).
 - **Teslim:** `sql/158_talimat_ve_asama_grup4.sql`. SONUC BEKLENIYOR.
   **Ilerleme (basarili olursa): 165/515.**
+
+### 23 Eylul 2026 -- 158 DOGRULANDI: Grup 4 (Parti 3) Bitti
+
+- 158 basariyla calisti -- "No rows returned", 56/56 tarif dogru.
+- **Ilerleme: 165/515 (Grup1+2=54 [Parti1] + Grup3=55 [Parti2] +
+  Grup4=56 [Parti3]).**
+- **SIRADAKI:** Parti4(tarif-ekleme)'nin 56 tarifi -- Grup 5 olarak
+  hazirlanabilir. NOT: Parti4'un ARMUT hatasi duzeltmesi (148,
+  Revizyon 2) sonrasi 56/56 basarili oldugu dogrulanmisti -- bu
+  yuzden Grup 5'te "onceden var" turden bir cakisma BEKLENMIYOR
+  (ama yine de fonksiyonun guvenlik kontrolu -- zaten asama varsa
+  hata verir -- her ihtimale karsi devrede).
