@@ -11485,3 +11485,13 @@ degismedi, sadece Grup3'un kendi sayisi 55 oldu).
   yuzden Grup 5'te "onceden var" turden bir cakisma BEKLENMIYOR
   (ama yine de fonksiyonun guvenlik kontrolu -- zaten asama varsa
   hata verir -- her ihtimale karsi devrede).
+
+### 23 Eylul 2026 -- Grup 5 (159) Teslim: Parti 4'un Tamami (56 tarif)
+
+- Parti4(tarif-ekleme)'nin tum 56 tarifi icin talimat+asama yazildi.
+  Ayni _talimat_ve_asama_ekle_v2 fonksiyonu.
+- Su eklemeleri orijinal Parti4 malzeme listeleriyle CAPRAZ KONTROL
+  edilerek dogrulandi. Hazirlik_dakika duzeltmesi bu partide GEREKMEDI
+  (tum degerler zaten gercekci).
+- **Teslim:** `sql/159_talimat_ve_asama_grup5.sql`. SONUC BEKLENIYOR.
+  **Ilerleme (basarili olursa): 221/515.**
