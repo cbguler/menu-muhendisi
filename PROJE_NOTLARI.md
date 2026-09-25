@@ -10970,11 +10970,76 @@ sistemi" mantigi).
 **144 MIGRATION:** `miktar_gram` sutunu `numeric` (sinirsiz hassasiyet,
 dogrulandi) oldugu icin kucuk miktarlar (3g -> 0.3g) KAYBOLMUYOR. 244
 tarifin TUM recete_malzemeleri.miktar_gram'i 10'a bolundu, porsiyon_
-sayisi 1'e cekildi. **Teslim:** `sql/144_244_tarifi_1_porsiyona_
-olcekle.sql`. SONUC BEKLENIYOR. Basarili olursa kutuphanenin TAMAMI
-(485/485) porsiyon_sayisi=1 olacak.
+sayisi 1'e cekildi. **TAMAMLANDI:** `sql/144_244_tarifi_1_porsiyona_olcekle.sql`
+basariyla calisti -- dogrulama ornegi ("Ahtapot Salatası (Soğuk)")
+tam 1/10 oranini gosterdi (600g->60g ahtapot, 2000g->200g su, vb.,
+hicbir yuvarlama kaybi yok). **Kutuphanenin TAMAMI (485/485) artik
+porsiyon_sayisi=1 -- birim standardizasyonu TAMAMLANDI.**
 
 **SIRADAKI (144 dogrulandiktan sonra):** Bu dogrulanirsa 1000 tarif
 hedefine devam -- kac tarif/hangi kategoriler/hangi parti buyuklugu
 konusulacak, `yukle_yeni_tarifler.py` script'inin mevcut deseni
 (onceki oturumlarda kullanilan) referans alinabilir.
+
+### 23 Eylul 2026 -- Kalici Not: Supabase Yeni Tablo GRANT Kurali (30 Ekim'den itibaren)
+
+Bahri'ye gelen Supabase e-postasi: 30 Ekim 2026'dan itibaren `public`
+semasinda YENI olusturulan tablolar artik Data API'ye (supabase-js/
+PostgREST) OTOMATIK acik olmayacak. **Mevcut tablolar ETKILENMIYOR**,
+fiyatlandirma/ucretsiz kullanimla ILGISI YOK -- salt teknik bir
+guvenlik varsayimi degisikligi. **KALICI KURAL:** Bundan sonra YENI
+bir tablo olusturan her migration'a AYNI migration icinde su GRANT'lari
+da eklemek gerekiyor, yoksa tablo Data API'den erisilemez kalir:
+```sql
+grant select, insert, update, delete on public.<tablo_adi> to anon, authenticated, service_role;
+```
+(anon icin sadece select yeterli olabilir, yazma yetkisi istenen role'e gore ayarlanir.)
+
+### 23 Eylul 2026 -- 1000 Tarif Hedefi: Ilk Parti (56 Yeni Tarif, 7 Bolge)
+
+Bahri: "Genel ve esit bir dagilim olsun" + yukle_yeni_tarifler.py
+dosyasi paylasildi + "50-100 gibi cikar".
+
+**Onemli yapisal bulgu:** `yukle_yeni_tarifler.py`'de `BOLGE_ADI`
+dosya basinda TEK bir sabit -- yani her import tek bir bolgeye ait
+olmali (docstring'deki "karadeniz_tarifleri" ornegi bunu dogruluyor).
+Bu yuzden "esit dagilim" icin TEK dosya degil, BOLGE BASINA AYRI
+dosya uretildi.
+
+**mutfak_kategorileri sira eslesmesi** (Bahri'nin sorgusuyla
+dogrulandi): sira 1 = I. Grup (Et/Tavuk/Balik/Etli Sebze/Kuru
+Baklagil/Yumurta), sira 2 = II. Grup (Corba/Pilav/Zeytinyagli/
+Makarna/Borek), sira 3 = III. Grup (Salata/Tatli/Komposto/Yogurt/
+Cacik/Tursu). Gozlemlenen ornek veriyle (40 rastgele tarif) `grup`
+alaninin `kategori_belirle()`'den BAGIMSIZ, elle atanan bir alan
+oldugu dogrulandi -- "kategori" sutunu SIK SIK null (ozellikle son
+245'lik partide TUMU null), bu yeni tariflerde de scriptin kendi
+`kategori_belirle()` mantigina birakildi (sorun degil, kullanilmiyor
+gibi gorunuyor).
+
+**56 yeni tarif uretildi, 7 bolgeye esit dagitildi (8'er tarif):**
+Marmara, Ege, Akdeniz, İç Anadolu, Karadeniz, Doğu Anadolu, Güneydoğu
+Anadolu. Her tarif icin: gercekci 10 kisilik bir tencere/tepsi ZIHINDE
+tasarlandi, sonra (23 Eylul standardizasyon karari geregi) 10'a
+BOLUNEREK `miktar_gram` yazildi (porsiyon_sayisi=1, scriptte zaten
+sabit). TUM malzeme adlari `kaynak_duzeltilmis_v37.xlsx` katalogundaki
+(573 kalem) adlarla BIREBIR dogrulandi (script bunu da kontrol ediyor,
+eslesmeyen olsa RuntimeError verirdi).
+
+**Bilinen sadelestirmeler (flagged):** Urfa/Adana tariflerinde gercek
+"isot" (Urfa biberi) katalogda yok -- PUL BİBER ile ikame edildi. Cag
+Kebabi ve Buryan gibi cok teknik-yogun tarifler ham malzeme listesiyle
+sinirli tutuldu (pisirme teknigi detaylari SONRAKI hazirlik_talimati
+asamasinda ele alinacak).
+
+**Teslim (7 dosya, /mnt/user-data/outputs/):**
+marmara_tarifleri.py, ege_tarifleri.py, akdeniz_tarifleri.py,
+ic_anadolu_tarifleri.py, karadeniz_tarifleri.py,
+dogu_anadolu_tarifleri.py, guneydogu_anadolu_tarifleri.py.
+Her biri `yukle_yeni_tarifler.py`'nin import satirinin degistirilip
+7 KEZ CALISTIRILMASINI gerektiriyor (bir bolge = bir calistirma).
+
+**ACIK IS:** Bu 56 tarifin hazirlik_talimati + recete_asamalari'si
+YOK -- 245'lik gorevdeki gibi bu SONRAKI bir asama (script bunlari
+yazmiyor). Ayrica hedefe (1000) ulasmak icin 56'dan sonra ~944 tarif
+daha gerekiyor -- bu SADECE ILK PARTI, Bahri isterse devam edilecek.
