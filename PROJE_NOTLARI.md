@@ -11208,3 +11208,55 @@ BEKLENIYOR. `yukle_yeni_tarifler_toplu.py` hala gecerli bir alternatif
   isletme_id is null;` istendi -- SONUC HENUZ GELMEDI.
 - **Teslim:** `sql/150_yeni_56_tarif_7_bolge_parti6.sql`. SONUC
   BEKLENIYOR. Basarili olursa kutuphane ~763 -> ~819 civarina cikacak.
+
+### 23 Eylul 2026 -- 762/763 GIZEMI COZULDU: Sayim-Bazli Kontrolun Kor Noktasi
+
+Bahri'nin dogrudan sayim sorgusu 762 dondu (763 degil). Arastirma:
+onceki tum partilerdeki dogrulama sorgum SADECE malzeme SAYISINI
+karsilastiriyordu, malzemelerin KENDISINI degil. Eger bir tarif
+onceden var olan FARKLI bir tarifle ayni isimde carpisirsa VE o eski
+tarifin malzeme sayisi TESADUFEN benimkiyle ayniysa, sayim-bazli
+kontrol bunu "YENI EKLENDI" diye YANLIS raporluyor.
+
+**BULUNAN GERCEK UCUNCU CAKISMA:** "Karadeniz Usulü Hamsi Buğulama"
+(Parti 4) -- benim onerdigim malzemeler (HAMSİ 120g, KURU SOĞAN 15g,
+MAYDANOZ 2g, TUZ 0.8g, ZEYTİNYAĞI 3g) ile DB'deki (HAMSİ 180g, KURU
+SOĞAN 30g, "MAYDONOZ" [farkli yazim] 5g, TUZ 3g, ZEYTİNYAĞİ 10g)
+TAMAMEN FARKLI -- ayni isimde ONCEDEN VAR OLAN baska bir tarif,
+ikisi de 5 malzemeli oldugu icin Parti 4'un kendi kontrolu bunu
+kacirmisti. **DUZELTME:** Parti 4 aslinda 56 degil 55 yeni tarif
+eklemis: 485+54+56+56+55+56 = 762 -- TAM DOGRU SAYI.
+
+**Ilk denetim denemesi (string sirali karsilastirma) BASARISIZ oldu**
+-- Python'un sort() ile Postgres'in collation'i Turkce karakterlerde
+(İ/ı, Ş, Ğ vb.) farkli sonuc verdigi icin ~50 YANLIS ALARM uretti.
+**DUZELTILMIS YONTEM (kalici, gelecekte kullanilacak):** String
+sirali karsilastirma yerine UC SAYI karsilastirmasi (beklenen sayi =
+DB sayisi = tam eslesen cift sayisi) -- collation sorunundan
+ETKILENMEZ. Bu yontem Parti 1-6'nin TAMAMI (336 tarif) icin
+`sql/denetim2_saglam.sql` olarak hazirlandi, SONUC BEKLENIYOR
+(beklenti: 3 satir -- Adana Kebap, Kayseri Mantısı, Karadeniz Usulü
+Hamsi Buğulama).
+
+**KALICI DERS:** Bundan sonraki partilerin dogrulamasinda SAYIM
+DEGIL, bu UC-SAYI yontemi kullanilacak.
+
+### 23 Eylul 2026 -- SAGLAM DENETIM DOGRULANDI: 818 Tarif, Sistem Temiz
+
+`sql/denetim2_saglam.sql` (HAVING/GROUP BY sozdizimi hatasi
+duzeltildikten sonra) calistirildi -- TAM OLARAK 3 satir dondu:
+Adana Kebap, Kayseri Mantısı, Karadeniz Usulü Hamsi Buğulama. Bundan
+fazlasi YOK -- Parti 1-6'nin TAMAMI (336 deneme) baska hicbir gizli
+cakisma icermiyor, Parti 6 (150) TAMAMEN TEMIZ dogrulandi.
+
+**KESIN SAYI:** 485 + 54 + 56 + 56 + 55 + 56 + 56 = **818 tarif.**
+**Ilerleme: 818/1000. Kalan: 182 tarif.**
+
+**KALICI YONTEM (bundan sonra HER partide kullanilacak):** Sayim-bazli
+degil, UC-SAYI karsilastirmasi (beklenen malzeme sayisi = DB'deki
+gercek sayi = tam eslesen [ayni malzeme+ayni miktar] cift sayisi).
+Bu yontem collation/siralama sorunundan ETKILENMIYOR, guvenilir.
+
+**SIRADAKI:** Bahri karar verirse Parti 7 hazirlanabilir -- artik
+182 tarif kaldigi icin belki daha kucuk partilerle (ör. 3-4 parti
+daha, 45-50'ser tarif) tamamlanabilir.
