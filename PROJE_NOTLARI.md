@@ -11105,3 +11105,21 @@ BEKLENIYOR. `yukle_yeni_tarifler_toplu.py` hala gecerli bir alternatif
   hazirlanabilir; ayni 7 bolgeye esit dagitim + SQL migration + ayni
   cift-dogrulama (toplam sayi + malzeme sayisi karsilastirmasi)
   yontemiyle devam edilecek.
+
+### 23 Eylul 2026 -- 1000 Tarif Hedefi: Parti 2 (146) Teslim
+
+- 56 yeni tarif daha, ayni 7 bolgeye esit dagitildi (8'er). Parti 1'in
+  54 tarifiyle VE 245'lik "eksik talimat" grubuyla isim CAKISMASI
+  KONTROL EDILDI -- YOK. Orijinal ~240 kutuphaneyle cakisma ihtimali
+  hala mevcut (goruntu alani disinda) ama isimlere daha fazla bolgesel/
+  usul ayraci eklenerek risk azaltildi.
+- **Iyilestirme:** Parti 1'deki belirsizligi (kac tanesi gercekten
+  eklendi?) onlemek icin, dogrulama sorgusu ARTIK MIGRATION DOSYASININ
+  ICINE gomuldu -- calistirinca dogrudan her tarifin "YENI EKLENDI" /
+  "ONCEDEN VARDI (atlandi)" durumunu gosteriyor, ayri bir takip
+  sorgusuna gerek yok.
+- `ozel_etiketler` icin text[] donusumu (145'te bulunan duzeltme)
+  BASTAN dogru uygulandi.
+- **Teslim:** `sql/146_yeni_56_tarif_7_bolge_parti2.sql`. SONUC
+  BEKLENIYOR. Basarili olursa kutuphane 539 -> ~595 civarina cikacak
+  (56'sinin kacinin cakisip atlanacagina bagli).
