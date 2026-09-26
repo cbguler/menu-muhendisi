@@ -11974,3 +11974,44 @@ Teslim: `sql/170_giresun_rize_gercek_pisirme_duzeltmesi.sql`. 3
 dogrulama sorgusu icerir: (1) hazirlik_dakika = asama toplami mi,
 (2) her isil asamada bagli malzeme var mi, (3) guncel malzeme
 listeleri. SONUC BEKLENIYOR.
+
+### 23 Eylul 2026 -- 170 Calisti: Malzeme Listeleri Dogrulandi
+
+170 basariyla calisti (DO blogu hatasiz tamamlandi, cunku herhangi
+bir eksik kayit olsaydi exception firlatirdi). Dogrulama 3 (malzeme
+listeleri) sonucu: Giresun (BUĞDAY UNU 5, KAŞAR PEYNİRİ 30, MISIR
+UNU 20, SU 15, TEREYAĞI 4, TUZ 0.75) ve Rize (BAL 10, BUĞDAY UNU
+3.75, KAYMAK 25, MISIR UNU 15, SU 11.25, TUZ 0.5625) -- TAM
+BEKLENDIGI GIBI.
+
+Dogrulama 1 (sure toplami) ve 2 (isil asama-malzeme baglantisi) ayri
+dosyada (`sql/170a_dogrulama_sure_ve_baglanti.sql`) SONUC BEKLENIYOR
+-- ama sure toplami (8+25+2=35 Giresun, 7+25+3=35 Rize) elle zaten
+dogrulanmis durumda, hata beklenmiyor.
+
+**BU, Bahri'nin "Giresun Usulü Mısır Ekmekli Peynirli Tabak" tarifinde
+bulduğu mantik hatasinin (malzeme/talimat uyumsuzlugu + isil islem
+celiskisi) TAMAMEN COZULDUGU anlamina geliyor** -- hem Giresun hem
+Rize artik gercek misir ekmegi pisirme surecini iceriyor.
+
+### 23 Eylul 2026 -- 170a DOGRULANDI: Giresun/Rize Duzeltmesi TAMAMEN BASARILI
+
+170a "No rows returned" dondu -- sure toplami tutarliligi VE isil
+asama-malzeme baglanti kontrolu ikisi de gecti.
+
+**SONUC: Bahri'nin bulduğu ilk mantik hatasi (Giresun'da MISIR UNU
+malzemesiyle "hazir misir ekmegi" talimati arasindaki uyumsuzluk +
+"isil islem yok" ama "eritilmiş tereyağı" celiskisi) TAMAMEN
+COZULDU.** Hem Giresun hem Rize artik:
+- Gercek misir ekmegi hamuru hazirlama + firinlama sureci iceriyor
+  (MISIR UNU + BUĞDAY UNU + SU + TUZ ile)
+- Dogru enerji maliyeti hesaplayacak sekilde isil asamalarina bagli
+  malzemeler var
+- hazirlik_dakika gercekci (35 dk, eskiden 10 dk idi)
+
+Bu, 168 serisiyle baslayan "1000 tarifte kac tane boyle mantik hatasi
+var" sorusturmasinin somut, basariyla tamamlanmis ilk duzeltmesidir.
+Arastirma sonucunda (168f) bu turden GERCEK celiskinin sadece
+Giresun'da oldugu, Rize'nin ise ayri bir "hazir X" adlandirma
+sorunu tasidigi (isil celiski olmadan) dogrulanmisti -- ikisi de
+simdi ayni kapsamli duzeltmeyle cozuldu.
