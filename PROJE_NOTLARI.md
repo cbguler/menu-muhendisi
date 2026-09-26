@@ -11552,3 +11552,40 @@ degismedi, sadece Grup3'un kendi sayisi 55 oldu).
   hazirlanabilir (bu parti 56 degil 63 tarif icerir -- 8 bolgeden
   degil, daha fazla tarif/bolge dagilimiyla yuklenmisti, dikkatli
   kontrol edilecek).
+
+### 23 Eylul 2026 -- Grup 9 (163) Teslim: Parti 8'in Tamami (63 tarif)
+
+- Parti8'in kaynak dosyasi bulunamadi (yenitarifler8 dizini yoktu) --
+  bunun yerine gercek eklenmis veriyi (isim+malzeme+hazirlik_dakika)
+  ORIJINAL MIGRATION DOSYASINDAN (152_yeni_63_tarif_7_bolge_parti8.sql)
+  regex ile PROGRAMATIK OLARAK CIKARDIM -- bolge adi "İç Anadolu" gibi
+  bosluklu oldugu icin ilk regex denemesi 63'ten sadece 36 kayit
+  yakaladi, boslugu destekleyecek sekilde duzeltildi, 63/63 dogru
+  cikarildi.
+- 63/63 isim, orijinal veriyle PROGRAMATIK TAM ESLESME ile dogrulandi
+  (eksik/fazla isim kontrolu de dahil).
+- Ayni _talimat_ve_asama_ekle_v2 fonksiyonu. Su eklemeleri capraz
+  kontrol edildi. Hazirlik_dakika duzeltmesi GEREKMEDI.
+- **Teslim:** `sql/163_talimat_ve_asama_grup9.sql`. SONUC BEKLENIYOR.
+  **Ilerleme (basarili olursa): 452/515.**
+- **SIRADAKI (son grup):** Parti9(tarif-ekleme)'nin 63 tarifi -- Grup
+  10, ayni yontemle (153_yeni_63... dosyasindan cikarilarak)
+  hazirlanacak.
+
+### 23 Eylul 2026 -- Grup 10/SON (164) Teslim: Parti 9'un Tamami (63 tarif)
+
+- Parti9'un kaynak verisi 153_yeni_63_tarif_7_bolge_parti9_SON.sql'den
+  ayni yontemle (regex, bosluklu bolge adi duzeltmesiyle) cikarildi,
+  63/63 isim+malzeme tam eslesme ile dogrulandi.
+- Bu grup COK tekrarlayan kaliplar icerdigi icin (Zeytinyagli X,
+  Etli Kavurma (Kimyonlu), Etli Bulgur Pilavi, Elmali Ceviz Tatlisi,
+  Kavurmali Yumurta, Izgara X, Komposto) SABLON FONKSIYONLARI
+  (sablon_zeytinyagli, sablon_etli_kavurma) ile hizlandirildi.
+- Ayni _talimat_ve_asama_ekle_v2 fonksiyonu. Su eklemeleri capraz
+  kontrol edildi. Hazirlik_dakika duzeltmesi GEREKMEDI.
+- **Teslim:** `sql/164_talimat_ve_asama_grup10_SON.sql`. Bu, 515
+  tarifin TALIMAT+ASAMA YAZIMI FAZININ SON GRUBU -- basarili olursa
+  kutuphanenin TAMAMINDA (1000 tarif) hazirlik_talimati eksik tarif
+  KALMAYACAK. Dosyanin sonunda bunu dogrulayan ek bir sorgu var
+  (0 donmesi beklenir). SONUC BEKLENIYOR.
+  **Ilerleme (basarili olursa): 515/515 -- TAMAMLANMIS OLACAK.**
