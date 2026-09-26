@@ -11502,3 +11502,12 @@ degismedi, sadece Grup3'un kendi sayisi 55 oldu).
 - **Ilerleme: 221/515.**
 - **SIRADAKI:** Parti5(tarif-ekleme)'nin 56 tarifi -- Grup 6 olarak
   hazirlanabilir.
+
+### 23 Eylul 2026 -- Grup 6 (160) Teslim: Parti 5'in Tamami (56 tarif)
+
+- Parti5(tarif-ekleme)'nin tum 56 tarifi icin talimat+asama yazildi.
+  Ayni _talimat_ve_asama_ekle_v2 fonksiyonu.
+- Su eklemeleri orijinal Parti5 malzeme listeleriyle CAPRAZ KONTROL
+  edilerek dogrulandi. Hazirlik_dakika duzeltmesi bu partide GEREKMEDI.
+- **Teslim:** `sql/160_talimat_ve_asama_grup6.sql`. SONUC BEKLENIYOR.
+  **Ilerleme (basarili olursa): 277/515.**
