@@ -11511,3 +11511,10 @@ degismedi, sadece Grup3'un kendi sayisi 55 oldu).
   edilerek dogrulandi. Hazirlik_dakika duzeltmesi bu partide GEREKMEDI.
 - **Teslim:** `sql/160_talimat_ve_asama_grup6.sql`. SONUC BEKLENIYOR.
   **Ilerleme (basarili olursa): 277/515.**
+
+### 23 Eylul 2026 -- 160 DOGRULANDI: Grup 6 (Parti 5) Bitti
+
+- 160 basariyla calisti -- "No rows returned", 56/56 tarif dogru.
+- **Ilerleme: 277/515 (yarisi gecildi).**
+- **SIRADAKI:** Parti6(tarif-ekleme)'nin 56 tarifi -- Grup 7 olarak
+  hazirlanabilir.
