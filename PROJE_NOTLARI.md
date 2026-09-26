@@ -11543,3 +11543,12 @@ degismedi, sadece Grup3'un kendi sayisi 55 oldu).
   edilerek dogrulandi. Hazirlik_dakika duzeltmesi bu partide GEREKMEDI.
 - **Teslim:** `sql/162_talimat_ve_asama_grup8.sql`. SONUC BEKLENIYOR.
   **Ilerleme (basarili olursa): 389/515.**
+
+### 23 Eylul 2026 -- 162 DOGRULANDI: Grup 8 (Parti 7) Bitti
+
+- 162 basariyla calisti -- "No rows returned", 56/56 tarif dogru.
+- **Ilerleme: 389/515. Kalan: 126 tarif (Parti8=63 + Parti9=63).**
+- **SIRADAKI:** Parti8(tarif-ekleme)'nin 63 tarifi -- Grup 9 olarak
+  hazirlanabilir (bu parti 56 degil 63 tarif icerir -- 8 bolgeden
+  degil, daha fazla tarif/bolge dagilimiyla yuklenmisti, dikkatli
+  kontrol edilecek).
