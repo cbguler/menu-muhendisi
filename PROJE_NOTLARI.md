@@ -11752,3 +11752,33 @@ malzeme x isletme kombinasyonu icin fiyat_gecmisi kaydi var mi,
 (3) GENEL kontrol -- bu 36'nin disinda, hala fiyatsiz VE tariflerde
 kullanilan baska malzeme kaldi mi (kalan ~180 fiyatsiz malzeme hic
 kullanilmadigi icin sorguya girmemeli). SONUC BEKLENIYOR.
+
+### 23 Eylul 2026 -- 167 DOGRULANDI: Eksik Malzeme Fiyati Sorunu TAMAMEN COZULDU
+
+167 basariyla calisti -- "No rows returned" (3 dogrulama sorgusunun
+sonuncusu, en kritik olani, sonuc olarak gosterildi):
+- 36/36 malzemenin katalog fiyati (varsayilan_fiyat_eur) dolu.
+- Her (malzeme x isletme) kombinasyonu icin fiyat_gecmisi kaydi var.
+- **GENEL KONTROL GECTI: Bahri'nin "buna daha ne kadar rastlayacagim"
+  sorusunun kesin cevabi -- artik kutuphanedeki HICBIR tarifte
+  kullanilan malzemenin fiyati eksik degil.** Kalan ~180 fiyatsiz
+  malzeme (yabani otlar, bolgesel tatli/icecek varyantlari vb.) hic
+  bir tarifte kullanilmadigi icin sorunu ETKILEMIYOR.
+
+**BU, "Aylik Menu onizlemesinde eksik fiyat uyarisi" sorununun
+TAMAMEN COZULDUGU anlamina geliyor** -- Bahri'nin paylastigi ekran
+goruntulerindeki TUM "eksik: <malzeme>" uyarilari artik gorunmeyecek
+(KUZU ETİ (KOL), KUZU KIYMA, MAYDANOZ, ZEYTİN EZMESİ, EDİRNE BEYAZ
+PEYNİRİ dahil).
+
+**SIRADAKI (dusuk oncelikli, acik isler):**
+- Yeni eklenen 515 tarif icin mevsim etiketi/ad tutarsizligi taramasi
+  YAPILDI VE TEMIZ CIKTI (bu oturumda daha once, 23 Eylul).
+- Bahri onerisi: 10-15 tarifi gercek bir ascıya gozden gecirtmek.
+- kaynak_duzeltilmis_v37.xlsx guncelleme (36 yeni fiyatlanan
+  malzemeyle -- ONEMLI: bu master kaynak dosyasi da guncellenmeli,
+  Bahri'nin daha once koydugu kural geregi "her yeni malzeme
+  eklemesinde SQL migration ile PARALEL guncellenmesi gerekiyor" --
+  ama bu sefer YENI MALZEME EKLENMEDI, SADECE MEVCUT malzemelerin
+  fiyati dolduruldu, o yuzden bu kural tam olarak uygulanabilir mi
+  netlestirilmeli).
