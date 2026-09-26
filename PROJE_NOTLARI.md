@@ -11624,3 +11624,131 @@ degismedi, sadece Grup3'un kendi sayisi 55 oldu).
   henuz yapilmadi (ilk 485'te yapilmisti, sonuc: tutarsizlik yoktu).
 - kaynak_duzeltilmis_v37.xlsx guncelleme (yeni malzeme eklemelerinde
   paralel guncellenebilir).
+
+### 23 Eylul 2026 -- YENI ONCELIKLI SORUN: Aylik Menu Onizlemesinde Cok Sayida "Eksik Fiyat" Uyarisi
+
+Bahri, Aralik ayi icin uretilen yillik menu onizlemesinde COK SAYIDA
+gunde "Maliyet (80 porsiyon icin) ≈X € (eksik: <malzeme>)" uyarisi
+oldugunu bildirdi (ekran goruntuleriyle): KUZU ETİ (KOL), MAYDANOZ,
+ZEYTİN EZMESİ, KUZU KIYMA, EDİRNE BEYAZ PEYNİRİ gibi FARKLI ve YAYGIN
+malzemeler icin. Bir ornekte (Diyarbakır Usulü Etli Kavurma) "Gerçek
+üretim maliyeti" bolumu de "Malzeme fiyatı eksik olduğu için gerçek
+maliyet hesaplanamıyor" diyor -- yani ENERJI+ISCILIK dahil TUM maliyet
+hesabi TEK BIR eksik malzeme fiyatiyla BLOKE OLUYOR.
+
+**ONEMLI IPUCU (kendi notlarimdan bulundu):** Tam da bu 515-tarif
+projesinden 1 gun once (22-23 Eylul), KUZU KIYMA/KOYUN KIYMA/KEÇİ
+KIYMA/HİNDİ+KAZ+TAVUK yeni kesimleri eklenirken, bu kayitlarin
+`varsayilan_fiyat_eur` alani BILEREK BOS BIRAKILMISTI ("piyasa verisi,
+SONUC BEKLENIYOR" notuyla) -- bu arastirma YARIM KALMIS olabilir.
+AMA "KUZU ETİ (KOL)", "MAYDANOZ", "ZEYTİN EZMESİ", "EDİRNE BEYAZ
+PEYNİRİ" gibi ESKI/temel malzemeler de listede -- bu da AYRICA
+(SALATALIK/Çam Fıstığı gibi) bir ISLETME BAZINDA `malzeme_fiyat_
+gecmisi` BACKFILL EKSIKLIGI olabilecegini gosteriyor. Iki farkli kok
+neden bir arada olabilir.
+
+**YAPILAN:** Onceki dersi (sutun adi asla tahmin edilmez) uygulayarak,
+sadece OKUMA yapan bir teshis dosyasi hazirlandi: `sql/165_teshis_
+eksik_fiyat.sql`. Bu dosya (1) malzeme_fiyat_gecmisi'nin TAM sutun
+listesini, (2) isletmeler'in TAM sutun listesini, (3) 5 ornek
+malzemenin KATALOG (malzemeler.varsayilan_fiyat_eur) seviyesinde
+fiyati olup olmadigini, (4) katalogda TOPLAM kac malzemenin fiyatsiz
+oldugunu, (5) o malzemelerin TAM listesini, (6) toplam isletme
+sayisini sorguluyor. **SONUC BEKLENIYOR** -- sonuca gore asil
+duzeltme migration'i (muhtemelen hem eksik piyasa fiyati arastirmasi
+hem de isletme bazinda geriye donuk fiyat doldurma, onceki
+25/26/28 numarali migration'lardaki YONTEMLE) hazirlanacak.
+
+**Bahri'nin sorusu:** "Buna benzer daha ne kadar tarif ile
+karsilasacagim?" -- ADIM 4/5 sonucu bu soruyu dogrudan cevaplayacak
+(katalog seviyesinde kac malzeme fiyatsiz). Isletme bazinda eksiklik
+ayri bir sayidir, o da ADIM 1 sonrasi ikinci bir sorguyla olculecek.
+
+### 23 Eylul 2026 -- Fiyat Teshisi Sonuclandi: 215 Malzeme Fiyatsiz, Kok Neden KATALOG Seviyesinde
+
+165a-f sonuclari geldi:
+- `malzeme_fiyat_gecmisi` sutunlari: id, isletme_id, malzeme_id,
+  fiyat_eur, gecerlilik_tarihi, tedarikci, created_at (hepsi NOT NULL,
+  tedarikci haric).
+- `isletmeler` sutunlari: id, ad, plan_tipi, created_at, adres,
+  fatura_adresi, vergi_dairesi, vergi_no, kisaltma.
+- **KOK NEDEN NETLESTI: bu bir isletme-bazli backfill eksikligi
+  DEGIL (SALATALIK/Çam Fıstığı gibi) -- dogrudan KATALOG seviyesinde
+  (`malzemeler.varsayilan_fiyat_eur`) fiyat hic girilmemis.**
+- 5/5 ornek malzeme (EDİRNE BEYAZ PEYNİRİ, KUZU ETİ (KOL), KUZU
+  KIYMA, MAYDANOZ, ZEYTİN EZMESİ) `varsayilan_fiyat_eur = null`.
+- **Toplam 215 malzeme fiyatsiz** -- TAM liste alindi. Icinde: TUM
+  temel kirmizi et kesimleri (DANA/SIĞIR/KOYUN/KEÇİ/KUZU'nun BUT/KOL/
+  SIRT/BEL/KONTRFİLE/PİRZOLA'si), HİNDİ/KAZ/TAVUK/PİLİÇ kesimleri,
+  TAVŞAN ETİ, cok sayida balik/deniz urunu, sakatatlar, MAYDANOZ gibi
+  temel sebzeler, yabani otlar (ISIRGAN/LABADA/EBEGÜMECİ vb.),
+  bolgesel tatli/icecek varyantlari (LOKUM/MANTI/PESTİL/YAZ HELVASI/
+  KAZANDİBİ/KEŞKÜL sehir bazinda ayri kayitlar), vb.
+- **Sadece 2 isletme var** -- geriye donuk doldurma kucuk bir is
+  olacak.
+- **BAHRI'NIN SORUSUNA CEVAP** ("buna ne kadar rastlayacagim"):
+  215 malzemenin bir kismi muhtemelen HIC tarifte kullanilmiyor
+  (katalog fazlaligi -- TürKomp'tan toplu eklenen ama henuz hicbir
+  tarifte kullanilmamis kalemler), bir kismi (ozellikle KUZU ETİ
+  (KOL) gibi benim 515 tarifte YOGUN kullandigim kesimler) YUZLERCE
+  tarifi etkiliyor olabilir. Kesin sayiyi gormek icin sonraki adim
+  gerekli.
+
+**SIRADAKI ADIM:** `sql/166_teshis_fiyatsiz_malzeme_kullanim_sayisi.sql`
+teslim edildi -- fiyatsiz 215 malzemenin HER BIRININ kac tarifte
+kullanildigini (recete_malzemeleri join'iyle) sayiyor, kullanim
+sayisina gore azalan sirada. Bu, hangi malzemelerin fiyat
+arastirmasina ONCELIKLI oldugunu (gercek etki buyuklugu) gosterecek.
+SONUC BEKLENIYOR.
+
+### 23 Eylul 2026 -- KALICI KURAL: Malzeme Fiyati Kaynak Onceligi
+
+Bahri'nin acik kararı: bu maliyet aracinda (tarif/menu maliyet
+hesabi) esas alinacak fiyat kaynagi hiyerarsisi:
+1. **Et, sakatat, sebze, meyve, aktar urunleri:** Market zinciri
+   (Migros/CarrefourSA/vb.) + Metro toptan ESAS alinir -- KDV,
+   paketleme, marj dahil, GERCEK satin alma fiyatini yansitir.
+2. **Arpa, canli hayvan, emtia:** Ticaret Borsasi ESAS alinir.
+3. **Hal fiyatlari:** SADECE restoran/halden dogrudan alim
+   senaryosunda ikincil referans; normal market/toptan aliminda
+   kullanilmaz (borsa/hal fiyatlari kemik-fire-iscilik-KDV
+   ICERMEZ, gercekci degil).
+**BU KURAL ILERIDEKI TUM malzeme fiyati arastirmalarinda
+uygulanacak.**
+
+### 23 Eylul 2026 -- Grup 167 Teslim: 36 Eksik Malzeme Fiyati Dolduruldu
+
+Kapsamli fiyat arastirmasi (web + Bahri'nin kendi arastirmasi, 3 tur
+karsilikli duzeltme) TAMAMLANDI. **36 malzemenin TAMAMI** (166
+sonucunda 34 degil 36 satir oldugu duzeltildi) icin katalog fiyati
+(malzemeler.varsayilan_fiyat_eur) VE 2 isletmenin malzeme_fiyat_
+gecmisi'ne geriye donuk doldurma tek migration'da yapildi.
+
+**5 kalem [TAHMIN] olarak acikca isaretlendi** (dogrudan kaynak
+bulunamadi, benzer urunden referans alindi -- KOYUN KIYMA'daki
+onceki yontemle tutarli):
+- KOYUN ETİ (KOL/BUT) <- KUZU ETİ'nin ayni kesimi
+- KEÇİ ETİ (BUT) <- KUZU ETİ (BUT)
+- KAZ ETİ (2 cesit, cig) <- HINDI eti x~1.8
+- DÖNER (ET, PİŞMİŞ, BURSA) <- cig kusbasi + pisirme kaybi + iscilik
+
+**Yol boyunca yakalanan onemli hatalar:**
+1. **BIRIM HATASI (kritik):** Bahri'nin ilk tablosu "gram basina TL"
+   vermisti (kaynaktaki kg fiyatini 1000'e bolerek), ama kod
+   `(miktar_gram/1000) x fiyat` formulunu kullaniyor -- yani
+   `varsayilan_fiyat_eur` KG basina olmali. Bu fark yakalanmasaydi
+   TUM fiyatlar 1000 KAT yanlis yazilacakti.
+2. Birkac kaynak-urun uyusmazligi yakalandi ve Bahri tarafindan
+   duzeltildi: ISIRGAN (tohum vs ot), KAZ ETİ (kurutulmus vs cig),
+   GÜLLAÇ (hazir tatli vs cig yaprak), DÖNER (restoran porsiyon/menu
+   fiyati vs kg).
+3. **KALICI METODOLOJI KURALI** belirlendi (yukarida ayrica
+   kaydedildi): et/sakatat/sebze/meyve icin market zinciri+Metro
+   toptan ESAS, borsa/hal SADECE emtia (arpa vb.) icin esas.
+
+**Teslim:** `sql/167_eksik_malzeme_fiyatlari_doldur.sql`. 3 dogrulama
+sorgusu icerir: (1) 36 malzemenin katalog fiyati var mi, (2) her
+malzeme x isletme kombinasyonu icin fiyat_gecmisi kaydi var mi,
+(3) GENEL kontrol -- bu 36'nin disinda, hala fiyatsiz VE tariflerde
+kullanilan baska malzeme kaldi mi (kalan ~180 fiyatsiz malzeme hic
+kullanilmadigi icin sorguya girmemeli). SONUC BEKLENIYOR.
