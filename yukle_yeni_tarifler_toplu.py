@@ -25,7 +25,7 @@ SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or input(
     "SUPABASE_SERVICE_ROLE_KEY: "
 ).strip()
 
-supabase = create_client(SUPABASE_URL, SERVICE_ROLE_KEY)
+supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 KATEGORI_ONCELIK = [
     "izgara", "kirmizi_et", "beyaz_et", "balik", "etli_sebze", "kuru_baklagil",

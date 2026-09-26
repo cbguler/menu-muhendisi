@@ -11782,3 +11782,130 @@ PEYNİRİ dahil).
   ama bu sefer YENI MALZEME EKLENMEDI, SADECE MEVCUT malzemelerin
   fiyati dolduruldu, o yuzden bu kural tam olarak uygulanabilir mi
   netlestirilmeli).
+
+### 23 Eylul 2026 -- ONEMLI KALITE SORUNU: Malzeme/Talimat Mantik Tutarsizligi
+
+Bahri, "Giresun Usulu Misir Ekmekli Peynirli Tabak" tarifinde iki
+mantik hatasi buldu:
+1. Malzeme listesinde MISIR UNU (cig) var, ama talimat "hazır mısır
+   ekmeğini dilimleyin" diyor -- pisirme asamasi YOK, malzeme cig
+   ama sanki hazir urunmuş gibi kullaniliyor.
+2. "Isıl işlem yok" deniyor ama talimat "eritilmiş tereyağı" diyor --
+   eritme bir isil islemdir, celiski var.
+
+**BU, tek bu tarife ozgu olmayabilir -- 1000 tarifin AI-uretimli
+olmasi nedeniyle benzer kaliplarin baska tariflerde de olma
+ihtimali yuksek.** 1000 tarifi tek tek okuyarak kontrol etmek
+gercekci degil, ama bu hata SINIFI (ozellikle #2, isil-islem-yok
+celiskisi) SQL ile METIN ARAMASIYLA olcekli sekilde taranabilir.
+
+**Teslim:** `sql/168_teshis_mantik_hatalari.sql` -- 4 adimli, SADECE
+OKUMA yapan bir teshis:
+1. Bu spesifik tarifin tam verisi.
+2. Katalogda "MISIR EKMEĞİ" (hazir/pismis) malzemesi var mi (yoksa
+   bu tarifin "hazir X" talimati yazip X'in CIG halini malzeme secme
+   kaliminin somut kaniti olur).
+3. KRITIK -- olcekli tarama: "Isıl İşlem yok" diyen AMA talimat
+   metninde erit/kizart/pisir/kavur/hasla/firinla/izgara/kaynat/
+   buğula gibi kelimeler gecen TUM tarifler (Bahri'nin bulduguyla
+   AYNI hata sinifinin kutuphanedeki diger orneklerini bulur).
+4. Aday liste (manuel gozden gecirme icin): talimatta "hazır "
+   gecen TUM tarifler -- bir kismi zaten dogru (paket urun
+   kullanan tarifler), bir kismi hatali olabilir.
+
+SONUC BEKLENIYOR. Sonuca gore: (a) bu spesifik tarif duzeltilecek,
+(b) adim 3'te bulunan TUM tarifler icin toplu bir duzeltme
+migration'i hazirlanacak, (c) adim 4'un sonucuna gore manuel
+gozden gecirme yapilacak.
+
+**Bahri'nin genel sorusuna (1000 tarifte baska ne kadar mantiksizlik
+var, nasil kontrol edilir) CEVAP:** Tam otomatik/kesin bir "mantik
+tutarliligi kontrolcusu" kurmak zor (serbest metin), ama BELIRLI,
+iyi tanimlanmis kaliplar (isil-islem-yok celiskisi gibi) SQL metin
+aramasiyla YUKSEK KESINLIKLE taranabilir. Daha derin/incelikli
+sorunlar icin Bahri'nin daha once onerdigi "10-15 tarifi gercek bir
+ascıya gozden gecirtme" fikri hala degerli.
+
+### 23 Eylul 2026 -- 168 (Adim 4) Sonucu Analiz Edildi: Cogu "hazir" Kullanimi Zararsiz
+
+168 dosyasi tek seferde calistirildiginda Supabase sadece SON
+sorgunun (Adim 4 -- "hazır " gecen TUM tarifler) sonucunu gosterdi:
+34 tarif. Bu 34'u tek tek manuel inceledim:
+
+- **~28 tarif:** "hazır tutun" = sadece mise-en-place notu (malzemeyi
+  olcup yaninda hazir bulundurun), malzemeyle ilgisiz, SORUN YOK.
+- **4 turşu tarifi** (Doğu Anadolu/Ev Yapımı/Karışık/Marmara Usulü
+  Karışık Turşu): hepsi ACIKCA "bu tarif hazir/fermente turşunun
+  servise hazirlanmasini kapsar" notu dusmus -- KASITLI TASARIM,
+  Giresun'daki gibi SESSIZ celiski degil, sorun yok gibi gorunuyor.
+- **2 tarif -- AYNI BUG'IN 2. ORNEGI:** Giresun Usulü Mısır Ekmekli
+  Peynirli Tabak (bilinen) VE **Rize Usulü Mısır Ekmekli Kaymak
+  Tabağı** (yeni bulundu, ayni "Hazır mısır ekmeğini dilimleyin"
+  kalibi).
+- **1 supheli:** Humus (Ev Usulü) -- "Hazır humus mayasını (nohut
+  ezmesi bazını)" ifadesi tuhaf, "Ev Usulü" basligiyla celisebilir.
+
+**Teslim (ayri ayri calistirilmak uzere 4 kucuk dosya):**
+- `sql/168a_bu_tarifin_verisi.sql` -- Giresun'un tam verisi
+- `sql/168b_misir_ekmegi_var_mi.sql` -- katalogda MISIR EKMEĞİ var mi
+  (KRITIK -- kok nedeni kesin dogrulayacak)
+- `sql/168c_isil_islem_yok_celiskisi_DUZELTILMIS.sql` -- ADIM 3'un
+  DUZELTILMIS hali (eski versiyon `%Isıl İşlem%yok%` gevsekti,
+  aralarda herhangi metinle eslesip "paralel fırsatı yok" gibi
+  alakasiz yerlerdeki "yok" ile yanlis eslesebilirdi -- artik tam
+  "ısıl işlem yok" ifadesini ariyor)
+- `sql/168d_humus_kontrolu.sql` -- Humus tarifinin tam verisi
+
+SONUC BEKLENIYOR. Sonrasinda: (a) Giresun + Rize icin duzeltme
+(muhtemelen MISIR EKMEĞİ malzemesi kataloga eklenip MISIR UNU yerine
+kullanilacak, veya talimata pisirme asamasi eklenecek), (b) Adim 3
+DUZELTILMIS sonucuna gore ek duzeltmeler, (c) Humus icin gerekirse
+duzeltme.
+
+### 23 Eylul 2026 -- 168 Teshisi Netlesti: SQL'de de Turkce I/I Sorunu Cikti
+
+168a (Giresun verisi) ve 168d (Humus Ev Usulu verisi) dogru geldi.
+168b (No rows) -- MISIR EKMEĞİ katalogda YOK, DOGRULANDI.
+
+**168c "No rows returned" YANLIS/YANILTICI cikti** -- SEBEP: Postgres
+`ILIKE`, veritabani collation'ina bagli olarak buyuk "I" harfini
+Turkce degil INGILIZCE kuralla kucultuyor ("I"->"i", "ı" degil).
+Sorgu `'%ısıl işlem yok%'` (noktasiz ı ile) ariyordu ama metin
+"**Is**ıl işlem yok" (Ingilizce I ile) basliyor -- GIRESUN'UN KENDISI
+BILE bu sorguyla eslesmiyor! (Ayni hatayi once kendi Python
+analizimde yapip duzeltmistim, SQL'de unutmusum.)
+
+**DUZELTME:** `sql/168e_isil_islem_yok_celiskisi_SON_DUZELTME.sql` --
+"şlem" (I/İ'den etkilenmeyen kisim) ile "yok" yakinligini arayarak
+buyuk/kucuk I/İ farkindan BAGIMSIZ calisir. Ayrica Humus (Ev Usulü)
+malzeme listesini de sorguluyor.
+
+**Kendi Python analizimde (168c/168d CSV verisi uzerinde, ayni
+duzeltmeyle) BULUNAN 10 aday, TEK TEK incelendi:**
+- **GERCEK BUG (2, bilinen):** Giresun + Rize (mısır ekmeği kalibi)
+- **8 YANLIS POZITIF:**
+  - 4 tanesi "**haşlanmış** nohut/fasulye" (ONCEDEN pisirilmis
+    malzeme, bu tarifin kendisinde pisirme yok -- DOGRU kullanim):
+    Antalya Usulü Nohut Piyazı, Humus (Ev Usulü DEGIL, "Humus"),
+    Kilis Usulü Zeytinyağlı Nohutlu Salata, Kuru Fasulye Piyazı
+  - 4 tanesi OLUMSUZ ifade ("kaynatıl**maz**", "pişiril**meden**") --
+    yani "PISMIYOR" diyor, kelime taramasi bunu yanlis yakalamis:
+    Çiğ Köfte, İncir Tatlısı, Kısır, Yoğurtlu Bulgur Salatası
+  - 1 tanesi YUMUSAK/SINIR DURUM: Mardin Usulü Susamlı Marul
+    Salatası -- "kavurabilirsiniz (isteğe bağlı)" opsiyonel adim,
+    Giresun kadar sert bir celiski degil.
+
+**YENI BULUNAN 3. OLASI BUG: "Humus (Ev Usulü)"** (dikkat: "Humus"
+plain DEGIL) -- "Hazır humus mayasını (nohut ezmesi bazını)" diyor,
+ama kardes tarif "Humus" dogru sekilde "Haşlanmış nohudu ...
+blenderdan gecirin" diyor. "Ev Usulü" basligiyla celisebilir --
+malzeme listesi kontrolu (168e'nin 2. sorgusu) SONUC BEKLENIYOR.
+
+**SONUC: Genel tablo Bahri'nin ilk endisesine gore COK DAHA IYI --
+"isil islem yok" celiskisi SISTEMIK DEGIL, sadece izole 2 (belki 3)
+tarifle sinirli gorunuyor.**
+
+**ACIK KARAR (Bahri'den bekleniyor):** Giresun + Rize icin:
+(a) MISIR EKMEĞİ'ni yeni malzeme olarak ekle (fiyat arastirmasi
+dahil) ve MISIR UNU yerine kullan, YA DA
+(b) MISIR UNU'nu koru, talimata gercek pisirme asamasi ekle.
