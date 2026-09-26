@@ -11909,3 +11909,68 @@ tarifle sinirli gorunuyor.**
 (a) MISIR EKMEĞİ'ni yeni malzeme olarak ekle (fiyat arastirmasi
 dahil) ve MISIR UNU yerine kullan, YA DA
 (b) MISIR UNU'nu koru, talimata gercek pisirme asamasi ekle.
+
+### 23 Eylul 2026 -- Giresun/Rize Duzeltmesi Icin Teshis Devam Ediyor (169 serisi)
+
+Bahri'nin karari: MISIR UNU korunacak, talimata GERCEK misir ekmegi
+pisirme asamasi eklenecek (yeni malzeme yerine).
+
+**Toplanan veri:**
+- GIRESUN mevcut malzemeler (1 porsiyon): KAŞAR PEYNİRİ 30g, MISIR
+  UNU 20g, TEREYAĞI 4g. hazirlik_dakika=10.
+- RIZE mevcut malzemeler (1 porsiyon): BAL 10g, KAYMAK 25g, MISIR
+  UNU 15g. hazirlik_dakika=10.
+- Referans "Mısır Ekmeği" tarifi (1 porsiyon): BUĞDAY UNU 20g, MISIR
+  UNU 80g, SU 60g, TUZ 3g. hazirlik_dakika=35.
+  -> Oran: MISIR UNU:BUĞDAY UNU:SU:TUZ = 80:20:60:3
+  -> Bu orandan GIRESUN icin (20/80=0.25 kat): BUĞDAY UNU 5g, SU 15g,
+     TUZ 0.75g eklenecek.
+  -> RIZE icin (15/80=0.1875 kat): BUĞDAY UNU 3.75g, SU 11.25g,
+     TUZ 0.5625g eklenecek.
+- **ONEMLI:** Referans tarifin Fırınlama asamasina SADECE BUĞDAY UNU,
+  MISIR UNU, SU baglanmis -- TUZ baglanmamis (kucuk miktar, ihmal
+  edilebilir isi kutlesi). Giresun/Rize'de de ayni kural uygulanacak.
+- recete_asamalari semasi: id, recete_id, ad, sira, sure_dakika,
+  isil_islem_mi, enerji_kaynagi, baslangic_sicaklik, hedef_sicaklik,
+  verimlilik_orani, created_at, aktif_dakika.
+- asama_malzemeleri semasi: id, asama_id, recete_malzeme_id (bu,
+  malzeme_id'ye DEGIL, recete_malzemeleri.id'ye referans veriyor).
+
+**BEKLENEN:** Referans tarifin Fırınlama asamasinin TAM teknik
+parametreleri (sure_dakika, aktif_dakika, enerji_kaynagi,
+baslangic/hedef_sicaklik, verimlilik_orani) -- `sql/169e_sadece_
+teknik_parametreler.sql` teslim edildi, SONUC BEKLENIYOR. Bu
+degerler Giresun/Rize'nin yeni Fırınlama asamasina AYNEN
+kopyalanacak (ayni fiziksel islem oldugu icin tahmin edilmeyecek).
+
+SONRAKI ADIM: Tum veriler toplaninca, hem GIRESUN hem RIZE icin:
+(1) yeni recete_malzemeleri satirlari (BUĞDAY UNU/SU/TUZ), (2) yeni
+hazirlik_talimati metni (gercek pisirme asamali), (3) guncellenmis
+hazirlik_dakika, (4) eski recete_asamalari/asama_malzemeleri silinip
+yenisi eklenecek migration hazirlanacak.
+
+### 23 Eylul 2026 -- 170 Teslim: Giresun/Rize Gercek Pisirme Asamasi Eklendi
+
+Bahri'nin karari uygulandi: MISIR UNU korundu, GERCEK misir ekmegi
+pisirme sureci eklendi (yeni malzeme yerine).
+
+**GIRESUN** (3 asama): Hazırlık (8dk, non-thermal) -> Fırınlama
+(25dk, elektrik, 20-200C, verimlilik 0.58, MISIR UNU+BUĞDAY UNU+SU
+bagli) -> Tereyağı Eritme (2dk, dogalgaz, 20-90C, verimlilik 0.5,
+TEREYAĞI bagli). Yeni malzemeler: BUĞDAY UNU 5g, SU 15g, TUZ 0.75g.
+hazirlik_dakika: 10 -> 35.
+
+**RIZE** (3 asama): Hazırlık (7dk) -> Fırınlama (25dk, ayni parametre)
+-> Servis (3dk, non-thermal). Yeni malzemeler: BUĞDAY UNU 3.75g,
+SU 11.25g, TUZ 0.5625g. hazirlik_dakika: 10 -> 35.
+
+**Teknik parametreler tahmin edilmedi** -- kutuphanedeki bagimsiz
+"Mısır Ekmeği" tarifinin Fırınlama asamasindan (elektrik, 20-200C,
+verimlilik 0.58) ve İskender Kebap'in dogalgaz/tava tipi
+asamalarindan (verimlilik 0.5) birebir kopyalandi. Malzeme oranlari
+referans tarifin oranindan (80:20:60:3) turetildi.
+
+Teslim: `sql/170_giresun_rize_gercek_pisirme_duzeltmesi.sql`. 3
+dogrulama sorgusu icerir: (1) hazirlik_dakika = asama toplami mi,
+(2) her isil asamada bagli malzeme var mi, (3) guncel malzeme
+listeleri. SONUC BEKLENIYOR.
