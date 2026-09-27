@@ -257,7 +257,15 @@ def _maliyet_ayarlarini_getir(isletme_id):
 
 
 def _gercek_maliyet_hesapla(asamalar, ayarlar, porsiyon):
+    """Donen deger: (enerji_eur, iscilik_eur, enerji_kwh, iscilik_dakika).
+    YUZ ALTMIS BESINCI DUZELTME (23 Eylul 2026): Aylık Sarf Listesi'nin
+    haftalik enerji tuketimi (kWh) ve iscilik saati toplamlarini
+    gosterebilmesi icin, daha once SADECE EUR tutarlarini donduren bu
+    fonksiyon artik HAM (birim fiyattan bagimsiz) kwh ve dakika
+    degerlerini de donduruyor -- boylece isletme farkli bir birim
+    fiyat ayarlasa bile TUKETIM miktari (fiziksel gercek) degismez."""
     enerji_eur = 0.0
+    enerji_kwh = 0.0
     iscilik_dk = 0.0
     for a in asamalar:
         iscilik_dk += a["aktif_dakika"] if a["aktif_dakika"] is not None else a["sure_dakika"]
@@ -266,13 +274,14 @@ def _gercek_maliyet_hesapla(asamalar, ayarlar, porsiyon):
             delta_t = a["hedef_sicaklik"] - a["baslangic_sicaklik"]
             joule = kutle * a["agirlikli_ozgul_isi"] * delta_t
             kwh = joule / 3_600_000.0 / a["verimlilik_orani"]
+            enerji_kwh += kwh
             birim_fiyat = (
                 ayarlar["elektrik_birim_fiyat_eur_kwh"] if a["enerji_kaynagi"] == "elektrik"
                 else ayarlar["dogalgaz_birim_fiyat_eur_kwh"]
             )
             enerji_eur += kwh * birim_fiyat
     iscilik_eur = (iscilik_dk / 60.0) * ayarlar["personel_saat_ucreti_eur"]
-    return enerji_eur, iscilik_eur
+    return enerji_eur, iscilik_eur, enerji_kwh, iscilik_dk
 
 
 mutfaklar_listesi = _mutfaklari_getir()
@@ -2015,7 +2024,7 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                                 continue
                             asamalar = _uretim_asamalarini_getir(rid)
                             if asamalar:
-                                e, i = _gercek_maliyet_hesapla(asamalar, ayarlar, PORSIYON_STANDART)
+                                e, i, _, _ = _gercek_maliyet_hesapla(asamalar, ayarlar, PORSIYON_STANDART)
                                 toplam_enerji += e
                                 toplam_iscilik += i
                         malzeme_eur = t["maliyet_eur"]  # zaten PORSIYON_STANDART ile olceklendi
@@ -2424,7 +2433,10 @@ def _hafta_kartlarini_goster_mobil(hafta, detay, fiyat_verisi_var, hedefler, ay_
 
 
 # YUZ ELLI SEKIZINCI DUZELTME (21 Eylul 2026): Bahri'nin istegi --
-# "Aylık Malzeme Listesi" ozelligi. Dayanikli (>=30 gun bozulmayan --
+# "Aylık Sarf Listesi" ozelligi (eskiden "Aylık Malzeme Listesi",
+# YUZ ALTMIS BESINCI DUZELTMEDE enerji tuketimi + iscilik saati
+# eklenince "Sarf Listesi" olarak yeniden adlandirildi). Dayanikli
+# (>=30 gun bozulmayan --
 # ör. zeytinyagi) malzemeler AYLIK TEK LISTE, taze (kisa omurlu)
 # malzemeler ise HAFTALIK ayri listeler halinde, miktar+fiyat+alt
 # toplam+genel toplamla gosteriliyor.
@@ -2437,14 +2449,23 @@ def _hafta_kartlarini_goster_mobil(hafta, detay, fiyat_verisi_var, hedefler, ay_
 _DAYANIKLILIK_ESIGI_GUN = 30
 
 
-def _aylik_malzeme_ihtiyaci_hesapla(aylik, porsiyon_sayisi, isletme_id):
+def _aylik_sarf_ihtiyaci_hesapla(aylik, porsiyon_sayisi, isletme_id):
     """Bir ayin TUM haftalarindaki tariflerin malzeme ihtiyacini,
     aktif porsiyon sayisina gore olcekleyip toplar. Donen sozluk:
     {"dayanikli": [...], "haftalik_taze": {1: [...], ...},
      "dayanikli_toplam_eur": X, "haftalik_toplam_eur": {1: X, ...},
-     "genel_toplam_eur": X, "tam_fiyatli": bool}
+     "genel_toplam_eur": X, "tam_fiyatli": bool,
+     "haftalik_enerji_kwh": {1: X, ...}, "genel_enerji_kwh": X,
+     "haftalik_iscilik_saat": {1: X, ...}, "genel_iscilik_saat": X}
     Her malzeme kaydi: {"ad", "miktar_gram", "fiyat_eur" (None ise
-    fiyat eksik demektir)}."""
+    fiyat eksik demektir)}.
+    YUZ ALTMIS BESINCI DUZELTME (23 Eylul 2026): "Aylık Malzeme
+    Listesi" -> "Aylık Sarf Listesi" olarak genisletildi -- Bahri'nin
+    istegiyle, malzeme ihtiyacinin yaninda HAFTALIK enerji tuketimi
+    (kWh) ve iscilik saati de ayni sekilde toplaniyor. Enerji/iscilik
+    hesabi, Tarif Kutuphanesi/kart gorunumundeki "gercek uretim
+    maliyeti" ile AYNI fonksiyonu (_gercek_maliyet_hesapla)
+    kullaniyor -- ayri/tutarsiz bir formul icat edilmedi."""
     # 1) Bu ayda kullanilan (hafta_no, tarif_adi) ciftlerini topla --
     # ayni tarif ayni haftada birden fazla kez, ya da farkli
     # haftalarda da gecebilir, hepsi ayri ayri sayiliyor.
@@ -2460,6 +2481,8 @@ def _aylik_malzeme_ihtiyaci_hesapla(aylik, porsiyon_sayisi, isletme_id):
         return {
             "dayanikli": [], "haftalik_taze": {}, "dayanikli_toplam_eur": 0.0,
             "haftalik_toplam_eur": {}, "genel_toplam_eur": 0.0, "tam_fiyatli": True,
+            "haftalik_enerji_kwh": {}, "genel_enerji_kwh": 0.0,
+            "haftalik_iscilik_saat": {}, "genel_iscilik_saat": 0.0,
         }
 
     # 2) Bu tariflerin ID'lerini ve malzeme listelerini (1 porsiyon
@@ -2546,6 +2569,29 @@ def _aylik_malzeme_ihtiyaci_hesapla(aylik, porsiyon_sayisi, isletme_id):
         _haftalik_taze[_hafta_no] = _liste
         _haftalik_toplam_eur[_hafta_no] = _alt_toplam
 
+    # 4) Haftalik enerji tuketimi (kWh) ve iscilik saati -- ayni
+    # (hafta_no, tarif_adi) kullanim listesi uzerinden, Tarif
+    # Kutuphanesi/kart gorunumundeki AYNI _gercek_maliyet_hesapla
+    # fonksiyonu kullanilarak. Ayni tarifin uretim asamalari birden
+    # fazla kez sorgulanmasin diye kucuk bir onbellek (_asama_onbellek)
+    # kullaniliyor.
+    _ad_to_id = {ad: rid for rid, ad in _id_to_ad.items()}
+    _ayarlar = _maliyet_ayarlarini_getir(isletme_id)
+    _asama_onbellek = {}
+    _haftalik_enerji_kwh = {}
+    _haftalik_iscilik_dk = {}
+    for _hafta_no, _tarif_adi in _kullanim:
+        if _tarif_adi not in _asama_onbellek:
+            _rid = _ad_to_id.get(_tarif_adi)
+            _asama_onbellek[_tarif_adi] = _uretim_asamalarini_getir(_rid) if _rid else []
+        _asamalar = _asama_onbellek[_tarif_adi]
+        if not _asamalar:
+            continue
+        _, _, _kwh, _dk = _gercek_maliyet_hesapla(_asamalar, _ayarlar, porsiyon_sayisi)
+        _haftalik_enerji_kwh[_hafta_no] = _haftalik_enerji_kwh.get(_hafta_no, 0.0) + _kwh
+        _haftalik_iscilik_dk[_hafta_no] = _haftalik_iscilik_dk.get(_hafta_no, 0.0) + _dk
+    _haftalik_iscilik_saat = {h: dk / 60.0 for h, dk in _haftalik_iscilik_dk.items()}
+
     return {
         "dayanikli": _dayanikli_liste,
         "haftalik_taze": _haftalik_taze,
@@ -2553,6 +2599,10 @@ def _aylik_malzeme_ihtiyaci_hesapla(aylik, porsiyon_sayisi, isletme_id):
         "haftalik_toplam_eur": _haftalik_toplam_eur,
         "genel_toplam_eur": _dayanikli_toplam_eur + sum(_haftalik_toplam_eur.values()),
         "tam_fiyatli": _tam_fiyatli,
+        "haftalik_enerji_kwh": _haftalik_enerji_kwh,
+        "genel_enerji_kwh": sum(_haftalik_enerji_kwh.values()),
+        "haftalik_iscilik_saat": _haftalik_iscilik_saat,
+        "genel_iscilik_saat": sum(_haftalik_iscilik_saat.values()),
     }
 
 
@@ -2591,10 +2641,26 @@ def _malzeme_tablosu_html(kayitlar, ara_toplam_eur):
     return f"<table style='width:100%; border-collapse:collapse;'>{_satirlar}</table>"
 
 
-@st.dialog("Aylık Malzeme Listesi")
-def _aylik_malzeme_listesi_dialog(aylik, porsiyon_sayisi, isletme_id, isletme_adi):
-    with st.spinner("Malzeme listesi hesaplanıyor..."):
-        _veri = _aylik_malzeme_ihtiyaci_hesapla(aylik, porsiyon_sayisi, isletme_id)
+def _sarf_ozet_html(enerji_kwh, iscilik_saat):
+    """Bir haftanin (ya da ayin) enerji tuketimi (kWh) ve iscilik
+    (saat) ozetini, malzeme tablolarindakiyle tutarli bir HTML
+    satiri olarak dondurur."""
+    return (
+        "<table style='width:100%; border-collapse:collapse; margin-top:6px;'>"
+        "<tr>"
+        "<td style='padding:2px 24px 2px 0;'>Enerji tüketimi</td>"
+        f"<td style='padding:2px 0; text-align:right; font-weight:500;'>{enerji_kwh:.2f} kWh</td>"
+        "</tr><tr>"
+        "<td style='padding:2px 24px 2px 0;'>İşçilik</td>"
+        f"<td style='padding:2px 0; text-align:right; font-weight:500;'>{iscilik_saat:.2f} saat</td>"
+        "</tr></table>"
+    )
+
+
+@st.dialog("Aylık Sarf Listesi")
+def _aylik_sarf_listesi_dialog(aylik, porsiyon_sayisi, isletme_id, isletme_adi):
+    with st.spinner("Sarf listesi hesaplanıyor..."):
+        _veri = _aylik_sarf_ihtiyaci_hesapla(aylik, porsiyon_sayisi, isletme_id)
 
     if not _veri["tam_fiyatli"]:
         st.caption("Not: bazı malzemelerin güncel fiyatı tanımlı değil — bunlar toplama dahil edilmedi (\"fiyat yok\" olarak işaretli).")
@@ -2614,6 +2680,12 @@ def _aylik_malzeme_listesi_dialog(aylik, porsiyon_sayisi, isletme_id, isletme_ad
     for _hafta_no in sorted(_veri["haftalik_taze"].keys()):
         _ekran_parcalari.append(f"<h4 style='margin-top:20px;'>{_hafta_no}. Hafta — Taze Malzemeler</h4>")
         _ekran_parcalari.append(_malzeme_tablosu_html(_veri["haftalik_taze"][_hafta_no], _veri["haftalik_toplam_eur"][_hafta_no]))
+        _ekran_parcalari.append(
+            _sarf_ozet_html(
+                _veri["haftalik_enerji_kwh"].get(_hafta_no, 0.0),
+                _veri["haftalik_iscilik_saat"].get(_hafta_no, 0.0),
+            )
+        )
     _ekran_parcalari.append("<hr style='margin-top:20px;'>")
     _ekran_parcalari.append(
         "<table style='width:100%; border-collapse:collapse;'><tr>"
@@ -2621,6 +2693,11 @@ def _aylik_malzeme_listesi_dialog(aylik, porsiyon_sayisi, isletme_id, isletme_ad
         "<td></td><td></td>"
         f"<td style='text-align:right; font-size:1.4em; font-weight:bold;'>{_veri['genel_toplam_eur']:.2f} €</td>"
         "</tr></table>"
+    )
+    _ekran_parcalari.append(
+        "<p style='color:#666; font-size:0.9em; margin-top:4px;'>"
+        f"Aylık toplam enerji tüketimi: {_veri['genel_enerji_kwh']:.2f} kWh · "
+        f"Aylık toplam işçilik: {_veri['genel_iscilik_saat']:.2f} saat</p>"
     )
     st.markdown("".join(_ekran_parcalari), unsafe_allow_html=True)
 
@@ -2671,6 +2748,10 @@ def _aylik_malzeme_listesi_dialog(aylik, porsiyon_sayisi, isletme_id, isletme_ad
             + _print_baslik_html
             + f"<h4>{_hafta_no}. Hafta — Taze Malzemeler</h4>"
             + _malzeme_tablosu_html(_veri["haftalik_taze"][_hafta_no], _veri["haftalik_toplam_eur"][_hafta_no])
+            + _sarf_ozet_html(
+                _veri["haftalik_enerji_kwh"].get(_hafta_no, 0.0),
+                _veri["haftalik_iscilik_saat"].get(_hafta_no, 0.0),
+            )
             + "</div>"
         )
     # Genel Toplam SON sayfaya (print'e) EKLENMIYOR -- Bahri: "bu
@@ -2680,7 +2761,7 @@ def _aylik_malzeme_listesi_dialog(aylik, porsiyon_sayisi, isletme_id, isletme_ad
     # YAZDIRMA -- ayri pencere mimarisi (bir onceki duzeltmede
     # kuruldu, calisiyor).
     _yazdirma_js_govde = json.dumps(_yazdirma_icerigi)
-    if st.button("Print", key="btn_aylik_malzeme_yazdir", use_container_width=True, type="primary"):
+    if st.button("Print", key="btn_aylik_sarf_yazdir", use_container_width=True, type="primary"):
         st.components.v1.html(
             f"""
             <script>
@@ -2690,7 +2771,7 @@ def _aylik_malzeme_listesi_dialog(aylik, porsiyon_sayisi, isletme_id, isletme_ad
                 alert('Yazdırma penceresi açılamadı — tarayıcının pop-up engelleyicisi bunu durdurmuş olabilir. Adres çubuğundaki pop-up bildirimine izin verip tekrar dene.');
             }} else {{
                 pencere.document.write(
-                    '<html><head><title>Aylık Malzeme Listesi</title>' +
+                    '<html><head><title>Aylık Sarf Listesi</title>' +
                     '<style>body{{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;padding:24px;}}' +
                     'table{{width:100%;border-collapse:collapse;}}' +
                     'h4{{margin-top:20px;}}</style></head><body>' + icerik + '</body></html>'
@@ -2950,8 +3031,8 @@ if aylik:
         )
 
     with _col_malzeme:
-        if st.button("Aylık Malzeme Listesi", key="btn_aylik_malzeme_listesi", use_container_width=True, type="primary"):
-            _aylik_malzeme_listesi_dialog(
+        if st.button("Aylık Sarf Listesi", key="btn_aylik_sarf_listesi", use_container_width=True, type="primary"):
+            _aylik_sarf_listesi_dialog(
                 aylik, st.session_state.get("secili_porsiyon_sayisi", 1), st.session_state.isletme_id, isletme_adi
             )
 
