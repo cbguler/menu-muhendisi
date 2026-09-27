@@ -64,9 +64,9 @@ isletme_bilgi = (
 
 with st.form("isletme_bilgi_formu"):
     ad_sutunu, kisaltma_sutunu = st.columns([2, 1])
-    yeni_ad = ad_sutunu.text_input("İşletme adı", value=isletme_bilgi.get("ad", ""))
+    yeni_ad = ad_sutunu.text_input("İşletme adı", value=isletme_bilgi.get("ad") or "")
     yeni_kisaltma = kisaltma_sutunu.text_input(
-        "İşletme kısaltılmış adı", value=isletme_bilgi.get("kisaltma", ""),
+        "İşletme kısaltılmış adı", value=isletme_bilgi.get("kisaltma") or "",
         max_chars=12,
         help="Reçete Üretimi'nde oluşturduğun her yeni reçetenin adının "
         "sonuna otomatik olarak eklenir (ör. \"Tavuk Sote (ACM)\") -- "
@@ -77,19 +77,19 @@ with st.form("isletme_bilgi_formu"):
         "menüsünü dahil etme butonunun üzerinde görünür."
     )
     yeni_adres = st.text_area(
-        "İşletme adresi", value=isletme_bilgi.get("adres", ""), height=80,
+        "İşletme adresi", value=isletme_bilgi.get("adres") or "", height=80,
     )
     yeni_fatura_adresi = st.text_area(
         "Fatura adresi",
-        value=isletme_bilgi.get("fatura_adresi", ""),
+        value=isletme_bilgi.get("fatura_adresi") or "",
         height=80,
         help="İşletme adresinden farklıysa buraya ayrı gir; aynıysa boş bırakabilirsin.",
     )
     yeni_vergi_dairesi = st.text_input(
-        "Vergi dairesi", value=isletme_bilgi.get("vergi_dairesi", ""),
+        "Vergi dairesi", value=isletme_bilgi.get("vergi_dairesi") or "",
     )
     yeni_vergi_no = st.text_input(
-        "Vergi numarası", value=isletme_bilgi.get("vergi_no", ""),
+        "Vergi numarası", value=isletme_bilgi.get("vergi_no") or "",
     )
     if st.form_submit_button("Kaydet"):
         if not yeni_ad.strip():
