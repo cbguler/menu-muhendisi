@@ -29,6 +29,33 @@ st.set_page_config(page_title="Abonelik", page_icon="assets/favicon.png", layout
 supabase = get_supabase()
 oturumu_uygula(supabase)
 
+
+@st.cache_data(ttl=3600)
+def _varsayilan_kutuphane_tarif_sayisi():
+    """Aylik Menu'nun hazir kutuphanesindeki (isletme_id NULL olan)
+    tarif sayisi. Supabase/PostgREST sorgu basina varsayilan olarak
+    en fazla 1000 satir donduruyor (sinirin uzerindekiler sessizce
+    kesiliyor) -- kutuphane su an tam 1000 tarif oldugu icin .range()
+    ile sayfalayarak sayiyoruz, boylece ileride kutuphane buyuyunce
+    bu sayi sessizce yanlis (1000'de sabit) kalmaz."""
+    toplam = 0
+    offset = 0
+    sayfa_boyutu = 1000
+    while True:
+        sayfa = (
+            supabase.table("receteler")
+            .select("id")
+            .is_("isletme_id", "null")
+            .range(offset, offset + sayfa_boyutu - 1)
+            .execute()
+        ).data
+        toplam += len(sayfa)
+        if len(sayfa) < sayfa_boyutu:
+            break
+        offset += sayfa_boyutu
+    return toplam
+
+
 st.title("Abonelik")
 
 plan_kodu = st.session_state.get("plan_kodu", "-")
@@ -133,7 +160,7 @@ st.divider()
 # Isletme maliyet ayarlari (24 Agustos 2026: Recete Uretimi sayfasindan
 # BURAYA tasindi -- kullanicinin gerekcesi: bu ayarlar tek bir receteye
 # ozgu degil, isletmenin TUM receteleri (kendi ozel receteleri + Yillik
-# Menu'deki 241 kutuphane tarifi DAHIL) icin gecerli, o yuzden dogal
+# Menu'deki hazir kutuphane tarifleri DAHIL) icin gecerli, o yuzden dogal
 # yeri "hesap/isletme genelinde" bir ayar sayfasidir, tek tek recete
 # calisilirken karsina cikan bir form degil.
 #
@@ -146,18 +173,20 @@ st.divider()
 # olmaz.
 # ---------------------------------------------------------------------
 st.subheader("İşletme Maliyet Ayarları")
+_kutuphane_tarif_sayisi = _varsayilan_kutuphane_tarif_sayisi()
 st.caption(
     "Bu ayarlar Reçete Üretimi sayfasında değil buradadır, çünkü tek "
     "bir reçeteye değil işletmenin TÜM reçetelerine birden uygulanır -- "
     "hem kendi oluşturduğun özel reçetelere, hem de Aylık Menü "
-    "sayfasındaki hazır 241 tariflik kütüphaneden ürettiğin menülere. "
+    f"sayfasındaki hazır {_kutuphane_tarif_sayisi} tariflik kütüphaneden "
+    "ürettiğin menülere. "
     "Malzeme maliyetleri (fiyatlar) zaten sistemde ayrı olarak "
     "tutuluyor, burada SADECE enerji ve işçilik birim fiyatları var. "
     "Aşağıdaki rakamlar başlangıç için makul TAHMİNİ değerlerdir -- "
     "işletmenin gerçek elektrik, doğalgaz ve saatlik personel maliyeti "
     "bu değerlerden farklıysa burada değiştirebilirsin; yaptığın "
     "değişiklik hesaplanan TÜM porsiyon maliyetlerine (default gelen "
-    "241 reçete dahil) anında yansır."
+    f"{_kutuphane_tarif_sayisi} reçete dahil) anında yansır."
 )
 
 ayar_sonuc = (

@@ -1,7 +1,8 @@
 # pages/5_Tarif_Kutuphanesi.py
 #
-# Tarif Kutuphanesi: 241 tariflik genel Turk mutfagi kutuphanesini
-# gozden gecirme, bolge/gruba gore filtreleme, bir tarif secip istenen
+# Tarif Kutuphanesi: kutuphanedeki (default, isletme_id null olan) TUM
+# tariflerin gozden gecirilmesi, bolge/gruba gore filtreleme, bir tarif
+# secip istenen
 # porsiyon sayisina gore malzeme miktarlarini ve besin/maliyet
 # degerlerini olceklenmis olarak gorme, ve (doldurulduysa) adim adim
 # hazirlik talimatini okuma.
@@ -26,15 +27,6 @@ st.set_page_config(page_title="Tarif Kütüphanesi", page_icon="assets/favicon.p
 
 supabase = get_supabase()
 oturumu_uygula(supabase)
-
-st.title("Tarif Kütüphanesi")
-st.caption(
-    "241 tariflik genel Türk mutfağı kütüphanesindeki tarifleri gözden "
-    "geçir, bir tarif seçip istediğin porsiyon sayısına göre malzeme "
-    "miktarlarını ve besin/maliyet değerlerini gör. Hazırlık talimatları "
-    "kademeli olarak ekleniyor -- henüz eklenmemiş tarifler için bunu "
-    "ekranda göreceksin."
-)
 
 
 def _sayfalayarak_getir(sorgu_uret, sayfa_boyutu=1000):
@@ -179,7 +171,17 @@ def _tarif_kutuphanesi_detayli_getir():
     return tarifler, fiyat_verisi_var
 
 
+st.title("Tarif Kütüphanesi")
+
 tarifler, fiyat_verisi_var = _tarif_kutuphanesi_detayli_getir()
+
+st.caption(
+    f"{len(tarifler)} tariflik genel Türk mutfağı kütüphanesindeki tarifleri "
+    "gözden geçir, bir tarif seçip istediğin porsiyon sayısına göre malzeme "
+    "miktarlarını ve besin/maliyet değerlerini gör. Hazırlık talimatları "
+    "kademeli olarak ekleniyor -- henüz eklenmemiş tarifler için bunu "
+    "ekranda göreceksin."
+)
 
 GRUP_ADI = {1: "Ana Yemek", 2: "Yardımcı Yemek", 3: "Tamamlayıcı"}
 KISA_BOLGE_ADI = {"Genel": "Klasik", "Doğu Anadolu": "Doğu", "Güneydoğu Anadolu": "Güneydoğu"}
