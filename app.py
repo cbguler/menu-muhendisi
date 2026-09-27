@@ -38,6 +38,42 @@ st.set_page_config(
 
 supabase = get_supabase()
 
+
+def _sayfalayarak_say(tablo_adi, filtre_uygula=None):
+    """Bir tablodaki toplam kayit sayisini, Supabase/PostgREST'in sorgu
+    basina varsayilan 1000 satir sinirina TAKILMADAN sayar (sinirin
+    uzerindeki satirlar sessizce kesiliyor, bu yuzden .range() ile
+    sayfalayarak sayiyoruz -- bkz. pages/5_Tarif_Kutuphanesi.py ve
+    pages/6_Abonelik.py'deki ayni yontem). Ana sayfadaki tarif/malzeme
+    sayilari boylece kutuphane buyudukce kendiliginden guncel kalir,
+    elle "241" gibi sabit bir rakami tekrar tekrar duzeltmek gerekmez."""
+    toplam = 0
+    offset = 0
+    sayfa_boyutu = 1000
+    while True:
+        sorgu = supabase.table(tablo_adi).select("id")
+        if filtre_uygula:
+            sorgu = filtre_uygula(sorgu)
+        sayfa = sorgu.range(offset, offset + sayfa_boyutu - 1).execute().data
+        toplam += len(sayfa)
+        if len(sayfa) < sayfa_boyutu:
+            break
+        offset += sayfa_boyutu
+    return toplam
+
+
+@st.cache_data(ttl=3600)
+def _ana_sayfa_kutuphane_sayilari():
+    """Ana sayfadaki tanitim metninde kullanilan iki sayi: varsayilan
+    (isletme_id NULL olan) tarif kutuphanesinin buyuklugu, ve
+    veritabanindaki toplam temel gida malzemesi sayisi."""
+    tarif_sayisi = _sayfalayarak_say(
+        "receteler", lambda s: s.is_("isletme_id", "null")
+    )
+    malzeme_sayisi = _sayfalayarak_say("malzemeler")
+    return tarif_sayisi, malzeme_sayisi
+
+
 BENI_HATIRLA_GUN = 30  # profesyonel sitelerde yaygin standart (Streamlit'in kendi
                        # native auth ozelligi de varsayilan olarak 30 gun kullaniyor)
 
@@ -603,6 +639,8 @@ def kontrol_paneli_sayfasi():
         "üst menüdeki **Abonelik** sayfasına bak."
     )
 
+    _tarif_sayisi, _malzeme_sayisi = _ana_sayfa_kutuphane_sayilari()
+
     _video_varsa_goster("tanitim_video.mp4")
 
     st.divider()
@@ -629,7 +667,7 @@ def kontrol_paneli_sayfasi():
 <text x="240" y="78" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#5F5E5A">Anayasa kuralı</text>
 <rect x="331" y="40" width="144" height="56" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
 <text x="403" y="58" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="#085041">Besin &amp; alerjen</text>
-<text x="403" y="78" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#0F6E56">6 veri noktası</text>
+<text x="403" y="78" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#0F6E56">27 besin ögesi</text>
 <rect x="505" y="40" width="128" height="56" rx="8" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
 <text x="569" y="58" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="#633806">Doğru kitleye</text>
 <text x="569" y="78" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#854F0B">Sağlık + kurum</text>
@@ -642,15 +680,27 @@ def kontrol_paneli_sayfasi():
     )
 
     st.markdown(
-        "- **Bölge / mevsim gözeten üretim:** 7 coğrafi bölgenin 241 "
-        "tariflik kütüphanesinden, mevsime uygun ürünleri önceliklendirerek "
-        "haftalık/aylık/mevsimlik/yıllık menü üretir — anayasa kuralları "
-        "(grup dengesi, tekrar etmeme, uyumsuz kombinasyonların engellenmesi) "
-        "her menünün tutarlı ve dengeli olmasını garanti eder.\n"
+        f"- **Bölge / mevsim gözeten üretim:** 7 coğrafi bölgenin "
+        f"{_tarif_sayisi} tariflik kütüphanesinden, mevsime uygun "
+        "ürünleri önceliklendirerek haftalık/aylık/mevsimlik/yıllık menü "
+        "üretir — anayasa kuralları (grup dengesi, tekrar etmeme, "
+        "uyumsuz kombinasyonların engellenmesi) her menünün tutarlı ve "
+        "dengeli olmasını garanti eder.\n"
+        "- **Vegan ve vejetaryen seçimi:** Aylık Menü sayfasında "
+        "\"Tümü / Vejetaryen / Vegan\" arasından seçim yapabilir, "
+        "istersen ayrıca belirli alerjenleri (süt, yumurta, gluten vb.) "
+        "içeren tarifleri menüden tamamen hariç tutabilirsin.\n"
+        f"- **Geniş malzeme veritabanı:** Veritabanında {_malzeme_sayisi} "
+        "temel gıda malzemesi kayıtlı — her birinin güncel piyasa "
+        "fiyatı, besin değeri ve (varsa) alerjen bilgisi tutuluyor; tüm "
+        "maliyet ve besin hesapları bu veriye dayanıyor.\n"
         "- **Sadece maliyet değil, sağlık bilgisi de:** Her yemek için "
-        "hesaplanan kalori, protein, yağ, karbonhidrat, glisemik indeks ve "
-        "alerjen bilgisi sadece bir maliyet aracı değil — amaçlarımızdan "
-        "biri de bu bilgiyi gerçekten ihtiyacı olan insanlara ulaştırmak."
+        "hesaplanan kalori, protein, yağ, karbonhidrat ve glisemik indeksin "
+        "yanında; E, K, kalsiyum, demir, magnezyum, potasyum, çinko, fosfor, "
+        "bakır, manganez, selenyum, iyot gibi 22 vitamin/mineral değeri "
+        "(toplamda 27 besin ögesi) ve alerjen bilgisi de hesaplanır — bu "
+        "sadece bir maliyet aracı değil, amaçlarımızdan biri de bu bilgiyi "
+        "gerçekten ihtiyacı olan insanlara ulaştırmak."
     )
 
     st.markdown(
@@ -673,7 +723,11 @@ def kontrol_paneli_sayfasi():
 """,
         unsafe_allow_html=True,
     )
-    st.caption("GI: Glisemik İndeks")
+    st.caption(
+        "GI: Glisemik İndeks. Ayrıca 22 vitamin/mineral değeri de "
+        "hesaplanır (toplam 27 besin ögesi) — burada yer, sık aranan "
+        "temel altısına ayrıldı."
+    )
 
     st.write("**Bu verilerin şeffaf sunulması, aşağıdaki gibi pek çok kişi ve kuruma gerçek bir fark yaratabilir:**")
     sutun1, sutun2, sutun3 = st.columns(3)
@@ -735,10 +789,12 @@ def kontrol_paneli_sayfasi():
         )
         st.caption(
             "Özel reçetelerini sadece sen görürsün, başka işletmeler "
-            "erişemez. Bu reçeteler, aşağıdaki \"Aylık Menü\" bölümündeki "
-            "241 tariflik genel Türk mutfağı kütüphanesinden AYRIDIR — "
-            "hazır olduğunda aynı sayfanın en altındaki \"Satışa Açma\" "
-            "bölümünden satışa sunabilirsin."
+            "erişemez — kendi işletmene özel, tamamen ayrı bir tarif "
+            "kütüphanesi oluşturmuş olursun. Bu reçeteler, aşağıdaki "
+            f"\"Aylık Menü\" bölümündeki {_tarif_sayisi} tariflik genel "
+            "Türk mutfağı kütüphanesinden AYRIDIR — hazır olduğunda aynı "
+            "sayfanın en altındaki \"Satışa Açma\" bölümünden satışa "
+            "sunabilirsin."
         )
     with sutun_gorsel:
         _gorsel_varsa_goster("tanitim_uretim_asamalari.png", use_container_width=True)
@@ -780,15 +836,20 @@ def kontrol_paneli_sayfasi():
     st.header("Aylık Menü")
     _gorsel_varsa_goster("tanitim_yillik_menu.png", use_container_width=True)
     st.write(
-        "241 tariflik genel bir Türk mutfağı kütüphanesinden (7 coğrafi "
-        "bölge + genel/klasik tarifler) anayasa kurallarına uygun aylık "
-        "menü üretir:"
+        f"{_tarif_sayisi} tariflik genel bir Türk mutfağı kütüphanesinden "
+        "(7 coğrafi bölge + genel/klasik tarifler) anayasa kurallarına "
+        "uygun aylık menü üretir, sonucu her gün ayrı bir kart olarak "
+        "haftalık gruplar halinde gösterir:"
     )
     st.markdown(
         "- **Mutfak / Bölge seçimi:** İstersen tüm kütüphaneyi, istersen "
         "sadece belirli bölge(ler)i (Ege, Akdeniz, Karadeniz vb.) "
         "kullanabilirsin. Bir bölgeye tıklamak sadece o bölgeyi devreye "
         "sokar; hiçbiri seçili değilken tüm kütüphane kullanılır.\n"
+        "- **Vegan / vejetaryen ve alerjen filtresi:** Beslenme tarzını "
+        "(Tümü / Vejetaryen / Vegan) seçebilir, ayrıca istediğin "
+        "alerjenleri (süt, yumurta, gluten vb.) içeren tarifleri menüden "
+        "tamamen hariç tutabilirsin.\n"
         "- **Mevsim / Ay seçimi:** Seçtiğin ay için 4 haftalık bir menü "
         "üretilir, mevsime uygun tarifler önceliklendirilir.\n"
         "- **Anayasa kuralları:** Her öğün üç gruptan (ana yemek, "
@@ -796,10 +857,20 @@ def kontrol_paneli_sayfasi():
         "içinde bir tarif mümkün olduğunca tekrar etmez; birbiriyle "
         "uyuşmayan yemek kombinasyonları (ör. zeytinyağlı + etli sebze) "
         "hiçbir zaman bir arada çıkmaz.\n"
-        "- **Besin hedefi (opsiyonel):** Öğle ve akşam için ayrı ayrı "
-        "kalori/protein/yağ/karbonhidrat/glisemik indeks aralığı "
-        "belirleyebilirsin; algoritma bu aralığa uyan kombinasyonları "
-        "önceliklendirir.\n"
+        "- **Besin hedefi (opsiyonel) ve düzeltme:** Öğle ve akşam için "
+        "ayrı ayrı kalori/protein/yağ/karbonhidrat/glisemik indeks "
+        "aralığı belirleyebilirsin; algoritma bu aralığa uyan "
+        "kombinasyonları önceliklendirir, hedefin dışında kalan bir "
+        "öğünü \"Tekrar Dene\" butonuyla uygulamanın önereceği yeni bir "
+        "öğünle değiştirebilirsin.\n"
+        "- **Her kartta tam bilgi:** Her günün kartında o öğünün "
+        "kalori/protein/yağ/karbonhidrat/glisemik indeks/alerjen "
+        "değerleri ve porsiyon maliyeti birlikte görünür; bir yemeğin "
+        "ismine tıklarsan Tarif Kütüphanesi'ndeki ilgili tarife "
+        "doğrudan gidersin.\n"
+        "- **Aylık malzeme listesi:** Üretilen ayın tüm malzeme "
+        "ihtiyacını \"Aylık Malzeme Listesi\" ile tek bir listede "
+        "toplayıp satın alma için kullanabilirsin.\n"
         "- **Excel'e indir:** Üretilen menüyü, ekrandaki kart "
         "görünümüyle birebir aynı biçimde tek tıkla indirebilirsin."
     )
