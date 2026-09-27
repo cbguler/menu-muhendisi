@@ -666,7 +666,7 @@ if "kendi_menu_dahil" not in st.session_state:
     st.session_state.kendi_menu_dahil = False
 
 isletme_bilgi = (
-    supabase.table("isletmeler").select("kisaltma").eq("id", st.session_state.isletme_id).single().execute()
+    supabase.table("isletmeler").select("kisaltma, ad").eq("id", st.session_state.isletme_id).single().execute()
 ).data
 # OTUZ DOKUZUNCU DUZELTME (30 Agustos 2026): kullanici talebiyle -- bu
 # buton artik isletmenin TAM adi degil, KISALTILMIS adi (bkz. Abonelik
@@ -675,6 +675,11 @@ isletme_bilgi = (
 # Kisaltma girilmemisse jenerik "ÖZEL" kullanilir.
 isletme_kisaltma = ((isletme_bilgi or {}).get("kisaltma") or "").strip()
 isletme_adi = isletme_kisaltma or "ÖZEL"
+# YUZ ALTMIS ALTINCI DUZELTME (23 Eylul 2026): Bahri "PDF sayfa
+# basliklarinda kisaltma degil TAM unvan gorunsun" dedi -- yukaridaki
+# isletme_adi (kisaltma) SADECE buton etiketi icin, PDF/yazdirma
+# basliklari icin AYRI bir "tam ad" degiskeni kullaniliyor.
+isletme_tam_adi = ((isletme_bilgi or {}).get("ad") or "").strip() or isletme_adi
 
 st.markdown("**Bölge (mutfak)**")
 st.caption(
@@ -2687,34 +2692,135 @@ def _sarf_ozet_html(enerji_kwh, iscilik_saat, gereken_personel):
     )
 
 
-def _aylik_sarf_pdf_olustur(aylik, veri, isletme_adi):
+_PDF_FONT_KLASORU = "assets/fonts"
+_PDF_TURKCE_FONT_HAZIR = None  # None: henuz denenmedi, True/False: sonuc onbelleklendi
+
+
+def _pdf_turkce_fontlari_kaydet():
+    """DejaVu Sans (Regular + Bold) fontlarini reportlab'a kaydeder.
+    ONEMLI: reportlab'in varsayilan fontlari (Helvetica) Turkce'ye
+    ozgu karakterleri (ığĞŞşçÇöÖüÜİı) DOGRU basamiyor -- bu yuzden
+    ureteceğimiz TUM PDF'lerde metin bu font ile yazilmali. Font
+    dosyalari assets/fonts/DejaVuSans.ttf ve
+    assets/fonts/DejaVuSans-Bold.ttf olarak depoda bulunmalidir (ayri
+    teslim edildi, bu ikisi yoksa fonksiyon False doner ve PDF
+    Helvetica'ya -- Turkce karaktersiz ama en azindan CALISAN bir PDF'e
+    -- geri duser, uygulama COKMEZ). Ayni oturumda birden fazla PDF
+    uretilirse fontu TEKRAR kaydetmeye calismaz (reportlab bunu
+    reddetmez ama gereksizdir)."""
+    global _PDF_TURKCE_FONT_HAZIR
+    if _PDF_TURKCE_FONT_HAZIR is not None:
+        return _PDF_TURKCE_FONT_HAZIR
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+
+    _normal_yol = os.path.join(_PDF_FONT_KLASORU, "DejaVuSans.ttf")
+    _kalin_yol = os.path.join(_PDF_FONT_KLASORU, "DejaVuSans-Bold.ttf")
+    if not (os.path.exists(_normal_yol) and os.path.exists(_kalin_yol)):
+        _PDF_TURKCE_FONT_HAZIR = False
+        return False
+    pdfmetrics.registerFont(TTFont("Turkce", _normal_yol))
+    pdfmetrics.registerFont(TTFont("Turkce-Kalin", _kalin_yol))
+    # KRITIK: registerFontFamily OLMADAN, reportlab'in Paragraph/Table
+    # motoru bazi Turkce'ye OZGU karakterleri (İ, ı, Ğ, ğ, Ş, ş --
+    # Latin-1'in DISINDaki kod noktalari) SESSIZCE yanlis/bos glif ile
+    # basiyor -- FONTNAME stiliyle acikca "Turkce" secilmis olsa bile.
+    # Bu satir olmadan test ederken tam olarak bu hatayi yasadik.
+    pdfmetrics.registerFontFamily(
+        "Turkce", normal="Turkce", bold="Turkce-Kalin",
+        italic="Turkce", boldItalic="Turkce-Kalin",
+    )
+    _PDF_TURKCE_FONT_HAZIR = True
+    return True
+
+
+def _pdf_font_adlari():
+    """(normal_font_adi, kalin_font_adi) dondurur -- Turkce fontlar
+    hazirsa DejaVu Sans, degilse (font dosyalari eksikse) Helvetica'ya
+    geri duser (Turkce karakterler o zaman bozuk cikar ama PDF yine de
+    uretilir, uygulama COKMEZ)."""
+    if _pdf_turkce_fontlari_kaydet():
+        return "Turkce", "Turkce-Kalin"
+    return "Helvetica", "Helvetica-Bold"
+
+
+def _pdf_sayfa_basligi_ciz(canvas, belge, isletme_tam_adi, alt_baslik, font_normal, font_kalin):
+    """HER PDF sayfasinin basina: sol ustte logo + altinda 'Menü
+    Mühendisi', sayfa ortasinda isletmenin TAM unvani (kisaltma DEGIL)
+    + altinda alt_baslik (ör. 'Aylık Sarf Listesi — Aralık 2026')
+    ciziyor, altina ayirici bir cizgi cekiyor. SimpleDocTemplate'in
+    onFirstPage/onLaterPages callback'i olarak kullanilir, boylece
+    HER sayfada tekrarlanir (eskiden sadece ilk sayfada goruntuleniyordu
+    -- Bahri'nin acikca istedigi duzeltme budur)."""
+    from reportlab.lib import colors
+    from reportlab.lib.units import cm
+
+    canvas.saveState()
+    _sayfa_genislik, _sayfa_yukseklik = belge.pagesize
+    _sol = belge.leftMargin
+    _sag = _sayfa_genislik - belge.rightMargin
+
+    if os.path.exists("assets/logo.png"):
+        try:
+            canvas.drawImage(
+                "assets/logo.png", _sol, _sayfa_yukseklik - 2.6 * cm,
+                width=1.5 * cm, height=1.5 * cm, mask="auto", preserveAspectRatio=True,
+            )
+        except Exception:
+            pass
+    canvas.setFont(font_normal, 9)
+    canvas.setFillColor(colors.grey)
+    canvas.drawString(_sol, _sayfa_yukseklik - 2.85 * cm, "Menü Mühendisi")
+
+    canvas.setFont(font_kalin, 15)
+    canvas.setFillColor(colors.black)
+    canvas.drawCentredString((_sol + _sag) / 2, _sayfa_yukseklik - 1.9 * cm, isletme_tam_adi)
+
+    canvas.setFont(font_normal, 10)
+    canvas.setFillColor(colors.grey)
+    canvas.drawCentredString((_sol + _sag) / 2, _sayfa_yukseklik - 2.5 * cm, alt_baslik)
+
+    canvas.setStrokeColor(colors.grey)
+    canvas.line(_sol, _sayfa_yukseklik - 3.0 * cm, _sag, _sayfa_yukseklik - 3.0 * cm)
+    canvas.restoreState()
+
+
+def _aylik_sarf_pdf_olustur(aylik, veri, isletme_tam_adi):
     """Aylık Sarf Listesi'ni GERÇEK bir PDF dosyası olarak üretir
     (reportlab ile, saf Python -- sistem bağımlılığı yok, Streamlit
     Cloud'da ek kurulum gerektirmez). Dayanıklı malzemeler + her
     hafta için taze malzemeler/enerji/işçilik/personel özeti + aylık
     genel toplamlarla, eskiden tarayıcı "Print" penceresinin verdiği
     AYNI bilgiyi içerir -- ama artık indirilip saklanabilen/e-posta
-    ile gönderilebilen gerçek bir dosya."""
+    ile gönderilebilen gerçek bir dosya.
+    YUZ ALTMIS ALTINCI DUZELTME (23 Eylul 2026): Bahri'nin 3 kozmetik
+    istegi karsilandi -- (1) Turkce karakterler artik DOGRU basiliyor
+    (DejaVu Sans font, bkz. _pdf_turkce_fontlari_kaydet), (2) logo +
+    "Menü Mühendisi" artik HER sayfanin basinda tekrarlaniyor (bkz.
+    _pdf_sayfa_basligi_ciz, onFirstPage/onLaterPages), (3) sayfa
+    basliginda kisaltma degil isletmenin TAM unvani ortalanmis olarak
+    gosteriliyor (cagiran kod artik isletme_tam_adi gonderiyor)."""
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import cm
     from reportlab.platypus import (
-        Image as RLImage, PageBreak, Paragraph, SimpleDocTemplate,
-        Spacer, Table, TableStyle,
+        PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle,
     )
+
+    _font_normal, _font_kalin = _pdf_font_adlari()
+    _alt_baslik = f"Aylık Sarf Listesi — {aylik['ay']} {aylik['yil']}"
 
     _arabellek = io.BytesIO()
     _belge = SimpleDocTemplate(
         _arabellek, pagesize=A4,
-        leftMargin=2 * cm, rightMargin=2 * cm, topMargin=2 * cm, bottomMargin=2 * cm,
+        leftMargin=2 * cm, rightMargin=2 * cm, topMargin=3.4 * cm, bottomMargin=2 * cm,
         title=f"Aylık Sarf Listesi - {aylik['ay']} {aylik['yil']}",
     )
     _stiller = getSampleStyleSheet()
-    _baslik_stili = ParagraphStyle("baslik", parent=_stiller["Title"], fontSize=16, spaceAfter=2)
-    _isletme_stili = ParagraphStyle("isletme", parent=_stiller["Normal"], fontSize=11, textColor=colors.grey, spaceAfter=16)
-    _bolum_stili = ParagraphStyle("bolum", parent=_stiller["Heading3"], spaceBefore=14, spaceAfter=6)
-    _aciklama_stili = ParagraphStyle("aciklama", parent=_stiller["Normal"], fontSize=9, textColor=colors.grey, spaceAfter=8)
+    _bolum_stili = ParagraphStyle("bolum", parent=_stiller["Heading3"], fontName=_font_kalin, spaceBefore=14, spaceAfter=6)
+    _normal_stili = ParagraphStyle("normalTr", parent=_stiller["Normal"], fontName=_font_normal)
+    _aciklama_stili = ParagraphStyle("aciklama", parent=_stiller["Normal"], fontName=_font_normal, fontSize=9, textColor=colors.grey, spaceAfter=8)
 
     def _malzeme_tablosu_pdf(kayitlar, ara_toplam_eur):
         _satirlar = [["Malzeme", "Miktar", "Birim", "Fiyat"]]
@@ -2725,12 +2831,13 @@ def _aylik_sarf_pdf_olustur(aylik, veri, isletme_adi):
         _satirlar.append(["Ara toplam", "", "", f"{ara_toplam_eur:.2f} €"])
         _t = Table(_satirlar, colWidths=[7.5 * cm, 2.5 * cm, 2 * cm, 3 * cm])
         _t.setStyle(TableStyle([
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("FONTNAME", (0, 0), (-1, -1), _font_normal),
+            ("FONTNAME", (0, 0), (-1, 0), _font_kalin),
             ("FONTSIZE", (0, 0), (-1, -1), 9),
             ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
             ("LINEBELOW", (0, 0), (-1, 0), 0.5, colors.grey),
             ("LINEABOVE", (0, -1), (-1, -1), 0.5, colors.black),
-            ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
+            ("FONTNAME", (0, -1), (-1, -1), _font_kalin),
             ("TOPPADDING", (0, 0), (-1, -1), 3),
             ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
         ]))
@@ -2744,23 +2851,16 @@ def _aylik_sarf_pdf_olustur(aylik, veri, isletme_adi):
         ]
         _t = Table(_satirlar, colWidths=[11 * cm, 4 * cm])
         _t.setStyle(TableStyle([
+            ("FONTNAME", (0, 0), (-1, -1), _font_normal),
             ("FONTSIZE", (0, 0), (-1, -1), 9),
             ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
-            ("FONTNAME", (1, 0), (1, -1), "Helvetica-Bold"),
+            ("FONTNAME", (1, 0), (1, -1), _font_kalin),
             ("TOPPADDING", (0, 0), (-1, -1), 2),
             ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
         ]))
         return _t
 
     _elemanlar = []
-    if os.path.exists("assets/logo.png"):
-        try:
-            _elemanlar.append(RLImage("assets/logo.png", width=1.8 * cm, height=1.8 * cm))
-        except Exception:
-            pass
-    _elemanlar.append(Paragraph("Menü Mühendisi", _stiller["Normal"]))
-    _elemanlar.append(Paragraph(isletme_adi, _baslik_stili))
-    _elemanlar.append(Paragraph(f"Aylık Sarf Listesi — {aylik['ay']} {aylik['yil']}", _isletme_stili))
 
     if not veri["tam_fiyatli"]:
         _elemanlar.append(Paragraph(
@@ -2776,7 +2876,7 @@ def _aylik_sarf_pdf_olustur(aylik, veri, isletme_adi):
     if veri["dayanikli"]:
         _elemanlar.append(_malzeme_tablosu_pdf(veri["dayanikli"], veri["dayanikli_toplam_eur"]))
     else:
-        _elemanlar.append(Paragraph("Bu ay için dayanıklı malzeme yok.", _stiller["Normal"]))
+        _elemanlar.append(Paragraph("Bu ay için dayanıklı malzeme yok.", _normal_stili))
 
     for _hafta_no in sorted(veri["haftalik_taze"].keys()):
         _elemanlar.append(PageBreak())
@@ -2798,9 +2898,9 @@ def _aylik_sarf_pdf_olustur(aylik, veri, isletme_adi):
     ]
     _t = Table(_genel_satirlari, colWidths=[11 * cm, 4 * cm])
     _t.setStyle(TableStyle([
+        ("FONTNAME", (0, 0), (-1, -1), _font_kalin),
         ("FONTSIZE", (0, 0), (-1, -1), 11),
         ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
-        ("FONTNAME", (0, 0), (-1, -1), "Helvetica-Bold"),
         ("TOPPADDING", (0, 0), (-1, -1), 4),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
     ]))
@@ -2812,16 +2912,19 @@ def _aylik_sarf_pdf_olustur(aylik, veri, isletme_adi):
             "gerekiyor (ayın en yoğun haftasının gerektirdiği işçilik saati, haftalık "
             f"{_HAFTALIK_YASAL_CALISMA_SAATI} saat yasal sınırına göre hesaplandı). "
             "Diğer haftalarda aynı ekip daha az yoğun çalışır.",
-            _stiller["Normal"],
+            _normal_stili,
         ))
 
-    _belge.build(_elemanlar)
+    def _sayfa_ciz(canvas, belge):
+        _pdf_sayfa_basligi_ciz(canvas, belge, isletme_tam_adi, _alt_baslik, _font_normal, _font_kalin)
+
+    _belge.build(_elemanlar, onFirstPage=_sayfa_ciz, onLaterPages=_sayfa_ciz)
     _arabellek.seek(0)
     return _arabellek.getvalue()
 
 
 @st.dialog("Aylık Sarf Listesi")
-def _aylik_sarf_listesi_dialog(aylik, porsiyon_sayisi, isletme_id, isletme_adi):
+def _aylik_sarf_listesi_dialog(aylik, porsiyon_sayisi, isletme_id, isletme_tam_adi):
     with st.spinner("Sarf listesi hesaplanıyor..."):
         _veri = _aylik_sarf_ihtiyaci_hesapla(aylik, porsiyon_sayisi, isletme_id)
 
@@ -2874,7 +2977,7 @@ def _aylik_sarf_listesi_dialog(aylik, porsiyon_sayisi, isletme_id, isletme_adi):
 
     st.download_button(
         "PDF olarak indir",
-        data=_aylik_sarf_pdf_olustur(aylik, _veri, isletme_adi),
+        data=_aylik_sarf_pdf_olustur(aylik, _veri, isletme_tam_adi),
         file_name=f"aylik_sarf_listesi_{aylik['ay']}_{aylik['yil']}.pdf",
         mime="application/pdf",
         use_container_width=True,
@@ -3128,7 +3231,7 @@ if aylik:
     with _col_malzeme:
         if st.button("Aylık Sarf Listesi", key="btn_aylik_sarf_listesi", use_container_width=True, type="primary"):
             _aylik_sarf_listesi_dialog(
-                aylik, st.session_state.get("secili_porsiyon_sayisi", 1), st.session_state.isletme_id, isletme_adi
+                aylik, st.session_state.get("secili_porsiyon_sayisi", 1), st.session_state.isletme_id, isletme_tam_adi
             )
 
     for i, hafta in enumerate(aylik["haftalar"], start=1):
