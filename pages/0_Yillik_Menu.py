@@ -2802,7 +2802,7 @@ def _aylik_sarf_pdf_olustur(aylik, veri, isletme_tam_adi):
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import cm
     from reportlab.platypus import (
-        PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle,
+        KeepTogether, PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle,
     )
 
     _font_normal, _font_kalin = _pdf_font_adlari()
@@ -2878,13 +2878,21 @@ def _aylik_sarf_pdf_olustur(aylik, veri, isletme_tam_adi):
     for _hafta_no in sorted(veri["haftalik_taze"].keys()):
         _elemanlar.append(PageBreak())
         _elemanlar.append(Paragraph(f"{_hafta_no}. Hafta — Taze Malzemeler", _bolum_stili))
-        _elemanlar.append(_malzeme_tablosu_pdf(veri["haftalik_taze"][_hafta_no], veri["haftalik_toplam_eur"][_hafta_no]))
-        _elemanlar.append(Spacer(1, 10))
-        _elemanlar.append(_sarf_ozet_tablosu_pdf(
-            veri["haftalik_enerji_kwh"].get(_hafta_no, 0.0),
-            veri["haftalik_iscilik_saat"].get(_hafta_no, 0.0),
-            veri["haftalik_gereken_personel"].get(_hafta_no, 0),
-        ))
+        # YUZ YETMISINCI DUZELTME (23 Eylul 2026): Bahri "sayfalar tek
+        # sayfaya cok kucuk farklarla oturmadi" dedi -- ozet tablosu
+        # (enerji/iscilik/personel), malzeme tablosundan AYRI bir
+        # sayfaya tasip yalniz kalabiliyordu. KeepTogether ile ikisi
+        # ARTIK BIR ARADA -- normal durumda (malzeme listesi tek
+        # sayfayi asmadigi surece) hep ayni sayfada kalirlar.
+        _elemanlar.append(KeepTogether([
+            _malzeme_tablosu_pdf(veri["haftalik_taze"][_hafta_no], veri["haftalik_toplam_eur"][_hafta_no]),
+            Spacer(1, 10),
+            _sarf_ozet_tablosu_pdf(
+                veri["haftalik_enerji_kwh"].get(_hafta_no, 0.0),
+                veri["haftalik_iscilik_saat"].get(_hafta_no, 0.0),
+                veri["haftalik_gereken_personel"].get(_hafta_no, 0),
+            ),
+        ]))
 
     _elemanlar.append(PageBreak())
     _elemanlar.append(Paragraph("Aylık Genel Toplam", _bolum_stili))
@@ -3197,14 +3205,14 @@ def _aylik_menu_pdf_sade_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_adi
 
     _hucre_stili = ParagraphStyle("hucreSade", fontName=_font_normal, fontSize=4.8, leading=5.6)
     _alerjen_stili = ParagraphStyle("alerjenSade", fontName=_font_normal, fontSize=4.1, leading=5, textColor=colors.HexColor(_ALERJEN_RENGI))
-    _bant_stili = ParagraphStyle("bantSade", fontName=_font_kalin, fontSize=4.5, leading=5.6, textColor=colors.white)
+    _bant_stili = ParagraphStyle("bantSade", fontName=_font_kalin, fontSize=4.3, leading=5.1, textColor=colors.white)
     _tarih_stili = ParagraphStyle("tarihSade", fontName=_font_kalin, fontSize=5.7, leading=7, alignment=1)
 
     _elemanlar = []
 
     for hafta_no, hafta in enumerate(aylik["haftalar"], start=1):
         if hafta_no > 1:
-            _elemanlar.append(Spacer(1, 1.2 * mm))
+            _elemanlar.append(Spacer(1, 3.2 * mm))
 
         _hafta_sonu_indeksleri = set()
         for _i, gun in enumerate(hafta):
@@ -3237,6 +3245,8 @@ def _aylik_menu_pdf_sade_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_adi
             _satirlar.append([Paragraph(ogun_adi.upper(), _bant_stili)] + [""] * (_gun_sayisi - 1))
             _stil_komutlari.append(("SPAN", (0, _bant_satir_no), (_gun_sayisi - 1, _bant_satir_no)))
             _stil_komutlari.append(("BACKGROUND", (0, _bant_satir_no), (-1, _bant_satir_no), colors.HexColor(_OGUN_BANT_RENGI)))
+            _stil_komutlari.append(("TOPPADDING", (0, _bant_satir_no), (-1, _bant_satir_no), 0.15))
+            _stil_komutlari.append(("BOTTOMPADDING", (0, _bant_satir_no), (-1, _bant_satir_no), 0.15))
 
             _yemek_satir_no = len(_satirlar)
             _yemek_satiri = []
@@ -3572,7 +3582,7 @@ if aylik:
         # acilip icerik turu (Sade/Detayli) + sayfa boyutu (A4/B3)
         # seciliyor, sonra PDF uretiliyor.
         if st.button(
-            "PDF'e indir", key="btn_aylik_pdf", type="primary", use_container_width=True,
+            "Aylık Menüyü PDF'e indir", key="btn_aylik_pdf", type="primary", use_container_width=True,
             disabled=st.session_state.get("salt_okunur", False),
         ):
             _aylik_menu_pdf_dialog(aylik, detay, isletme_tam_adi)
