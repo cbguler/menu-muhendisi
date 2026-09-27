@@ -2984,6 +2984,31 @@ def _aylik_sarf_listesi_dialog(aylik, porsiyon_sayisi, isletme_id, isletme_tam_a
 
 _GUN_ADLARI_TAM = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"]
 
+# YUZ ALTMIS SEKIZINCI DUZELTME (23 Eylul 2026): Bahri'nin "gıda
+# değerlerinin tümü kullanılsın" istegi -- bunlar _gun_popup_govdesini_
+# ciz'deki (ekrandaki gun popup'i) AYNI anahtar listeleri, TEK
+# YERDEN (burada) alinip hem Sade hem Detayli PDF'te kullaniliyor,
+# boylece ekran/PDF arasinda TUTARLI ayni 32 besin ogesi (5 temel +
+# 27 ek) gosteriliyor.
+_VITAMIN_ANAHTARLARI = [
+    "vitamin_a_mcg", "vitamin_b1_mg", "vitamin_b2_mg", "vitamin_b3_mg",
+    "vitamin_b5_mg", "vitamin_b6_mg", "vitamin_b7_mcg", "vitamin_b9_mcg",
+    "vitamin_b12_mcg", "vitamin_c_mg", "vitamin_d_mcg", "vitamin_e_mg", "vitamin_k_mcg",
+]
+_MINERAL_ANAHTARLARI = [
+    "kalsiyum_mg", "demir_mg", "magnezyum_mg", "potasyum_mg", "cinko_mg",
+    "fosfor_mg", "bakir_mg", "manganez_mg", "selenyum_mcg", "iyot_mcg",
+]
+_DIGER_MAKRO_ANAHTARLARI = ["sodyum_mg", "lif_g", "seker_g", "doymus_yag_g"]
+_TUM_EK_BESIN_ANAHTARLARI = _VITAMIN_ANAHTARLARI + _MINERAL_ANAHTARLARI + _DIGER_MAKRO_ANAHTARLARI
+
+# PDF renk sabitleri -- Bahri'nin 2. tur istekleri: Öğle/Akşam bantları
+# AYNI renkte, besin degerleri yemek isimlerinden FARKLI renkte,
+# alerjenler KIRMIZI.
+_OGUN_BANT_RENGI = "#4A4A4A"
+_ALERJEN_RENGI = "#C0392B"
+_BESIN_RENGI = "#2C5F8A"
+
 
 def _gun_tarih_bilgisi(gun, yil_secimi):
     """_hafta_kartlarini_goster'daki AYNI tarih/gun-adi hesabi --
@@ -2999,18 +3024,160 @@ def _gun_tarih_bilgisi(gun, yil_secimi):
     return f"Gün {gun['gun']}", ""
 
 
-def _aylik_menu_pdf_sade_olustur(aylik, isletme_tam_adi, sayfa_boyutu_adi):
-    """YUZ ALTMIS YEDINCI DUZELTME (23 Eylul 2026): Bahri'nin istegiyle
-    "Excel'e indir" TAMAMEN KALKTI, yerine PDF geldi -- Excel'e artik
-    HICBIR YERDE referans yok. Bu, PDF'in iki secenegeinden ILKI:
-    "Sade" -- ekrandaki ANA TABLO gibi, SADECE yemek isimleri (besin/
-    maliyet YOK), TUM AY (butun haftalar) tek bir PDF sayfasina/
+def _yildizli_liste(tarif_adlari):
+    """Bahri'nin istegi: her yemegin basina '*' konularak, ayni
+    hucrede alt alta duran yemekler birbirinden acikca ayrilsin."""
+    if not tarif_adlari:
+        return "&nbsp;"
+    return "<br/>".join(f"* {ad}" for ad in tarif_adlari)
+
+
+def _alerjen_metni(tarif_adlari, detay):
+    """Bir ogundeki TUM yemeklerin alerjenlerinin BIRLESIMI (union) --
+    _ogun_toplami zaten bunu hesapliyor, ayni fonksiyon/mantik burada
+    da kullanildi (ayri bir hesap icat edilmedi)."""
+    if not tarif_adlari:
+        return "Yok"
+    t = _ogun_toplami(tarif_adlari, detay)
+    return ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
+
+
+def _tum_besin_metinleri(tarif_adlari, detay):
+    """(temel_metin, ek_metin) dondurur -- temel 5 (kalori/protein/
+    yag/karbonhidrat/Gi) + TUM 27 ek besin ogesi (vitamin+mineral+
+    diger makro, ekrandaki gun popup'iyle AYNI anahtar listeleri ve
+    BESIN_ETIKET kullanilarak). Bir malzemede veri OLMAYAN (None) ek
+    ogeler yer tasarrufu icin sessizce ATLANIYOR -- 500+ malzemenin
+    cogunda vitamin/mineral verisi eksik oldugu zaten biliniyor (bkz.
+    _gun_popup_govdesini_ciz'deki ayni not), her satirda onlarca "-"
+    yazmak yerine SADECE gercekten var olan degerler gosteriliyor."""
+    if not tarif_adlari:
+        return "", ""
+    t = _ogun_toplami(tarif_adlari, detay)
+    gi_deger = f"{round(t['gi'])}" if t["gi"] is not None else "-"
+    temel_metin = (
+        f"{round(t['kalori'])} kcal · P{round(t['protein'])}g · "
+        f"Y{round(t['yag'])}g · K{round(t['karbonhidrat'])}g · Gİ{gi_deger}"
+    )
+    ek_parcalari = []
+    for anahtar in _TUM_EK_BESIN_ANAHTARLARI:
+        deger = t.get(anahtar)
+        if deger is None:
+            continue
+        etiket_tam = BESIN_ETIKET.get(anahtar, anahtar)
+        kisa_ad = etiket_tam.split(" (")[0].replace("Vitamin ", "")
+        birim = ""
+        if "(" in etiket_tam:
+            birim = etiket_tam[etiket_tam.rfind("(") + 1: etiket_tam.rfind(")")]
+        deger_metni = f"{deger:.2f}" if deger < 5 else f"{round(deger)}"
+        ek_parcalari.append(f"{kisa_ad} {deger_metni}{birim}")
+    return temel_metin, " · ".join(ek_parcalari)
+
+
+# Besin_sabitleri.py'deki GERCEK anahtar listeleri -- ekrandaki "tum
+# besin degerlerini gor" popup'inda (bkz. _gun_popup_dialog icindeki
+# VITAMIN_ANAHTARLARI/MINERAL_ANAHTARLARI/DIGER_MAKRO_ANAHTARLARI)
+# kullanilanla BIREBIR AYNI -- PDF'de "tum gida degerleri" icin ayri/
+# tutarsiz bir liste UYDURULMADI, oradan BIREBIR kopyalandi (13 vitamin
+# + 10 mineral + 4 diger makro = TEMEL 5 haric 27 kalem, toplam 32).
+_PDF_VITAMIN_ANAHTARLARI = [
+    "vitamin_a_mcg", "vitamin_b1_mg", "vitamin_b2_mg", "vitamin_b3_mg",
+    "vitamin_b5_mg", "vitamin_b6_mg", "vitamin_b7_mcg", "vitamin_b9_mcg",
+    "vitamin_b12_mcg", "vitamin_c_mg", "vitamin_d_mcg", "vitamin_e_mg", "vitamin_k_mcg",
+]
+_PDF_MINERAL_ANAHTARLARI = [
+    "kalsiyum_mg", "demir_mg", "magnezyum_mg", "potasyum_mg", "cinko_mg",
+    "fosfor_mg", "bakir_mg", "manganez_mg", "selenyum_mcg", "iyot_mcg",
+]
+_PDF_DIGER_MAKRO_ANAHTARLARI = ["sodyum_mg", "lif_g", "seker_g", "doymus_yag_g"]
+
+
+def _pdf_besin_deger_formatla(deger):
+    """_gun_popup_dialog'daki _deger_formatla ile AYNI kural: None ise
+    None (PDF'de bu ogeyi atlamak icin), 5'in altindaysa 2 ondalik,
+    degilse tam sayi."""
+    if deger is None:
+        return None
+    return f"{deger:.2f}" if deger < 5 else f"{round(deger)}"
+
+
+def _pdf_besin_birim_al(anahtar):
+    etiket = BESIN_ETIKET.get(anahtar, "")
+    if "(" in etiket:
+        return etiket[etiket.rfind("(") + 1: etiket.rfind(")")]
+    return ""
+
+
+def _pdf_besin_kisa_ad(anahtar):
+    etiket = BESIN_ETIKET.get(anahtar, anahtar)
+    return etiket.split(" (")[0].replace("Vitamin ", "")
+
+
+def _pdf_besin_grubu_metni(baslik, anahtarlar, t):
+    parcalar = []
+    for anahtar in anahtarlar:
+        metin = _pdf_besin_deger_formatla(t.get(anahtar))
+        if metin is None:
+            continue
+        parcalar.append(f"{_pdf_besin_kisa_ad(anahtar)} {metin}{_pdf_besin_birim_al(anahtar)}")
+    if not parcalar:
+        return None
+    return f"{baslik}: " + ", ".join(parcalar)
+
+
+def _pdf_besin_metni_tam(tarif_adlari, detay):
+    """Bir ogunun TUM besin degerlerini (32 ogenin tumu -- 5 temel +
+    13 vitamin + 10 mineral + 4 diger makro) PDF hucresine yazilacak
+    coklu-satir bir metne donusturur. Veri olmayan ogeler ATLANIR
+    (ekrandaki popup'taki AYNI davranis)."""
+    if not tarif_adlari:
+        return ""
+    t = _ogun_toplami(tarif_adlari, detay)
+    gi_deger = f"{round(t['gi'])}" if t["gi"] is not None else "-"
+    satirlar = [
+        f"{round(t['kalori'])} kcal · P{round(t['protein'])}g · "
+        f"Y{round(t['yag'])}g · K{round(t['karbonhidrat'])}g · Gİ{gi_deger}"
+    ]
+    for baslik, anahtarlar in (
+        ("Vit", _PDF_VITAMIN_ANAHTARLARI),
+        ("Min", _PDF_MINERAL_ANAHTARLARI),
+        ("Diğer", _PDF_DIGER_MAKRO_ANAHTARLARI),
+    ):
+        parca = _pdf_besin_grubu_metni(baslik, anahtarlar, t)
+        if parca:
+            satirlar.append(parca)
+    return "<br/>".join(satirlar)
+
+
+def _pdf_hafta_sonu_indeksleri(hafta):
+    """Bir haftadaki gunlerden hangilerinin (0 tabanli indeks) Cumartesi/
+    Pazar oldugunu dondurur -- renk ayirimi icin. Tarih bilgisi olmayan
+    (None) gunler icin hicbir sey varsayilmaz."""
+    indeksler = []
+    for idx, gun in enumerate(hafta):
+        tarih = gun.get("tarih")
+        if tarih is not None and tarih.weekday() >= 5:
+            indeksler.append(idx)
+    return indeksler
+
+
+def _aylik_menu_pdf_sade_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_adi):
+    """"Sade" -- ekrandaki ANA TABLO gibi, SADECE yemek isimleri (besin
+    detayı YOK), TUM AY (butun haftalar) tek bir PDF sayfasina/
     tablosuna sigacak sekilde. Bahri'nin acik istegi "tek bir A4
-    tabloya sigmali" -- bunun icin mumkun oldugunca kompakt (kucuk
-    punto, dar hucre bosluklari) tasarlandi, ama COK uzun tarif
-    isimleri + 7 sutun ile teorik olarak yine de 2. sayfaya tasabilir
-    -- bu durumda veri KAYBOLMAZ, sadece bir sonraki sayfaya devam
-    eder (reportlab'in kendi otomatik sayfalama davranisi)."""
+    tabloya sigmali" -- bunun icin mumkun oldugunca kompakt tasarlandi.
+
+    YUZ ALTMIS SEKIZINCI DUZELTME (23 Eylul 2026, Bahri'nin 2. tur
+    kozmetik istekleri):
+    1) ÖĞLE/AKŞAM ince bantlari eklendi (once hic yoktu).
+    2) Her yemegin basina '*' isareti eklendi (bir hucrede alt alta
+       duran yemekleri birbirinden ayirmak icin).
+    3) Her ogunun yemek listesinin ALTINA (ince bir cizgiyle ayrilmis,
+       KENDI SATIRINDA -- boylece cizgi tum hafta boyunca DUZ cikiyor)
+       o ogundeki TUM yemeklerin alerjenlerinin BIRLESIMI KIRMIZI
+       fontla ekleniyor -- bunun icin fonksiyon artik 'detay'
+       parametresi de aliyor (eskiden SADECE isim gosterdigi icin
+       ihtiyaci yoktu)."""
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4, B3
     from reportlab.lib.styles import ParagraphStyle
@@ -3025,23 +3192,25 @@ def _aylik_menu_pdf_sade_olustur(aylik, isletme_tam_adi, sayfa_boyutu_adi):
     _sayfa_genislik = _sayfa_boyutu[0] - 2 * cm
     _sutun_genislik = _sayfa_genislik / _gun_sayisi
 
-    _hucre_stili = ParagraphStyle("hucreSade", fontName=_font_normal, fontSize=6, leading=7.2)
-    _etiket_stili = ParagraphStyle("etiketSade", fontName=_font_kalin, fontSize=7, leading=9, textColor=colors.white)
-    _tarih_stili = ParagraphStyle("tarihSade", fontName=_font_kalin, fontSize=7, leading=8.5, alignment=1)
+    _hucre_stili = ParagraphStyle("hucreSade", fontName=_font_normal, fontSize=5.3, leading=6.3)
+    _alerjen_stili = ParagraphStyle("alerjenSade", fontName=_font_normal, fontSize=4.8, leading=5.8, textColor=colors.HexColor(_ALERJEN_RENGI))
+    _bant_stili = ParagraphStyle("bantSade", fontName=_font_kalin, fontSize=5.3, leading=6.6, textColor=colors.white)
+    _hafta_baslik_stili = ParagraphStyle("haftaBaslikSade", fontName=_font_kalin, fontSize=6.5, leading=8.2, textColor=colors.white)
+    _tarih_stili = ParagraphStyle("tarihSade", fontName=_font_kalin, fontSize=6.2, leading=7.6, alignment=1)
 
     _satirlar = []
     _stil_komutlari = [
         ("GRID", (0, 0), (-1, -1), 0.4, colors.grey),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("TOPPADDING", (0, 0), (-1, -1), 1.5),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 1.5),
-        ("LEFTPADDING", (0, 0), (-1, -1), 2.5),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 2.5),
+        ("TOPPADDING", (0, 0), (-1, -1), 0.7),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 0.7),
+        ("LEFTPADDING", (0, 0), (-1, -1), 1.8),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 1.8),
     ]
 
     for hafta_no, hafta in enumerate(aylik["haftalar"], start=1):
         _satir_no = len(_satirlar)
-        _satirlar.append([Paragraph(f"{aylik['ay']} — {hafta_no}. Hafta", _etiket_stili)] + [""] * (_gun_sayisi - 1))
+        _satirlar.append([Paragraph(f"{aylik['ay']} — {hafta_no}. Hafta", _hafta_baslik_stili)] + [""] * (_gun_sayisi - 1))
         _stil_komutlari.append(("SPAN", (0, _satir_no), (_gun_sayisi - 1, _satir_no)))
         _stil_komutlari.append(("BACKGROUND", (0, _satir_no), (-1, _satir_no), colors.HexColor("#2C6B3C")))
 
@@ -3055,14 +3224,28 @@ def _aylik_menu_pdf_sade_olustur(aylik, isletme_tam_adi, sayfa_boyutu_adi):
         _satirlar.append(_tarih_satiri)
 
         for ogun_adi in ("Öğle", "Akşam"):
-            _ogun_satiri = []
+            _bant_satir_no = len(_satirlar)
+            _satirlar.append([Paragraph(ogun_adi.upper(), _bant_stili)] + [""] * (_gun_sayisi - 1))
+            _stil_komutlari.append(("SPAN", (0, _bant_satir_no), (_gun_sayisi - 1, _bant_satir_no)))
+            _stil_komutlari.append(("BACKGROUND", (0, _bant_satir_no), (-1, _bant_satir_no), colors.HexColor(_OGUN_BANT_RENGI)))
+
+            _yemek_satiri = []
             for gun in hafta:
                 liste = gun["ogunler"].get(ogun_adi, [])
-                icerik = "<br/>".join(liste) if liste else "&nbsp;"
-                _ogun_satiri.append(Paragraph(icerik, _hucre_stili))
-            while len(_ogun_satiri) < _gun_sayisi:
-                _ogun_satiri.append("")
-            _satirlar.append(_ogun_satiri)
+                _yemek_satiri.append(Paragraph(_yildizli_liste(liste), _hucre_stili))
+            while len(_yemek_satiri) < _gun_sayisi:
+                _yemek_satiri.append("")
+            _satirlar.append(_yemek_satiri)
+
+            _alerjen_satir_no = len(_satirlar)
+            _alerjen_satiri = []
+            for gun in hafta:
+                liste = gun["ogunler"].get(ogun_adi, [])
+                _alerjen_satiri.append(Paragraph(_alerjen_metni(liste, detay), _alerjen_stili))
+            while len(_alerjen_satiri) < _gun_sayisi:
+                _alerjen_satiri.append("")
+            _satirlar.append(_alerjen_satiri)
+            _stil_komutlari.append(("LINEABOVE", (0, _alerjen_satir_no), (-1, _alerjen_satir_no), 0.5, colors.grey))
 
     _tablo = Table(_satirlar, colWidths=[_sutun_genislik] * _gun_sayisi)
     _tablo.setStyle(TableStyle(_stil_komutlari))
@@ -3073,7 +3256,7 @@ def _aylik_menu_pdf_sade_olustur(aylik, isletme_tam_adi, sayfa_boyutu_adi):
     _arabellek = io.BytesIO()
     _belge = SimpleDocTemplate(
         _arabellek, pagesize=_sayfa_boyutu,
-        leftMargin=1 * cm, rightMargin=1 * cm, topMargin=3.15 * cm, bottomMargin=0.6 * cm,
+        leftMargin=1 * cm, rightMargin=1 * cm, topMargin=3.05 * cm, bottomMargin=0.4 * cm,
         title=f"Aylık Menü (Sade) - {aylik['ay']} {aylik['yil']}",
     )
     _belge.build([_tablo], onFirstPage=_sayfa_ciz, onLaterPages=_sayfa_ciz)
@@ -3082,14 +3265,31 @@ def _aylik_menu_pdf_sade_olustur(aylik, isletme_tam_adi, sayfa_boyutu_adi):
 
 
 def _aylik_menu_pdf_detayli_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_adi):
-    """PDF'in IKINCI secenegi: "Detaylı" -- her hafta KENDI sayfasinda
-    (sayfa kirilmasi haftalar arasinda), her gunun Öğle/Akşam yemek
-    isimlerinin ALTINA o ogunun besin degerleri (kalori/protein/yag/
-    karbonhidrat/Gİ, 1 porsiyon bazinda -- ekran/Excel'deki AYNI
-    format ve AYNI _ogun_toplami fonksiyonu) yaziliyor. Bahri'nin acik
-    istegi bu iki alanla (yemek + besin) sinirli -- maliyet/alerjen/
-    hedef durumu bu secenekte YOK (Aylık Sarf Listesi zaten maliyeti,
-    ekrandaki gun popup'i zaten alerjen+hedefi kapsiyor)."""
+    """PDF'in IKINCI secenegi: "Detaylı" -- her hafta KENDI sayfasinda,
+    her gunun Öğle/Akşam yemek isimlerinin ALTINA o ogunun besin
+    degerleri yaziliyor.
+
+    YUZ ALTMIS SEKIZINCI DUZELTME (23 Eylul 2026, Bahri'nin 2. tur
+    kozmetik istekleri):
+    1) Her yemegin basina '*' isareti eklendi.
+    2) Yemek listesi VE besin degerleri ARTIK AYRI TABLO SATIRLARINDA
+       (eskiden ayni hucrede <br/><br/> ile alt alta idi) -- boylece
+       aralarindaki ayirici cizgi bir TABLO SATIR SINIRI (LINEABOVE)
+       oldugu icin otomatik olarak TUM HAFTA boyunca DUZ/AYNI
+       YUKSEKLIKTE cikiyor. Eskiden ayni hucrede oldugu icin, bir
+       gunun yemek listesi digerinden UZUNSA, o sutunun besin metni
+       digerlerinden DAHA ASAGIDAN basliyordu (cizgi zigzag
+       goruntuluyordu) -- artik yemekler kendi satirinda (icerik
+       farkli uzunlukta olsa da SATIRIN TAMAMI o satirin en uzun
+       hucresine gore hizalaniyor), besin degerleri bir SONRAKI
+       satirda, boylece "yemek isimleri usте, besin degerleri altta"
+       ve "cizgi duz" istekleri AYNI ANDA saglaniyor.
+    3) Besin degerleri artik TUM 32 ogeyi (5 temel + 27 ek) icerir --
+       veri olmayanlar sessizce atlanıyor.
+    4) Besin metninin rengi (mavi, _BESIN_RENGI) yemek isimlerinin
+       renginden (siyah) FARKLI.
+    5) ÖĞLE/AKŞAM bantlari ARTIK AYNI renkte (_OGUN_BANT_RENGI) ve
+       daha ince (kucultulmus dolgu)."""
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4, B3
     from reportlab.lib.styles import ParagraphStyle
@@ -3105,19 +3305,10 @@ def _aylik_menu_pdf_detayli_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_
     _sutun_genislik = _sayfa_genislik / _gun_sayisi
 
     _dish_stili = ParagraphStyle("dishDetay", fontName=_font_normal, fontSize=8, leading=10)
+    _besin_stili = ParagraphStyle("besinDetay", fontName=_font_normal, fontSize=6.5, leading=8, textColor=colors.HexColor(_BESIN_RENGI))
     _tarih_stili = ParagraphStyle("tarihDetay", fontName=_font_kalin, fontSize=9.5, leading=12, alignment=1)
-    _etiket_stili = ParagraphStyle("etiketDetay", fontName=_font_kalin, fontSize=8.5, leading=11, textColor=colors.white)
+    _bant_stili = ParagraphStyle("bantDetay", fontName=_font_kalin, fontSize=7.5, leading=9.5, textColor=colors.white)
     _hafta_baslik_stili = ParagraphStyle("haftaBaslikDetay", fontName=_font_kalin, fontSize=13, leading=16, spaceAfter=8)
-
-    def _besin_metni(tarif_adlari):
-        if not tarif_adlari:
-            return ""
-        t = _ogun_toplami(tarif_adlari, detay)
-        gi_deger = f"{round(t['gi'])}" if t["gi"] is not None else "-"
-        return (
-            f"{round(t['kalori'])} kcal · P{round(t['protein'])}g · "
-            f"Y{round(t['yag'])}g · K{round(t['karbonhidrat'])}g · Gİ{gi_deger}"
-        )
 
     _elemanlar = []
     for hafta_no, hafta in enumerate(aylik["haftalar"], start=1):
@@ -3129,10 +3320,10 @@ def _aylik_menu_pdf_detayli_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_
         _stil_komutlari = [
             ("GRID", (0, 0), (-1, -1), 0.4, colors.grey),
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
-            ("TOPPADDING", (0, 0), (-1, -1), 5),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-            ("LEFTPADDING", (0, 0), (-1, -1), 5),
-            ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+            ("TOPPADDING", (0, 0), (-1, -1), 4),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ("LEFTPADDING", (0, 0), (-1, -1), 4),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 4),
         ]
 
         _tarih_satiri = []
@@ -3144,24 +3335,39 @@ def _aylik_menu_pdf_detayli_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_
         _satirlar.append(_tarih_satiri)
         _stil_komutlari.append(("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#EFEFEF")))
 
-        _renkler = {"Öğle": "#D85A30", "Akşam": "#639922"}
         for ogun_adi in ("Öğle", "Akşam"):
-            _etiket_satir_no = len(_satirlar)
-            _satirlar.append([Paragraph(ogun_adi.upper(), _etiket_stili)] + [""] * (_gun_sayisi - 1))
-            _stil_komutlari.append(("SPAN", (0, _etiket_satir_no), (_gun_sayisi - 1, _etiket_satir_no)))
-            _stil_komutlari.append(("BACKGROUND", (0, _etiket_satir_no), (-1, _etiket_satir_no), colors.HexColor(_renkler[ogun_adi])))
+            _bant_satir_no = len(_satirlar)
+            _satirlar.append([Paragraph(ogun_adi.upper(), _bant_stili)] + [""] * (_gun_sayisi - 1))
+            _stil_komutlari.append(("SPAN", (0, _bant_satir_no), (_gun_sayisi - 1, _bant_satir_no)))
+            _stil_komutlari.append(("BACKGROUND", (0, _bant_satir_no), (-1, _bant_satir_no), colors.HexColor(_OGUN_BANT_RENGI)))
+            _stil_komutlari.append(("TOPPADDING", (0, _bant_satir_no), (-1, _bant_satir_no), 2))
+            _stil_komutlari.append(("BOTTOMPADDING", (0, _bant_satir_no), (-1, _bant_satir_no), 2))
 
-            _ogun_satiri = []
+            # Yemek satiri -- KENDI satirinda (besin degerinden AYRI)
+            _yemek_satiri = []
             for gun in hafta:
                 liste = gun["ogunler"].get(ogun_adi, [])
-                if liste:
-                    _icerik = "<br/>".join(liste) + f"<br/><br/><font size=6.8 color='#555555'>{_besin_metni(liste)}</font>"
-                    _ogun_satiri.append(Paragraph(_icerik, _dish_stili))
+                _yemek_satiri.append(Paragraph(_yildizli_liste(liste), _dish_stili))
+            while len(_yemek_satiri) < _gun_sayisi:
+                _yemek_satiri.append("")
+            _satirlar.append(_yemek_satiri)
+
+            # Besin satiri -- KENDI satirinda, ustune LINEABOVE ile
+            # TUM HAFTA boyunca DUZ bir cizgi (satir siniri oldugu icin).
+            _besin_satir_no = len(_satirlar)
+            _besin_satiri = []
+            for gun in hafta:
+                liste = gun["ogunler"].get(ogun_adi, [])
+                _temel, _ek = _tum_besin_metinleri(liste, detay)
+                if not _temel:
+                    _besin_satiri.append(Paragraph("&nbsp;", _besin_stili))
                 else:
-                    _ogun_satiri.append(Paragraph("&nbsp;", _dish_stili))
-            while len(_ogun_satiri) < _gun_sayisi:
-                _ogun_satiri.append("")
-            _satirlar.append(_ogun_satiri)
+                    _icerik = f"{_temel}<br/>{_ek}" if _ek else _temel
+                    _besin_satiri.append(Paragraph(_icerik, _besin_stili))
+            while len(_besin_satiri) < _gun_sayisi:
+                _besin_satiri.append("")
+            _satirlar.append(_besin_satiri)
+            _stil_komutlari.append(("LINEABOVE", (0, _besin_satir_no), (-1, _besin_satir_no), 0.6, colors.grey))
 
         _tablo = Table(_satirlar, colWidths=[_sutun_genislik] * _gun_sayisi)
         _tablo.setStyle(TableStyle(_stil_komutlari))
@@ -3183,9 +3389,9 @@ def _aylik_menu_pdf_detayli_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_
 
 @st.dialog("Aylık Menü PDF")
 def _aylik_menu_pdf_dialog(aylik, detay, isletme_tam_adi):
-    """PDF icerik turu (Sade/Detayli) + sayfa boyutu (A4/B3) secimini
-    alip PDF'i uretir. Onceki "Excel'e indir" butonunun YERINE gecti
-    -- Excel TAMAMEN KALKTI."""
+    """Bahri'nin ikinci tur duzeltmesi: "PDF Oluştur" ARA ADIMI
+    KALDIRILDI -- secim degistikce PDF zaten anlik uretiliyor, tek
+    "PDF'i indir" butonu yeterli."""
     st.radio(
         "İçerik",
         ["sade", "detayli"],
@@ -3197,28 +3403,24 @@ def _aylik_menu_pdf_dialog(aylik, detay, isletme_tam_adi):
     )
     st.radio("Sayfa boyutu", ["A4", "B3"], key="pdf_sayfa_boyutu_secimi", horizontal=True)
 
-    if st.button("PDF Oluştur", type="primary", key="btn_pdf_olustur_tetikle", use_container_width=True):
-        with st.spinner("PDF oluşturuluyor..."):
-            if st.session_state["pdf_icerik_secimi"] == "sade":
-                _pdf_bytes = _aylik_menu_pdf_sade_olustur(aylik, isletme_tam_adi, st.session_state["pdf_sayfa_boyutu_secimi"])
-                _icerik_etiketi = "sade"
-            else:
-                _pdf_bytes = _aylik_menu_pdf_detayli_olustur(aylik, detay, isletme_tam_adi, st.session_state["pdf_sayfa_boyutu_secimi"])
-                _icerik_etiketi = "detayli"
-            st.session_state["_aylik_menu_pdf_bytes"] = _pdf_bytes
-            st.session_state["_aylik_menu_pdf_ad"] = (
-                f"aylik_menu_{_icerik_etiketi}_{aylik['ay']}_{aylik['yil']}_{st.session_state['pdf_sayfa_boyutu_secimi']}.pdf"
-            )
+    with st.spinner("PDF oluşturuluyor..."):
+        if st.session_state["pdf_icerik_secimi"] == "sade":
+            _pdf_bytes = _aylik_menu_pdf_sade_olustur(aylik, detay, isletme_tam_adi, st.session_state["pdf_sayfa_boyutu_secimi"])
+            _icerik_etiketi = "sade"
+        else:
+            _pdf_bytes = _aylik_menu_pdf_detayli_olustur(aylik, detay, isletme_tam_adi, st.session_state["pdf_sayfa_boyutu_secimi"])
+            _icerik_etiketi = "detayli"
 
-    if st.session_state.get("_aylik_menu_pdf_bytes"):
-        st.download_button(
-            "PDF'i indir",
-            data=st.session_state["_aylik_menu_pdf_bytes"],
-            file_name=st.session_state.get("_aylik_menu_pdf_ad", "aylik_menu.pdf"),
-            mime="application/pdf",
-            type="primary",
-            use_container_width=True,
-        )
+    st.download_button(
+        "PDF'i indir",
+        data=_pdf_bytes,
+        file_name=f"aylik_menu_{_icerik_etiketi}_{aylik['ay']}_{aylik['yil']}_{st.session_state['pdf_sayfa_boyutu_secimi']}.pdf",
+        mime="application/pdf",
+        type="primary",
+        use_container_width=True,
+    )
+
+
 
 
 
@@ -3350,9 +3552,6 @@ if aylik:
             "PDF'e indir", key="btn_aylik_pdf", type="primary", use_container_width=True,
             disabled=st.session_state.get("salt_okunur", False),
         ):
-            # Her acilista onceki PDF'i temizle -- baska bir aya/profile
-            # ait ESKI PDF'in yanlislikla indirilebilir kalmasini onler.
-            st.session_state["_aylik_menu_pdf_bytes"] = None
             _aylik_menu_pdf_dialog(aylik, detay, isletme_tam_adi)
 
     with _col_malzeme:

@@ -667,7 +667,7 @@ def kontrol_paneli_sayfasi():
 <text x="240" y="78" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#5F5E5A">Anayasa kuralı</text>
 <rect x="331" y="40" width="144" height="56" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
 <text x="403" y="58" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="#085041">Besin &amp; alerjen</text>
-<text x="403" y="78" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#0F6E56">27 besin ögesi</text>
+<text x="403" y="78" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#0F6E56">32 besin ögesi</text>
 <rect x="505" y="40" width="128" height="56" rx="8" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
 <text x="569" y="58" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="#633806">Doğru kitleye</text>
 <text x="569" y="78" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#854F0B">Sağlık + kurum</text>
@@ -697,8 +697,9 @@ def kontrol_paneli_sayfasi():
         "- **Sadece maliyet değil, sağlık bilgisi de:** Her yemek için "
         "hesaplanan kalori, protein, yağ, karbonhidrat ve glisemik indeksin "
         "yanında; E, K, kalsiyum, demir, magnezyum, potasyum, çinko, fosfor, "
-        "bakır, manganez, selenyum, iyot gibi 22 vitamin/mineral değeri "
-        "(toplamda 27 besin ögesi) ve alerjen bilgisi de hesaplanır — bu "
+        "bakır, manganez, selenyum, iyot gibi 23 vitamin/mineral değeri, "
+        "sodyum, lif, şeker, doymuş yağ (toplamda 32 besin ögesi) ve alerjen "
+        "bilgisi de hesaplanır — bu "
         "sadece bir maliyet aracı değil, amaçlarımızdan biri de bu bilgiyi "
         "gerçekten ihtiyacı olan insanlara ulaştırmak."
     )
@@ -724,8 +725,9 @@ def kontrol_paneli_sayfasi():
         unsafe_allow_html=True,
     )
     st.caption(
-        "GI: Glisemik İndeks. Ayrıca 22 vitamin/mineral değeri de "
-        "hesaplanır (toplam 27 besin ögesi) — burada yer, sık aranan "
+        "GI: Glisemik İndeks. Ayrıca 23 vitamin/mineral ve sodyum/lif/"
+        "şeker/doymuş yağ değeri de hesaplanır (toplam 32 besin ögesi) — "
+        "burada yer, sık aranan "
         "temel altısına ayrıldı."
     )
 
