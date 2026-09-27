@@ -14,9 +14,6 @@ import os
 import random
 
 import streamlit as st
-from openpyxl import Workbook
-from openpyxl.styles import Alignment, Font, PatternFill
-from openpyxl.utils import get_column_letter
 
 # NOT (12 Agustos 2026, Oturum 11): logo artik burada AYRICA gosterilmiyor -- app.py'deki ozel menu satirinin icine tasindi, orada zaten her sayfa gecisinde render ediliyor. Burada tekrar cagirmak cift logoya yol acardi.
 
@@ -2985,116 +2982,244 @@ def _aylik_sarf_listesi_dialog(aylik, porsiyon_sayisi, isletme_id, isletme_tam_a
     )
 
 
-def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
-    """Aylık menüyü ekrandaki kart görünümüyle AYNI düzende Excel'e döker:
-    her gün bir sütun, altında Öğle/Akşam blokları (yemekler + besin +
-    alerjen + maliyet) aynı sırayla. Bir finansal model degil -- formul
-    gerekmiyor, sadece ekrandakiyle bire bir eslesen bir gorunum."""
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Aylık Menü"
+_GUN_ADLARI_TAM = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"]
 
-    yazi_tipi = "Arial"
-    baslik_yazi = Font(name=yazi_tipi, bold=True, color="FFFFFF")
-    baslik_dolgu = PatternFill(start_color="2C6B3C", end_color="2C6B3C", fill_type="solid")
-    hafta_baslik_yazi = Font(name=yazi_tipi, bold=True, size=13)
-    alan_yazi = Font(name=yazi_tipi, bold=True)
-    normal_yazi = Font(name=yazi_tipi)
-    RENK_ANA, RENK_YARDIMCI, RENK_TAMAMLAYICI, RENK_FAST_FOOD = "D85A30", "639922", "1D9E75", "BA7517"
 
-    def oyun_bloguna_yaz(satir, ogun_adi, tarif_adlari, t, t_ham, gun_kolonu):
-        ws.cell(row=satir, column=1, value=f"{ogun_adi} (besin: 1 p. / maliyet: 10 p.)").font = alan_yazi
-        satir += 1
-        # Yemek satirlari, o ogunde 4. (istege bagli Fast Food) tarif
-        # var mi yok mu -- 6 Agustos 2026'da eklendi -- gore DINAMIK
-        # olarak olusturuluyor. Sabit 3'lu bir liste kullanip
-        # tarif_adlari[i] ile eslestirmek (eski kod), 4. tarif eklenince
-        # onu sessizce Excel'den dusururdu.
-        yemek_satirlari = [
-            ("Ana Yemek", RENK_ANA), ("Yardımcı Yemek", RENK_YARDIMCI), ("Tamamlayıcı", RENK_TAMAMLAYICI),
-        ]
-        if len(tarif_adlari) >= 4:
-            yemek_satirlari.append(("Fast Food", RENK_FAST_FOOD))
-        yemek_sayisi = len(yemek_satirlari)
+def _gun_tarih_bilgisi(gun, yil_secimi):
+    """_hafta_kartlarini_goster'daki AYNI tarih/gun-adi hesabi --
+    ekranla PDF'in gun basliklari TUTARLI olsun diye buraya da
+    (module seviyesinde, tek yerden) cikarildi."""
+    tarih = gun.get("tarih")
+    if tarih is not None:
+        if yil_secimi is not None and tarih.year != yil_secimi:
+            tarih_metni = f"{tarih.day} {AYLAR_SIRALI[tarih.month - 1]} {tarih.year}"
+        else:
+            tarih_metni = f"{tarih.day} {AYLAR_SIRALI[tarih.month - 1]}"
+        return _GUN_ADLARI_TAM[tarih.weekday()], tarih_metni
+    return f"Gün {gun['gun']}", ""
 
-        alan_satirlari = yemek_satirlari + [
-            ("Besin (kcal/P/Y/K/Gİ)", None), ("Alerjen", None), ("Maliyet", None),
-        ]
-        if hedefler:
-            alan_satirlari.append(("Hedef Durumu", None))
-        for i, (etiket, renk) in enumerate(alan_satirlari):
-            hucre_etiket = ws.cell(row=satir, column=1, value=etiket)
-            hucre_etiket.font = Font(name=yazi_tipi, color=renk) if renk else normal_yazi
-            if i < yemek_sayisi:
-                deger = tarif_adlari[i]
-            elif etiket.startswith("Besin"):
-                gi_deger = f"{round(t['gi'])}" if t["gi"] is not None else "-"
-                deger = (
-                    f"{round(t['kalori'])} kcal · P{round(t['protein'])}g · "
-                    f"Y{round(t['yag'])}g · K{round(t['karbonhidrat'])}g · Gİ{gi_deger}"
-                )
-            elif etiket == "Alerjen":
-                deger = ", ".join(sorted(t["alerjenler"])) if t["alerjenler"] else "Yok"
-            elif etiket == "Hedef Durumu":
-                hedefte, _ = _hedefte_mi(ogun_adi, t_ham, hedefler, hafta, detay)
-                # SEKSEN ALTINCI DUZELTME (4 Eylul 2026): pop-up'taki
-                # degisiklikle tutarli olsun diye "Hedef dışı" burada da
-                # geri getirildi (bkz. yukaridaki not).
-                deger = {True: "Hedefte", False: "Hedef dışı", None: "-"}[hedefte]
-            else:  # Maliyet
-                if not fiyat_verisi_var:
-                    deger = "-"
-                elif t["tam_fiyatli"]:
-                    deger = f"{t['maliyet_eur']:.2f} €"
-                else:
-                    eksik_liste = ", ".join(sorted(t["eksik_malzemeler"]))
-                    deger = f"≈{t['maliyet_eur']:.2f} € (eksik: {eksik_liste})"
-            hucre = ws.cell(row=satir, column=gun_kolonu, value=deger)
-            hucre.font = normal_yazi
-            hucre.alignment = Alignment(wrap_text=True, vertical="top")
-            satir += 1
-        return satir
 
-    satir = 1
+def _aylik_menu_pdf_sade_olustur(aylik, isletme_tam_adi, sayfa_boyutu_adi):
+    """YUZ ALTMIS YEDINCI DUZELTME (23 Eylul 2026): Bahri'nin istegiyle
+    "Excel'e indir" TAMAMEN KALKTI, yerine PDF geldi -- Excel'e artik
+    HICBIR YERDE referans yok. Bu, PDF'in iki secenegeinden ILKI:
+    "Sade" -- ekrandaki ANA TABLO gibi, SADECE yemek isimleri (besin/
+    maliyet YOK), TUM AY (butun haftalar) tek bir PDF sayfasina/
+    tablosuna sigacak sekilde. Bahri'nin acik istegi "tek bir A4
+    tabloya sigmali" -- bunun icin mumkun oldugunca kompakt (kucuk
+    punto, dar hucre bosluklari) tasarlandi, ama COK uzun tarif
+    isimleri + 7 sutun ile teorik olarak yine de 2. sayfaya tasabilir
+    -- bu durumda veri KAYBOLMAZ, sadece bir sonraki sayfaya devam
+    eder (reportlab'in kendi otomatik sayfalama davranisi)."""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4, B3
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Table, TableStyle
+
+    _font_normal, _font_kalin = _pdf_font_adlari()
+    _sayfa_boyutu = B3 if sayfa_boyutu_adi == "B3" else A4
+    _alt_baslik = f"Aylık Menü (Sade) — {aylik['ay']} {aylik['yil']}"
+
+    _gun_sayisi = max(len(hafta) for hafta in aylik["haftalar"])
+    _sayfa_genislik = _sayfa_boyutu[0] - 2 * cm
+    _sutun_genislik = _sayfa_genislik / _gun_sayisi
+
+    _hucre_stili = ParagraphStyle("hucreSade", fontName=_font_normal, fontSize=6, leading=7.2)
+    _etiket_stili = ParagraphStyle("etiketSade", fontName=_font_kalin, fontSize=7, leading=9, textColor=colors.white)
+    _tarih_stili = ParagraphStyle("tarihSade", fontName=_font_kalin, fontSize=7, leading=8.5, alignment=1)
+
+    _satirlar = []
+    _stil_komutlari = [
+        ("GRID", (0, 0), (-1, -1), 0.4, colors.grey),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("TOPPADDING", (0, 0), (-1, -1), 1.5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 1.5),
+        ("LEFTPADDING", (0, 0), (-1, -1), 2.5),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 2.5),
+    ]
+
     for hafta_no, hafta in enumerate(aylik["haftalar"], start=1):
-        gun_sayisi = len(hafta)
+        _satir_no = len(_satirlar)
+        _satirlar.append([Paragraph(f"{aylik['ay']} — {hafta_no}. Hafta", _etiket_stili)] + [""] * (_gun_sayisi - 1))
+        _stil_komutlari.append(("SPAN", (0, _satir_no), (_gun_sayisi - 1, _satir_no)))
+        _stil_komutlari.append(("BACKGROUND", (0, _satir_no), (-1, _satir_no), colors.HexColor("#2C6B3C")))
 
-        ws.cell(row=satir, column=1, value=f"{aylik['ay']} — {hafta_no}. Hafta").font = hafta_baslik_yazi
-        satir += 1
+        _tarih_satiri = []
+        for gun in hafta:
+            gun_adi, tarih_metni = _gun_tarih_bilgisi(gun, aylik["yil"])
+            _tarih_satiri.append(Paragraph(f"{tarih_metni}<br/>{gun_adi}", _tarih_stili))
+        while len(_tarih_satiri) < _gun_sayisi:
+            _tarih_satiri.append("")
+        _stil_komutlari.append(("BACKGROUND", (0, len(_satirlar)), (-1, len(_satirlar)), colors.HexColor("#EFEFEF")))
+        _satirlar.append(_tarih_satiri)
 
-        baslik_satiri = satir
-        ws.cell(row=baslik_satiri, column=1, value="")
-        for g in range(gun_sayisi):
-            hucre = ws.cell(row=baslik_satiri, column=g + 2, value=f"Gün {g + 1}")
-            hucre.font = baslik_yazi
-            hucre.fill = baslik_dolgu
-            hucre.alignment = Alignment(horizontal="center")
-        satir += 1
+        for ogun_adi in ("Öğle", "Akşam"):
+            _ogun_satiri = []
+            for gun in hafta:
+                liste = gun["ogunler"].get(ogun_adi, [])
+                icerik = "<br/>".join(liste) if liste else "&nbsp;"
+                _ogun_satiri.append(Paragraph(icerik, _hucre_stili))
+            while len(_ogun_satiri) < _gun_sayisi:
+                _ogun_satiri.append("")
+            _satirlar.append(_ogun_satiri)
 
-        blok_baslangic = satir
-        for g, gun in enumerate(hafta):
-            gun_kolonu = g + 2
-            s = blok_baslangic
-            for ogun_adi, tarif_adlari in gun["ogunler"].items():
-                # OTUZ DORDUNCU DUZELTME (13 Agustos 2026): pop-up'taki
-                # ayni ilke -- besin degerleri 1 porsiyon (musterinin
-                # gercekte yedigi), maliyet ise 10 porsiyon (mutfak
-                # planlamasi) uzerinden. Hedefte kontrolu icin ayrica
-                # olceklenmemis t_ham tutuluyor.
-                t_ham = _ogun_toplami(tarif_adlari, detay)
-                t = dict(t_ham)
-                if t.get("maliyet_eur") is not None:
-                    t["maliyet_eur"] = t["maliyet_eur"] * 10
-                s = oyun_bloguna_yaz(s, ogun_adi, tarif_adlari, t, t_ham, gun_kolonu)
-        satir = s + 1  # bir sonraki hafta bloğundan önce bos satir
+    _tablo = Table(_satirlar, colWidths=[_sutun_genislik] * _gun_sayisi)
+    _tablo.setStyle(TableStyle(_stil_komutlari))
 
-    genislikler = [24] + [24] * 7
-    for i, genislik in enumerate(genislikler, start=1):
-        ws.column_dimensions[get_column_letter(i)].width = genislik
+    def _sayfa_ciz(canvas, belge):
+        _pdf_sayfa_basligi_ciz(canvas, belge, isletme_tam_adi, _alt_baslik, _font_normal, _font_kalin)
 
-    tampon = io.BytesIO()
-    wb.save(tampon)
-    return tampon.getvalue()
+    _arabellek = io.BytesIO()
+    _belge = SimpleDocTemplate(
+        _arabellek, pagesize=_sayfa_boyutu,
+        leftMargin=1 * cm, rightMargin=1 * cm, topMargin=3.15 * cm, bottomMargin=0.6 * cm,
+        title=f"Aylık Menü (Sade) - {aylik['ay']} {aylik['yil']}",
+    )
+    _belge.build([_tablo], onFirstPage=_sayfa_ciz, onLaterPages=_sayfa_ciz)
+    _arabellek.seek(0)
+    return _arabellek.getvalue()
+
+
+def _aylik_menu_pdf_detayli_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_adi):
+    """PDF'in IKINCI secenegi: "Detaylı" -- her hafta KENDI sayfasinda
+    (sayfa kirilmasi haftalar arasinda), her gunun Öğle/Akşam yemek
+    isimlerinin ALTINA o ogunun besin degerleri (kalori/protein/yag/
+    karbonhidrat/Gİ, 1 porsiyon bazinda -- ekran/Excel'deki AYNI
+    format ve AYNI _ogun_toplami fonksiyonu) yaziliyor. Bahri'nin acik
+    istegi bu iki alanla (yemek + besin) sinirli -- maliyet/alerjen/
+    hedef durumu bu secenekte YOK (Aylık Sarf Listesi zaten maliyeti,
+    ekrandaki gun popup'i zaten alerjen+hedefi kapsiyor)."""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4, B3
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Table, TableStyle
+
+    _font_normal, _font_kalin = _pdf_font_adlari()
+    _sayfa_boyutu = B3 if sayfa_boyutu_adi == "B3" else A4
+    _alt_baslik = f"Aylık Menü (Detaylı) — {aylik['ay']} {aylik['yil']}"
+
+    _gun_sayisi = max(len(hafta) for hafta in aylik["haftalar"])
+    _sayfa_genislik = _sayfa_boyutu[0] - 2.4 * cm
+    _sutun_genislik = _sayfa_genislik / _gun_sayisi
+
+    _dish_stili = ParagraphStyle("dishDetay", fontName=_font_normal, fontSize=8, leading=10)
+    _tarih_stili = ParagraphStyle("tarihDetay", fontName=_font_kalin, fontSize=9.5, leading=12, alignment=1)
+    _etiket_stili = ParagraphStyle("etiketDetay", fontName=_font_kalin, fontSize=8.5, leading=11, textColor=colors.white)
+    _hafta_baslik_stili = ParagraphStyle("haftaBaslikDetay", fontName=_font_kalin, fontSize=13, leading=16, spaceAfter=8)
+
+    def _besin_metni(tarif_adlari):
+        if not tarif_adlari:
+            return ""
+        t = _ogun_toplami(tarif_adlari, detay)
+        gi_deger = f"{round(t['gi'])}" if t["gi"] is not None else "-"
+        return (
+            f"{round(t['kalori'])} kcal · P{round(t['protein'])}g · "
+            f"Y{round(t['yag'])}g · K{round(t['karbonhidrat'])}g · Gİ{gi_deger}"
+        )
+
+    _elemanlar = []
+    for hafta_no, hafta in enumerate(aylik["haftalar"], start=1):
+        if hafta_no > 1:
+            _elemanlar.append(PageBreak())
+        _elemanlar.append(Paragraph(f"{aylik['ay']} {aylik['yil']} — {hafta_no}. Hafta", _hafta_baslik_stili))
+
+        _satirlar = []
+        _stil_komutlari = [
+            ("GRID", (0, 0), (-1, -1), 0.4, colors.grey),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("TOPPADDING", (0, 0), (-1, -1), 5),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+            ("LEFTPADDING", (0, 0), (-1, -1), 5),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+        ]
+
+        _tarih_satiri = []
+        for gun in hafta:
+            gun_adi, tarih_metni = _gun_tarih_bilgisi(gun, aylik["yil"])
+            _tarih_satiri.append(Paragraph(f"{tarih_metni}<br/>{gun_adi}", _tarih_stili))
+        while len(_tarih_satiri) < _gun_sayisi:
+            _tarih_satiri.append("")
+        _satirlar.append(_tarih_satiri)
+        _stil_komutlari.append(("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#EFEFEF")))
+
+        _renkler = {"Öğle": "#D85A30", "Akşam": "#639922"}
+        for ogun_adi in ("Öğle", "Akşam"):
+            _etiket_satir_no = len(_satirlar)
+            _satirlar.append([Paragraph(ogun_adi.upper(), _etiket_stili)] + [""] * (_gun_sayisi - 1))
+            _stil_komutlari.append(("SPAN", (0, _etiket_satir_no), (_gun_sayisi - 1, _etiket_satir_no)))
+            _stil_komutlari.append(("BACKGROUND", (0, _etiket_satir_no), (-1, _etiket_satir_no), colors.HexColor(_renkler[ogun_adi])))
+
+            _ogun_satiri = []
+            for gun in hafta:
+                liste = gun["ogunler"].get(ogun_adi, [])
+                if liste:
+                    _icerik = "<br/>".join(liste) + f"<br/><br/><font size=6.8 color='#555555'>{_besin_metni(liste)}</font>"
+                    _ogun_satiri.append(Paragraph(_icerik, _dish_stili))
+                else:
+                    _ogun_satiri.append(Paragraph("&nbsp;", _dish_stili))
+            while len(_ogun_satiri) < _gun_sayisi:
+                _ogun_satiri.append("")
+            _satirlar.append(_ogun_satiri)
+
+        _tablo = Table(_satirlar, colWidths=[_sutun_genislik] * _gun_sayisi)
+        _tablo.setStyle(TableStyle(_stil_komutlari))
+        _elemanlar.append(_tablo)
+
+    def _sayfa_ciz(canvas, belge):
+        _pdf_sayfa_basligi_ciz(canvas, belge, isletme_tam_adi, _alt_baslik, _font_normal, _font_kalin)
+
+    _arabellek = io.BytesIO()
+    _belge = SimpleDocTemplate(
+        _arabellek, pagesize=_sayfa_boyutu,
+        leftMargin=1.2 * cm, rightMargin=1.2 * cm, topMargin=3.4 * cm, bottomMargin=1.2 * cm,
+        title=f"Aylık Menü (Detaylı) - {aylik['ay']} {aylik['yil']}",
+    )
+    _belge.build(_elemanlar, onFirstPage=_sayfa_ciz, onLaterPages=_sayfa_ciz)
+    _arabellek.seek(0)
+    return _arabellek.getvalue()
+
+
+@st.dialog("Aylık Menü PDF")
+def _aylik_menu_pdf_dialog(aylik, detay, isletme_tam_adi):
+    """PDF icerik turu (Sade/Detayli) + sayfa boyutu (A4/B3) secimini
+    alip PDF'i uretir. Onceki "Excel'e indir" butonunun YERINE gecti
+    -- Excel TAMAMEN KALKTI."""
+    st.radio(
+        "İçerik",
+        ["sade", "detayli"],
+        format_func=lambda v: (
+            "Sade — tüm ay tek sayfada (sadece yemek isimleri)" if v == "sade"
+            else "Detaylı — her hafta kendi sayfasında (yemek isimleri + besin değerleri)"
+        ),
+        key="pdf_icerik_secimi",
+    )
+    st.radio("Sayfa boyutu", ["A4", "B3"], key="pdf_sayfa_boyutu_secimi", horizontal=True)
+
+    if st.button("PDF Oluştur", type="primary", key="btn_pdf_olustur_tetikle", use_container_width=True):
+        with st.spinner("PDF oluşturuluyor..."):
+            if st.session_state["pdf_icerik_secimi"] == "sade":
+                _pdf_bytes = _aylik_menu_pdf_sade_olustur(aylik, isletme_tam_adi, st.session_state["pdf_sayfa_boyutu_secimi"])
+                _icerik_etiketi = "sade"
+            else:
+                _pdf_bytes = _aylik_menu_pdf_detayli_olustur(aylik, detay, isletme_tam_adi, st.session_state["pdf_sayfa_boyutu_secimi"])
+                _icerik_etiketi = "detayli"
+            st.session_state["_aylik_menu_pdf_bytes"] = _pdf_bytes
+            st.session_state["_aylik_menu_pdf_ad"] = (
+                f"aylik_menu_{_icerik_etiketi}_{aylik['ay']}_{aylik['yil']}_{st.session_state['pdf_sayfa_boyutu_secimi']}.pdf"
+            )
+
+    if st.session_state.get("_aylik_menu_pdf_bytes"):
+        st.download_button(
+            "PDF'i indir",
+            data=st.session_state["_aylik_menu_pdf_bytes"],
+            file_name=st.session_state.get("_aylik_menu_pdf_ad", "aylik_menu.pdf"),
+            mime="application/pdf",
+            type="primary",
+            use_container_width=True,
+        )
+
 
 
 aylik = st.session_state.get("yillik_menu_aylik")
@@ -3165,13 +3290,11 @@ if aylik:
     else:
         _kaydet_durumu = "aktif"
 
-    excel_verisi = _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, kayitli_hedefler)
-
     # YUZ ELLI DOKUZUNCU DUZELTME (21 Eylul 2026): Bahri "butonlar cok
     # genis, en uzun yazi olan 'Aylık Menüyü Kaydet'e sigacak kadar
     # daralt" dedi -- esit genislikte 3 DAR sutun + kalan alani yutan
     # bir bosluk sutunu.
-    _col_kaydet, _col_excel, _col_malzeme, _ = st.columns([2, 2, 2, 5])
+    _col_kaydet, _col_pdf, _col_malzeme, _ = st.columns([2, 2, 2, 5])
     with _col_kaydet:
         if _kaydet_durumu == "hedef_disi":
             st.button("Aylık Menüyü Kaydet", disabled=True, key="btn_aylik_kaydet_disabled", use_container_width=True)
@@ -3207,26 +3330,30 @@ if aylik:
                     supabase.table("kayitli_aylik_menuler").insert(_kayit_govdesi).execute()
                     st.success(f"\"{aylik['ay']} {aylik['yil']}\" kaydedildi.")
 
-    with _col_excel:
+    with _col_pdf:
         # OTUZ DORDUNCU DUZELTME (24 Agustos 2026): kod incelemesinde bulundu --
         # bu sayfada veritabanina yazma OLMADIGI icin "salt_okunur" hic
         # kullanilmamisti, ama bu buton bir ISTISNA: odeme onayi bekleyen
         # kullanici, sinirsiz sayida aylik menu uretip GERCEK, disari
-        # tasinabilir bir Excel ciktisi alabiliyordu -- diger 3 sayfadaki
+        # tasinabilir bir cikti alabiliyordu -- diger 3 sayfadaki
         # ("goruntule ama islem yapma") kurali fiilen boşa cikaran tek nokta
         # buydu. Menu ONIZLEMESI (ekrandaki kartlar) bilerek disabled
-        # BIRAKILDI -- sadece disariya TASINABILIR/KALICI cikti (Excel)
+        # BIRAKILDI -- sadece disariya TASINABILIR/KALICI cikti (PDF)
         # engelleniyor, ayni Recete Uretimi/Ozel Menu Uretimi'ndeki "olustur/
         # kaydet" butonlarinin gated olup form alanlarinin gated olmamasi gibi.
-        st.download_button(
-            "Excel'e indir",
-            data=excel_verisi,
-            file_name=f"yillik_menu_{aylik['ay']}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        # YUZ ALTMIS YEDINCI DUZELTME (23 Eylul 2026): "Excel'e indir"
+        # TAMAMEN KALKTI -- Bahri'nin acik karari, Excel referansi
+        # kalmadi. Yerine "PDF'e indir" geldi: tiklaninca bir dialog
+        # acilip icerik turu (Sade/Detayli) + sayfa boyutu (A4/B3)
+        # seciliyor, sonra PDF uretiliyor.
+        if st.button(
+            "PDF'e indir", key="btn_aylik_pdf", type="primary", use_container_width=True,
             disabled=st.session_state.get("salt_okunur", False),
-            use_container_width=True,
-            type="primary",
-        )
+        ):
+            # Her acilista onceki PDF'i temizle -- baska bir aya/profile
+            # ait ESKI PDF'in yanlislikla indirilebilir kalmasini onler.
+            st.session_state["_aylik_menu_pdf_bytes"] = None
+            _aylik_menu_pdf_dialog(aylik, detay, isletme_tam_adi)
 
     with _col_malzeme:
         if st.button("Aylık Sarf Listesi", key="btn_aylik_sarf_listesi", use_container_width=True, type="primary"):
