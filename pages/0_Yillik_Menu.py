@@ -9,6 +9,7 @@ import base64
 import datetime
 import io
 import json
+import math
 import os
 import random
 
@@ -2447,6 +2448,12 @@ def _hafta_kartlarini_goster_mobil(hafta, detay, fiyat_verisi_var, hedefler, ay_
 # sayilip yanlis alisveris tavsiyesi verilmesindense, daha sik
 # alinmasi onerilen bir malzeme daha az riskli.
 _DAYANIKLILIK_ESIGI_GUN = 30
+_HAFTALIK_YASAL_CALISMA_SAATI = 45  # Is Kanunu md. 63 -- daha once
+                                     # personel saat ucreti hesabinda
+                                     # da AYNI sinir kullanildi (bkz.
+                                     # 6_Abonelik.py Personel saat
+                                     # ucreti ayari), tutarlilik icin
+                                     # burada da ayni sabit kullanildi.
 
 
 def _aylik_sarf_ihtiyaci_hesapla(aylik, porsiyon_sayisi, isletme_id):
@@ -2456,7 +2463,8 @@ def _aylik_sarf_ihtiyaci_hesapla(aylik, porsiyon_sayisi, isletme_id):
      "dayanikli_toplam_eur": X, "haftalik_toplam_eur": {1: X, ...},
      "genel_toplam_eur": X, "tam_fiyatli": bool,
      "haftalik_enerji_kwh": {1: X, ...}, "genel_enerji_kwh": X,
-     "haftalik_iscilik_saat": {1: X, ...}, "genel_iscilik_saat": X}
+     "haftalik_iscilik_saat": {1: X, ...}, "genel_iscilik_saat": X,
+     "haftalik_gereken_personel": {1: N, ...}, "en_yogun_hafta_personel": N}
     Her malzeme kaydi: {"ad", "miktar_gram", "fiyat_eur" (None ise
     fiyat eksik demektir)}.
     YUZ ALTMIS BESINCI DUZELTME (23 Eylul 2026): "Aylık Malzeme
@@ -2465,7 +2473,18 @@ def _aylik_sarf_ihtiyaci_hesapla(aylik, porsiyon_sayisi, isletme_id):
     (kWh) ve iscilik saati de ayni sekilde toplaniyor. Enerji/iscilik
     hesabi, Tarif Kutuphanesi/kart gorunumundeki "gercek uretim
     maliyeti" ile AYNI fonksiyonu (_gercek_maliyet_hesapla)
-    kullaniyor -- ayri/tutarsiz bir formul icat edilmedi."""
+    kullaniyor -- ayri/tutarsiz bir formul icat edilmedi.
+    Ayrica HER HAFTA icin gereken personel sayisi da hesaplaniyor --
+    Bahri'nin senaryosu: isletme ekstra bir siparis alir (or. aylik
+    180 kisilik), mevcut personelin bunu karsilayip karsilayamayacagini
+    gormek icin o haftanin GEREKTIRDIGI iscilik saatinden personel
+    sayisina ulasilmasi gerekiyor -- gereken_personel =
+    YUKARI_YUVARLAMA(haftalik_iscilik_saat / 45), cunku bir personel
+    yasal olarak haftada en fazla 45 saat calisabilir (Is Kanunu md.
+    63). "en_yogun_hafta_personel", ayin en yuksek yuklu haftasinin
+    gerektirdigi sayidir -- isletmenin O AY icin en az kac personel
+    istihdam etmesi gerektigini gosterir (diger haftalarda ayni
+    personel daha az yogun calisir, ama sayica ayni ekip yeterlidir)."""
     # 1) Bu ayda kullanilan (hafta_no, tarif_adi) ciftlerini topla --
     # ayni tarif ayni haftada birden fazla kez, ya da farkli
     # haftalarda da gecebilir, hepsi ayri ayri sayiliyor.
@@ -2483,6 +2502,7 @@ def _aylik_sarf_ihtiyaci_hesapla(aylik, porsiyon_sayisi, isletme_id):
             "haftalik_toplam_eur": {}, "genel_toplam_eur": 0.0, "tam_fiyatli": True,
             "haftalik_enerji_kwh": {}, "genel_enerji_kwh": 0.0,
             "haftalik_iscilik_saat": {}, "genel_iscilik_saat": 0.0,
+            "haftalik_gereken_personel": {}, "en_yogun_hafta_personel": 0,
         }
 
     # 2) Bu tariflerin ID'lerini ve malzeme listelerini (1 porsiyon
@@ -2591,6 +2611,11 @@ def _aylik_sarf_ihtiyaci_hesapla(aylik, porsiyon_sayisi, isletme_id):
         _haftalik_enerji_kwh[_hafta_no] = _haftalik_enerji_kwh.get(_hafta_no, 0.0) + _kwh
         _haftalik_iscilik_dk[_hafta_no] = _haftalik_iscilik_dk.get(_hafta_no, 0.0) + _dk
     _haftalik_iscilik_saat = {h: dk / 60.0 for h, dk in _haftalik_iscilik_dk.items()}
+    _haftalik_gereken_personel = {
+        h: math.ceil(saat / _HAFTALIK_YASAL_CALISMA_SAATI) if saat > 0 else 0
+        for h, saat in _haftalik_iscilik_saat.items()
+    }
+    _en_yogun_hafta_personel = max(_haftalik_gereken_personel.values(), default=0)
 
     return {
         "dayanikli": _dayanikli_liste,
@@ -2603,6 +2628,8 @@ def _aylik_sarf_ihtiyaci_hesapla(aylik, porsiyon_sayisi, isletme_id):
         "genel_enerji_kwh": sum(_haftalik_enerji_kwh.values()),
         "haftalik_iscilik_saat": _haftalik_iscilik_saat,
         "genel_iscilik_saat": sum(_haftalik_iscilik_saat.values()),
+        "haftalik_gereken_personel": _haftalik_gereken_personel,
+        "en_yogun_hafta_personel": _en_yogun_hafta_personel,
     }
 
 
@@ -2641,10 +2668,10 @@ def _malzeme_tablosu_html(kayitlar, ara_toplam_eur):
     return f"<table style='width:100%; border-collapse:collapse;'>{_satirlar}</table>"
 
 
-def _sarf_ozet_html(enerji_kwh, iscilik_saat):
-    """Bir haftanin (ya da ayin) enerji tuketimi (kWh) ve iscilik
-    (saat) ozetini, malzeme tablolarindakiyle tutarli bir HTML
-    satiri olarak dondurur."""
+def _sarf_ozet_html(enerji_kwh, iscilik_saat, gereken_personel):
+    """Bir haftanin (ya da ayin) enerji tuketimi (kWh), iscilik (saat)
+    ve gereken personel sayisi ozetini, malzeme tablolarindakiyle
+    tutarli bir HTML satiri olarak dondurur."""
     return (
         "<table style='width:100%; border-collapse:collapse; margin-top:6px;'>"
         "<tr>"
@@ -2653,8 +2680,144 @@ def _sarf_ozet_html(enerji_kwh, iscilik_saat):
         "</tr><tr>"
         "<td style='padding:2px 24px 2px 0;'>İşçilik</td>"
         f"<td style='padding:2px 0; text-align:right; font-weight:500;'>{iscilik_saat:.2f} saat</td>"
+        "</tr><tr>"
+        "<td style='padding:2px 24px 2px 0;'>Gereken personel (haftalık 45 saat üzerinden)</td>"
+        f"<td style='padding:2px 0; text-align:right; font-weight:500;'>{gereken_personel}</td>"
         "</tr></table>"
     )
+
+
+def _aylik_sarf_pdf_olustur(aylik, veri, isletme_adi):
+    """Aylık Sarf Listesi'ni GERÇEK bir PDF dosyası olarak üretir
+    (reportlab ile, saf Python -- sistem bağımlılığı yok, Streamlit
+    Cloud'da ek kurulum gerektirmez). Dayanıklı malzemeler + her
+    hafta için taze malzemeler/enerji/işçilik/personel özeti + aylık
+    genel toplamlarla, eskiden tarayıcı "Print" penceresinin verdiği
+    AYNI bilgiyi içerir -- ama artık indirilip saklanabilen/e-posta
+    ile gönderilebilen gerçek bir dosya."""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.platypus import (
+        Image as RLImage, PageBreak, Paragraph, SimpleDocTemplate,
+        Spacer, Table, TableStyle,
+    )
+
+    _arabellek = io.BytesIO()
+    _belge = SimpleDocTemplate(
+        _arabellek, pagesize=A4,
+        leftMargin=2 * cm, rightMargin=2 * cm, topMargin=2 * cm, bottomMargin=2 * cm,
+        title=f"Aylık Sarf Listesi - {aylik['ay']} {aylik['yil']}",
+    )
+    _stiller = getSampleStyleSheet()
+    _baslik_stili = ParagraphStyle("baslik", parent=_stiller["Title"], fontSize=16, spaceAfter=2)
+    _isletme_stili = ParagraphStyle("isletme", parent=_stiller["Normal"], fontSize=11, textColor=colors.grey, spaceAfter=16)
+    _bolum_stili = ParagraphStyle("bolum", parent=_stiller["Heading3"], spaceBefore=14, spaceAfter=6)
+    _aciklama_stili = ParagraphStyle("aciklama", parent=_stiller["Normal"], fontSize=9, textColor=colors.grey, spaceAfter=8)
+
+    def _malzeme_tablosu_pdf(kayitlar, ara_toplam_eur):
+        _satirlar = [["Malzeme", "Miktar", "Birim", "Fiyat"]]
+        for _k in kayitlar:
+            _sayi, _birim = _malzeme_miktar_parcala(_k["miktar_gram"])
+            _fiyat_metni = f"{_k['fiyat_eur']:.2f} €" if _k["fiyat_eur"] is not None else "fiyat yok"
+            _satirlar.append([_k["ad"], _sayi, _birim, _fiyat_metni])
+        _satirlar.append(["Ara toplam", "", "", f"{ara_toplam_eur:.2f} €"])
+        _t = Table(_satirlar, colWidths=[7.5 * cm, 2.5 * cm, 2 * cm, 3 * cm])
+        _t.setStyle(TableStyle([
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("FONTSIZE", (0, 0), (-1, -1), 9),
+            ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
+            ("LINEBELOW", (0, 0), (-1, 0), 0.5, colors.grey),
+            ("LINEABOVE", (0, -1), (-1, -1), 0.5, colors.black),
+            ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
+            ("TOPPADDING", (0, 0), (-1, -1), 3),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+        ]))
+        return _t
+
+    def _sarf_ozet_tablosu_pdf(enerji_kwh, iscilik_saat, personel):
+        _satirlar = [
+            ["Enerji tüketimi", f"{enerji_kwh:.2f} kWh"],
+            ["İşçilik", f"{iscilik_saat:.2f} saat"],
+            [f"Gereken personel ({_HAFTALIK_YASAL_CALISMA_SAATI} saat/hafta üzerinden)", str(personel)],
+        ]
+        _t = Table(_satirlar, colWidths=[11 * cm, 4 * cm])
+        _t.setStyle(TableStyle([
+            ("FONTSIZE", (0, 0), (-1, -1), 9),
+            ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
+            ("FONTNAME", (1, 0), (1, -1), "Helvetica-Bold"),
+            ("TOPPADDING", (0, 0), (-1, -1), 2),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
+        ]))
+        return _t
+
+    _elemanlar = []
+    if os.path.exists("assets/logo.png"):
+        try:
+            _elemanlar.append(RLImage("assets/logo.png", width=1.8 * cm, height=1.8 * cm))
+        except Exception:
+            pass
+    _elemanlar.append(Paragraph("Menü Mühendisi", _stiller["Normal"]))
+    _elemanlar.append(Paragraph(isletme_adi, _baslik_stili))
+    _elemanlar.append(Paragraph(f"Aylık Sarf Listesi — {aylik['ay']} {aylik['yil']}", _isletme_stili))
+
+    if not veri["tam_fiyatli"]:
+        _elemanlar.append(Paragraph(
+            "Not: bazı malzemelerin güncel fiyatı tanımlı değil — bunlar toplama dahil edilmedi.",
+            _aciklama_stili,
+        ))
+
+    _elemanlar.append(Paragraph("Dayanıklı Malzemeler (Aylık)", _bolum_stili))
+    _elemanlar.append(Paragraph(
+        "En az 30 gün bozulmadan saklanabilen malzemeler — ay başında tek seferde alınabilir.",
+        _aciklama_stili,
+    ))
+    if veri["dayanikli"]:
+        _elemanlar.append(_malzeme_tablosu_pdf(veri["dayanikli"], veri["dayanikli_toplam_eur"]))
+    else:
+        _elemanlar.append(Paragraph("Bu ay için dayanıklı malzeme yok.", _stiller["Normal"]))
+
+    for _hafta_no in sorted(veri["haftalik_taze"].keys()):
+        _elemanlar.append(PageBreak())
+        _elemanlar.append(Paragraph(f"{_hafta_no}. Hafta — Taze Malzemeler", _bolum_stili))
+        _elemanlar.append(_malzeme_tablosu_pdf(veri["haftalik_taze"][_hafta_no], veri["haftalik_toplam_eur"][_hafta_no]))
+        _elemanlar.append(Spacer(1, 10))
+        _elemanlar.append(_sarf_ozet_tablosu_pdf(
+            veri["haftalik_enerji_kwh"].get(_hafta_no, 0.0),
+            veri["haftalik_iscilik_saat"].get(_hafta_no, 0.0),
+            veri["haftalik_gereken_personel"].get(_hafta_no, 0),
+        ))
+
+    _elemanlar.append(PageBreak())
+    _elemanlar.append(Paragraph("Aylık Genel Toplam", _bolum_stili))
+    _genel_satirlari = [
+        ["Malzeme maliyeti", f"{veri['genel_toplam_eur']:.2f} €"],
+        ["Enerji tüketimi", f"{veri['genel_enerji_kwh']:.2f} kWh"],
+        ["İşçilik", f"{veri['genel_iscilik_saat']:.2f} saat"],
+    ]
+    _t = Table(_genel_satirlari, colWidths=[11 * cm, 4 * cm])
+    _t.setStyle(TableStyle([
+        ("FONTSIZE", (0, 0), (-1, -1), 11),
+        ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
+        ("FONTNAME", (0, 0), (-1, -1), "Helvetica-Bold"),
+        ("TOPPADDING", (0, 0), (-1, -1), 4),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+    ]))
+    _elemanlar.append(_t)
+    if veri["en_yogun_hafta_personel"] > 0:
+        _elemanlar.append(Spacer(1, 12))
+        _elemanlar.append(Paragraph(
+            f"Bu ayı karşılamak için en az <b>{veri['en_yogun_hafta_personel']} personel</b> "
+            "gerekiyor (ayın en yoğun haftasının gerektirdiği işçilik saati, haftalık "
+            f"{_HAFTALIK_YASAL_CALISMA_SAATI} saat yasal sınırına göre hesaplandı). "
+            "Diğer haftalarda aynı ekip daha az yoğun çalışır.",
+            _stiller["Normal"],
+        ))
+
+    _belge.build(_elemanlar)
+    _arabellek.seek(0)
+    return _arabellek.getvalue()
 
 
 @st.dialog("Aylık Sarf Listesi")
@@ -2684,6 +2847,7 @@ def _aylik_sarf_listesi_dialog(aylik, porsiyon_sayisi, isletme_id, isletme_adi):
             _sarf_ozet_html(
                 _veri["haftalik_enerji_kwh"].get(_hafta_no, 0.0),
                 _veri["haftalik_iscilik_saat"].get(_hafta_no, 0.0),
+                _veri["haftalik_gereken_personel"].get(_hafta_no, 0),
             )
         )
     _ekran_parcalari.append("<hr style='margin-top:20px;'>")
@@ -2700,91 +2864,22 @@ def _aylik_sarf_listesi_dialog(aylik, porsiyon_sayisi, isletme_id, isletme_adi):
         f"Aylık toplam işçilik: {_veri['genel_iscilik_saat']:.2f} saat</p>"
     )
     st.markdown("".join(_ekran_parcalari), unsafe_allow_html=True)
+    if _veri["en_yogun_hafta_personel"] > 0:
+        st.info(
+            f"Bu ayı karşılamak için en az **{_veri['en_yogun_hafta_personel']} personel** "
+            "gerekiyor (ayın en yoğun haftasının gerektirdiği işçilik saati, "
+            f"haftalık {_HAFTALIK_YASAL_CALISMA_SAATI} saat yasal sınırına göre "
+            "hesaplandı). Diğer haftalarda aynı ekip daha az yoğun çalışır."
+        )
 
-    # YUZ ALTMIS DORDUNCU DUZELTME (22 Eylul 2026): Bahri "print artik
-    # calisiyor" dedi, 4 kozmetik istek verdi -- (1) Dayanıklı ve
-    # 1.Hafta'nin TEK SAYFAYA sigmasi ISTENMIYOR ARTIK (listeler cok
-    # uzun) -- 1.Hafta da kendi sayfasina gecsin; (2) sayfa 1'deki
-    # aciklama satiri KALDIRILSIN (yer actirmak icin); (3) SON
-    # sayfada "Genel Toplam" GEREKSIZ (bu sayfa satinalmaciya rehber,
-    # aylik toplam onu ilgilendirmiyor); (4) HER sayfanin basinda logo
-    # + "Menü Mühendisi" + hangi ISLETMEYE ait oldugu (buyuk baslik).
-    #
-    # Bu YENI gereksinimler EKRANDAKI (uygulama sahibi icin -- aciklama
-    # ve Genel Toplam faydali) goruntuden FARKLI oldugu icin, YAZDIRMA
-    # icin AYRI, KENDINE OZGU bir HTML govdesi olusturuldu -- artik
-    # ekran ile print ayni icerigi PAYLASMIYOR.
-    try:
-        with open("assets/logo.png", "rb") as _f:
-            _logo_b64_print = base64.b64encode(_f.read()).decode("ascii")
-        _print_logo_img = f"<img src='data:image/png;base64,{_logo_b64_print}' style='width:56px; height:auto;'/>"
-    except OSError:
-        _print_logo_img = ""
-    _print_baslik_html = (
-        "<div style='display:flex; align-items:center; gap:14px; "
-        "border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:16px;'>"
-        f"{_print_logo_img}"
-        "<div style='line-height:1.3;'>"
-        "<div style='font-size:1em; color:#333;'>Menü Mühendisi</div>"
-        f"<div style='font-size:1.7em; font-weight:bold;'>{isletme_adi}</div>"
-        "</div></div>"
+    st.download_button(
+        "PDF olarak indir",
+        data=_aylik_sarf_pdf_olustur(aylik, _veri, isletme_adi),
+        file_name=f"aylik_sarf_listesi_{aylik['ay']}_{aylik['yil']}.pdf",
+        mime="application/pdf",
+        use_container_width=True,
+        type="primary",
     )
-
-    _print_parcalari = [
-        _print_baslik_html,
-        f"<h4>Dayanıklı Malzemeler (Aylık — {aylik['ay']} {aylik['yil']})</h4>",
-    ]
-    if _veri["dayanikli"]:
-        _print_parcalari.append(_malzeme_tablosu_html(_veri["dayanikli"], _veri["dayanikli_toplam_eur"]))
-    else:
-        _print_parcalari.append("<p style='color:#666;'>Bu ay için dayanıklı malzeme yok.</p>")
-
-    for _hafta_no in sorted(_veri["haftalik_taze"].keys()):
-        # ARTIK 1. hafta da DAHIL -- Bahri: "listelerin uzunluguna
-        # bakinca tek sayfa olmalari mumkun degil" -- HER hafta kendi
-        # sayfasinda.
-        _print_parcalari.append(
-            "<div style='page-break-before: always; break-before: page;'>"
-            + _print_baslik_html
-            + f"<h4>{_hafta_no}. Hafta — Taze Malzemeler</h4>"
-            + _malzeme_tablosu_html(_veri["haftalik_taze"][_hafta_no], _veri["haftalik_toplam_eur"][_hafta_no])
-            + _sarf_ozet_html(
-                _veri["haftalik_enerji_kwh"].get(_hafta_no, 0.0),
-                _veri["haftalik_iscilik_saat"].get(_hafta_no, 0.0),
-            )
-            + "</div>"
-        )
-    # Genel Toplam SON sayfaya (print'e) EKLENMIYOR -- Bahri: "bu
-    # sayfa satinalmaciya rehber olacak, aylik toplam onu ilgilendirmiyor".
-    _yazdirma_icerigi = "".join(_print_parcalari)
-
-    # YAZDIRMA -- ayri pencere mimarisi (bir onceki duzeltmede
-    # kuruldu, calisiyor).
-    _yazdirma_js_govde = json.dumps(_yazdirma_icerigi)
-    if st.button("Print", key="btn_aylik_sarf_yazdir", use_container_width=True, type="primary"):
-        st.components.v1.html(
-            f"""
-            <script>
-            var icerik = {_yazdirma_js_govde};
-            var pencere = window.open('', '_blank', 'width=900,height=700');
-            if (!pencere) {{
-                alert('Yazdırma penceresi açılamadı — tarayıcının pop-up engelleyicisi bunu durdurmuş olabilir. Adres çubuğundaki pop-up bildirimine izin verip tekrar dene.');
-            }} else {{
-                pencere.document.write(
-                    '<html><head><title>Aylık Sarf Listesi</title>' +
-                    '<style>body{{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;padding:24px;}}' +
-                    'table{{width:100%;border-collapse:collapse;}}' +
-                    'h4{{margin-top:20px;}}</style></head><body>' + icerik + '</body></html>'
-                );
-
-                pencere.document.close();
-                pencere.focus();
-                setTimeout(function() {{ pencere.print(); }}, 300);
-            }}
-            </script>
-            """,
-            height=0,
-        )
 
 
 def _aylik_menu_excel_olustur(aylik, detay, fiyat_verisi_var, hedefler):
