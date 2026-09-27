@@ -2760,25 +2760,25 @@ def _pdf_sayfa_basligi_ciz(canvas, belge, isletme_tam_adi, alt_baslik, font_norm
     if os.path.exists("assets/logo.png"):
         try:
             canvas.drawImage(
-                "assets/logo.png", _sol, _sayfa_yukseklik - 2.6 * cm,
-                width=1.5 * cm, height=1.5 * cm, mask="auto", preserveAspectRatio=True,
+                "assets/logo.png", _sol, _sayfa_yukseklik - 2.2 * cm,
+                width=1.2 * cm, height=1.2 * cm, mask="auto", preserveAspectRatio=True,
             )
         except Exception:
             pass
+    canvas.setFont(font_normal, 8)
+    canvas.setFillColor(colors.grey)
+    canvas.drawString(_sol, _sayfa_yukseklik - 2.4 * cm, "Menü Mühendisi")
+
+    canvas.setFont(font_kalin, 14)
+    canvas.setFillColor(colors.black)
+    canvas.drawCentredString((_sol + _sag) / 2, _sayfa_yukseklik - 1.55 * cm, isletme_tam_adi)
+
     canvas.setFont(font_normal, 9)
     canvas.setFillColor(colors.grey)
-    canvas.drawString(_sol, _sayfa_yukseklik - 2.85 * cm, "Menü Mühendisi")
-
-    canvas.setFont(font_kalin, 15)
-    canvas.setFillColor(colors.black)
-    canvas.drawCentredString((_sol + _sag) / 2, _sayfa_yukseklik - 1.9 * cm, isletme_tam_adi)
-
-    canvas.setFont(font_normal, 10)
-    canvas.setFillColor(colors.grey)
-    canvas.drawCentredString((_sol + _sag) / 2, _sayfa_yukseklik - 2.5 * cm, alt_baslik)
+    canvas.drawCentredString((_sol + _sag) / 2, _sayfa_yukseklik - 2.1 * cm, alt_baslik)
 
     canvas.setStrokeColor(colors.grey)
-    canvas.line(_sol, _sayfa_yukseklik - 3.0 * cm, _sag, _sayfa_yukseklik - 3.0 * cm)
+    canvas.line(_sol, _sayfa_yukseklik - 2.5 * cm, _sag, _sayfa_yukseklik - 2.5 * cm)
     canvas.restoreState()
 
 
@@ -2811,7 +2811,7 @@ def _aylik_sarf_pdf_olustur(aylik, veri, isletme_tam_adi):
     _arabellek = io.BytesIO()
     _belge = SimpleDocTemplate(
         _arabellek, pagesize=A4,
-        leftMargin=2 * cm, rightMargin=2 * cm, topMargin=3.4 * cm, bottomMargin=2 * cm,
+        leftMargin=2 * cm, rightMargin=2 * cm, topMargin=2.7 * cm, bottomMargin=2 * cm,
         title=f"Aylık Sarf Listesi - {aylik['ay']} {aylik['yil']}",
     )
     _stiller = getSampleStyleSheet()
@@ -3008,6 +3008,7 @@ _TUM_EK_BESIN_ANAHTARLARI = _VITAMIN_ANAHTARLARI + _MINERAL_ANAHTARLARI + _DIGER
 _OGUN_BANT_RENGI = "#4A4A4A"
 _ALERJEN_RENGI = "#C0392B"
 _BESIN_RENGI = "#2C5F8A"
+_HAFTASONU_RENGI = "#F2E8D5"
 
 
 def _gun_tarih_bilgisi(gun, yil_secimi):
@@ -3162,57 +3163,66 @@ def _pdf_hafta_sonu_indeksleri(hafta):
 
 
 def _aylik_menu_pdf_sade_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_adi):
-    """"Sade" -- ekrandaki ANA TABLO gibi, SADECE yemek isimleri (besin
-    detayı YOK), TUM AY (butun haftalar) tek bir PDF sayfasina/
-    tablosuna sigacak sekilde. Bahri'nin acik istegi "tek bir A4
-    tabloya sigmali" -- bunun icin mumkun oldugunca kompakt tasarlandi.
+    """"Sade" -- ekrandaki ANA TABLO gibi, SADECE yemek isimleri, TUM
+    AY tek bir PDF SAYFASINA sigacak sekilde (Bahri'nin en onemli
+    kosulu).
 
-    YUZ ALTMIS SEKIZINCI DUZELTME (23 Eylul 2026, Bahri'nin 2. tur
+    YUZ ALTMIS DOKUZUNCU DUZELTME (23 Eylul 2026, Bahri'nin 3. tur
     kozmetik istekleri):
-    1) ÖĞLE/AKŞAM ince bantlari eklendi (once hic yoktu).
-    2) Her yemegin basina '*' isareti eklendi (bir hucrede alt alta
-       duran yemekleri birbirinden ayirmak icin).
-    3) Her ogunun yemek listesinin ALTINA (ince bir cizgiyle ayrilmis,
-       KENDI SATIRINDA -- boylece cizgi tum hafta boyunca DUZ cikiyor)
-       o ogundeki TUM yemeklerin alerjenlerinin BIRLESIMI KIRMIZI
-       fontla ekleniyor -- bunun icin fonksiyon artik 'detay'
-       parametresi de aliyor (eskiden SADECE isim gosterdigi icin
-       ihtiyaci yoktu)."""
+    1) "Aralık — N. Hafta" renkli bant SATIRI TAMAMEN KALDIRILDI --
+       yerine haftalar arasinda milimetrik bir bosluk (Spacer)
+       birakildi. Bu, hem yer kazandirdi hem Bahri'nin acik istegiydi.
+    2) Kenar bosluklari, punto, satir araligi ve ÖĞLE/AKŞAM
+       bantlarinin kalinligi (yuksekligi) agresif sekilde daha da
+       kucultuldu -- tek sayfaya sigma hedefi icin.
+    3) Hafta sonu (Cumartesi/Pazar) sutunlari, ARKA PLAN renginin
+       hafifce degismesiyle belirginlestirildi (Bahri: "daha once
+       istemistim, yapilmamisti -- bir pattern degisikligi bile
+       coder" -- ACIK NOT: bu istegin daha onceki tam nereden geldigi
+       kod/gecmis notlarda bulunamadi, ama simdi acikca tekrarlandigi
+       icin dogrudan uygulandi)."""
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4, B3
     from reportlab.lib.styles import ParagraphStyle
-    from reportlab.lib.units import cm
-    from reportlab.platypus import Paragraph, SimpleDocTemplate, Table, TableStyle
+    from reportlab.lib.units import cm, mm
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
     _font_normal, _font_kalin = _pdf_font_adlari()
     _sayfa_boyutu = B3 if sayfa_boyutu_adi == "B3" else A4
     _alt_baslik = f"Aylık Menü (Sade) — {aylik['ay']} {aylik['yil']}"
 
     _gun_sayisi = max(len(hafta) for hafta in aylik["haftalar"])
-    _sayfa_genislik = _sayfa_boyutu[0] - 2 * cm
+    _sayfa_genislik = _sayfa_boyutu[0] - 1.2 * cm
     _sutun_genislik = _sayfa_genislik / _gun_sayisi
 
-    _hucre_stili = ParagraphStyle("hucreSade", fontName=_font_normal, fontSize=5.3, leading=6.3)
-    _alerjen_stili = ParagraphStyle("alerjenSade", fontName=_font_normal, fontSize=4.8, leading=5.8, textColor=colors.HexColor(_ALERJEN_RENGI))
-    _bant_stili = ParagraphStyle("bantSade", fontName=_font_kalin, fontSize=5.3, leading=6.6, textColor=colors.white)
-    _hafta_baslik_stili = ParagraphStyle("haftaBaslikSade", fontName=_font_kalin, fontSize=6.5, leading=8.2, textColor=colors.white)
-    _tarih_stili = ParagraphStyle("tarihSade", fontName=_font_kalin, fontSize=6.2, leading=7.6, alignment=1)
+    _hucre_stili = ParagraphStyle("hucreSade", fontName=_font_normal, fontSize=4.8, leading=5.6)
+    _alerjen_stili = ParagraphStyle("alerjenSade", fontName=_font_normal, fontSize=4.1, leading=5, textColor=colors.HexColor(_ALERJEN_RENGI))
+    _bant_stili = ParagraphStyle("bantSade", fontName=_font_kalin, fontSize=4.5, leading=5.6, textColor=colors.white)
+    _tarih_stili = ParagraphStyle("tarihSade", fontName=_font_kalin, fontSize=5.7, leading=7, alignment=1)
 
-    _satirlar = []
-    _stil_komutlari = [
-        ("GRID", (0, 0), (-1, -1), 0.4, colors.grey),
-        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("TOPPADDING", (0, 0), (-1, -1), 0.7),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 0.7),
-        ("LEFTPADDING", (0, 0), (-1, -1), 1.8),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 1.8),
-    ]
+    _elemanlar = []
 
     for hafta_no, hafta in enumerate(aylik["haftalar"], start=1):
-        _satir_no = len(_satirlar)
-        _satirlar.append([Paragraph(f"{aylik['ay']} — {hafta_no}. Hafta", _hafta_baslik_stili)] + [""] * (_gun_sayisi - 1))
-        _stil_komutlari.append(("SPAN", (0, _satir_no), (_gun_sayisi - 1, _satir_no)))
-        _stil_komutlari.append(("BACKGROUND", (0, _satir_no), (-1, _satir_no), colors.HexColor("#2C6B3C")))
+        if hafta_no > 1:
+            _elemanlar.append(Spacer(1, 1.2 * mm))
+
+        _hafta_sonu_indeksleri = set()
+        for _i, gun in enumerate(hafta):
+            _gun_adi, _ = _gun_tarih_bilgisi(gun, aylik["yil"])
+            if _gun_adi in ("Cumartesi", "Pazar"):
+                _hafta_sonu_indeksleri.add(_i)
+
+        _satirlar = []
+        _stil_komutlari = [
+            ("GRID", (0, 0), (-1, -1), 0.4, colors.grey),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("TOPPADDING", (0, 0), (-1, -1), 0.4),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 0.4),
+            ("LEFTPADDING", (0, 0), (-1, -1), 1.5),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 1.5),
+        ]
+        for _i in _hafta_sonu_indeksleri:
+            _stil_komutlari.append(("BACKGROUND", (_i, 0), (_i, 0), colors.HexColor(_HAFTASONU_RENGI)))
 
         _tarih_satiri = []
         for gun in hafta:
@@ -3220,7 +3230,6 @@ def _aylik_menu_pdf_sade_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_adi
             _tarih_satiri.append(Paragraph(f"{tarih_metni}<br/>{gun_adi}", _tarih_stili))
         while len(_tarih_satiri) < _gun_sayisi:
             _tarih_satiri.append("")
-        _stil_komutlari.append(("BACKGROUND", (0, len(_satirlar)), (-1, len(_satirlar)), colors.HexColor("#EFEFEF")))
         _satirlar.append(_tarih_satiri)
 
         for ogun_adi in ("Öğle", "Akşam"):
@@ -3229,6 +3238,7 @@ def _aylik_menu_pdf_sade_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_adi
             _stil_komutlari.append(("SPAN", (0, _bant_satir_no), (_gun_sayisi - 1, _bant_satir_no)))
             _stil_komutlari.append(("BACKGROUND", (0, _bant_satir_no), (-1, _bant_satir_no), colors.HexColor(_OGUN_BANT_RENGI)))
 
+            _yemek_satir_no = len(_satirlar)
             _yemek_satiri = []
             for gun in hafta:
                 liste = gun["ogunler"].get(ogun_adi, [])
@@ -3236,6 +3246,8 @@ def _aylik_menu_pdf_sade_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_adi
             while len(_yemek_satiri) < _gun_sayisi:
                 _yemek_satiri.append("")
             _satirlar.append(_yemek_satiri)
+            for _i in _hafta_sonu_indeksleri:
+                _stil_komutlari.append(("BACKGROUND", (_i, _yemek_satir_no), (_i, _yemek_satir_no), colors.HexColor(_HAFTASONU_RENGI)))
 
             _alerjen_satir_no = len(_satirlar)
             _alerjen_satiri = []
@@ -3246,128 +3258,8 @@ def _aylik_menu_pdf_sade_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_adi
                 _alerjen_satiri.append("")
             _satirlar.append(_alerjen_satiri)
             _stil_komutlari.append(("LINEABOVE", (0, _alerjen_satir_no), (-1, _alerjen_satir_no), 0.5, colors.grey))
-
-    _tablo = Table(_satirlar, colWidths=[_sutun_genislik] * _gun_sayisi)
-    _tablo.setStyle(TableStyle(_stil_komutlari))
-
-    def _sayfa_ciz(canvas, belge):
-        _pdf_sayfa_basligi_ciz(canvas, belge, isletme_tam_adi, _alt_baslik, _font_normal, _font_kalin)
-
-    _arabellek = io.BytesIO()
-    _belge = SimpleDocTemplate(
-        _arabellek, pagesize=_sayfa_boyutu,
-        leftMargin=1 * cm, rightMargin=1 * cm, topMargin=3.05 * cm, bottomMargin=0.4 * cm,
-        title=f"Aylık Menü (Sade) - {aylik['ay']} {aylik['yil']}",
-    )
-    _belge.build([_tablo], onFirstPage=_sayfa_ciz, onLaterPages=_sayfa_ciz)
-    _arabellek.seek(0)
-    return _arabellek.getvalue()
-
-
-def _aylik_menu_pdf_detayli_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_adi):
-    """PDF'in IKINCI secenegi: "Detaylı" -- her hafta KENDI sayfasinda,
-    her gunun Öğle/Akşam yemek isimlerinin ALTINA o ogunun besin
-    degerleri yaziliyor.
-
-    YUZ ALTMIS SEKIZINCI DUZELTME (23 Eylul 2026, Bahri'nin 2. tur
-    kozmetik istekleri):
-    1) Her yemegin basina '*' isareti eklendi.
-    2) Yemek listesi VE besin degerleri ARTIK AYRI TABLO SATIRLARINDA
-       (eskiden ayni hucrede <br/><br/> ile alt alta idi) -- boylece
-       aralarindaki ayirici cizgi bir TABLO SATIR SINIRI (LINEABOVE)
-       oldugu icin otomatik olarak TUM HAFTA boyunca DUZ/AYNI
-       YUKSEKLIKTE cikiyor. Eskiden ayni hucrede oldugu icin, bir
-       gunun yemek listesi digerinden UZUNSA, o sutunun besin metni
-       digerlerinden DAHA ASAGIDAN basliyordu (cizgi zigzag
-       goruntuluyordu) -- artik yemekler kendi satirinda (icerik
-       farkli uzunlukta olsa da SATIRIN TAMAMI o satirin en uzun
-       hucresine gore hizalaniyor), besin degerleri bir SONRAKI
-       satirda, boylece "yemek isimleri usте, besin degerleri altta"
-       ve "cizgi duz" istekleri AYNI ANDA saglaniyor.
-    3) Besin degerleri artik TUM 32 ogeyi (5 temel + 27 ek) icerir --
-       veri olmayanlar sessizce atlanıyor.
-    4) Besin metninin rengi (mavi, _BESIN_RENGI) yemek isimlerinin
-       renginden (siyah) FARKLI.
-    5) ÖĞLE/AKŞAM bantlari ARTIK AYNI renkte (_OGUN_BANT_RENGI) ve
-       daha ince (kucultulmus dolgu)."""
-    from reportlab.lib import colors
-    from reportlab.lib.pagesizes import A4, B3
-    from reportlab.lib.styles import ParagraphStyle
-    from reportlab.lib.units import cm
-    from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Table, TableStyle
-
-    _font_normal, _font_kalin = _pdf_font_adlari()
-    _sayfa_boyutu = B3 if sayfa_boyutu_adi == "B3" else A4
-    _alt_baslik = f"Aylık Menü (Detaylı) — {aylik['ay']} {aylik['yil']}"
-
-    _gun_sayisi = max(len(hafta) for hafta in aylik["haftalar"])
-    _sayfa_genislik = _sayfa_boyutu[0] - 2.4 * cm
-    _sutun_genislik = _sayfa_genislik / _gun_sayisi
-
-    _dish_stili = ParagraphStyle("dishDetay", fontName=_font_normal, fontSize=8, leading=10)
-    _besin_stili = ParagraphStyle("besinDetay", fontName=_font_normal, fontSize=6.5, leading=8, textColor=colors.HexColor(_BESIN_RENGI))
-    _tarih_stili = ParagraphStyle("tarihDetay", fontName=_font_kalin, fontSize=9.5, leading=12, alignment=1)
-    _bant_stili = ParagraphStyle("bantDetay", fontName=_font_kalin, fontSize=7.5, leading=9.5, textColor=colors.white)
-    _hafta_baslik_stili = ParagraphStyle("haftaBaslikDetay", fontName=_font_kalin, fontSize=13, leading=16, spaceAfter=8)
-
-    _elemanlar = []
-    for hafta_no, hafta in enumerate(aylik["haftalar"], start=1):
-        if hafta_no > 1:
-            _elemanlar.append(PageBreak())
-        _elemanlar.append(Paragraph(f"{aylik['ay']} {aylik['yil']} — {hafta_no}. Hafta", _hafta_baslik_stili))
-
-        _satirlar = []
-        _stil_komutlari = [
-            ("GRID", (0, 0), (-1, -1), 0.4, colors.grey),
-            ("VALIGN", (0, 0), (-1, -1), "TOP"),
-            ("TOPPADDING", (0, 0), (-1, -1), 4),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-            ("LEFTPADDING", (0, 0), (-1, -1), 4),
-            ("RIGHTPADDING", (0, 0), (-1, -1), 4),
-        ]
-
-        _tarih_satiri = []
-        for gun in hafta:
-            gun_adi, tarih_metni = _gun_tarih_bilgisi(gun, aylik["yil"])
-            _tarih_satiri.append(Paragraph(f"{tarih_metni}<br/>{gun_adi}", _tarih_stili))
-        while len(_tarih_satiri) < _gun_sayisi:
-            _tarih_satiri.append("")
-        _satirlar.append(_tarih_satiri)
-        _stil_komutlari.append(("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#EFEFEF")))
-
-        for ogun_adi in ("Öğle", "Akşam"):
-            _bant_satir_no = len(_satirlar)
-            _satirlar.append([Paragraph(ogun_adi.upper(), _bant_stili)] + [""] * (_gun_sayisi - 1))
-            _stil_komutlari.append(("SPAN", (0, _bant_satir_no), (_gun_sayisi - 1, _bant_satir_no)))
-            _stil_komutlari.append(("BACKGROUND", (0, _bant_satir_no), (-1, _bant_satir_no), colors.HexColor(_OGUN_BANT_RENGI)))
-            _stil_komutlari.append(("TOPPADDING", (0, _bant_satir_no), (-1, _bant_satir_no), 2))
-            _stil_komutlari.append(("BOTTOMPADDING", (0, _bant_satir_no), (-1, _bant_satir_no), 2))
-
-            # Yemek satiri -- KENDI satirinda (besin degerinden AYRI)
-            _yemek_satiri = []
-            for gun in hafta:
-                liste = gun["ogunler"].get(ogun_adi, [])
-                _yemek_satiri.append(Paragraph(_yildizli_liste(liste), _dish_stili))
-            while len(_yemek_satiri) < _gun_sayisi:
-                _yemek_satiri.append("")
-            _satirlar.append(_yemek_satiri)
-
-            # Besin satiri -- KENDI satirinda, ustune LINEABOVE ile
-            # TUM HAFTA boyunca DUZ bir cizgi (satir siniri oldugu icin).
-            _besin_satir_no = len(_satirlar)
-            _besin_satiri = []
-            for gun in hafta:
-                liste = gun["ogunler"].get(ogun_adi, [])
-                _temel, _ek = _tum_besin_metinleri(liste, detay)
-                if not _temel:
-                    _besin_satiri.append(Paragraph("&nbsp;", _besin_stili))
-                else:
-                    _icerik = f"{_temel}<br/>{_ek}" if _ek else _temel
-                    _besin_satiri.append(Paragraph(_icerik, _besin_stili))
-            while len(_besin_satiri) < _gun_sayisi:
-                _besin_satiri.append("")
-            _satirlar.append(_besin_satiri)
-            _stil_komutlari.append(("LINEABOVE", (0, _besin_satir_no), (-1, _besin_satir_no), 0.6, colors.grey))
+            for _i in _hafta_sonu_indeksleri:
+                _stil_komutlari.append(("BACKGROUND", (_i, _alerjen_satir_no), (_i, _alerjen_satir_no), colors.HexColor(_HAFTASONU_RENGI)))
 
         _tablo = Table(_satirlar, colWidths=[_sutun_genislik] * _gun_sayisi)
         _tablo.setStyle(TableStyle(_stil_komutlari))
@@ -3379,7 +3271,138 @@ def _aylik_menu_pdf_detayli_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_
     _arabellek = io.BytesIO()
     _belge = SimpleDocTemplate(
         _arabellek, pagesize=_sayfa_boyutu,
-        leftMargin=1.2 * cm, rightMargin=1.2 * cm, topMargin=3.4 * cm, bottomMargin=1.2 * cm,
+        leftMargin=0.6 * cm, rightMargin=0.6 * cm, topMargin=2.55 * cm, bottomMargin=0.2 * cm,
+        title=f"Aylık Menü (Sade) - {aylik['ay']} {aylik['yil']}",
+    )
+    _belge.build(_elemanlar, onFirstPage=_sayfa_ciz, onLaterPages=_sayfa_ciz)
+    _arabellek.seek(0)
+    return _arabellek.getvalue()
+
+
+def _aylik_menu_pdf_detayli_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_adi):
+    """"Detaylı" -- her hafta KENDI sayfasinda, her gunun Öğle/Akşam
+    yemek isimlerinin ALTINA o ogunun besin degerleri yaziliyor.
+
+    YUZ ALTMIS DOKUZUNCU DUZELTME (23 Eylul 2026): Bahri gercek bir
+    HATA buldu -- bir ogunun yemek listesi bir sayfada, besin
+    degerleri BIR SONRAKI sayfada kaliyordu ("gunun ortasindan
+    kesilmesi"). KOK NEDEN: yemek ve besin AYRI TABLO SATIRLARI
+    olduğu icin (cizginin duz cikmasi icin oyle yapilmisti), tablo
+    sayfaya sigmayinca reportlab bu iki satirin ARASINDAN
+    bolebiliyordu. COZUM: her ogun (etiket+yemek+besin, 3 satir) ARTIK
+    KENDI KUCUK TABLOSU ve bu kucuk tablo bir KeepTogether icine
+    alindi -- boylece bu 3 satir ASLA birbirinden ayrilmiyor (sayfa
+    "cizgiyi duz" kalma ozelligini KAYBETMEDEN). Ayrica: hafta sonu
+    sutunlari renklendirildi, kenar boslugu/punto/aralik daha da
+    sikilastirildi (hafta tek sayfaya sigsin diye)."""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4, B3
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.platypus import KeepTogether, PageBreak, Paragraph, SimpleDocTemplate, Table, TableStyle
+
+    _font_normal, _font_kalin = _pdf_font_adlari()
+    _sayfa_boyutu = B3 if sayfa_boyutu_adi == "B3" else A4
+    _alt_baslik = f"Aylık Menü (Detaylı) — {aylik['ay']} {aylik['yil']}"
+
+    _gun_sayisi = max(len(hafta) for hafta in aylik["haftalar"])
+    _sayfa_genislik = _sayfa_boyutu[0] - 1.6 * cm
+    _sutun_genislik = _sayfa_genislik / _gun_sayisi
+
+    _dish_stili = ParagraphStyle("dishDetay", fontName=_font_normal, fontSize=6.6, leading=8)
+    _besin_stili = ParagraphStyle("besinDetay", fontName=_font_normal, fontSize=5.6, leading=6.9, textColor=colors.HexColor(_BESIN_RENGI))
+    _tarih_stili = ParagraphStyle("tarihDetay", fontName=_font_kalin, fontSize=8, leading=10, alignment=1)
+    _bant_stili = ParagraphStyle("bantDetay", fontName=_font_kalin, fontSize=6.5, leading=8, textColor=colors.white)
+    _hafta_baslik_stili = ParagraphStyle("haftaBaslikDetay", fontName=_font_kalin, fontSize=11, leading=14, spaceAfter=5)
+
+    _elemanlar = []
+    for hafta_no, hafta in enumerate(aylik["haftalar"], start=1):
+        if hafta_no > 1:
+            _elemanlar.append(PageBreak())
+        _elemanlar.append(Paragraph(f"{aylik['ay']} {aylik['yil']} — {hafta_no}. Hafta", _hafta_baslik_stili))
+
+        _hafta_sonu_indeksleri = set()
+        for _i, gun in enumerate(hafta):
+            _gun_adi, _ = _gun_tarih_bilgisi(gun, aylik["yil"])
+            if _gun_adi in ("Cumartesi", "Pazar"):
+                _hafta_sonu_indeksleri.add(_i)
+
+        # 1) Tarih basligi -- kendi kucuk tablosu (KeepTogether GEREKMEZ,
+        # tek satir zaten bolunemez).
+        _tarih_satiri = []
+        for gun in hafta:
+            gun_adi, tarih_metni = _gun_tarih_bilgisi(gun, aylik["yil"])
+            _tarih_satiri.append(Paragraph(f"{tarih_metni}<br/>{gun_adi}", _tarih_stili))
+        while len(_tarih_satiri) < _gun_sayisi:
+            _tarih_satiri.append("")
+        _tarih_stil_komutlari = [
+            ("GRID", (0, 0), (-1, -1), 0.4, colors.grey),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("TOPPADDING", (0, 0), (-1, -1), 3),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+            ("LEFTPADDING", (0, 0), (-1, -1), 3),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#EFEFEF")),
+        ]
+        for _i in _hafta_sonu_indeksleri:
+            _tarih_stil_komutlari.append(("BACKGROUND", (_i, 0), (_i, 0), colors.HexColor(_HAFTASONU_RENGI)))
+        _tarih_tablo = Table([_tarih_satiri], colWidths=[_sutun_genislik] * _gun_sayisi)
+        _tarih_tablo.setStyle(TableStyle(_tarih_stil_komutlari))
+        _elemanlar.append(_tarih_tablo)
+
+        # 2) Her ogun -- KENDI 3 satirlik (etiket+yemek+besin) kucuk
+        # tablosu, KeepTogether ile SARILMIS -- boylece bu 3 satir
+        # ASLA sayfa arasinda bolunmez.
+        for ogun_adi in ("Öğle", "Akşam"):
+            _satirlar = [
+                [Paragraph(ogun_adi.upper(), _bant_stili)] + [""] * (_gun_sayisi - 1),
+                [],
+                [],
+            ]
+            for gun in hafta:
+                liste = gun["ogunler"].get(ogun_adi, [])
+                _satirlar[1].append(Paragraph(_yildizli_liste(liste), _dish_stili))
+            while len(_satirlar[1]) < _gun_sayisi:
+                _satirlar[1].append("")
+            for gun in hafta:
+                liste = gun["ogunler"].get(ogun_adi, [])
+                _temel, _ek = _tum_besin_metinleri(liste, detay)
+                if not _temel:
+                    _satirlar[2].append(Paragraph("&nbsp;", _besin_stili))
+                else:
+                    _icerik = f"{_temel}<br/>{_ek}" if _ek else _temel
+                    _satirlar[2].append(Paragraph(_icerik, _besin_stili))
+            while len(_satirlar[2]) < _gun_sayisi:
+                _satirlar[2].append("")
+
+            _ogun_stil_komutlari = [
+                ("GRID", (0, 0), (-1, -1), 0.4, colors.grey),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("TOPPADDING", (0, 0), (-1, -1), 3),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                ("LEFTPADDING", (0, 0), (-1, -1), 3),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+                ("SPAN", (0, 0), (_gun_sayisi - 1, 0)),
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor(_OGUN_BANT_RENGI)),
+                ("TOPPADDING", (0, 0), (-1, 0), 1.5),
+                ("BOTTOMPADDING", (0, 0), (-1, 0), 1.5),
+                ("LINEABOVE", (0, 2), (-1, 2), 0.6, colors.grey),
+            ]
+            for _i in _hafta_sonu_indeksleri:
+                _ogun_stil_komutlari.append(("BACKGROUND", (_i, 1), (_i, 1), colors.HexColor(_HAFTASONU_RENGI)))
+                _ogun_stil_komutlari.append(("BACKGROUND", (_i, 2), (_i, 2), colors.HexColor(_HAFTASONU_RENGI)))
+
+            _ogun_tablo = Table(_satirlar, colWidths=[_sutun_genislik] * _gun_sayisi)
+            _ogun_tablo.setStyle(TableStyle(_ogun_stil_komutlari))
+            _elemanlar.append(KeepTogether([_ogun_tablo]))
+
+    def _sayfa_ciz(canvas, belge):
+        _pdf_sayfa_basligi_ciz(canvas, belge, isletme_tam_adi, _alt_baslik, _font_normal, _font_kalin)
+
+    _arabellek = io.BytesIO()
+    _belge = SimpleDocTemplate(
+        _arabellek, pagesize=_sayfa_boyutu,
+        leftMargin=0.8 * cm, rightMargin=0.8 * cm, topMargin=2.6 * cm, bottomMargin=0.5 * cm,
         title=f"Aylık Menü (Detaylı) - {aylik['ay']} {aylik['yil']}",
     )
     _belge.build(_elemanlar, onFirstPage=_sayfa_ciz, onLaterPages=_sayfa_ciz)
