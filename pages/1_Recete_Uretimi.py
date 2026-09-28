@@ -19,6 +19,12 @@ st.set_page_config(page_title="Reçete Üretimi", page_icon="assets/favicon.png"
 supabase = get_supabase()
 oturumu_uygula(supabase)
 
+# YUZ ... DUZELTME (28 Eylul 2026, Menu Muhendisi 9, sql/182): maliyet yetkisi
+# olmayan personel maliyet/kar bolumlerini gormez (veritabani fiyatlari zaten
+# gizliyor; burada "0,00 EUR" gibi yaniltici rakam gosterilmesin diye).
+from yetkiler import yetki
+_MALIYET_GORUNUR = yetki("maliyetler") >= 1
+
 isletme_id = st.session_state.isletme_id
 recete_limiti = st.session_state.get("recete_limiti")  # None = sınırsız
 
@@ -297,7 +303,9 @@ maliyet = maliyet_sonuc.data[0] if maliyet_sonuc.data else None
 
 porsiyon_sayisi = recete.get("porsiyon_sayisi") or 1
 
-if maliyet:
+if not _MALIYET_GORUNUR:
+    st.caption("Maliyet bilgileri yetkin dışında.")
+if maliyet and _MALIYET_GORUNUR:
     st.write(f"**Malzeme maliyeti ({porsiyon_sayisi} porsiyon için)**")
     mc1, mc2, mc3 = st.columns(3)
     mc1.metric(f"Toplam malzeme maliyeti ({porsiyon_sayisi} porsiyon)", f"{maliyet['toplam_maliyet_eur']:.2f} €")
@@ -555,7 +563,7 @@ uretim_maliyeti_sonuc = (
 )
 uretim_maliyeti = uretim_maliyeti_sonuc.data[0] if uretim_maliyeti_sonuc.data else None
 
-if uretim_maliyeti:
+if uretim_maliyeti and _MALIYET_GORUNUR:
     # OTUZ YEDINCI DUZELTME (24 Agustos 2026): "Genel gider payı" diger
     # hesaplamalardan (kullanicinin daha once bahsettigi bir onceki
     # duzeltmede) zaten cikarilmisti, tutarlilik icin BURADAN da
@@ -598,8 +606,8 @@ recete_menu_ogeleri = (
 ).data or []
 
 if recete_menu_ogeleri:
-    _menu_ogesi_idleri = [oge["id"] for oge in recete_menu_ogeleri]
-    karlilik_listesi = (
+    _menu_ogesi_idleri = [oge["id"] for oge in recete_menu_ogeleri] if _MALIYET_GORUNUR else []
+    karlilik_listesi = [] if not _MALIYET_GORUNUR else (
         supabase.table("menu_ogesi_karlilik")
         .select("*")
         .in_("menu_ogesi_id", _menu_ogesi_idleri)
