@@ -12249,3 +12249,60 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   RLS aciksa okuma politikasi; 6 gorunum security_invoker=true; 7 gorunumden anon SELECT kaldirildi.
   KILIT: degisiklik oncesi/sonrasi her sahibin kimligiyle (set local role authenticated + jwt claims)
   uretim maliyeti, fiyat sayisi, karlilik ve abonelik karsilastiriliyor; fark varsa tum islem geri aliniyor.
+- 181 SONUCU: 7 gorunumun hepsi security_invoker=true, hicbiri anon'a acik degil; 2 patron, 430 fiyat satiri
+  once/sonra ayni. Karsilastirilan uretim satiri 0 (iki isletmede de ozel recete yok) -> "kendi recete
+  asamalarini oku" politikasi gercek veriyle SINANMADI; ilk ozel recetede enerji/iscilik maliyeti kontrol edilecek.
+
+### 28 Eylul 2026 -- Menu Muhendisi 9: Isletme / Sube / Personel yetki modeli UYGULANDI
+- Bahri isteği yeniden yazdi ("yukarida yazdiklarimin cogu gerceklesmedi"): teshis/guvenlik isleri yapilmis ama
+  ozelligin kendisi teslim edilmemisti. Bu teslimle ozellik uctan uca kuruldu.
+- Kutular (boston_matrisi/satis_analitik/ozel_destek) admin sayfasindan kaldirilmis ve GitHub'a push edilmisti
+  (GitHub'daki 7_Admin.py'de dogrulandi).
+- sql/182_sube_ve_personel_yetki_modeli.sql:
+  * isletmeler.ust_isletme_id (NULL = ana isletme, dolu = sube). Eski bos subeler ve 175'teki bos
+    personel_yetkileri tablolari kaldirildi.
+  * Yeni tablolar: personel (ana_isletme_id, email tekil, ad_soyad, kullanici_id, aktif),
+    personel_sube_yetkileri (personel_id + isletme_id PK, rol_sablonu asci/yonetici/muhasebe/ozel,
+    yetkiler jsonb), aktif_sube (kullanici_id -> calisilan isletme).
+  * kullanicilar.rol'e 'personel' eklendi; personel kullanicilar.isletme_id = ana isletme.
+  * auth_isletme_id() artik AKTIF isletme doner (aktif_sube -> personelin ilk subesi -> kullanicilar);
+    patron icin varsayilan ana isletme = eski davranis. Mevcut butun "isletme_id = auth_isletme_id()"
+    politikalari boylece subede de calisir.
+  * Yeni fonksiyonlar: auth_ana_isletme_id, auth_personel_mi, isletme_ana_id, auth_isletmeye_erisebilir,
+    auth_yetki_seviye (0/1/2; patron 2), aktif_yetkilerim, erisilebilir_isletmeler, aktif_sube_sec,
+    sube_olustur (patron, plan sube_limiti ana dahil; merkezin fiyat/maliyet ayari/porsiyon profilleri
+    kopyalanir), _isletme_verisi_kopyala (ic, execute yetkisi kaldirildi).
+  * Kayit tetikleyicisi: personel tablosunda bekleyen e-posta -> kullanicilar(rol personel, ana isletme).
+  * abonelikler/kullanicilar/odeme_gecmisi "kendi" politikalari ana isletmeye baglandi.
+  * Ana isletmenin tarifleri (receteler, malzemeleri, asamalari) + fiyat ve maliyet ayarlari subelerde okunur.
+  * Personel yetkileri RESTRICTIVE politikalarla: receteler (uygulama/ozel tarif okuma, recete uretimi/ozel
+    tarif duzenleme ile yazma), recete_malzemeleri/asamalari (ust tarif gorunurse), malzeme_fiyat_gecmisi
+    (maliyetler / fiyat_guncelleme), isletme_maliyet_ayarlari, porsiyon profilleri, menu_takvimi(+ogeleri),
+    kayitli_aylik_menuler, kisisel_beslenme_profilleri (aylik_menu), menu_ogeleri (recete_uretimi),
+    menu_analiz/satislar (maliyetler, yazma yok), malzemeler yazma, odeme_gecmisi (personel hic),
+    isletmeler guncelleme (personel yapamaz). Hepsi "case when not personel then true" ile patronlari etkilemez.
+  * KILIT: her patronun kimligiyle 15 sayim (aktif isletme, recete/malzeme/asama/fiyat/ayar/menu/abonelik/
+    kullanici/isletme sayilari, uretim maliyeti toplami) once/sonra ayni olmazsa tamami geri alinir.
+- yetkiler.py (YENI): YETKI_KATALOGU (10 yetki), HAZIR_ROLLER (Asci/Yonetici/Muhasebe; Claude onerisi),
+  tam_yetkiler(), yetki(anahtar). "Tarif ayrintilari (gramaj/talimat)" katalogdan CIKARILDI: gramajlar
+  maliyet, besin degeri, menu ve sarf listesinin temeli; gizlenirse o sayfalar calismaz.
+- app.py: ana_isletme_id / aktif isletme (rpc auth_isletme_id) ayrimi; abonelik ana isletmeden; personel
+  subesiz/durdurulmussa bilgi + cikis; session: yetkiler, patron_mu, personel_mi, erisilebilir_isletmeler,
+  onbellek_imzasi, plan_adi; navigasyon yetkiye gore (Aylik Menu/Recete Uretimi/Tarif Kutuphanesi);
+  sube secici (aktif_sube_sec); sayfa bazli salt_okunur (yetki < duzenle); odeme_onay_bekleniyor bayragi ayrildi.
+- pages/6_Abonelik.py: "Subeler" (liste + sube ac) ve "Personel ve Yetkiler" (yeni personel: ad, e-posta,
+  sifre, isletmeler, rol -> personel + yetki satirlari + service role create_user; mevcut personel: aktif,
+  isletme bazinda calisir/rol/ozel yetkiler, sifre belirleme) -- sadece patron. Isletme Bilgileri sadece
+  patron; Maliyet Ayarlari patron veya maliyet_ayarlari yetkisi (kaydet duzenle ister); Porsiyon Profilleri
+  porsiyon_profilleri duzenle; e-posta degistirme personelde gizli. Plan "None" yazma hatasi duzeltildi.
+- pages/0_Yillik_Menu.py: cache_data fonksiyonlarina imza (kullanici|isletme); ozel tarif sorgulari
+  sube + ana isletme; PDF dugmesi pdf_raporlar, Sarf Listesi satin_alma yetkisine bagli.
+- pages/5_Tarif_Kutuphanesi.py: cache imzasi. HATA DUZELTMESI: _tarif_kutuphanesi_detayli_getir() parametresiz
+  onbellekleniyordu ama oturumdaki isletmenin fiyatlarini okuyordu -> ilk acan isletmenin fiyatlari 1 saat
+  herkese gosteriliyordu.
+- pages/1_Recete_Uretimi.py: maliyet yetkisi yoksa maliyet/kar bolumleri gizli ("yetkin disinda").
+- pages/7_Admin.py: personel listesi yeni personel tablosundan.
+- ACIK / TEST EDILMEDI: gercek personel ve sube ile uctan uca test (sube ac, personel ekle, personel girisi,
+  yetki kisitlari); iki sekmede farkli sube secimi ayni kullanicida cakisir (aktif_sube kullanici basina tek);
+  personel silme (su an sadece durdurma); Aylik Menu'de maliyet gizli personel icin fiyat_verisi_var=False
+  yolu ekranda nasil gorunuyor; sube bazli recete limiti (her isletme ayri sayiyor).
