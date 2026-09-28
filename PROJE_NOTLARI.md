@@ -12166,3 +12166,21 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   gorur ve UPDATE edebilir (plan_id dahil) -> plan secimi icin migration GEREKMEZ, sadece arayuz.
   Admin'in baska isletmelerin kullanicilar/personel_yetkileri satirlarini gorme politikasi YOK (personel
   listesi icin gerekecek). Durum sayilari: aktif 2.
+
+### 28 Eylul 2026 -- Menu Muhendisi 9: Admin sayfasi genisletildi + admin yetkisi tek kaynakta
+- Bahri'nin kararlari: planlar Temel/Pro/Kurumsal ile devam (detaylari Bahri admin'den degistirebilir);
+  admin her abonenin planini admin panelinden degistirebilmeli. KURAL: platform admin'i SADECE Bahri;
+  ileride YALNIZCA Emre ve esi Gizem eklenebilir; baska HICBIR abone ASLA admin olamaz.
+- sql/177_admin_yetkisi_ve_plan_yonetimi.sql: public.auth_admin_mi() (admin e-posta listesi fonksiyon
+  icinde sabit; su an sadece bahriguler@gmail.com; degisiklik SADECE migration ile). public'teki sabit
+  e-postali butun politikalar bu fonksiyona cevrildi (DO blogu, dogrulamada kalan 0 olmali).
+  Yeni: admin abonelik_planlari UPDATE; admin kullanicilar ve personel_yetkileri SELECT.
+- pages/7_Admin.py: (1) Bekleyen Onaylar ayni; (2) Aboneler: tum abonelikler, durum filtresi, plan/durum/
+  donem baslangic-bitis (Suresiz = NULL) duzenleme, erisimi kesen durumda onay kutusu, iptal edilen hesap
+  geri acilabilir, isletme kullanicilari/personeli salt okunur; (3) Planlar: ad, aylik/yillik fiyat, sube/
+  recete limiti (bos = sinirsiz), ozellikler, aktif. "? plani" yerine "Plan atanmamis".
+- app.py: ADMIN_EPOSTA sabiti kaldirildi; admin_mi = rpc("auth_admin_mi"), hata olursa False.
+  SIRA ONEMLI: once 177 calistirilmali, sonra app.py push edilmeli (yoksa admin sayfasi kaybolur).
+- GitHub'daki app.py ve 7_Admin.py zip/yuklenen surumle birebir ayni oldugu dogrulandi.
+- Acik: Emre/Gizem admin eklenecek mi (Gizem'in e-postasi); Emre'nin plani (Bahri admin'den atayacak);
+  personel hesabi yontemi A/B.
