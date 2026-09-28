@@ -546,8 +546,16 @@ if abonelik_verisi["durum"] == "odeme_gecikti":
 # anlamina geliyor -- ileride HER musteri kendi isletmesinde 'sahip'
 # rolune sahip olacak. Platform genelinde TEK admin olmasi icin bu
 # ayrimin rol alanindan tamamen BAGIMSIZ tutulmasi sart.
-ADMIN_EPOSTA = "bahriguler@gmail.com"
-st.session_state.admin_mi = (kullanici.user.email == ADMIN_EPOSTA)
+# YUZ ... DUZELTME (28 Eylul 2026, Menu Muhendisi 9): admin listesi artik
+# TEK yerde, veritabanindaki public.auth_admin_mi() fonksiyonunda (sql/177).
+# Bahri'nin kurali: admin SADECE Bahri; ileride YALNIZCA Emre ve Gizem
+# eklenebilir, baska hicbir abone asla. Listeyi degistirmek icin yeni bir
+# migration gerekir; uygulamadan degistirilemez. Fonksiyon cagrilamazsa
+# (ag hatasi, 177 calismamis) guvenli taraf: admin DEGIL.
+try:
+    st.session_state.admin_mi = bool(supabase.rpc("auth_admin_mi").execute().data)
+except Exception:
+    st.session_state.admin_mi = False
 
 # YENI ABONELIK DURUMU -- 6 Agustos 2026: "deneme" kavrami tamamen
 # kaldirildi (bkz. 41_deneme_plani_kaldir.sql). Yeni akis: kullanici
