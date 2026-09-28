@@ -12149,3 +12149,12 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
 - FAZ 2 (sonra): RLS ile kendi recete ve maliyet gizleme + sayfa duzenleme yetkisi; FAZ 3: Abonelik
   sayfasinda "Personel ve Yetkiler" arayuzu + app.py navigasyon filtresi. Hesap olusturma yontemi (A/B)
   hala Bahri'nin kararini bekliyor.
+- 175 SONUCU: rls_acik true, politika_sayisi 5, rol kisitinda 'muhasebe' var, tetikleyici_guncel true,
+  sahip sayisi 2. Faz 1 dogrulandi.
+- 173 SONUCU: isletme_aktif_abonelik Emre'nin isletmesi icin durum 'aktif' donduruyor; plan_adi/plan_kodu/
+  limitler/ozellikler NULL (erisim engellenmiyor). Bahri: donem_bitis BOS kalsin; Emre'nin sifresi var.
+- Kucuk kusur: 6_Abonelik.py st.session_state.get("plan_kodu", "-") plan NULL iken "None" yazar
+  (.get(key) or "-" olmali). Personel arayuzuyle birlikte duzeltilecek.
+- Admin sayfasi (pages/7_Admin.py) istegi: admin, aboneler uzerinde yapabildigi HER seyi burada gormeli
+  (su an sadece "Iptal Et" var, plan NULL oldugu icin "? plani" yaziyor). Plan secimi admin'den
+  yapilabilmeli. Teshis: sql/176_teshis_abonelik_planlari.sql. 7_Admin.py dosyasi zip'te yok, istendi.
