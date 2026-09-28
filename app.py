@@ -24,7 +24,7 @@ from cryptography.fernet import Fernet, InvalidToken
 
 from sidebar_logo import sidebar_logo_goster
 
-from db import get_supabase, supabase_ile_dene
+from db import get_supabase, supabase_ile_dene, olay_kaydet
 from yetkiler import tam_yetkiler, yetki
 
 st.set_page_config(
@@ -256,6 +256,7 @@ if st.session_state.oturum is None:
         try:
             yenilenen = supabase.auth.refresh_session(saklanan_refresh)
             st.session_state.oturum = yenilenen.session
+            st.session_state["_giris_turu"] = "hatirla"  # kullanim istatistigi (sql/183)
             # ONEMLI: Supabase refresh token'lari TEK KULLANIMLIK (rotation) --
             # her basarili yenilemede yeni bir refresh_token doner, eskisi
             # gecersiz olur. Cerezi burada guncellemezsek "beni hatirla"
@@ -314,6 +315,8 @@ if st.session_state.oturum is None:
                 try:
                     sonuc = giris_yap(email, sifre)
                     st.session_state.oturum = sonuc.session
+                    st.session_state["_giris_turu"] = "sifre"  # kullanim istatistigi (sql/183)
+                    st.session_state.pop("_giris_kaydedildi", None)
                     if beni_hatirla:
                         cerezler.set(
                             "refresh_token", _sifrele(sonuc.session.refresh_token),
@@ -503,6 +506,7 @@ except Exception:
     st.rerun()
 
 kullanici = supabase_ile_dene(lambda: supabase.auth.get_user())
+st.session_state["_kullanici_eposta"] = kullanici.user.email
 
 kullanici_kaydi = supabase_ile_dene(
     lambda: (
@@ -539,6 +543,8 @@ if personel_mi and not isletme_id:
         "İşletme sahibiyle görüşebilirsin."
     )
     if st.button("Çıkış yap"):
+        olay_kaydet(supabase, "cikis")
+        st.session_state.pop("_giris_kaydedildi", None)
         supabase.auth.sign_out()
         st.session_state.oturum = None
         cerezler.delete("refresh_token", key="refresh_token_cikis_personel")
@@ -561,6 +567,8 @@ if abonelik_verisi is None or abonelik_verisi["durum"] in ("suresi_doldu", "ipta
     st.warning("Aboneliğin bulunmuyor ya da sona ermiş.")
     st.link_button("Plan seç ve devam et", url="https://ORNEK-ODEME-SAYFASI-LINKI")
     if st.button("Çıkış yap"):
+        olay_kaydet(supabase, "cikis")
+        st.session_state.pop("_giris_kaydedildi", None)
         supabase.auth.sign_out()
         st.session_state.oturum = None
         cerezler.delete("refresh_token", key="refresh_token_cikis_abonelik")
@@ -1433,4 +1441,18 @@ st.session_state.salt_okunur = st.session_state.get("odeme_onay_bekleniyor", Fal
     and _sayfa_yetki_anahtari != "uygulama_tarifleri"
     and yetki(_sayfa_yetki_anahtari) < 2
 )
+
+# KULLANIM ISTATISTIGI (29 Eylul 2026, sql/183): oturumun ilk calismasinda
+# "giris", sonra sayfa degisince ya da ayni sayfada en az 60 saniye arayla
+# "sayfa" olayi yazilir (her widget tiklamasinda yazmamak icin kisitli).
+# Yazilamazsa uygulama etkilenmez (olay_kaydet hatalari yutar).
+if not st.session_state.get("_giris_kaydedildi"):
+    olay_kaydet(supabase, "giris", detay=st.session_state.get("_giris_turu") or "oturum")
+    st.session_state["_giris_kaydedildi"] = True
+    st.session_state["_son_sayfa_olayi"] = None
+_simdi = time.time()
+_son = st.session_state.get("_son_sayfa_olayi")
+if not _son or _son[0] != pg.title or _simdi - _son[1] >= 60:
+    olay_kaydet(supabase, "sayfa", sayfa=pg.title)
+    st.session_state["_son_sayfa_olayi"] = (pg.title, _simdi)
 pg.run()
