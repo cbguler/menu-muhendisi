@@ -12237,3 +12237,15 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   isletme sayisi 2.
 - Teshis: sql/180_teshis_gorunumler_ve_subeler.sql (gorunum tanimlari + anon/authenticated izinleri,
   subeler yapisi, RLS acik mi).
+- 180 SONUCU: 7 gorunumun hepsi anon ve authenticated'a acik; 6'si security_invoker degil (tanimlar okundu:
+  isletme_aktif_abonelik ve malzeme_guncel_fiyat filtre icermiyor; asama/uretim/karlilik gorunumleri
+  isletme filtresi olmadan tum isletmeleri kapsiyor). Uygulama kodu bu gorunumleri her yerde kendi
+  isletme_id'siyle suzuyor. NOT: Streamlit sunucu tarafli calistigi icin anon anahtar ve oturum token'lari
+  tarayiciya gitmiyor; pratik istismar riski dusuk, ama savunma katmani olarak kapatilmali.
+  subeler tablosu: id, isletme_id, ad, adres, created_at; 0 satir (kullanilmiyor). Butun ilgili tablolarda
+  RLS acik (menu_takvimi_ogeleri, recete_asamalari, recete_malzemeleri dahil).
+- sql/181_gorunum_guvenligi.sql: recete_asamalari'na "kendi recete asamalarini oku" politikasi (yoksa
+  gorunumler RLS'e tabi olunca kendi tariflerin enerji/iscilik maliyeti 0 cikardi); asama_malzemeleri'nde
+  RLS aciksa okuma politikasi; 6 gorunum security_invoker=true; 7 gorunumden anon SELECT kaldirildi.
+  KILIT: degisiklik oncesi/sonrasi her sahibin kimligiyle (set local role authenticated + jwt claims)
+  uretim maliyeti, fiyat sayisi, karlilik ve abonelik karsilastiriliyor; fark varsa tum islem geri aliniyor.
