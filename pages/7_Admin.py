@@ -360,6 +360,144 @@ for plan in planlar:
 
 
 # -----------------------------------------------------------------------
+# KULLANIM ISTATISTIKLERI (29 Eylul 2026, sql/183 kullanim_olaylari)
+# Bahri'nin istegi: abonelerin giris, cikis, hangi sayfada ne kadar kaldigi.
+# SURE TAHMINDIR: Streamlit sekmenin kapandigini sunucuya bildirmez. Bir olaydan
+# sonraki olaya kadar gecen sure o sayfaya yazilir; 30 dakikadan uzun ara oturum
+# kopmasi sayilip 1 dakika olarak alinir; oturumun son olayina da 1 dakika eklenir.
+# -----------------------------------------------------------------------
+st.divider()
+st.subheader("Kullanım İstatistikleri")
+st.caption(
+    "Giriş, çıkış ve sayfa görüntüleme kayıtları. Sayfada kalma süreleri tahminidir: tarayıcı "
+    "kapatıldığında uygulamaya haber gelmez, bu yüzden bir işlemden bir sonrakine kadar geçen süre "
+    "sayılır (30 dakikadan uzun aralar kesinti kabul edilir). Kayıtlar 29 Eylül 2026'dan itibaren tutulur."
+)
+
+import pandas as pd
+from datetime import timedelta
+
+_ist_c1, _ist_c2 = st.columns([1, 1])
+_donem_gun = _ist_c1.selectbox(
+    "Dönem", [1, 7, 30, 90], index=1,
+    format_func=lambda g: "Son 24 saat" if g == 1 else f"Son {g} gün", key="ist_donem",
+)
+_kendi_haric = _ist_c2.checkbox("Kendi hesabımı hariç tut", value=True, key="ist_kendi_haric")
+
+_baslangic = (datetime.now(timezone.utc) - timedelta(days=_donem_gun)).isoformat()
+_olaylar = []
+_ofset = 0
+try:
+    while True:
+        _parti = (
+            supabase.table("kullanim_olaylari")
+            .select("kullanici_id, email, isletme_id, ana_isletme_id, oturum_kimligi, olay, sayfa, detay, created_at")
+            .gte("created_at", _baslangic)
+            .order("created_at")
+            .range(_ofset, _ofset + 999)
+            .execute()
+        ).data or []
+        _olaylar += _parti
+        if len(_parti) < 1000:
+            break
+        _ofset += 1000
+except Exception:
+    _olaylar = []
+    st.info("Kullanım kayıtları okunamadı (183 çalıştırıldı mı?).")
+
+if _kendi_haric:
+    _kendi_eposta = st.session_state.get("_kullanici_eposta")
+    _olaylar = [o for o in _olaylar if o.get("email") != _kendi_eposta]
+
+if not _olaylar:
+    st.info("Bu dönemde kayıt yok.")
+else:
+    _df = pd.DataFrame(_olaylar)
+    _df["zaman"] = pd.to_datetime(_df["created_at"], utc=True).dt.tz_convert("Europe/Istanbul")
+    _df = _df.sort_values(["oturum_kimligi", "zaman"])
+    # Tahmini sure: ayni oturumda bir sonraki olaya kadar
+    _df["sonraki"] = _df.groupby("oturum_kimligi")["zaman"].shift(-1)
+    _fark = (_df["sonraki"] - _df["zaman"]).dt.total_seconds()
+    _df["sure_sn"] = _fark.where(_fark <= 1800, 60).fillna(60)
+    _df.loc[_df["olay"] == "cikis", "sure_sn"] = 0
+
+    # Isletme adlari (admin tum isletmeleri gorur)
+    try:
+        _isl = supabase.table("isletmeler").select("id, ad").execute().data or []
+    except Exception:
+        _isl = []
+    _isl_ad = {i["id"]: i["ad"] for i in _isl}
+    _df["abone"] = _df["ana_isletme_id"].map(_isl_ad).fillna("?")
+    _df["calisilan"] = _df["isletme_id"].map(_isl_ad).fillna("?")
+
+    def _sure_yaz(sn):
+        sn = int(sn or 0)
+        s_, d_ = divmod(sn // 60, 60)
+        return f"{s_} sa {d_} dk" if s_ else f"{d_} dk"
+
+    _sayfa_df = _df[_df["olay"] == "sayfa"]
+    _giris_df = _df[_df["olay"] == "giris"]
+
+    _m1, _m2, _m3, _m4 = st.columns(4)
+    _m1.metric("Aktif kullanıcı", _df["email"].nunique())
+    _m2.metric("Oturum", _df["oturum_kimligi"].nunique())
+    _m3.metric("Giriş", len(_giris_df))
+    _m4.metric("Toplam süre (tahmini)", _sure_yaz(_sayfa_df["sure_sn"].sum()))
+
+    st.markdown("**Kullanıcı bazında**")
+    _kullanici_ozet = []
+    for (_eposta, _abone), _g in _df.groupby(["email", "abone"], dropna=False):
+        _gs = _g[_g["olay"] == "sayfa"]
+        _en_cok = _gs.groupby("sayfa")["sure_sn"].sum().sort_values(ascending=False)
+        _kullanici_ozet.append({
+            "Kullanıcı": _eposta or "?",
+            "Abone işletme": _abone,
+            "Giriş": int((_g["olay"] == "giris").sum()),
+            "Çıkış (düğmeyle)": int((_g["olay"] == "cikis").sum()),
+            "Son işlem": _g["zaman"].max().strftime("%d.%m.%Y %H:%M"),
+            "Toplam süre": _sure_yaz(_gs["sure_sn"].sum()),
+            "En çok kullandığı sayfa": _en_cok.index[0] if len(_en_cok) else "-",
+        })
+    st.dataframe(pd.DataFrame(_kullanici_ozet), hide_index=True, use_container_width=True)
+
+    st.markdown("**Sayfa bazında**")
+    _sayfa_ozet = (
+        _sayfa_df.groupby("sayfa")
+        .agg(goruntuleme=("sayfa", "size"), sure=("sure_sn", "sum"), kullanici=("email", "nunique"))
+        .sort_values("sure", ascending=False)
+        .reset_index()
+    )
+    st.dataframe(
+        pd.DataFrame({
+            "Sayfa": _sayfa_ozet["sayfa"],
+            "Görüntüleme": _sayfa_ozet["goruntuleme"],
+            "Kullanıcı": _sayfa_ozet["kullanici"],
+            "Toplam süre": _sayfa_ozet["sure"].map(_sure_yaz),
+        }),
+        hide_index=True, use_container_width=True,
+    )
+
+    st.markdown("**Günlük aktif kullanıcı**")
+    _gunluk = _df.assign(gun=_df["zaman"].dt.strftime("%Y-%m-%d")).groupby("gun")["email"].nunique()
+    st.bar_chart(_gunluk)
+
+    with st.expander("Son işlemler (en yeni 200)"):
+        _son = _df.sort_values("zaman", ascending=False).head(200)
+        _olay_etiket = {"giris": "Giriş", "cikis": "Çıkış", "sayfa": "Sayfa"}
+        _detay_etiket = {"sifre": "şifreyle", "hatirla": "beni hatırla", "oturum": "açık oturum"}
+        st.dataframe(
+            pd.DataFrame({
+                "Zaman": _son["zaman"].dt.strftime("%d.%m.%Y %H:%M:%S"),
+                "Kullanıcı": _son["email"],
+                "Abone": _son["abone"],
+                "Çalışılan işletme": _son["calisilan"],
+                "İşlem": _son["olay"].map(_olay_etiket),
+                "Sayfa / ayrıntı": _son["sayfa"].fillna(_son["detay"].map(_detay_etiket)).fillna(""),
+            }),
+            hide_index=True, use_container_width=True,
+        )
+
+# -----------------------------------------------------------------------
 # 4) ADMIN YETKILERI -- sadece ana admin (sql/178)
 # -----------------------------------------------------------------------
 try:
