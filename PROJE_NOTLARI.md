@@ -12313,3 +12313,18 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   yatay secim (radio) olarak gorunur; rol secilince o rolun setiyle dolar; st.form kaldirildi (rol degisince
   secimler hemen yenilensin diye). Hazir rolun seti degistirilirse rol_sablonu 'ozel' kaydedilir. Mevcut
   personel duzenlemede de ayni yapi: isletme basina "calisir" kutusu, rol, yetkiler.
+
+### 29 Eylul 2026 -- Menu Muhendisi 9: Admin kullanim istatistikleri
+- Bahri'nin istegi: admin sayfasinda abonelerin giris, cikis, hangi sayfada ne kadar kaldigi vb. istatistikler.
+- sql/183_kullanim_olaylari.sql: kullanim_olaylari (kullanici_id, email, isletme_id, ana_isletme_id,
+  oturum_kimligi, olay giris/cikis/sayfa, sayfa, detay, created_at). RLS: herkes sadece kendi olayini
+  yazar, SADECE admin okur; guncelleme/silme yok; anon kapali.
+- db.py: olay_kaydet() -- hata olursa sessizce yutar (uygulamayi asla etkilemez); oturum kimligi uuid.
+- app.py: giris turu ('sifre' / 'hatirla' / 'oturum'); oturumun ilk calismasinda 'giris'; sayfa degisince
+  veya ayni sayfada >= 60 sn arayla 'sayfa'; app.py'deki iki "Cikis yap" dugmesinde 'cikis'.
+- pages/6_Abonelik.py: "Cikis yap" dugmesinde 'cikis'.
+- pages/7_Admin.py: "Kullanim Istatistikleri" (donem 24 saat/7/30/90 gun, kendi hesabini haric tut; ozet
+  metrikler, kullanici bazinda, sayfa bazinda, gunluk aktif kullanici grafigi, son 200 islem).
+  SURE TAHMINDIR: bir olaydan sonrakine kadar; 30 dk'dan uzun ara kesinti -> 1 dk; son olaya 1 dk.
+- Acik: kayitlarin saklama suresi (tablo surekli buyur; ornek: 12 ay sonra silme) Bahri'nin karari;
+  KVKK acisindan kullanicilara aydinlatma metninde bildirilmesi (hukuki degerlendirme Claude'un degil).
