@@ -35,7 +35,7 @@ oturumu_uygula(supabase)
 # porsiyon profilleri) gorur. Isletme bilgileri, subeler ve personel yonetimi
 # SADECE patrona aittir.
 from yetkiler import YETKI_KATALOGU, HAZIR_ROLLER, OZEL_ROL, yetki
-from db import get_supabase_admin
+from db import get_supabase_admin, olay_kaydet
 
 _patron = st.session_state.get("patron_mu", True)
 _personel_mi = st.session_state.get("personel_mi", False)
@@ -737,6 +737,8 @@ st.divider()
 
 cerezler = cerez_yoneticisi()
 if st.button("Çıkış yap", type="primary"):
+    olay_kaydet(supabase, "cikis")  # kullanim istatistigi (sql/183)
+    st.session_state.pop("_giris_kaydedildi", None)
     supabase.auth.sign_out()
     st.session_state.oturum = None
     cerezler.delete("refresh_token", key="refresh_token_cikis_abonelik_sayfasi")
