@@ -149,56 +149,89 @@ if _patron and _org:
     _rol_etiketi = {k: v[0] for k, v in HAZIR_ROLLER.items()}
     _rol_etiketi[OZEL_ROL[0]] = OZEL_ROL[1]
 
+    # YUZ ... DUZELTME (28 Eylul 2026): Bahri -- "yetkiler ve yetki secimi nerede?"
+    # Yetkiler artik personel eklerken de gorunur. st.form KULLANILMIYOR: rol
+    # degistiginde yetki secimleri o rolun setiyle hemen dolsun diye (form icinde
+    # widget'lar gonderilene kadar yenilenmez). Hazir rolun seti degistirilirse
+    # kayit "Ozel" rol olarak yapilir.
+    def _yetki_secicileri(on_ek, baslangic):
+        """Katalogdaki her yetki icin yatay secim; secilen seviyeleri dondurur."""
+        secim = {}
+        for _anahtar, _etiket, _aciklama, _seviyeler in YETKI_KATALOGU:
+            _kodlar = [kod for kod, _ in _seviyeler]
+            _etiketler = dict(_seviyeler)
+            _eski = baslangic.get(_anahtar, _kodlar[0])
+            secim[_anahtar] = st.radio(
+                _etiket, _kodlar,
+                index=_kodlar.index(_eski) if _eski in _kodlar else 0,
+                format_func=lambda k, e=_etiketler: e[k],
+                horizontal=True, help=_aciklama, key=f"{on_ek}_{_anahtar}",
+            )
+        return secim
+
+    def _kayit_rolu(rol, secim):
+        if rol != OZEL_ROL[0] and secim == HAZIR_ROLLER[rol][1]:
+            return rol
+        return OZEL_ROL[0]
+
     with st.expander("Yeni personel ekle", expanded=False):
-        with st.form("yeni_personel_formu", clear_on_submit=False):
-            _pc1, _pc2 = st.columns(2)
-            _p_ad = _pc1.text_input("Ad soyad")
-            _p_eposta = _pc2.text_input("E-posta (giriş adı)")
-            _pc3, _pc4 = st.columns(2)
-            _p_sifre = _pc3.text_input("Şifre (en az 8 karakter)", type="password")
-            _p_rol = _pc4.selectbox(
-                "Rol", list(HAZIR_ROLLER.keys()), format_func=lambda k: _rol_etiketi[k],
-                help="Yetkileri sonra şube şube değiştirebilirsin.",
-            )
-            _p_subeler = st.multiselect(
-                "Çalışacağı işletmeler", _org_idleri, default=[isletme_id] if isletme_id in _org_idleri else [],
-                format_func=lambda i: _org_ad.get(i, "?"),
-            )
-            if st.form_submit_button("Personeli ekle", type="primary", disabled=_admin is None):
-                _eposta = _p_eposta.strip().lower()
-                if not _eposta or "@" not in _eposta:
-                    st.error("Geçerli bir e-posta gir.")
-                elif len(_p_sifre) < 8:
-                    st.error("Şifre en az 8 karakter olmalı.")
-                elif not _p_subeler:
-                    st.error("En az bir işletme seç.")
-                else:
-                    _personel_id = None
-                    try:
-                        _personel_id = supabase.table("personel").insert({
-                            "ana_isletme_id": _ana_id, "email": _eposta, "ad_soyad": _p_ad.strip() or None,
-                        }).execute().data[0]["id"]
-                        supabase.table("personel_sube_yetkileri").insert([
-                            {"personel_id": _personel_id, "isletme_id": _sid, "rol_sablonu": _p_rol,
-                             "yetkiler": HAZIR_ROLLER[_p_rol][1]}
-                            for _sid in _p_subeler
-                        ]).execute()
-                        # Hesap e-posta gondermeden, dogrulanmis olarak acilir; kayit
-                        # tetikleyicisi (182) kisiyi yeni isletme acmadan bu isletmeye baglar.
-                        _admin.auth.admin.create_user(
-                            {"email": _eposta, "password": _p_sifre, "email_confirm": True}
-                        )
-                        st.success(f"{_eposta} eklendi. Bu e-posta ve şifreyle giriş yapabilir.")
-                        st.rerun()
-                    except Exception as e:
-                        if _personel_id:
-                            try:
-                                supabase.table("personel").delete().eq("id", _personel_id).execute()
-                            except Exception:
-                                pass
-                        st.error(
-                            f"Personel eklenemedi: {e}. E-posta başka bir hesapta kayıtlı olabilir."
-                        )
+        _pc1, _pc2 = st.columns(2)
+        _p_ad = _pc1.text_input("Ad soyad", key="yp_ad")
+        _p_eposta = _pc2.text_input("E-posta (giriş adı)", key="yp_eposta")
+        _pc3, _pc4 = st.columns(2)
+        _p_sifre = _pc3.text_input("Şifre (en az 8 karakter)", type="password", key="yp_sifre")
+        _p_rol = _pc4.selectbox(
+            "Rol", _rol_secenekleri, format_func=lambda k: _rol_etiketi[k], key="yp_rol",
+            help="Hazır rol seçince aşağıdaki yetkiler o role göre dolar; istediğini değiştirebilirsin.",
+        )
+        _p_subeler = st.multiselect(
+            "Çalışacağı işletmeler", _org_idleri,
+            default=[isletme_id] if isletme_id in _org_idleri else [],
+            format_func=lambda i: _org_ad.get(i, "?"), key="yp_subeler",
+        )
+        st.markdown("**Yetkiler**")
+        st.caption(
+            "Seçilen bütün işletmelere aynı yetkiler uygulanır; personeli ekledikten sonra "
+            "işletme işletme ayrı ayrı değiştirebilirsin."
+        )
+        _sablon = HAZIR_ROLLER.get(_p_rol, HAZIR_ROLLER["asci"])[1]
+        _p_yetkiler = _yetki_secicileri(f"yp_yetki_{_p_rol}", _sablon)
+
+        if st.button("Personeli ekle", type="primary", disabled=_admin is None, key="yp_ekle"):
+            _eposta = _p_eposta.strip().lower()
+            if not _eposta or "@" not in _eposta:
+                st.error("Geçerli bir e-posta gir.")
+            elif len(_p_sifre) < 8:
+                st.error("Şifre en az 8 karakter olmalı.")
+            elif not _p_subeler:
+                st.error("En az bir işletme seç.")
+            else:
+                _personel_id = None
+                try:
+                    _personel_id = supabase.table("personel").insert({
+                        "ana_isletme_id": _ana_id, "email": _eposta, "ad_soyad": _p_ad.strip() or None,
+                    }).execute().data[0]["id"]
+                    supabase.table("personel_sube_yetkileri").insert([
+                        {"personel_id": _personel_id, "isletme_id": _sid,
+                         "rol_sablonu": _kayit_rolu(_p_rol, _p_yetkiler), "yetkiler": _p_yetkiler}
+                        for _sid in _p_subeler
+                    ]).execute()
+                    # Hesap e-posta gondermeden, dogrulanmis olarak acilir; kayit
+                    # tetikleyicisi (182) kisiyi yeni isletme acmadan bu isletmeye baglar.
+                    _admin.auth.admin.create_user(
+                        {"email": _eposta, "password": _p_sifre, "email_confirm": True}
+                    )
+                    for _k in [k for k in st.session_state.keys() if str(k).startswith("yp_")]:
+                        del st.session_state[_k]
+                    st.success(f"{_eposta} eklendi. Bu e-posta ve şifreyle giriş yapabilir.")
+                    st.rerun()
+                except Exception as e:
+                    if _personel_id:
+                        try:
+                            supabase.table("personel").delete().eq("id", _personel_id).execute()
+                        except Exception:
+                            pass
+                    st.error(f"Personel eklenemedi: {e}. E-posta başka bir hesapta kayıtlı olabilir.")
 
     try:
         _personeller = (
@@ -220,49 +253,44 @@ if _patron and _org:
         if not _p.get("kullanici_id"):
             _durum += ", hesabı açılmamış"
         with st.expander(f"{_p.get('ad_soyad') or _p['email']} — {_p['email']} — {_durum}"):
-            with st.form(f"personel_formu_{_pid}"):
-                _aktif = st.checkbox("Aktif (işaret kaldırılırsa hiçbir işletmeye erişemez)", value=bool(_p.get("aktif")), key=f"p_aktif_{_pid}")
-                _secimler = {}
-                for _iid in _org_idleri:
-                    st.markdown(f"**{_org_ad[_iid]}**")
-                    _var = _iid in _mevcut
-                    _k1, _k2 = st.columns([1, 2])
-                    _calisir = _k1.checkbox("Bu işletmede çalışır", value=_var, key=f"p_calisir_{_pid}_{_iid}")
-                    _eski_rol = (_mevcut.get(_iid) or {}).get("rol_sablonu") or "asci"
-                    _rol = _k2.selectbox(
-                        "Rol", _rol_secenekleri,
-                        index=_rol_secenekleri.index(_eski_rol) if _eski_rol in _rol_secenekleri else 0,
-                        format_func=lambda k: _rol_etiketi[k], key=f"p_rol_{_pid}_{_iid}",
-                    )
-                    _eski_yetkiler = (_mevcut.get(_iid) or {}).get("yetkiler") or HAZIR_ROLLER.get(_eski_rol, HAZIR_ROLLER["asci"])[1]
-                    st.caption("Aşağıdaki ayarlar sadece rol 'Özel' iken kullanılır; hazır rolde o rolün seti uygulanır.")
-                    _ozel = {}
-                    _sutunlar = st.columns(5)
-                    for _n, (_anahtar, _etiket, _aciklama, _seviyeler) in enumerate(YETKI_KATALOGU):
-                        _kodlar = [kod for kod, _ in _seviyeler]
-                        _etiketler = dict(_seviyeler)
-                        _eski = _eski_yetkiler.get(_anahtar, _kodlar[0])
-                        with _sutunlar[_n % 5]:
-                            _ozel[_anahtar] = st.selectbox(
-                                _etiket, _kodlar,
-                                index=_kodlar.index(_eski) if _eski in _kodlar else 0,
-                                format_func=lambda k, e=_etiketler: e[k],
-                                help=_aciklama, key=f"p_yetki_{_pid}_{_iid}_{_anahtar}",
-                            )
-                    _secimler[_iid] = (_calisir, _rol, _ozel)
-                _yeni_sifre = st.text_input(
-                    "Yeni şifre belirle (boş bırakırsan değişmez)", type="password", key=f"p_sifre_{_pid}"
+            _aktif = st.checkbox(
+                "Aktif (işaret kaldırılırsa hiçbir işletmeye erişemez)",
+                value=bool(_p.get("aktif")), key=f"p_aktif_{_pid}",
+            )
+            _secimler = {}
+            for _iid in _org_idleri:
+                st.markdown(f"**{_org_ad[_iid]}**")
+                _kayit = _mevcut.get(_iid)
+                _calisir = st.checkbox("Bu işletmede çalışır", value=_kayit is not None, key=f"p_calisir_{_pid}_{_iid}")
+                if not _calisir:
+                    _secimler[_iid] = (False, None, None)
+                    continue
+                _eski_rol = (_kayit or {}).get("rol_sablonu") or "asci"
+                _rol = st.selectbox(
+                    "Rol", _rol_secenekleri,
+                    index=_rol_secenekleri.index(_eski_rol) if _eski_rol in _rol_secenekleri else 0,
+                    format_func=lambda k: _rol_etiketi[k], key=f"p_rol_{_pid}_{_iid}",
                 )
-                _kaydet = st.form_submit_button("Kaydet", type="primary")
-
-            if _kaydet:
+                # Rol degismediyse kayitli yetkiler, degistiyse yeni rolun seti gelir
+                if _kayit and _rol == _eski_rol:
+                    _baslangic = _kayit.get("yetkiler") or {}
+                elif _rol == OZEL_ROL[0]:
+                    _baslangic = (_kayit or {}).get("yetkiler") or HAZIR_ROLLER["asci"][1]
+                else:
+                    _baslangic = HAZIR_ROLLER[_rol][1]
+                _secim = _yetki_secicileri(f"p_yetki_{_pid}_{_iid}_{_rol}", _baslangic)
+                _secimler[_iid] = (True, _rol, _secim)
+            _yeni_sifre = st.text_input(
+                "Yeni şifre belirle (boş bırakırsan değişmez)", type="password", key=f"p_sifre_{_pid}"
+            )
+            if st.button("Kaydet", type="primary", key=f"p_kaydet_{_pid}"):
                 try:
                     supabase.table("personel").update({"aktif": _aktif}).eq("id", _pid).execute()
-                    for _iid, (_calisir, _rol, _ozel) in _secimler.items():
+                    for _iid, (_calisir, _rol, _secim) in _secimler.items():
                         if _calisir:
-                            _yetkiler = _ozel if _rol == OZEL_ROL[0] else HAZIR_ROLLER[_rol][1]
                             supabase.table("personel_sube_yetkileri").upsert(
-                                {"personel_id": _pid, "isletme_id": _iid, "rol_sablonu": _rol, "yetkiler": _yetkiler},
+                                {"personel_id": _pid, "isletme_id": _iid,
+                                 "rol_sablonu": _kayit_rolu(_rol, _secim), "yetkiler": _secim},
                                 on_conflict="personel_id,isletme_id",
                             ).execute()
                         elif _iid in _mevcut:
