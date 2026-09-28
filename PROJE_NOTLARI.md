@@ -12306,3 +12306,10 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   yetki kisitlari); iki sekmede farkli sube secimi ayni kullanicida cakisir (aktif_sube kullanici basina tek);
   personel silme (su an sadece durdurma); Aylik Menu'de maliyet gizli personel icin fiyat_verisi_var=False
   yolu ekranda nasil gorunuyor; sube bazli recete limiti (her isletme ayri sayiyor).
+- 182 kod push'u (9 commit, 29 Eylul 00:18-00:20) GitHub'da dogrulandi; Abonelik'te Subeler ve Personel ve
+  Yetkiler bolumleri goruldu.
+- Bahri: "yetkiler ve yetki secimi onay kutulari nerede?" -- yeni personel formunda sadece rol vardi, yetki
+  ayarlari personel eklendikten sonra aciliyordu. DUZELTME (6_Abonelik.py): yeni personel eklerken de 10 yetki
+  yatay secim (radio) olarak gorunur; rol secilince o rolun setiyle dolar; st.form kaldirildi (rol degisince
+  secimler hemen yenilensin diye). Hazir rolun seti degistirilirse rol_sablonu 'ozel' kaydedilir. Mevcut
+  personel duzenlemede de ayni yapi: isletme basina "calisir" kutusu, rol, yetkiler.
