@@ -15,7 +15,12 @@
 #       listesinden 'iptal_edildi' secilip onay kutusu isaretlenerek yapilir;
 #       iptal edilmis bir hesap ayni yoldan tekrar 'aktif' yapilabilir.
 #   (3) Planlar -- Temel/Pro/Kurumsal'in adi, fiyatlari, limitleri (bos =
-#       sinirsiz), ozellikleri ve aktifligi duzenlenir.
+#       sinirsiz) ve aktifligi duzenlenir. YUZ ... DUZELTME (28 Eylul 2026):
+#       "Ozellikler" kutulari (boston_matrisi, satis_analitik, ozel_destek)
+#       Bahri'nin karariyla KALDIRILDI -- uygulama satis verisi toplayan bir
+#       satis destek uygulamasi degil; planlar SADECE sube ve recete limitiyle
+#       ayrilir. Veritabanindaki ozellikler kolonuna dokunulmuyor (kodda hicbir
+#       yerde kullanilmiyordu), guncelleme de o kolonu artik yazmiyor.
 #   (4) Admin Yetkileri -- SADECE ana admin (Bahri) gorur. Aday listesindeki
 #       kisilerin (Emre; ileride Gizem) admin hakki acilip kapatilir. Aday
 #       listesi sql/178'de sabit; buradan yeni aday eklenemez.
@@ -54,11 +59,6 @@ DURUM_ETIKETLERI = {
 # Erisimi kesen durumlar -- secilirse ayrica onay istenir
 ERISIMI_KESEN = {"iptal_edildi", "suresi_doldu"}
 
-OZELLIK_ETIKETLERI = {
-    "boston_matrisi": "Boston matrisi",
-    "satis_analitik": "Satış analitiği",
-    "ozel_destek": "Özel destek",
-}
 
 
 def _tarih(deger):
@@ -296,14 +296,6 @@ st.caption(
     "Değişiklik, o plandaki bütün abonelere bir sonraki girişlerinde yansır."
 )
 
-# Bilinen + planlarda gecen butun ozellik anahtarlari
-tum_ozellikler = list(OZELLIK_ETIKETLERI.keys())
-for p in planlar:
-    for anahtar in (p.get("ozellikler") or {}):
-        if anahtar not in tum_ozellikler:
-            tum_ozellikler.append(anahtar)
-
-
 def _sayi_ya_da_none(deger, tam_sayi=False):
     if deger is None:
         return None
@@ -336,17 +328,6 @@ for plan in planlar:
                     "Reçete limiti (boş = sınırsız)", min_value=1, step=1,
                     value=_sayi_ya_da_none(plan.get("recete_limiti"), tam_sayi=True), key=f"recete_{pid}",
                 )
-            st.markdown("**Özellikler**")
-            mevcut_ozellikler = dict(plan.get("ozellikler") or {})
-            oz_sutunlar = st.columns(len(tum_ozellikler) or 1)
-            yeni_ozellikler = dict(mevcut_ozellikler)
-            for i, anahtar in enumerate(tum_ozellikler):
-                with oz_sutunlar[i]:
-                    yeni_ozellikler[anahtar] = st.checkbox(
-                        OZELLIK_ETIKETLERI.get(anahtar, anahtar),
-                        value=bool(mevcut_ozellikler.get(anahtar)),
-                        key=f"oz_{pid}_{anahtar}",
-                    )
             plan_kaydet = st.form_submit_button("Planı kaydet", type="primary")
 
         if plan_kaydet:
@@ -362,7 +343,6 @@ for plan in planlar:
                         "yillik_fiyat_eur": yillik,
                         "sube_limiti": sube,
                         "recete_limiti": recete,
-                        "ozellikler": yeni_ozellikler,
                     })
                     .eq("id", pid)
                     .execute()
