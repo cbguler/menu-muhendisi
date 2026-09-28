@@ -14,9 +14,40 @@ import streamlit as st
 from supabase import create_client, Client
 
 
-@st.cache_resource
 def get_supabase() -> Client:
-    return create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_ANON_KEY"])
+    """Her TARAYICI OTURUMUNA ayri bir Supabase istemcisi dondurur.
+
+    YUZ ... DUZELTME (28 Eylul 2026, Menu Muhendisi 9): bu fonksiyon onceden
+    @st.cache_resource ile onbellekleniyordu. cache_resource, sunucudaki
+    BUTUN kullanicilar arasinda TEK bir nesne paylastirir; her sayfa da bu
+    ortak istemciye set_session() ile kendi token'ini yaziyordu. Iki kisi ayni
+    anda uygulamayi kullandiginda birinin sorgusu digerinin token'iyla
+    calisabilir (baska isletmenin verisini gorme/yazma riski) ve refresh
+    token'lar birbirinin uzerine yazilabilir ("Beni hatirla" sorunlarinin
+    olasi sebeplerinden biri -- TAHMIN, teyit edilmedi). Personel/sube modeline
+    gecmeden once kapatilmasi SART. Artik istemci st.session_state'te, yani
+    oturum basina tutuluyor.
+    """
+    if "_supabase_istemcisi" not in st.session_state:
+        st.session_state["_supabase_istemcisi"] = create_client(
+            st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_ANON_KEY"]
+        )
+    return st.session_state["_supabase_istemcisi"]
+
+
+@st.cache_resource
+def get_supabase_admin():
+    """Service role istemcisi -- SADECE patronun personel hesabi acmasi icin
+    (auth.admin.create_user). RLS'i ATLAR: baska hicbir sorguda kullanilmaz,
+    set_session() asla cagrilmaz (kullanici oturumu tasimadigi icin
+    onbelleklenmesi guvenli). Anahtar Streamlit Cloud "Secrets" ekraninda
+    SUPABASE_SERVICE_ROLE_KEY adiyla durur; repoya ve Claude ortamina ASLA
+    girmez. Anahtar tanimli degilse None doner, arayuz bunu kontrol eder.
+    """
+    anahtar = st.secrets.get("SUPABASE_SERVICE_ROLE_KEY")
+    if not anahtar:
+        return None
+    return create_client(st.secrets["SUPABASE_URL"], anahtar)
 
 
 def supabase_ile_dene(fonksiyon, deneme_sayisi=3, bekleme_saniye=1.0):
