@@ -12158,3 +12158,11 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
 - Admin sayfasi (pages/7_Admin.py) istegi: admin, aboneler uzerinde yapabildigi HER seyi burada gormeli
   (su an sadece "Iptal Et" var, plan NULL oldugu icin "? plani" yaziyor). Plan secimi admin'den
   yapilabilmeli. Teshis: sql/176_teshis_abonelik_planlari.sql. 7_Admin.py dosyasi zip'te yok, istendi.
+- 176 SONUCU: abonelik_planlari'nda 3 aktif plan: Temel (temel; 19 EUR/ay, 190 EUR/yil; 1 sube, 100 recete;
+  boston_matrisi), Pro (pro; 39/390; 3 sube, recete sinirsiz; + satis_analitik), Kurumsal (kurumsal; fiyat
+  NULL; sube/recete sinirsiz; + ozel_destek). "premium" plani YOK (13 Agustos notundaki premium karari ile
+  celisiyor, Bahri'ye soruldu). abonelikler.durum kisiti 7 deger; odeme_saglayici'da 'manuel' var.
+  isletme_aktif_abonelik: LEFT JOIN planlar, isletme basina en yeni abonelik. RLS: admin tum abonelikleri
+  gorur ve UPDATE edebilir (plan_id dahil) -> plan secimi icin migration GEREKMEZ, sadece arayuz.
+  Admin'in baska isletmelerin kullanicilar/personel_yetkileri satirlarini gorme politikasi YOK (personel
+  listesi icin gerekecek). Durum sayilari: aktif 2.
