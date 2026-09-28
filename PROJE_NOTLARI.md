@@ -12118,3 +12118,20 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   Dogrulama isletme_aktif_abonelik gorunumunden yapiliyor (gorunum tanimi bu oturumda gorulmedi).
 - Emre asci; uygulama onun fikirleriyle gelistirilecek. Acik is #7 (10-15 tarifin bir asciya gozden
   gecirtilmesi) icin aday.
+
+### 28 Eylul 2026 -- Menu Muhendisi 9: "Personel ve Yetkiler" ozelligi (tasarim asamasi)
+- Istek: abone (sahip), uygulamayi kullanacak personeli ve yetkilerini Abonelik sayfasindan yonetsin.
+- Bahri'nin kararlari: (1) personel hesabini SAHIP olusturur (e-posta + sifreyi kendisi belirler);
+  (2) hazir rol + sayfa bazinda ince ayar (Yok / Goruntule / Duzenle); (3) isletmenin KENDI recete ve
+  tariflerini (receteler.isletme_id NOT NULL) personelden gizleme yetkisi olsun (maliyet/fiyat gizleme
+  ifadesinin kapsami teyit ediliyor).
+- Mevcut temel: kullanicilar(isletme_id, rol) + RLS auth_isletme_id(). Engel: 05 kayit tetikleyicisi her
+  yeni auth kullanicisina yeni isletme+abonelik aciyor; personel icin sahibin isletmesine baglanmali.
+- Kutuphane tarifleri isletme_id NULL (global), kendi receteler isletme_id NOT NULL: kendi recetelerin
+  gizlenmesi RLS ile satir duzeyinde yapilabilir.
+- Hazir rol varsayilanlari (Asci/Yonetici/Muhasebe) Claude onerisi, TAHMIN; Emre ile gozden gecirilecek.
+- Teshis: sql/174_teshis_personel_altyapisi.sql (salt okunur). Hesap olusturma yontemi (service_role'u
+  Streamlit secrets'a koymak mi, koymadan mi) Bahri'nin kararini bekliyor.
+- Emre hesabi: 173 dogrulama sonucu ve plan/bitis tarihi karari hala bekleniyor.
+- Bahri teyit etti: personelden HEM maliyet/fiyat HEM isletmenin kendi recete/tarifleri gizlenebilsin
+  (iki ayri yetki). Hesap olusturma yontemi (A: service_role Streamlit secrets / B: service_role'suz) cevapsiz.
