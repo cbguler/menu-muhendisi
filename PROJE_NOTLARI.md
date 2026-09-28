@@ -12196,3 +12196,32 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   Gizem: e-postasi gelince aday listesine (CHECK + fonksiyon) migration ile eklenecek.
 - pages/7_Admin.py: (4) "Admin Yetkileri" bolumu, sadece ana admin gorur; adaylarin admin hakki onay
   kutusuyla acilip kapatilir. app.py degismedi (admin_mi zaten auth_admin_mi() ile).
+- Plan ozellikleri incelemesi: boston_matrisi/satis_analitik/ozel_destek kodda HICBIR yerde kullanilmiyordu
+  (app.py sadece session_state'e yaziyor); pages/3_Boston_Matrisi.py repoda yok. sube_limiti de hicbir yerde
+  uygulanmiyor (recete_limiti sadece 1_Recete_Uretimi.py'de).
+- Bahri'nin karari: ozellik kutulari admin sayfasindan KALDIRILDI; planlar SADECE sube ve recete limitiyle
+  ayrilir ("bu uygulama satis verisi toplayan bir satis destek uygulamasi degildir"). 7_Admin.py guncellendi;
+  DB'deki ozellikler kolonuna dokunulmadi.
+
+### 28 Eylul 2026 -- Menu Muhendisi 9: Isletme / Sube / Personel yetki modeli (TASARIM, onay bekliyor)
+- Bahri'nin istegi: Abonelik sayfasinda isletme olusturulunca patron belli olsun; patron baska kimlere,
+  hangi subelere, neyi gorme/yapma yetkisi verecegini belirlesin. Istenen yetkiler: maliyetler, satin alma
+  listeleri, uygulama tarifleri, isletmenin ozel tarifleri, recete uretimi, aylik menu uretimi, PDF raporlari
+  + Claude'un onerecegi ek yetkiler. SUBELER AYRI AYRI BIRER ISLETME sayilir ve ana isletme icinde ayni
+  yetkilendirme kurallarina tabidir.
+- Onerilen model (Claude, onay bekliyor): isletmeler.ust_isletme_id (NULL = ana isletme, dolu = sube);
+  abonelik ve limitler ana isletmede; patron = ana isletmenin sahibi, tum subelerde tam yetki; personel
+  atamasi (personel, sube) basina yetki seti; 175'teki personel_yetkileri (bos) bu modele gore yeniden
+  kurulacak; RLS isletme_id = auth_isletme_id() yerine erisim fonksiyonlarina gecis; ust menude sube secici.
+- Bahri'nin kararlari (sube/yetki modeli): (1) ana isletmenin ozel tarifleri TUM subelerde ortak, sube kendi
+  tarifini de ekleyebilir; (2) personeli SADECE patron ekler (sube mudurune devredilmez -> katalogdaki
+  "Personel yonetimi" satiri kaldirildi); (3) personel hesabi yontemi A: service_role anahtari Streamlit
+  secrets'a (Bahri ekler, Claude ortamina ASLA girmez), hesap e-postasiz ve dogrulanmis acilir.
+  Yetki katalogu (7 istenen + 5 oneri) itirazsiz kabul edildi.
+- Asama 1 teshis: sql/179_teshis_sube_yetki_altyapisi.sql. db.py istendi (admin istemcisi eklenecek).
+- GUVENLIK BULGUSU (db.py, GitHub'dan okundu): get_supabase() @st.cache_resource ile TUM kullanicilar
+  arasinda TEK istemci paylastiriyordu; her sayfa bu ortak istemciye set_session() yapiyordu. Eszamanli
+  kullanimda baska isletmenin token'iyla sorgu ve refresh token cakismasi riski ("Beni hatirla" sorununun
+  olasi sebebi -- TAHMIN). DUZELTME: istemci st.session_state'te, oturum basina. Ayrica
+  get_supabase_admin() eklendi (SUPABASE_SERVICE_ROLE_KEY secrets'ta yoksa None; sadece personel hesabi
+  acmak icin, RLS'i atlar). .gitignore .streamlit/secrets.toml'u zaten disliyor (dogrulandi).
