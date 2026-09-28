@@ -12015,3 +12015,71 @@ Arastirma sonucunda (168f) bu turden GERCEK celiskinin sadece
 Giresun'da oldugu, Rize'nin ise ayri bir "hazir X" adlandirma
 sorunu tasidigi (isil celiski olmadan) dogrulanmisti -- ikisi de
 simdi ayni kapsamli duzeltmeyle cozuldu.
+
+## OTURUM 28 EYLUL 2026 -- Enerji/Iscilik Ayarlari, PDF Ciktilari, Ana Sayfa (OZET)
+
+### Maliyet ayarlari (Abonelik sayfasi, Isletme Maliyet Ayarlari) -- KARARLAR
+- Elektrik: 0,12 -> **0,13 EUR/kWh**. Kaynak: EPDK 4 Nisan 2026 ticarethane tarifesi, >30 kWh/gun
+  5,93 TL/kWh (vergisiz); BTV %5 + KDV %20 eklenince 7,4718 TL/kWh; kur 55,93 => 0,1336 EUR/kWh.
+- Dogalgaz: **0,08 EUR/kWh KORUNDU**. Ticarethaneye ozel net bir tarife bulunamadi; mesken (Istanbul
+  IGDAS, 13,45 TL/m3 KDV dahil) proxy'siyle 0,023-0,025 EUR/kWh cikti. Bahri "buyuk rakam" tercihi
+  ile mevcut degeri korudu. Bu rakam elektrik kadar guvenilir bir kaynaga dayanmiyor.
+- Personel saat ucreti: 5,00 -> **11,03 EUR/saat** (kariyer.net asci en yuksek net maas, bordro
+  simulasyonu, 192,86 saat/ay). Bahri ayarlari Abonelik sayfasindan kendisi girdi.
+- Enerji kaynagi kurali (recete_asamalari.enerji_kaynagi): ocak/tava/tencere/izgara -> dogalgaz,
+  firin -> elektrik. Sabit varsayim; indüksiyon vb. yansitilmiyor, tarif/isletme bazli ayar yok.
+
+### Giresun/Rize mantik hatasi (migration 170) -- TAMAMLANDI
+- MISIR UNU korundu, gercek misir ekmegi pisirme asamasi eklendi (yeni malzeme eklenmedi). 168f
+  taramasinda "isil islem yok + isi kelimesi" celiskisi sadece Giresun'da bulundu. Tarama SADECE bu
+  kalibi yakaliyor; baska turde malzeme/talimat tutarsizliklari icin ayri tarama gerekir.
+- Postgres ILIKE, veritabani collation'ina bagli olarak Turkce I/i katlamasini yapmiyor (168c yanlis
+  "0 satir" verdi); bu tur aramalarda "slem" gibi I/i icermeyen govde kullanilmali.
+
+### Kod duzeltmeleri
+- pages/6_Abonelik.py: dict.get(key, "") deger NULL iken None dondurur -> None.strip() AttributeError.
+  6 alanda .get(key) or "" ile duzeltildi.
+- Sabit "241 tarif" metinleri dinamik sayima cevrildi (5_Tarif_Kutuphanesi.py, 6_Abonelik.py, app.py).
+  Sayim, PostgREST 1000 satir siniri nedeniyle .range() ile sayfalayarak yapiliyor (kutuphane 1000 tarif).
+- Ana sayfa (app.py): dinamik tarif/malzeme sayisi, vegan/vejetaryen, aylik kartlar, "Tekrar Dene",
+  tarife tiklama, Aylik Sarf Listesi, ozel recete kutuphanesi anlatimi eklendi.
+- Besin ogesi sayisi DUZELTILDI: toplam **32** (5 temel + 13 vitamin + 10 mineral + 4 diger makro:
+  sodyum/lif/seker/doymus yag). Ana sayfaya once yazilan "22 vitamin/mineral, 27 besin ogesi" YANLISTI.
+
+### Aylik Sarf Listesi (eski adi Aylik Malzeme Listesi) -- pages/0_Yillik_Menu.py
+- Malzeme ihtiyacinin yaninda haftalik enerji tuketimi (kWh), iscilik (saat) ve gereken personel.
+- _gercek_maliyet_hesapla artik 4 deger doner: (enerji_eur, iscilik_eur, enerji_kwh, iscilik_dakika).
+  Tek cagri yeri vardi, guncellendi.
+- Gereken personel = YUKARI_YUVARLAMA(haftalik iscilik saati / 45); ayin sonucu = en yogun haftanin degeri.
+- Cikti tarayici Print yerine gercek PDF (reportlab). Haftalik ozet satirlari malzeme tablosunun son
+  satirlari + NOSPLIT: uzun listede bile ozet bolunmez/yalniz kalmaz. Genel toplam blogu KeepTogether.
+
+### PDF altyapisi (ortak)
+- requirements.txt: reportlab>=4.0.
+- Turkce karakter icin assets/fonts/DejaVuSans.ttf ve DejaVuSans-Bold.ttf sart (yoksa Helvetica'ya
+  duser, Turkce karakterler bozulur ama uygulama cokmez). registerFontFamily cagrisi ZORUNLU: bu
+  olmadan Latin-1 disi harfler (I-noktali, s-cengelli, g-yumusak vb.) tablo hucrelerinde bozuluyordu.
+- Sayfa basligi (_pdf_sayfa_basligi_ciz, her sayfada): sol ustte assets/logo.png + altinda
+  "Menü Mühendisi", ortada isletmenin TAM unvani (isletmeler.ad; kisaltma DEGIL, kisaltma sadece
+  buton etiketi icin), altinda alt baslik. Sade menu cizgisiz baslik kullaniyor (cift cizgi kusuru).
+
+### Aylik Menu PDF (Excel'e indir TAMAMEN KALDIRILDI)
+- Buton: "Aylik Menuyu PDF'e indir" -> dialog: Icerik (Sade/Detayli), Sayfa boyutu (A4/B3), Sayfa yonu
+  (deneme: Dikey/Yatay, yatay=True parametresi, varsayilan dikey). PDF Olustur ara adimi yok.
+- Sade: tum ay TEK sayfa. Takvim ayi 4-6 hafta surebildigi icin punto/dolgu/bosluk olcek dongusuyle
+  (1.0 -> 0.65, %5 adim) tek sayfaya sigana kadar kuculuyor. Ogun basina yemekler (basinda *), ince
+  cizgi, kirmizi alerjen satiri; hafta sonu sutunlari krem arka plan; haftalar arasi kucuk bosluk
+  (hafta basligi bandi yok); altta ALLERJEN uyari NOT'u.
+- Detayli: her hafta bir sayfa; her ogun blogu KeepTogether (bant, yemekler, "Besin Değerleri",
+  cizgi, kirmizi "Allerjenler"). 32 besin ogesinin verisi olanlar gosterilir (veri olmayan atlanir).
+  Yemek/besin AYRI tablo satirlari oldugu icin ayirici cizgi tum hafta boyunca duz cikar.
+- Yazim: Bahri'nin istegiyle PDF'te "Allerjen" yazimi kullaniliyor.
+
+### Dogrulama durumu / ACIK ISLER
+- Sade tek sayfa ve Detayli hafta-basi-bir-sayfa testleri gercek Aralik/Kasim PDF'leriyle (dikey) ve
+  sahte veriyle (5 ve 6 hafta, dikey ve yatay) yapildi. YATAY modun gercek ay verisiyle teyidi yok.
+- "Hafta sonu vurgusu daha once istenmisti" ifadesinin kaynagi gecmis notlarda bulunamadi; dogrudan
+  uygulandi ve Bahri onayladi.
+- Ayri PDF'ler icin git commit'leri Bahri tarafindan yapiliyor; hangi dosyalarin push'landigi teyit edilmedi.
+- Bekleyen: kaynak_duzeltilmis_v37.xlsx guncelleme kurali; 10-15 tarifin gercek bir asciya gozden
+  gecirtilmesi; Projects'e gecis (Operation & Maintenance asamasinda).
