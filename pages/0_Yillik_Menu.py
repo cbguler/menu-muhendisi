@@ -3316,6 +3316,15 @@ def _aylik_menu_pdf_sade_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_adi
             _tablo.setStyle(TableStyle(_stil_komutlari))
             _elemanlar.append(_tablo)
 
+        # Tablonun altina ALLERJEN uyari notu (Bahri'nin istegi)
+        _not_stili = ParagraphStyle("notSade", fontName=_font_normal, fontSize=5.6 * olcek, leading=6.8 * olcek)
+        _elemanlar.append(Spacer(1, 2 * mm * olcek))
+        _elemanlar.append(Paragraph(
+            "<b>NOT:</b> Porsiyonların altında kırmızı yazı ile belirtilenler ALLERJEN gıda maddeleridir, "
+            "eğer bu gıda maddelerine karşı gıda toleransınız varsa lütfen başka menü tercih ediniz.",
+            _not_stili,
+        ))
+
         _sayac = [0]
 
         def _sayfa_ciz(canvas, belge):
@@ -3379,6 +3388,7 @@ def _aylik_menu_pdf_detayli_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_
 
     _dish_stili = ParagraphStyle("dishDetay", fontName=_font_normal, fontSize=6.6, leading=8)
     _besin_stili = ParagraphStyle("besinDetay", fontName=_font_normal, fontSize=5.6, leading=6.9, textColor=colors.HexColor(_BESIN_RENGI))
+    _alerjen_stili = ParagraphStyle("alerjenDetay", fontName=_font_normal, fontSize=5.6, leading=6.9, textColor=colors.HexColor(_ALERJEN_RENGI))
     _tarih_stili = ParagraphStyle("tarihDetay", fontName=_font_kalin, fontSize=8, leading=10, alignment=1)
     _bant_stili = ParagraphStyle("bantDetay", fontName=_font_kalin, fontSize=6.5, leading=8, textColor=colors.white)
     _hafta_baslik_stili = ParagraphStyle("haftaBaslikDetay", fontName=_font_kalin, fontSize=11, leading=14, spaceAfter=5)
@@ -3418,12 +3428,13 @@ def _aylik_menu_pdf_detayli_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_
         _tarih_tablo.setStyle(TableStyle(_tarih_stil_komutlari))
         _elemanlar.append(_tarih_tablo)
 
-        # 2) Her ogun -- KENDI 3 satirlik (etiket+yemek+besin) kucuk
-        # tablosu, KeepTogether ile SARILMIS -- boylece bu 3 satir
+        # 2) Her ogun -- KENDI 4 satirlik (etiket+yemek+besin+allerjen) kucuk
+        # tablosu, KeepTogether ile SARILMIS -- boylece bu satirlar
         # ASLA sayfa arasinda bolunmez.
         for ogun_adi in ("Öğle", "Akşam"):
             _satirlar = [
                 [Paragraph(ogun_adi.upper(), _bant_stili)] + [""] * (_gun_sayisi - 1),
+                [],
                 [],
                 [],
             ]
@@ -3439,9 +3450,18 @@ def _aylik_menu_pdf_detayli_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_
                     _satirlar[2].append(Paragraph("&nbsp;", _besin_stili))
                 else:
                     _icerik = f"{_temel}<br/>{_ek}" if _ek else _temel
-                    _satirlar[2].append(Paragraph(_icerik, _besin_stili))
+                    _satirlar[2].append(Paragraph(f"<b>Besin Değerleri</b><br/>{_icerik}", _besin_stili))
             while len(_satirlar[2]) < _gun_sayisi:
                 _satirlar[2].append("")
+            # 4. satir: Allerjenler (kirmizi baslik + o porsiyondaki allerjen listesi)
+            for gun in hafta:
+                liste = gun["ogunler"].get(ogun_adi, [])
+                if not liste:
+                    _satirlar[3].append(Paragraph("&nbsp;", _alerjen_stili))
+                else:
+                    _satirlar[3].append(Paragraph(f"<b>Allerjenler</b><br/>{_alerjen_metni(liste, detay)}", _alerjen_stili))
+            while len(_satirlar[3]) < _gun_sayisi:
+                _satirlar[3].append("")
 
             _ogun_stil_komutlari = [
                 ("GRID", (0, 0), (-1, -1), 0.4, colors.grey),
@@ -3455,10 +3475,13 @@ def _aylik_menu_pdf_detayli_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_
                 ("TOPPADDING", (0, 0), (-1, 0), 1.5),
                 ("BOTTOMPADDING", (0, 0), (-1, 0), 1.5),
                 ("LINEABOVE", (0, 2), (-1, 2), 0.6, colors.grey),
+                # besin degerlerinin ALTINA cizgi (allerjen satirinin ustu) -- satir siniri
+                # oldugu icin tum hafta boyunca duz cikar
+                ("LINEABOVE", (0, 3), (-1, 3), 0.6, colors.grey),
             ]
             for _i in _hafta_sonu_indeksleri:
-                _ogun_stil_komutlari.append(("BACKGROUND", (_i, 1), (_i, 1), colors.HexColor(_HAFTASONU_RENGI)))
-                _ogun_stil_komutlari.append(("BACKGROUND", (_i, 2), (_i, 2), colors.HexColor(_HAFTASONU_RENGI)))
+                for _r in (1, 2, 3):
+                    _ogun_stil_komutlari.append(("BACKGROUND", (_i, _r), (_i, _r), colors.HexColor(_HAFTASONU_RENGI)))
 
             _ogun_tablo = Table(_satirlar, colWidths=[_sutun_genislik] * _gun_sayisi)
             _ogun_tablo.setStyle(TableStyle(_ogun_stil_komutlari))
