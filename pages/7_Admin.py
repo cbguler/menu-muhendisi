@@ -16,13 +16,16 @@
 #       iptal edilmis bir hesap ayni yoldan tekrar 'aktif' yapilabilir.
 #   (3) Planlar -- Temel/Pro/Kurumsal'in adi, fiyatlari, limitleri (bos =
 #       sinirsiz), ozellikleri ve aktifligi duzenlenir.
+#   (4) Admin Yetkileri -- SADECE ana admin (Bahri) gorur. Aday listesindeki
+#       kisilerin (Emre; ileride Gizem) admin hakki acilip kapatilir. Aday
+#       listesi sql/178'de sabit; buradan yeni aday eklenemez.
 #
 # Yetki: sql/177_admin_yetkisi_ve_plan_yonetimi.sql'deki auth_admin_mi()
 # fonksiyonuna bagli RLS politikalari. 177 calistirilmadan (2) icindeki
 # kullanici/personel listesi bos, (3) kaydetme reddedilir.
 # Admin listesi SADECE o fonksiyonda (Bahri; ileride yalnizca Emre/Gizem).
 
-from datetime import date
+from datetime import date, datetime, timezone
 
 import streamlit as st
 
@@ -372,3 +375,58 @@ for plan in planlar:
                         "Kaydetme veritabanı tarafından reddedildi "
                         "(177 çalıştırılmadıysa plan güncelleme izni yoktur)."
                     )
+
+
+# -----------------------------------------------------------------------
+# 4) ADMIN YETKILERI -- sadece ana admin (sql/178)
+# -----------------------------------------------------------------------
+try:
+    ana_admin_mi = bool(supabase.rpc("auth_ana_admin_mi").execute().data)
+except Exception:
+    ana_admin_mi = False
+
+if ana_admin_mi:
+    st.divider()
+    st.subheader("Admin Yetkileri")
+    st.caption(
+        "Sadece aday listesindeki kişilere admin hakkı verilebilir; liste veritabanında sabittir, "
+        "buradan yeni kişi eklenemez. Değişiklik, kişinin bir sonraki sayfa yenilemesinde geçerli olur."
+    )
+    try:
+        adaylar = (
+            supabase.table("admin_yetkileri").select("email, aktif, updated_at").order("email").execute()
+        ).data or []
+    except Exception:
+        adaylar = []
+
+    if not adaylar:
+        st.info("Aday bulunamadı (178 çalıştırıldı mı?).")
+    else:
+        with st.form("admin_yetkileri_form"):
+            yeni_degerler = {}
+            for aday in adaylar:
+                yeni_degerler[aday["email"]] = st.checkbox(
+                    f"{aday['email']} — admin hakkı",
+                    value=bool(aday.get("aktif")),
+                    key=f"adminhak_{aday['email']}",
+                )
+            yetki_kaydet = st.form_submit_button("Admin yetkilerini kaydet", type="primary")
+
+        if yetki_kaydet:
+            hata = False
+            for aday in adaylar:
+                yeni = yeni_degerler[aday["email"]]
+                if yeni == bool(aday.get("aktif")):
+                    continue
+                sonuc = (
+                    supabase.table("admin_yetkileri")
+                    .update({"aktif": yeni, "updated_at": datetime.now(timezone.utc).isoformat()})
+                    .eq("email", aday["email"])
+                    .execute()
+                )
+                if not sonuc.data:
+                    hata = True
+                    st.error(f"'{aday['email']}' güncellenemedi (izin politikası engelledi).")
+            if not hata:
+                st.success("Admin yetkileri kaydedildi.")
+                st.rerun()
