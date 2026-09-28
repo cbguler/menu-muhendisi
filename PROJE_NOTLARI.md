@@ -12225,3 +12225,15 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   olasi sebebi -- TAHMIN). DUZELTME: istemci st.session_state'te, oturum basina. Ayrica
   get_supabase_admin() eklendi (SUPABASE_SERVICE_ROLE_KEY secrets'ta yoksa None; sadece personel hesabi
   acmak icin, RLS'i atlar). .gitignore .streamlit/secrets.toml'u zaten disliyor (dogrulandi).
+- 179 SONUCU: isletme_id tasiyan 16 tablo: abonelikler, isletme_maliyet_ayarlari, isletme_porsiyon_profilleri,
+  kayitli_aylik_menuler, kisisel_beslenme_profilleri, kullanicilar, malzeme_fiyat_gecmisi, malzemeler,
+  menu_analiz, menu_ogeleri, menu_takvimi, odeme_gecmisi, personel_yetkileri, receteler, satislar, subeler.
+  Politikalarin hepsi isletme_id = auth_isletme_id() kalibinda (malzemeler/receteler okumada + global NULL).
+  GORUNUMLER: recete_guncel_maliyet security_invoker=true; asama_enerji_maliyeti, asama_iscilik_maliyeti,
+  isletme_aktif_abonelik, malzeme_guncel_fiyat, menu_ogesi_karlilik, recete_uretim_maliyeti security_invoker
+  DEGIL -> alttaki RLS'i atlayabilir, isletmeler arasi veri sizintisi RISKI (isletme_aktif_abonelik tanimi
+  filtre icermiyor, 176'da goruldu). Eski semadan "subeler" tablosu var (icerik bilinmiyor).
+  isletmeler kolonlari: id, ad, plan_tipi, created_at, adres, fatura_adresi, vergi_dairesi, vergi_no, kisaltma.
+  isletme sayisi 2.
+- Teshis: sql/180_teshis_gorunumler_ve_subeler.sql (gorunum tanimlari + anon/authenticated izinleri,
+  subeler yapisi, RLS acik mi).
