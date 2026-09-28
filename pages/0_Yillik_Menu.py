@@ -2819,25 +2819,57 @@ def _aylik_sarf_pdf_olustur(aylik, veri, isletme_tam_adi):
     _normal_stili = ParagraphStyle("normalTr", parent=_stiller["Normal"], fontName=_font_normal)
     _aciklama_stili = ParagraphStyle("aciklama", parent=_stiller["Normal"], fontName=_font_normal, fontSize=9, textColor=colors.grey, spaceAfter=8)
 
-    def _malzeme_tablosu_pdf(kayitlar, ara_toplam_eur):
+    def _malzeme_tablosu_pdf(kayitlar, ara_toplam_eur, ozet_satirlari=None):
+        """YUZ YETMIS BIRINCI DUZELTME (23 Eylul 2026): Bahri Kasim
+        ayinda "son sayfalara dogru sayfalar birbirine girmis" dedi.
+        KOK NEDEN: 6. haftanin malzeme listesi o kadar uzundu ki
+        malzeme tablosu + ozet tek sayfaya sigmiyordu; KeepTogether bu
+        durumda "sigmiyorsa bol" davranisina donup ozet tablosunun
+        ORTASINDAN (Isçilik ile Gereken personel arasindan) bolmustu.
+        COZUM: ozet satirlari (enerji/iscilik/personel) ARTIK ayni
+        tablonun son satirlari, ve NOSPLIT ile son birkaç malzeme
+        satiri + Ara toplam + ozet satirlari BOLUNMEZ blok -- liste
+        uzunsa kendi sayfalarina serbestce yayilir, ama ozet ASLA
+        yalniz/bolunmus kalmaz. repeatRows=1: baslik satiri her yeni
+        sayfada tekrarlanir."""
         _satirlar = [["Malzeme", "Miktar", "Birim", "Fiyat"]]
         for _k in kayitlar:
             _sayi, _birim = _malzeme_miktar_parcala(_k["miktar_gram"])
             _fiyat_metni = f"{_k['fiyat_eur']:.2f} €" if _k["fiyat_eur"] is not None else "fiyat yok"
             _satirlar.append([_k["ad"], _sayi, _birim, _fiyat_metni])
         _satirlar.append(["Ara toplam", "", "", f"{ara_toplam_eur:.2f} €"])
-        _t = Table(_satirlar, colWidths=[7.5 * cm, 2.5 * cm, 2 * cm, 3 * cm])
-        _t.setStyle(TableStyle([
+        _ara_toplam_indeksi = len(_satirlar) - 1
+        _ek_sayisi = 0
+        if ozet_satirlari:
+            _satirlar.append(["", "", "", ""])
+            for _etiket, _deger in ozet_satirlari:
+                _satirlar.append([_etiket, "", "", _deger])
+            _ek_sayisi = 1 + len(ozet_satirlari)
+        _t = Table(_satirlar, colWidths=[7.5 * cm, 2.5 * cm, 2 * cm, 3 * cm], repeatRows=1)
+        _komutlar = [
             ("FONTNAME", (0, 0), (-1, -1), _font_normal),
             ("FONTNAME", (0, 0), (-1, 0), _font_kalin),
-            ("FONTSIZE", (0, 0), (-1, -1), 9),
+            ("FONTSIZE", (0, 0), (-1, -1), 8.5),
             ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
             ("LINEBELOW", (0, 0), (-1, 0), 0.5, colors.grey),
-            ("LINEABOVE", (0, -1), (-1, -1), 0.5, colors.black),
-            ("FONTNAME", (0, -1), (-1, -1), _font_kalin),
-            ("TOPPADDING", (0, 0), (-1, -1), 3),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
-        ]))
+            ("LINEABOVE", (0, _ara_toplam_indeksi), (-1, _ara_toplam_indeksi), 0.5, colors.black),
+            ("FONTNAME", (0, _ara_toplam_indeksi), (-1, _ara_toplam_indeksi), _font_kalin),
+            ("TOPPADDING", (0, 0), (-1, -1), 1.8),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 1.8),
+        ]
+        if ozet_satirlari:
+            _ozet_baslangic = _ara_toplam_indeksi + 2
+            _komutlar += [
+                ("TOPPADDING", (0, _ozet_baslangic - 1), (-1, _ozet_baslangic - 1), 1),
+                ("BOTTOMPADDING", (0, _ozet_baslangic - 1), (-1, _ozet_baslangic - 1), 1),
+                ("TOPPADDING", (0, _ozet_baslangic), (-1, -1), 2),
+                ("BOTTOMPADDING", (0, _ozet_baslangic), (-1, -1), 2),
+                ("FONTNAME", (3, _ozet_baslangic), (3, -1), _font_kalin),
+            ]
+        # Son 3 malzeme satiri + Ara toplam + ozet satirlari BOLUNMEZ
+        _nosplit_baslangic = max(1, _ara_toplam_indeksi - 3)
+        _komutlar.append(("NOSPLIT", (0, _nosplit_baslangic), (-1, -1)))
+        _t.setStyle(TableStyle(_komutlar))
         return _t
 
     def _sarf_ozet_tablosu_pdf(enerji_kwh, iscilik_saat, personel):
@@ -2878,24 +2910,18 @@ def _aylik_sarf_pdf_olustur(aylik, veri, isletme_tam_adi):
     for _hafta_no in sorted(veri["haftalik_taze"].keys()):
         _elemanlar.append(PageBreak())
         _elemanlar.append(Paragraph(f"{_hafta_no}. Hafta — Taze Malzemeler", _bolum_stili))
-        # YUZ YETMISINCI DUZELTME (23 Eylul 2026): Bahri "sayfalar tek
-        # sayfaya cok kucuk farklarla oturmadi" dedi -- ozet tablosu
-        # (enerji/iscilik/personel), malzeme tablosundan AYRI bir
-        # sayfaya tasip yalniz kalabiliyordu. KeepTogether ile ikisi
-        # ARTIK BIR ARADA -- normal durumda (malzeme listesi tek
-        # sayfayi asmadigi surece) hep ayni sayfada kalirlar.
-        _elemanlar.append(KeepTogether([
-            _malzeme_tablosu_pdf(veri["haftalik_taze"][_hafta_no], veri["haftalik_toplam_eur"][_hafta_no]),
-            Spacer(1, 10),
-            _sarf_ozet_tablosu_pdf(
-                veri["haftalik_enerji_kwh"].get(_hafta_no, 0.0),
-                veri["haftalik_iscilik_saat"].get(_hafta_no, 0.0),
-                veri["haftalik_gereken_personel"].get(_hafta_no, 0),
-            ),
-        ]))
+        _elemanlar.append(_malzeme_tablosu_pdf(
+            veri["haftalik_taze"][_hafta_no], veri["haftalik_toplam_eur"][_hafta_no],
+            ozet_satirlari=[
+                ("Enerji tüketimi", f"{veri['haftalik_enerji_kwh'].get(_hafta_no, 0.0):.2f} kWh"),
+                ("İşçilik", f"{veri['haftalik_iscilik_saat'].get(_hafta_no, 0.0):.2f} saat"),
+                (f"Gereken personel ({_HAFTALIK_YASAL_CALISMA_SAATI} saat/hafta üzerinden)",
+                 str(veri["haftalik_gereken_personel"].get(_hafta_no, 0))),
+            ],
+        ))
 
     _elemanlar.append(PageBreak())
-    _elemanlar.append(Paragraph("Aylık Genel Toplam", _bolum_stili))
+    _genel_blok = [Paragraph("Aylık Genel Toplam", _bolum_stili)]
     _genel_satirlari = [
         ["Malzeme maliyeti", f"{veri['genel_toplam_eur']:.2f} €"],
         ["Enerji tüketimi", f"{veri['genel_enerji_kwh']:.2f} kWh"],
@@ -2909,16 +2935,17 @@ def _aylik_sarf_pdf_olustur(aylik, veri, isletme_tam_adi):
         ("TOPPADDING", (0, 0), (-1, -1), 4),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
     ]))
-    _elemanlar.append(_t)
+    _genel_blok.append(_t)
     if veri["en_yogun_hafta_personel"] > 0:
-        _elemanlar.append(Spacer(1, 12))
-        _elemanlar.append(Paragraph(
+        _genel_blok.append(Spacer(1, 12))
+        _genel_blok.append(Paragraph(
             f"Bu ayı karşılamak için en az <b>{veri['en_yogun_hafta_personel']} personel</b> "
             "gerekiyor (ayın en yoğun haftasının gerektirdiği işçilik saati, haftalık "
             f"{_HAFTALIK_YASAL_CALISMA_SAATI} saat yasal sınırına göre hesaplandı). "
             "Diğer haftalarda aynı ekip daha az yoğun çalışır.",
             _normal_stili,
         ))
+    _elemanlar.append(KeepTogether(_genel_blok))
 
     def _sayfa_ciz(canvas, belge):
         _pdf_sayfa_basligi_ciz(canvas, belge, isletme_tam_adi, _alt_baslik, _font_normal, _font_kalin)
@@ -3171,24 +3198,23 @@ def _pdf_hafta_sonu_indeksleri(hafta):
 
 
 def _aylik_menu_pdf_sade_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_adi):
-    """"Sade" -- ekrandaki ANA TABLO gibi, SADECE yemek isimleri, TUM
-    AY tek bir PDF SAYFASINA sigacak sekilde (Bahri'nin en onemli
-    kosulu).
+    """"Sade" -- ekrandaki ANA TABLO gibi, SADECE yemek isimleri + alerjen,
+    TUM AY tek bir PDF SAYFASINA sigacak sekilde (Bahri'nin en onemli
+    kosulu: "bu tablo tek sayfaya sigmak zorunda").
 
-    YUZ ALTMIS DOKUZUNCU DUZELTME (23 Eylul 2026, Bahri'nin 3. tur
-    kozmetik istekleri):
-    1) "Aralık — N. Hafta" renkli bant SATIRI TAMAMEN KALDIRILDI --
-       yerine haftalar arasinda milimetrik bir bosluk (Spacer)
-       birakildi. Bu, hem yer kazandirdi hem Bahri'nin acik istegiydi.
-    2) Kenar bosluklari, punto, satir araligi ve ÖĞLE/AKŞAM
-       bantlarinin kalinligi (yuksekligi) agresif sekilde daha da
-       kucultuldu -- tek sayfaya sigma hedefi icin.
-    3) Hafta sonu (Cumartesi/Pazar) sutunlari, ARKA PLAN renginin
-       hafifce degismesiyle belirginlestirildi (Bahri: "daha once
-       istemistim, yapilmamisti -- bir pattern degisikligi bile
-       coder" -- ACIK NOT: bu istegin daha onceki tam nereden geldigi
-       kod/gecmis notlarda bulunamadi, ama simdi acikca tekrarlandigi
-       icin dogrudan uygulandi)."""
+    YUZ YETMIS IKINCI DUZELTME (23 Eylul 2026): Kasim 2026 (26 Ekim -
+    6 Aralik, 6 haftalik takvim) 5 haftaya gore ayarlanmis SABIT punto/
+    bosluklarla tek sayfaya SIGMADI, son hafta ikinci sayfaya tasti.
+    KOK NEDEN: takvim ayi 4-6 hafta surebiliyor, sabit boyutlar sadece
+    5 hafta icin denenmisti. COZUM: olcek dongusu -- once rahat (1.0)
+    boyutlarla deneniyor, sayfa sayisi 1'den fazlaysa punto/dolgu/
+    hafta-arasi bosluk kademeli (%5) kucultulup tekrar deneniyor, ta ki
+    TEK sayfaya sigana kadar. Boylece 4-5 haftalik aylar rahat, 6
+    haftalik aylar sikisik ama YINE tek sayfa olur.
+    Ayrica: ÖĞLE/AKŞAM bantlari yazilarina gore inceltildi -- birlesik
+    (SPAN) bant satirindaki BOS hucreler varsayilan 10 punto yukseklik
+    dayattigi icin bant yaziisindan kalin gorunuyordu; bant satirina
+    ozel FONTSIZE/LEADING verilerek duzeltildi."""
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4, B3
     from reportlab.lib.styles import ParagraphStyle
@@ -3203,90 +3229,105 @@ def _aylik_menu_pdf_sade_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_adi
     _sayfa_genislik = _sayfa_boyutu[0] - 1.2 * cm
     _sutun_genislik = _sayfa_genislik / _gun_sayisi
 
-    _hucre_stili = ParagraphStyle("hucreSade", fontName=_font_normal, fontSize=4.8, leading=5.6)
-    _alerjen_stili = ParagraphStyle("alerjenSade", fontName=_font_normal, fontSize=4.1, leading=5, textColor=colors.HexColor(_ALERJEN_RENGI))
-    _bant_stili = ParagraphStyle("bantSade", fontName=_font_kalin, fontSize=4.3, leading=5.1, textColor=colors.white)
-    _tarih_stili = ParagraphStyle("tarihSade", fontName=_font_kalin, fontSize=5.7, leading=7, alignment=1)
+    def _uret(olcek):
+        _hucre_stili = ParagraphStyle("hucreSade", fontName=_font_normal, fontSize=4.8 * olcek, leading=5.6 * olcek)
+        _alerjen_stili = ParagraphStyle("alerjenSade", fontName=_font_normal, fontSize=4.1 * olcek, leading=5 * olcek, textColor=colors.HexColor(_ALERJEN_RENGI))
+        _bant_font = 4.3 * olcek
+        _bant_leading = 5.0 * olcek
+        _bant_stili = ParagraphStyle("bantSade", fontName=_font_kalin, fontSize=_bant_font, leading=_bant_leading, textColor=colors.white)
+        _tarih_stili = ParagraphStyle("tarihSade", fontName=_font_kalin, fontSize=5.7 * olcek, leading=7 * olcek, alignment=1)
+        _dolgu = 0.4 * olcek
 
-    _elemanlar = []
+        _elemanlar = []
+        for hafta_no, hafta in enumerate(aylik["haftalar"], start=1):
+            if hafta_no > 1:
+                _elemanlar.append(Spacer(1, max(1.2, 3.2 * olcek) * mm))
 
-    for hafta_no, hafta in enumerate(aylik["haftalar"], start=1):
-        if hafta_no > 1:
-            _elemanlar.append(Spacer(1, 3.2 * mm))
+            _hafta_sonu_indeksleri = set()
+            for _i, gun in enumerate(hafta):
+                _gun_adi, _ = _gun_tarih_bilgisi(gun, aylik["yil"])
+                if _gun_adi in ("Cumartesi", "Pazar"):
+                    _hafta_sonu_indeksleri.add(_i)
 
-        _hafta_sonu_indeksleri = set()
-        for _i, gun in enumerate(hafta):
-            _gun_adi, _ = _gun_tarih_bilgisi(gun, aylik["yil"])
-            if _gun_adi in ("Cumartesi", "Pazar"):
-                _hafta_sonu_indeksleri.add(_i)
-
-        _satirlar = []
-        _stil_komutlari = [
-            ("GRID", (0, 0), (-1, -1), 0.4, colors.grey),
-            ("VALIGN", (0, 0), (-1, -1), "TOP"),
-            ("TOPPADDING", (0, 0), (-1, -1), 0.4),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 0.4),
-            ("LEFTPADDING", (0, 0), (-1, -1), 1.5),
-            ("RIGHTPADDING", (0, 0), (-1, -1), 1.5),
-        ]
-        for _i in _hafta_sonu_indeksleri:
-            _stil_komutlari.append(("BACKGROUND", (_i, 0), (_i, 0), colors.HexColor(_HAFTASONU_RENGI)))
-
-        _tarih_satiri = []
-        for gun in hafta:
-            gun_adi, tarih_metni = _gun_tarih_bilgisi(gun, aylik["yil"])
-            _tarih_satiri.append(Paragraph(f"{tarih_metni}<br/>{gun_adi}", _tarih_stili))
-        while len(_tarih_satiri) < _gun_sayisi:
-            _tarih_satiri.append("")
-        _satirlar.append(_tarih_satiri)
-
-        for ogun_adi in ("Öğle", "Akşam"):
-            _bant_satir_no = len(_satirlar)
-            _satirlar.append([Paragraph(ogun_adi.upper(), _bant_stili)] + [""] * (_gun_sayisi - 1))
-            _stil_komutlari.append(("SPAN", (0, _bant_satir_no), (_gun_sayisi - 1, _bant_satir_no)))
-            _stil_komutlari.append(("BACKGROUND", (0, _bant_satir_no), (-1, _bant_satir_no), colors.HexColor(_OGUN_BANT_RENGI)))
-            _stil_komutlari.append(("TOPPADDING", (0, _bant_satir_no), (-1, _bant_satir_no), 0.15))
-            _stil_komutlari.append(("BOTTOMPADDING", (0, _bant_satir_no), (-1, _bant_satir_no), 0.15))
-
-            _yemek_satir_no = len(_satirlar)
-            _yemek_satiri = []
-            for gun in hafta:
-                liste = gun["ogunler"].get(ogun_adi, [])
-                _yemek_satiri.append(Paragraph(_yildizli_liste(liste), _hucre_stili))
-            while len(_yemek_satiri) < _gun_sayisi:
-                _yemek_satiri.append("")
-            _satirlar.append(_yemek_satiri)
+            _satirlar = []
+            _stil_komutlari = [
+                ("GRID", (0, 0), (-1, -1), 0.4, colors.grey),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("TOPPADDING", (0, 0), (-1, -1), _dolgu),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), _dolgu),
+                ("LEFTPADDING", (0, 0), (-1, -1), 1.5),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 1.5),
+            ]
             for _i in _hafta_sonu_indeksleri:
-                _stil_komutlari.append(("BACKGROUND", (_i, _yemek_satir_no), (_i, _yemek_satir_no), colors.HexColor(_HAFTASONU_RENGI)))
+                _stil_komutlari.append(("BACKGROUND", (_i, 0), (_i, 0), colors.HexColor(_HAFTASONU_RENGI)))
 
-            _alerjen_satir_no = len(_satirlar)
-            _alerjen_satiri = []
+            _tarih_satiri = []
             for gun in hafta:
-                liste = gun["ogunler"].get(ogun_adi, [])
-                _alerjen_satiri.append(Paragraph(_alerjen_metni(liste, detay), _alerjen_stili))
-            while len(_alerjen_satiri) < _gun_sayisi:
-                _alerjen_satiri.append("")
-            _satirlar.append(_alerjen_satiri)
-            _stil_komutlari.append(("LINEABOVE", (0, _alerjen_satir_no), (-1, _alerjen_satir_no), 0.5, colors.grey))
-            for _i in _hafta_sonu_indeksleri:
-                _stil_komutlari.append(("BACKGROUND", (_i, _alerjen_satir_no), (_i, _alerjen_satir_no), colors.HexColor(_HAFTASONU_RENGI)))
+                gun_adi, tarih_metni = _gun_tarih_bilgisi(gun, aylik["yil"])
+                _tarih_satiri.append(Paragraph(f"{tarih_metni}<br/>{gun_adi}", _tarih_stili))
+            while len(_tarih_satiri) < _gun_sayisi:
+                _tarih_satiri.append("")
+            _satirlar.append(_tarih_satiri)
 
-        _tablo = Table(_satirlar, colWidths=[_sutun_genislik] * _gun_sayisi)
-        _tablo.setStyle(TableStyle(_stil_komutlari))
-        _elemanlar.append(_tablo)
+            for ogun_adi in ("Öğle", "Akşam"):
+                _bant_satir_no = len(_satirlar)
+                _satirlar.append([Paragraph(ogun_adi.upper(), _bant_stili)] + [""] * (_gun_sayisi - 1))
+                _stil_komutlari.append(("SPAN", (0, _bant_satir_no), (_gun_sayisi - 1, _bant_satir_no)))
+                _stil_komutlari.append(("BACKGROUND", (0, _bant_satir_no), (-1, _bant_satir_no), colors.HexColor(_OGUN_BANT_RENGI)))
+                # Bos (SPAN) hucreler varsayilan 10 punto yukseklik dayatmasin
+                _stil_komutlari.append(("FONTSIZE", (0, _bant_satir_no), (-1, _bant_satir_no), _bant_font))
+                _stil_komutlari.append(("LEADING", (0, _bant_satir_no), (-1, _bant_satir_no), _bant_leading))
+                _stil_komutlari.append(("TOPPADDING", (0, _bant_satir_no), (-1, _bant_satir_no), 0.2))
+                _stil_komutlari.append(("BOTTOMPADDING", (0, _bant_satir_no), (-1, _bant_satir_no), 0.2))
 
-    def _sayfa_ciz(canvas, belge):
-        _pdf_sayfa_basligi_ciz(canvas, belge, isletme_tam_adi, _alt_baslik, _font_normal, _font_kalin)
+                _yemek_satir_no = len(_satirlar)
+                _yemek_satiri = []
+                for gun in hafta:
+                    liste = gun["ogunler"].get(ogun_adi, [])
+                    _yemek_satiri.append(Paragraph(_yildizli_liste(liste), _hucre_stili))
+                while len(_yemek_satiri) < _gun_sayisi:
+                    _yemek_satiri.append("")
+                _satirlar.append(_yemek_satiri)
+                for _i in _hafta_sonu_indeksleri:
+                    _stil_komutlari.append(("BACKGROUND", (_i, _yemek_satir_no), (_i, _yemek_satir_no), colors.HexColor(_HAFTASONU_RENGI)))
 
-    _arabellek = io.BytesIO()
-    _belge = SimpleDocTemplate(
-        _arabellek, pagesize=_sayfa_boyutu,
-        leftMargin=0.6 * cm, rightMargin=0.6 * cm, topMargin=2.55 * cm, bottomMargin=0.2 * cm,
-        title=f"Aylık Menü (Sade) - {aylik['ay']} {aylik['yil']}",
-    )
-    _belge.build(_elemanlar, onFirstPage=_sayfa_ciz, onLaterPages=_sayfa_ciz)
-    _arabellek.seek(0)
-    return _arabellek.getvalue()
+                _alerjen_satir_no = len(_satirlar)
+                _alerjen_satiri = []
+                for gun in hafta:
+                    liste = gun["ogunler"].get(ogun_adi, [])
+                    _alerjen_satiri.append(Paragraph(_alerjen_metni(liste, detay), _alerjen_stili))
+                while len(_alerjen_satiri) < _gun_sayisi:
+                    _alerjen_satiri.append("")
+                _satirlar.append(_alerjen_satiri)
+                _stil_komutlari.append(("LINEABOVE", (0, _alerjen_satir_no), (-1, _alerjen_satir_no), 0.5, colors.grey))
+                for _i in _hafta_sonu_indeksleri:
+                    _stil_komutlari.append(("BACKGROUND", (_i, _alerjen_satir_no), (_i, _alerjen_satir_no), colors.HexColor(_HAFTASONU_RENGI)))
+
+            _tablo = Table(_satirlar, colWidths=[_sutun_genislik] * _gun_sayisi)
+            _tablo.setStyle(TableStyle(_stil_komutlari))
+            _elemanlar.append(_tablo)
+
+        _sayac = [0]
+
+        def _sayfa_ciz(canvas, belge):
+            _sayac[0] += 1
+            _pdf_sayfa_basligi_ciz(canvas, belge, isletme_tam_adi, _alt_baslik, _font_normal, _font_kalin)
+
+        _arabellek = io.BytesIO()
+        _belge = SimpleDocTemplate(
+            _arabellek, pagesize=_sayfa_boyutu,
+            leftMargin=0.6 * cm, rightMargin=0.6 * cm, topMargin=2.55 * cm, bottomMargin=0.2 * cm,
+            title=f"Aylık Menü (Sade) - {aylik['ay']} {aylik['yil']}",
+        )
+        _belge.build(_elemanlar, onFirstPage=_sayfa_ciz, onLaterPages=_sayfa_ciz)
+        return _arabellek.getvalue(), _sayac[0]
+
+    _sonuc = None
+    for _olcek in (1.0, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65):
+        _sonuc, _sayfa_sayisi = _uret(_olcek)
+        if _sayfa_sayisi <= 1:
+            break
+    return _sonuc
 
 
 def _aylik_menu_pdf_detayli_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_adi):
