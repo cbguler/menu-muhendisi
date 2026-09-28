@@ -3197,7 +3197,7 @@ def _pdf_hafta_sonu_indeksleri(hafta):
     return indeksler
 
 
-def _aylik_menu_pdf_sade_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_adi):
+def _aylik_menu_pdf_sade_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_adi, yatay=False):
     """"Sade" -- ekrandaki ANA TABLO gibi, SADECE yemek isimleri + alerjen,
     TUM AY tek bir PDF SAYFASINA sigacak sekilde (Bahri'nin en onemli
     kosulu: "bu tablo tek sayfaya sigmak zorunda").
@@ -3216,13 +3216,18 @@ def _aylik_menu_pdf_sade_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_adi
     dayattigi icin bant yaziisindan kalin gorunuyordu; bant satirina
     ozel FONTSIZE/LEADING verilerek duzeltildi."""
     from reportlab.lib import colors
-    from reportlab.lib.pagesizes import A4, B3
+    from reportlab.lib.pagesizes import A4, B3, landscape
     from reportlab.lib.styles import ParagraphStyle
     from reportlab.lib.units import cm, mm
     from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
     _font_normal, _font_kalin = _pdf_font_adlari()
     _sayfa_boyutu = B3 if sayfa_boyutu_adi == "B3" else A4
+    if yatay:
+        # DENEME (23 Eylul 2026): Bahri yatay (landscape) gorunumu denemek
+        # istedi -- diger tum kurallar ayni, sadece sayfa boyutu cevriliyor.
+        # Baslik cizimi belge.pagesize kullandigi icin kendiliginden uyar.
+        _sayfa_boyutu = (_sayfa_boyutu[1], _sayfa_boyutu[0])
     _alt_baslik = f"Aylık Menü (Sade) — {aylik['ay']} {aylik['yil']}"
 
     _gun_sayisi = max(len(hafta) for hafta in aylik["haftalar"])
@@ -3323,14 +3328,17 @@ def _aylik_menu_pdf_sade_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_adi
         return _arabellek.getvalue(), _sayac[0]
 
     _sonuc = None
-    for _olcek in (1.0, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65):
+    _olcekler = (1.0, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65)
+    if yatay:
+        _olcekler = _olcekler + (0.6, 0.55, 0.5, 0.45, 0.4)
+    for _olcek in _olcekler:
         _sonuc, _sayfa_sayisi = _uret(_olcek)
         if _sayfa_sayisi <= 1:
             break
     return _sonuc
 
 
-def _aylik_menu_pdf_detayli_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_adi):
+def _aylik_menu_pdf_detayli_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_adi, yatay=False):
     """"Detaylı" -- her hafta KENDI sayfasinda, her gunun Öğle/Akşam
     yemek isimlerinin ALTINA o ogunun besin degerleri yaziliyor.
 
@@ -3347,13 +3355,18 @@ def _aylik_menu_pdf_detayli_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_
     sutunlari renklendirildi, kenar boslugu/punto/aralik daha da
     sikilastirildi (hafta tek sayfaya sigsin diye)."""
     from reportlab.lib import colors
-    from reportlab.lib.pagesizes import A4, B3
+    from reportlab.lib.pagesizes import A4, B3, landscape
     from reportlab.lib.styles import ParagraphStyle
     from reportlab.lib.units import cm
     from reportlab.platypus import KeepTogether, PageBreak, Paragraph, SimpleDocTemplate, Table, TableStyle
 
     _font_normal, _font_kalin = _pdf_font_adlari()
     _sayfa_boyutu = B3 if sayfa_boyutu_adi == "B3" else A4
+    if yatay:
+        # DENEME (23 Eylul 2026): Bahri yatay (landscape) gorunumu denemek
+        # istedi -- diger tum kurallar ayni, sadece sayfa boyutu cevriliyor.
+        # Baslik cizimi belge.pagesize kullandigi icin kendiliginden uyar.
+        _sayfa_boyutu = (_sayfa_boyutu[1], _sayfa_boyutu[0])
     _alt_baslik = f"Aylık Menü (Detaylı) — {aylik['ay']} {aylik['yil']}"
 
     _gun_sayisi = max(len(hafta) for hafta in aylik["haftalar"])
@@ -3476,19 +3489,27 @@ def _aylik_menu_pdf_dialog(aylik, detay, isletme_tam_adi):
         key="pdf_icerik_secimi",
     )
     st.radio("Sayfa boyutu", ["A4", "B3"], key="pdf_sayfa_boyutu_secimi", horizontal=True)
+    st.radio(
+        "Sayfa yönü (deneme)",
+        ["dikey", "yatay"],
+        format_func=lambda v: "Dikey" if v == "dikey" else "Yatay",
+        key="pdf_sayfa_yonu_secimi",
+        horizontal=True,
+    )
+    _yatay = st.session_state["pdf_sayfa_yonu_secimi"] == "yatay"
 
     with st.spinner("PDF oluşturuluyor..."):
         if st.session_state["pdf_icerik_secimi"] == "sade":
-            _pdf_bytes = _aylik_menu_pdf_sade_olustur(aylik, detay, isletme_tam_adi, st.session_state["pdf_sayfa_boyutu_secimi"])
+            _pdf_bytes = _aylik_menu_pdf_sade_olustur(aylik, detay, isletme_tam_adi, st.session_state["pdf_sayfa_boyutu_secimi"], yatay=_yatay)
             _icerik_etiketi = "sade"
         else:
-            _pdf_bytes = _aylik_menu_pdf_detayli_olustur(aylik, detay, isletme_tam_adi, st.session_state["pdf_sayfa_boyutu_secimi"])
+            _pdf_bytes = _aylik_menu_pdf_detayli_olustur(aylik, detay, isletme_tam_adi, st.session_state["pdf_sayfa_boyutu_secimi"], yatay=_yatay)
             _icerik_etiketi = "detayli"
 
     st.download_button(
         "PDF'i indir",
         data=_pdf_bytes,
-        file_name=f"aylik_menu_{_icerik_etiketi}_{aylik['ay']}_{aylik['yil']}_{st.session_state['pdf_sayfa_boyutu_secimi']}.pdf",
+        file_name=f"aylik_menu_{_icerik_etiketi}_{aylik['ay']}_{aylik['yil']}_{st.session_state['pdf_sayfa_boyutu_secimi']}{'_yatay' if _yatay else ''}.pdf",
         mime="application/pdf",
         type="primary",
         use_container_width=True,
