@@ -117,6 +117,23 @@ st.set_page_config(page_title="Aylık Menü", page_icon="assets/favicon.png", la
 supabase = get_supabase()
 oturumu_uygula(supabase)
 
+# YUZ ... DUZELTME (28 Eylul 2026, Menu Muhendisi 9, sql/182):
+# (1) st.cache_data sonuclari KULLANICI + AKTIF ISLETME basina ayrilir (imza
+#     parametresi). Onceden ayni isletme_id'yi paylasan iki kullanici (patron ve
+#     maliyet yetkisi olmayan personel) birbirinin onbellege alinmis verisini
+#     gorebilirdi.
+# (2) Ana isletmenin ozel tarifleri subelerde ortak: subede calisirken ozel tarif
+#     sorgulari hem subenin hem ana isletmenin tariflerini kapsar.
+from yetkiler import yetki
+
+_IMZA = st.session_state.get("onbellek_imzasi", "")
+
+
+def _ozel_isletme_idleri(isletme_id):
+    ana = st.session_state.get("ana_isletme_id")
+    return [isletme_id] if not ana or ana == isletme_id else [isletme_id, ana]
+
+
 st.title("Aylık Menü Üretim Motoru")
 st.caption(
     "Türk mutfağı tarif kütüphanesinden, anayasa kurallarına uygun "
@@ -185,7 +202,7 @@ def _sayfalayarak_getir(sorgu_uret, sayfa_boyutu=1000):
 # pages/5_Tarif_Kutuphanesi.py'deki BIREBIR AYNI mantikla buraya da
 # eklendi, boylece pop-up da tam maliyeti gosterebiliyor.
 @st.cache_data(ttl=3600)
-def _tum_tarif_id_by_ad_getir(isletme_id):
+def _tum_tarif_id_by_ad_getir(isletme_id, imza=""):
     """Pop-up'ta uretim asamalarina (enerji/iscilik icin) erismek icin
     tarif ADINDAN id'sine ihtiyacimiz var -- detay sozlugu (yukarida)
     sadece ada gore anahtarlanmis, id tasimiyor."""
@@ -193,13 +210,13 @@ def _tum_tarif_id_by_ad_getir(isletme_id):
         lambda: supabase.table("receteler").select("id, ad").is_("isletme_id", "null")
     )
     ozel = _sayfalayarak_getir(
-        lambda: supabase.table("receteler").select("id, ad").eq("isletme_id", isletme_id)
+        lambda: supabase.table("receteler").select("id, ad").in_("isletme_id", _ozel_isletme_idleri(isletme_id))
     )
     return {r["ad"]: r["id"] for r in genel + ozel}
 
 
 @st.cache_data(ttl=3600)
-def _uretim_asamalarini_getir(recete_id):
+def _uretim_asamalarini_getir(recete_id, imza=""):
     asamalar = (
         supabase.table("recete_asamalari")
         .select("id, ad, sira, sure_dakika, aktif_dakika, isil_islem_mi, enerji_kaynagi, baslangic_sicaklik, hedef_sicaklik, verimlilik_orani")
@@ -237,7 +254,7 @@ def _uretim_asamalarini_getir(recete_id):
 
 
 @st.cache_data(ttl=3600)
-def _maliyet_ayarlarini_getir(isletme_id):
+def _maliyet_ayarlarini_getir(isletme_id, imza=""):
     sonuc = (
         supabase.table("isletme_maliyet_ayarlari")
         .select("*")
@@ -295,7 +312,7 @@ with sol_mutfak:
 
 
 @st.cache_data(ttl=3600)
-def _tarif_kutuphanesini_getir(mutfak_kodu):
+def _tarif_kutuphanesini_getir(mutfak_kodu, imza=""):
     mutfak = (
         supabase.table("mutfaklar").select("id").eq("kod", mutfak_kodu).single().execute()
     ).data
@@ -332,7 +349,7 @@ def _tarif_kutuphanesini_getir(mutfak_kodu):
 
 
 @st.cache_data(ttl=3600)
-def _tarif_detaylarini_getir(isletme_id):
+def _tarif_detaylarini_getir(isletme_id, imza=""):
     """Global tariflerin porsiyon basi besin degeri, alerjen listesi ve
     (bu isletmenin kendi malzeme fiyatlariyla) maliyetini hesaplar.
     Maliyet isletmeye ozeldir cunku fiyatlar isletme_id'ye gore tutuluyor
@@ -483,7 +500,7 @@ def _ogun_toplami(tarif_adlari, detay):
 
 
 @st.cache_data(ttl=3600)
-def _isletme_receteler_ve_detay_getir(isletme_id):
+def _isletme_receteler_ve_detay_getir(isletme_id, imza=""):
     """Isletmenin kendi ozel receteleri (1_Receteler.py'de olusturulan)
     -- Yillik Menu'ye ISTEGE BAGLI olarak eklenebilir (bkz. asagidaki
     'kendi menu' butonu). Kutuphane tarifleriyle AYNI sekle
@@ -517,7 +534,7 @@ def _isletme_receteler_ve_detay_getir(isletme_id):
     receteler = (
         supabase.table("receteler")
         .select("id, ad, kategori, porsiyon_sayisi")
-        .eq("isletme_id", isletme_id)
+        .in_("isletme_id", _ozel_isletme_idleri(isletme_id))
         .execute()
     ).data or []
     if not receteler:
@@ -634,7 +651,7 @@ def _isletme_receteler_ve_detay_getir(isletme_id):
     return tarif_listesi, detay, fiyat_verisi_var
 
 
-tarifler = _tarif_kutuphanesini_getir(mutfak_secimi["kod"])
+tarifler = _tarif_kutuphanesini_getir(mutfak_secimi["kod"], imza=_IMZA)
 
 if not tarifler:
     st.warning(
@@ -718,7 +735,7 @@ detay_ozel = {}
 fiyat_ozel_var = False
 if st.session_state.kendi_menu_dahil:
     ozel_tarifler, detay_ozel, fiyat_ozel_var = _isletme_receteler_ve_detay_getir(
-        st.session_state.isletme_id
+        st.session_state.isletme_id, imza=_IMZA
     )
     if not ozel_tarifler:
         st.caption(
@@ -737,7 +754,7 @@ else:
     st.caption(f"Hiçbir bölge seçilmedi, tüm {len(tarifler)} tarif kullanılacak.")
 
 
-detay, fiyat_verisi_var = _tarif_detaylarini_getir(st.session_state.isletme_id)
+detay, fiyat_verisi_var = _tarif_detaylarini_getir(st.session_state.isletme_id, imza=_IMZA)
 if detay_ozel:
     detay = {**detay, **detay_ozel}
     fiyat_verisi_var = fiyat_verisi_var or fiyat_ozel_var
@@ -2017,15 +2034,15 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                         # enerji + işçilik)" modeliyle TUTARLI olmasi icin,
                         # her yemegin uretim asamalarindan enerji+iscilik
                         # maliyeti de hesaplanip malzeme maliyetine ekleniyor.
-                        tarif_id_sozluk = _tum_tarif_id_by_ad_getir(st.session_state.isletme_id)
-                        ayarlar = _maliyet_ayarlarini_getir(st.session_state.isletme_id)
+                        tarif_id_sozluk = _tum_tarif_id_by_ad_getir(st.session_state.isletme_id, imza=_IMZA)
+                        ayarlar = _maliyet_ayarlarini_getir(st.session_state.isletme_id, imza=_IMZA)
                         toplam_enerji = 0.0
                         toplam_iscilik = 0.0
                         for ad in tarif_adlari:
                             rid = tarif_id_sozluk.get(ad)
                             if rid is None:
                                 continue
-                            asamalar = _uretim_asamalarini_getir(rid)
+                            asamalar = _uretim_asamalarini_getir(rid, imza=_IMZA)
                             if asamalar:
                                 e, i, _, _ = _gercek_maliyet_hesapla(asamalar, ayarlar, PORSIYON_STANDART)
                                 toplam_enerji += e
@@ -2598,14 +2615,14 @@ def _aylik_sarf_ihtiyaci_hesapla(aylik, porsiyon_sayisi, isletme_id):
     # fazla kez sorgulanmasin diye kucuk bir onbellek (_asama_onbellek)
     # kullaniliyor.
     _ad_to_id = {ad: rid for rid, ad in _id_to_ad.items()}
-    _ayarlar = _maliyet_ayarlarini_getir(isletme_id)
+    _ayarlar = _maliyet_ayarlarini_getir(isletme_id, imza=_IMZA)
     _asama_onbellek = {}
     _haftalik_enerji_kwh = {}
     _haftalik_iscilik_dk = {}
     for _hafta_no, _tarif_adi in _kullanim:
         if _tarif_adi not in _asama_onbellek:
             _rid = _ad_to_id.get(_tarif_adi)
-            _asama_onbellek[_tarif_adi] = _uretim_asamalarini_getir(_rid) if _rid else []
+            _asama_onbellek[_tarif_adi] = _uretim_asamalarini_getir(_rid, imza=_IMZA) if _rid else []
         _asamalar = _asama_onbellek[_tarif_adi]
         if not _asamalar:
             continue
@@ -3672,12 +3689,19 @@ if aylik:
         # seciliyor, sonra PDF uretiliyor.
         if st.button(
             "Aylık Menüyü PDF'e indir", key="btn_aylik_pdf", type="primary", use_container_width=True,
-            disabled=st.session_state.get("salt_okunur", False),
+            # YUZ ... DUZELTME (28 Eylul 2026): PDF raporu yetkisi (pdf_raporlar)
+            disabled=st.session_state.get("salt_okunur", False) or yetki("pdf_raporlar") < 1,
+            help=None if yetki("pdf_raporlar") >= 1 else "PDF raporu alma yetkin yok.",
         ):
             _aylik_menu_pdf_dialog(aylik, detay, isletme_tam_adi)
 
     with _col_malzeme:
-        if st.button("Aylık Sarf Listesi", key="btn_aylik_sarf_listesi", use_container_width=True, type="primary"):
+        # YUZ ... DUZELTME (28 Eylul 2026): satin alma listesi yetkisi (satin_alma)
+        if st.button(
+            "Aylık Sarf Listesi", key="btn_aylik_sarf_listesi", use_container_width=True, type="primary",
+            disabled=yetki("satin_alma") < 1,
+            help=None if yetki("satin_alma") >= 1 else "Satın alma listesi yetkin yok.",
+        ):
             _aylik_sarf_listesi_dialog(
                 aylik, st.session_state.get("secili_porsiyon_sayisi", 1), st.session_state.isletme_id, isletme_tam_adi
             )
