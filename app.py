@@ -25,6 +25,7 @@ from cryptography.fernet import Fernet, InvalidToken
 from sidebar_logo import sidebar_logo_goster
 
 from db import get_supabase, supabase_ile_dene
+from yetkiler import tam_yetkiler, yetki
 
 st.set_page_config(
     page_title="Menü Mühendisliği", page_icon="assets/favicon.png", layout="wide"
@@ -512,13 +513,44 @@ kullanici_kaydi = supabase_ile_dene(
         .execute()
     )
 )
-isletme_id = kullanici_kaydi.data["isletme_id"]
+# YUZ ... DUZELTME (28 Eylul 2026, Menu Muhendisi 9): Isletme / Sube / Personel
+# modeli (sql/182). kullanicilar.isletme_id artik ANA isletmedir (abonelik orada).
+# Calisilan isletme (ana isletme ya da bir sube) veritabanindaki auth_isletme_id()
+# fonksiyonundan okunur -- butun RLS politikalari da ayni fonksiyona bakar, bu
+# yuzden session_state.isletme_id ile veritabani her zaman ayni isletmeyi gosterir.
+ana_isletme_id = kullanici_kaydi.data["isletme_id"]
+kullanici_rolu = kullanici_kaydi.data["rol"]
+personel_mi = kullanici_rolu == "personel"
+
+try:
+    erisilebilir_isletmeler = supabase_ile_dene(
+        lambda: supabase.rpc("erisilebilir_isletmeler").execute()
+    ).data or []
+    isletme_id = supabase_ile_dene(lambda: supabase.rpc("auth_isletme_id").execute()).data
+except Exception:
+    # 182 henuz calistirilmadiysa eski davranis: tek isletme
+    erisilebilir_isletmeler = []
+    isletme_id = ana_isletme_id
+
+if personel_mi and not isletme_id:
+    sidebar_logo_goster(animasyonlu=False)
+    st.warning(
+        "Hesabına henüz bir şube yetkisi tanımlanmamış ya da hesabın durdurulmuş. "
+        "İşletme sahibiyle görüşebilirsin."
+    )
+    if st.button("Çıkış yap"):
+        supabase.auth.sign_out()
+        st.session_state.oturum = None
+        cerezler.delete("refresh_token", key="refresh_token_cikis_personel")
+        st.rerun()
+    _navigasyon_sidebar_gizle()
+    st.stop()
 
 abonelik_sonuc = supabase_ile_dene(
     lambda: (
         supabase.table("isletme_aktif_abonelik")
         .select("*")
-        .eq("isletme_id", isletme_id)
+        .eq("isletme_id", ana_isletme_id)
         .execute()
     )
 )
@@ -566,9 +598,10 @@ except Exception:
 # Yillik Menu/Recete Uretimi/Ozel Menu Uretimi/Tarif Kutuphanesi
 # sayfalarinda SADECE ONIZLEME yapabilir -- o 4 sayfadaki HER etkilesimli
 # widget'a disabled=st.session_state.salt_okunur veriliyor.
-st.session_state.salt_okunur = (
+st.session_state.odeme_onay_bekleniyor = (
     abonelik_verisi["durum"] == "odeme_alindi_onay_bekliyor" and not st.session_state.admin_mi
 )
+st.session_state.salt_okunur = st.session_state.odeme_onay_bekleniyor
 if st.session_state.salt_okunur:
     st.info(
         "Ödemen alındı, teşekkürler! Hesabın admin onayı bekliyor — onaylanana "
@@ -587,8 +620,25 @@ st.session_state.odeme_bekleniyor = (
 
 # Diger sayfalarin okuyacagi ortak oturum bilgisi
 st.session_state.isletme_id = isletme_id
-st.session_state.rol = kullanici_kaydi.data["rol"]
+st.session_state.ana_isletme_id = ana_isletme_id
+st.session_state.erisilebilir_isletmeler = erisilebilir_isletmeler
+st.session_state.rol = kullanici_rolu
+st.session_state.personel_mi = personel_mi
+st.session_state.patron_mu = kullanici_rolu == "sahip"
+# Yetkiler: patron her seyin en ust seviyesi; personel aktif subedeki yetki seti.
+if personel_mi:
+    try:
+        _yetki_verisi = supabase.rpc("aktif_yetkilerim").execute().data or {}
+    except Exception:
+        _yetki_verisi = {}
+    st.session_state.yetkiler = {k: v for k, v in _yetki_verisi.items() if not k.startswith("_")}
+else:
+    st.session_state.yetkiler = tam_yetkiler()
+# Onbellek imzasi: st.cache_data sonuclari kullanici + aktif isletme basina ayrilsin
+# (yetkisi farkli iki kisi ayni isletmede birbirinin onbellege alinmis verisini gormesin).
+st.session_state.onbellek_imzasi = f"{kullanici.user.id}|{isletme_id}"
 st.session_state.plan_kodu = abonelik_verisi["plan_kodu"]
+st.session_state.plan_adi = abonelik_verisi.get("plan_adi")
 st.session_state.ozellikler = abonelik_verisi["ozellikler"] or {}
 st.session_state.recete_limiti = abonelik_verisi["recete_limiti"]
 st.session_state.sube_limiti = abonelik_verisi["sube_limiti"]
@@ -918,9 +968,16 @@ sayfa_listesi = [kontrol_sayfasi]
 # onaylanmasa da) bu sayfalar navigasyonda goruniyor; onay bekleyen
 # durumdaki kisitlama (islem yapamama) salt_okunur ile ayri saglaniyor.
 if not st.session_state.odeme_bekleniyor:
-    sayfa_listesi += [
-        yillik_menu_sayfasi, recete_uretimi_sayfasi, tarif_kutuphanesi_sayfasi,
-    ]
+    # YUZ ... DUZELTME (28 Eylul 2026): personel sadece yetkisi olan sayfalari gorur
+    # (patronun yetkileri her zaman tam oldugu icin onun icin degisiklik yok).
+    if yetki("aylik_menu") >= 1:
+        sayfa_listesi.append(yillik_menu_sayfasi)
+    if yetki("recete_uretimi") >= 1:
+        sayfa_listesi.append(recete_uretimi_sayfasi)
+    if yetki("uygulama_tarifleri") >= 1:
+        sayfa_listesi.append(tarif_kutuphanesi_sayfasi)
+# Abonelik sayfasi herkese acik (personel orada sadece Hesap Bilgileri, cikis ve
+# yetkisi olan bolumleri gorur).
 sayfa_listesi.append(abonelik_sayfasi)
 # Admin sayfasi SADECE admin oturumunda navigasyon listesine ekleniyor --
 # st.navigation() sadece kendisine verilen sayfalari taniyor, listede
@@ -1340,5 +1397,40 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# SUBE SECICI (28 Eylul 2026, sql/182): birden fazla isletmeye (ana + subeler)
+# erisimi olan kisi hangi isletmede calistigini buradan secer. Secim veritabanina
+# (aktif_sube_sec) yazilir; RLS ve sayfalar ayni isletmeyi kullanir.
+if len(erisilebilir_isletmeler) > 1:
+    _isletme_idleri = [i["id"] for i in erisilebilir_isletmeler]
+    _isletme_adlari = {
+        i["id"]: (i["ad"] + (" (merkez)" if not i.get("ust_isletme_id") else ""))
+        for i in erisilebilir_isletmeler
+    }
+    _secili = st.selectbox(
+        "Çalıştığın işletme / şube",
+        _isletme_idleri,
+        index=_isletme_idleri.index(isletme_id) if isletme_id in _isletme_idleri else 0,
+        format_func=lambda i: _isletme_adlari.get(i, "?"),
+        key="sube_secici",
+    )
+    if _secili != isletme_id:
+        if supabase.rpc("aktif_sube_sec", {"p_isletme": _secili}).execute().data:
+            st.rerun()
+        else:
+            st.error("Bu şubeye erişim yetkin yok.")
+
 pg = st.navigation(sayfa_listesi, position="hidden")
+
+# Sayfa bazli salt okunur: odeme onayi beklerken (eski kural) VEYA personelin o
+# sayfadaki yetkisi "Duzenler" degilse sayfadaki islem dugmeleri kapali.
+_sayfa_yetki_anahtari = {
+    "Aylık Menü": "aylik_menu",
+    "Reçete Üretimi": "recete_uretimi",
+    "Tarif Kütüphanesi": "uygulama_tarifleri",
+}.get(pg.title)
+st.session_state.salt_okunur = st.session_state.get("odeme_onay_bekleniyor", False) or (
+    _sayfa_yetki_anahtari is not None
+    and _sayfa_yetki_anahtari != "uygulama_tarifleri"
+    and yetki(_sayfa_yetki_anahtari) < 2
+)
 pg.run()
