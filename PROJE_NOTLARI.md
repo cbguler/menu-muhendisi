@@ -12184,3 +12184,15 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
 - GitHub'daki app.py ve 7_Admin.py zip/yuklenen surumle birebir ayni oldugu dogrulandi.
 - Acik: Emre/Gizem admin eklenecek mi (Gizem'in e-postasi); Emre'nin plani (Bahri admin'den atayacak);
   personel hesabi yontemi A/B.
+- 177 SONUCU: kalan sabit e-postali politika yok ([]); auth_admin_mi() kullanan 6 politika:
+  abonelik_planlari guncelleme, abonelikler gor/onayla, isletmeler admin gor, kullanicilar ve
+  personel_yetkileri admin gor. Dogrulandi.
+- Bahri: Emre ve Gizem SIMDI admin olmasin; once abone olarak girip denetim yapacaklar. Admin hakkini
+  Bahri admin panelinden verebilmeli.
+- sql/178_admin_yetkisi_panelden.sql: auth_ana_admin_mi() (sadece bahriguler@gmail.com, sabit);
+  admin_yetkileri tablosu (email PK, aktif) + CHECK ile aday listesi (su an sadece emreguler98@hotmail.com);
+  Emre satiri aktif=false. RLS: sadece ana admin SELECT/UPDATE; INSERT/DELETE politikasi yok.
+  auth_admin_mi() = ana admin VEYA (aday listesinde VE aktif) (SECURITY DEFINER).
+  Gizem: e-postasi gelince aday listesine (CHECK + fonksiyon) migration ile eklenecek.
+- pages/7_Admin.py: (4) "Admin Yetkileri" bolumu, sadece ana admin gorur; adaylarin admin hakki onay
+  kutusuyla acilip kapatilir. app.py degismedi (admin_mi zaten auth_admin_mi() ile).
