@@ -12135,3 +12135,17 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
 - Emre hesabi: 173 dogrulama sonucu ve plan/bitis tarihi karari hala bekleniyor.
 - Bahri teyit etti: personelden HEM maliyet/fiyat HEM isletmenin kendi recete/tarifleri gizlenebilsin
   (iki ayri yetki). Hesap olusturma yontemi (A: service_role Streamlit secrets / B: service_role'suz) cevapsiz.
+- 174 SONUCU: tetikleyici on_auth_user_created -> yeni_kullanici_isle() (her kayitta yeni isletme + sahip +
+  odeme_bekleniyor). kullanicilar_rol_check: sahip/yonetici/mutfak/salt_okunur. auth_isletme_id() SECURITY
+  DEFINER. receteler/recete_malzemeleri RLS: okuma = global VEYA kendi isletme; yazma = kendi isletme.
+  recete_asamalari'nda SADECE global okuma politikasi var (kendi recetelerin asamalari okunamiyor olabilir;
+  ayri kontrol edilecek, bu ise dahil degil). recete_id tasiyan: asama_enerji_maliyeti,
+  asama_iscilik_maliyeti, menu_ogeleri, menu_takvimi_ogeleri, recete_asamalari, recete_guncel_maliyet,
+  recete_malzemeleri, recete_uretim_maliyeti.
+- sql/175_personel_yetkileri_altyapi.sql (FAZ 1): rol kisitina 'muhasebe'; personel_yetkileri tablosu
+  (email tekil, sayfa_yetkileri jsonb, kendi_receteleri_gorur, maliyet_gorur, aktif) + sahip-only RLS;
+  auth_sahip_mi(); tetikleyici: bekleyen personel kaydi varsa sahibin isletmesine baglar, yoksa eski yol.
+  Mevcut tablolarin RLS'ine dokunulmadi. Rol eslesmesi: Asci=mutfak, Yonetici=yonetici, Muhasebe=muhasebe.
+- FAZ 2 (sonra): RLS ile kendi recete ve maliyet gizleme + sayfa duzenleme yetkisi; FAZ 3: Abonelik
+  sayfasinda "Personel ve Yetkiler" arayuzu + app.py navigasyon filtresi. Hesap olusturma yontemi (A/B)
+  hala Bahri'nin kararini bekliyor.
