@@ -163,8 +163,10 @@ kullanicilar = (
 ).data or []
 try:
     personel = (
-        supabase.table("personel_yetkileri")
-        .select("isletme_id, email, ad_soyad, rol, aktif, kullanici_id")
+        # YUZ ... DUZELTME (28 Eylul 2026, sql/182): personel_yetkileri yerine
+        # personel tablosu (ana_isletme_id); abonelik ana isletmeye bagli.
+        supabase.table("personel")
+        .select("ana_isletme_id, email, ad_soyad, aktif, kullanici_id")
         .execute()
     ).data or []
 except Exception:
@@ -263,7 +265,7 @@ for abonelik in gosterilecek:
 
         # Kullanicilar ve personel (salt okunur)
         isletme_kullanicilari = [k for k in kullanicilar if k.get("isletme_id") == abonelik.get("isletme_id")]
-        isletme_personeli = [p for p in personel if p.get("isletme_id") == abonelik.get("isletme_id")]
+        isletme_personeli = [p for p in personel if p.get("ana_isletme_id") == abonelik.get("isletme_id")]
         st.markdown("**Kullanıcılar**")
         if not isletme_kullanicilari:
             st.caption("Kullanıcı bilgisi okunamadı (177 çalıştırıldı mı?).")
