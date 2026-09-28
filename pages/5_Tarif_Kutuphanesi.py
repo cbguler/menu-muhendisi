@@ -28,6 +28,12 @@ st.set_page_config(page_title="Tarif Kütüphanesi", page_icon="assets/favicon.p
 supabase = get_supabase()
 oturumu_uygula(supabase)
 
+# YUZ ... DUZELTME (28 Eylul 2026, Menu Muhendisi 9, sql/182): st.cache_data
+# sonuclari KULLANICI + AKTIF ISLETME basina ayrilir. _tarif_kutuphanesi_detayli_getir(imza=_IMZA)
+# onceden hic parametre almadigi halde icinde oturumdaki isletmenin fiyatlarini
+# okuyordu: ilk acan isletmenin fiyatlari 1 saat boyunca herkese gosteriliyordu.
+_IMZA = st.session_state.get("onbellek_imzasi", "")
+
 
 def _sayfalayarak_getir(sorgu_uret, sayfa_boyutu=1000):
     """Supabase/PostgREST, .range() belirtilmese bile sorgu basina
@@ -49,7 +55,7 @@ def _sayfalayarak_getir(sorgu_uret, sayfa_boyutu=1000):
 
 
 @st.cache_data(ttl=3600)
-def _tarif_kutuphanesi_detayli_getir():
+def _tarif_kutuphanesi_detayli_getir(imza=""):
     mutfak = (
         supabase.table("mutfaklar").select("id").eq("kod", "turk").single().execute()
     ).data
@@ -173,7 +179,7 @@ def _tarif_kutuphanesi_detayli_getir():
 
 st.title("Tarif Kütüphanesi")
 
-tarifler, fiyat_verisi_var = _tarif_kutuphanesi_detayli_getir()
+tarifler, fiyat_verisi_var = _tarif_kutuphanesi_detayli_getir(imza=_IMZA)
 
 st.caption(
     f"{len(tarifler)} tariflik genel Türk mutfağı kütüphanesindeki tarifleri "
@@ -272,7 +278,7 @@ with sutun_bilgi:
         st.caption(f"Eksik fiyat: {eksik_liste}")
 
 @st.cache_data(ttl=3600)
-def _uretim_asamalarini_getir(recete_id):
+def _uretim_asamalarini_getir(recete_id, imza=""):
     asamalar = (
         supabase.table("recete_asamalari")
         .select("id, ad, sira, sure_dakika, aktif_dakika, isil_islem_mi, enerji_kaynagi, baslangic_sicaklik, hedef_sicaklik, verimlilik_orani")
@@ -313,7 +319,7 @@ def _uretim_asamalarini_getir(recete_id):
 
 
 @st.cache_data(ttl=3600)
-def _maliyet_ayarlarini_getir(isletme_id):
+def _maliyet_ayarlarini_getir(isletme_id, imza=""):
     sonuc = (
         supabase.table("isletme_maliyet_ayarlari")
         .select("*")
@@ -353,7 +359,7 @@ def _gercek_maliyet_hesapla(asamalar, ayarlar, olcek):
     return enerji_eur, iscilik_eur
 
 
-tarif_asamalari = _uretim_asamalarini_getir(tarif["id"])
+tarif_asamalari = _uretim_asamalarini_getir(tarif["id"], imza=_IMZA)
 
 st.write("**Gerçek üretim maliyeti (malzeme + enerji + işçilik)**")
 if not tarif_asamalari:
@@ -368,7 +374,7 @@ elif not fiyat_verisi_var or not tarif["tam_fiyatli"]:
         "(yukarıdaki eksik fiyat uyarısına bakın)."
     )
 else:
-    ayarlar = _maliyet_ayarlarini_getir(st.session_state.isletme_id)
+    ayarlar = _maliyet_ayarlarini_getir(st.session_state.isletme_id, imza=_IMZA)
     enerji_eur, iscilik_eur = _gercek_maliyet_hesapla(tarif_asamalari, ayarlar, olcek)
     malzeme_eur = tarif["maliyet_eur"] * olcek
     toplam_eur = malzeme_eur + enerji_eur + iscilik_eur
