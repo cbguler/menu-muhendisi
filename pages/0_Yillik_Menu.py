@@ -2741,7 +2741,7 @@ def _pdf_font_adlari():
     return "Helvetica", "Helvetica-Bold"
 
 
-def _pdf_sayfa_basligi_ciz(canvas, belge, isletme_tam_adi, alt_baslik, font_normal, font_kalin):
+def _pdf_sayfa_basligi_ciz(canvas, belge, isletme_tam_adi, alt_baslik, font_normal, font_kalin, cizgi_ciz=True):
     """HER PDF sayfasinin basina: sol ustte logo + altinda 'Menü
     Mühendisi', sayfa ortasinda isletmenin TAM unvani (kisaltma DEGIL)
     + altinda alt_baslik (ör. 'Aylık Sarf Listesi — Aralık 2026')
@@ -2777,8 +2777,12 @@ def _pdf_sayfa_basligi_ciz(canvas, belge, isletme_tam_adi, alt_baslik, font_norm
     canvas.setFillColor(colors.grey)
     canvas.drawCentredString((_sol + _sag) / 2, _sayfa_yukseklik - 2.1 * cm, alt_baslik)
 
-    canvas.setStrokeColor(colors.grey)
-    canvas.line(_sol, _sayfa_yukseklik - 2.5 * cm, _sag, _sayfa_yukseklik - 2.5 * cm)
+    # cizgi_ciz=False: Sade menude tablonun kendi ust kenar cizgisi baslik
+    # ayirici cizgisinin hemen altinda basladigi icin ikisi ust uste binip
+    # "anlamsiz cift cizgi" gibi gorunuyordu -- Sade bu cizgiyi cizdirmiyor.
+    if cizgi_ciz:
+        canvas.setStrokeColor(colors.grey)
+        canvas.line(_sol, _sayfa_yukseklik - 2.5 * cm, _sag, _sayfa_yukseklik - 2.5 * cm)
     canvas.restoreState()
 
 
@@ -3316,12 +3320,12 @@ def _aylik_menu_pdf_sade_olustur(aylik, detay, isletme_tam_adi, sayfa_boyutu_adi
 
         def _sayfa_ciz(canvas, belge):
             _sayac[0] += 1
-            _pdf_sayfa_basligi_ciz(canvas, belge, isletme_tam_adi, _alt_baslik, _font_normal, _font_kalin)
+            _pdf_sayfa_basligi_ciz(canvas, belge, isletme_tam_adi, _alt_baslik, _font_normal, _font_kalin, cizgi_ciz=False)
 
         _arabellek = io.BytesIO()
         _belge = SimpleDocTemplate(
             _arabellek, pagesize=_sayfa_boyutu,
-            leftMargin=0.6 * cm, rightMargin=0.6 * cm, topMargin=2.55 * cm, bottomMargin=0.2 * cm,
+            leftMargin=0.6 * cm, rightMargin=0.6 * cm, topMargin=2.65 * cm, bottomMargin=0.2 * cm,
             title=f"Aylık Menü (Sade) - {aylik['ay']} {aylik['yil']}",
         )
         _belge.build(_elemanlar, onFirstPage=_sayfa_ciz, onLaterPages=_sayfa_ciz)
