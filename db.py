@@ -86,3 +86,28 @@ def cerez_yoneticisi():
     riski almiyoruz. Bu fonksiyon sadece SAYFALARIN (Cikis yap butonu
     icin) cerez temizleyebilmesi icin var."""
     return stx.CookieManager(key="sayfa_cerez_yoneticisi")
+
+
+def olay_kaydet(supabase: Client, olay: str, sayfa=None, detay=None):
+    """Kullanim istatistigi olayi yazar (sql/183, kullanim_olaylari).
+
+    YUZ ... DUZELTME (29 Eylul 2026): admin sayfasindaki Kullanim Istatistikleri
+    icin. Olay yazilamazsa (ag hatasi, 183 calismamis) uygulama ETKILENMEZ --
+    hata sessizce yutulur, kullanicinin isi asla bu yuzden kesilmez.
+    olay: 'giris' | 'cikis' | 'sayfa'
+    """
+    try:
+        if "_oturum_kimligi" not in st.session_state:
+            import uuid
+            st.session_state["_oturum_kimligi"] = str(uuid.uuid4())
+        supabase.table("kullanim_olaylari").insert({
+            "email": st.session_state.get("_kullanici_eposta"),
+            "isletme_id": st.session_state.get("isletme_id"),
+            "ana_isletme_id": st.session_state.get("ana_isletme_id"),
+            "oturum_kimligi": st.session_state["_oturum_kimligi"],
+            "olay": olay,
+            "sayfa": sayfa,
+            "detay": detay,
+        }).execute()
+    except Exception:
+        pass
