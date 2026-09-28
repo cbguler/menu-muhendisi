@@ -12328,3 +12328,8 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   SURE TAHMINDIR: bir olaydan sonrakine kadar; 30 dk'dan uzun ara kesinti -> 1 dk; son olaya 1 dk.
 - Acik: kayitlarin saklama suresi (tablo surekli buyur; ornek: 12 ay sonra silme) Bahri'nin karari;
   KVKK acisindan kullanicilara aydinlatma metninde bildirilmesi (hukuki degerlendirme Claude'un degil).
+- 183 SONUCU: rls_acik true, 2 politika, 0 satir. (183'e ait kod dosyalari 29 Eylul itibariyla HENUZ push
+  edilmedi: db.py, app.py, pages/6_Abonelik.py, pages/7_Admin.py.)
+- Bahri'nin karari: kullanim kayitlari 12 ay sonra otomatik silinsin.
+  sql/184_kullanim_olaylari_12_ay_saklama.sql: pg_cron gerektirmeyen AFTER INSERT (statement) tetikleyici;
+  ortalama her 100 yazmada bir 12 aydan eski kayitlari siler (SECURITY DEFINER; elle silme yasagi korunuyor).
