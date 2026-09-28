@@ -12083,3 +12083,10 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
 - Ayri PDF'ler icin git commit'leri Bahri tarafindan yapiliyor; hangi dosyalarin push'landigi teyit edilmedi.
 - Bekleyen: kaynak_duzeltilmis_v37.xlsx guncelleme kurali; 10-15 tarifin gercek bir asciya gozden
   gecirtilmesi; Projects'e gecis (Operation & Maintenance asamasinda).
+
+### 28 Eylul 2026 -- "Menu Muhendisi 9" sohbetine devir
+- Sohbet gorsel limiti doldu; devir icin ozet dosya hazirlandi: DEVIR_NOTU_MM9.md (guncel durum, acik isler,
+  kalici kurallar, teknik tuzaklar, yeni sohbet acilis onerisi).
+- Ilk is: "Beni hatirla" sorunu (devam ediyor, belirti henuz alinmadi).
+- Bahri bu sohbeti Claude'da "Add to project" ile bir projeye eklemeyi dusunuyor; proje aramasi/hafiza ayari
+  proje bazli ayrisir, bilgi tabanina PROJE_NOTLARI.md + DEVIR_NOTU_MM9.md yuklemek daha guvenilir.
