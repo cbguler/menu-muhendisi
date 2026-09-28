@@ -12090,3 +12090,31 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
 - Ilk is: "Beni hatirla" sorunu (devam ediyor, belirti henuz alinmadi).
 - Bahri bu sohbeti Claude'da "Add to project" ile bir projeye eklemeyi dusunuyor; proje aramasi/hafiza ayari
   proje bazli ayrisir, bilgi tabanina PROJE_NOTLARI.md + DEVIR_NOTU_MM9.md yuklemek daha guvenilir.
+
+### 28 Eylul 2026 -- Menu Muhendisi 9: Kayit hatasi "The read operation timed out"
+- Bahri, oglu Emre icin (emreguler98@hotmail.com, isletme: GIZ-EM RESTAURANT LTD. STI.) hesap olusturmayi
+  denedi; ekranda "Kayit basarisiz: The read operation timed out".
+- Hata istemci tarafli zaman asimi: app.py hesap_olustur() -> supabase.auth.sign_up() yanitini zamaninda
+  alamadi. Supabase sign_up istegi, auth.users'a ekleme (05 tetikleyicisi calisir) VE dogrulama e-postasi
+  gonderimi bitmeden yanit donmez; bu yuzden kullanici sunucuda olusmus olabilir. Kok sebep TEYIT EDILMEDI.
+- Teshis: sql/171_teshis_kayit_durumu_emre.sql (salt okunur) + Supabase Dashboard Auth loglari.
+- Hatirlatma (13 Agustos notu): Site URL localhost'ta idi; duzeltilip duzeltilmedigi teyit edilmedi. Duzeltilmediyse
+  kayit dogrulama baglantisi da kirik cikar.
+- "Beni hatirla" isi bu sorun cozulene kadar beklemede (belirti ve db.py hala bekleniyor).
+- 171 SONUCU: hesap 13 Agustos 2026'da olusmus (kullanici b4c1411a-..., isletme 46ad7857-..., ad "Gocek",
+  rol sahip), dogrulama e-postasi o gun gonderilmis, e-posta HIC dogrulanmamis. Bugunku deneme yeni hesap
+  acmadi; mevcut dogrulanmamis kullanici icin sign_up'in yeniden e-posta gondermesi sirasinda zaman asimi
+  olmus olabilir (TAHMIN). Bugun girilen sifre hesaba UYGULANMADI (sign_up mevcut kullanicinin sifresini
+  degistirmez). 13 Agustos, Site URL'in localhost oldugu tarih; dogrulama baglantisi o yuzden kirik olabilir.
+- sql/172_emre_hesabi_dogrula_ve_isletme_adi.sql: email_confirmed_at elle dolduruldu, isletme adi
+  "GİZ-EM RESTAURANT LTD. ŞTİ." yapildi; abonelik satiri sadece gosteriliyor, durum degistirilmedi.
+- Acik: Emre'nin sifresi ("Sifremi unuttum" OTP akisi, gercek kullanici ile ilk test olacak);
+  abonelik aktivasyonu (172 sonucu gorulunce); kod: kayitli e-postada ve zaman asiminda dogru mesaj.
+- 172 SONUCU: e-posta dogrulandi (28.09.2026 13:46 UTC), isletme adi "GİZ-EM RESTAURANT LTD. ŞTİ." oldu.
+  Abonelik satiri: durum odeme_bekleniyor, plan_id NULL, donem_bitis NULL.
+- sql/173_emre_aboneligi_aktif.sql: Bahri'nin talebiyle odeme/onay akisi atlanarak durum 'aktif',
+  donem_baslangic bugun. plan_id ve donem_bitis NULL birakildi (karar Bahri'de). app.py erisimi sadece
+  durum'a gore veriyor; plan_kodu kontrolu henuz uygulanmadi; recete_limiti NULL = sinirsiz.
+  Dogrulama isletme_aktif_abonelik gorunumunden yapiliyor (gorunum tanimi bu oturumda gorulmedi).
+- Emre asci; uygulama onun fikirleriyle gelistirilecek. Acik is #7 (10-15 tarifin bir asciya gozden
+  gecirtilmesi) icin aday.
