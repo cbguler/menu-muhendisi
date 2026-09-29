@@ -12355,3 +12355,22 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
 - Planlanan: su eksik tariflere SU satiri + isil asama baglantisi; kategori bazli hedef porsiyon
   gramajlari (Emre ile) ve gramaj olcekleme; pismis agirlik (verim katsayisi, kaynak gerekli);
   talimat dili icin Emre'nin terim kurallari + parti parti yeniden yazim.
+- 185 SONUCU (1000 kutuphane tarifi, hepsi porsiyon_sayisi=1): porsiyon basi cig net gram ortanca 145 g
+  (min 37, max 932). Zeytinyagli (155 tarif) ortanca 84 g, salata 85, yumurta 75, tatli 120 -> kural 12
+  (sebze ~200 g) ile belirgin sapma. 311 tarifte SU var; 371 tarifte SU yok ama talimatta su/haslama/kaynatma
+  geciyor (aday; regex genis). Burdur Zeytinyagli Nohutlu Havuc'ta talimatta su bile gecmiyor ve malzeme
+  KURU NOHUT: 22 dk pisirmede kuru nohut pismez (islatma + haslama eksik) -> su taramasi sadece regex'le
+  yapilamaz. 144 tarifte fire orani bos malzeme var.
+- KOPYA TARIFLER: 509 tarif "X Usulu ..." adli; 294 taban tarif. Ornek: "Etli Kavurma" 26 kopya (hepsi
+  ~101 g), "Zeytinyagli Nohutlu Havuc" 17 kopya (hepsi 83,8 g, ayni talimat). Bahri'ye soruldu.
+- 185b SONUCU: 233 malzeme; 35'inde fire bos (KUZU ETI (KOL) 77 tarifte). Dolu olanlarin cogu %5/%10
+  (genel deger gibi). USDA SR28 "Refuse" (fire) ile karsilastirma: enginar %10 -> USDA %60, pirasa %10 -> %56,
+  patates %10 -> %25, patlican %5 -> %19, yumurta %5 -> %12, kuzu kol (kemikli) bos -> %21.
+  Kaynak: USDA SR28 FOOD_DES.txt (ars.usda.gov sr28asc.zip), Refuse + Ref_desc alanlari (indirilip dogrulandi).
+- Excel (kaynak_duzeltilmis_v29.xlsx, 596 malzeme, 58 sutun): pisirme verim katsayisi sutunu YOK.
+  Onerilen kaynak: Bognar A. (2002) "Tables on weight yield of food and retention factors..." BFE-R-02-03,
+  Karlsruhe (KIT'te PDF; EuroFIR ve FSANZ tarafindan kullaniliyor). Yemek gruplari ve pisirme yontemine gore
+  agirlik verim katsayilari. Sonraki adim: PDF'ten katsayilari cikarip Excel'e ve tariflere uygulamak.
+- Emre_Gizem_tarif_sorulari.xlsx: (1) 35 belirsiz ifade + ornek + yaklasik gecis + bos "dogru ifade";
+  (2) 18 malzemenin DB fire / USDA fire karsilastirmasi + bos "karar"; (3) yemek grubu bazinda porsiyon
+  gramaji ozeti + bos hedef cig/pismis gramaj. Gecis sayilari repodaki talimat dosyalarindan, YAKLASIK.
