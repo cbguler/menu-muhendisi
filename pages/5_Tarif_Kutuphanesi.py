@@ -148,7 +148,12 @@ def _tarif_kutuphanesi_detayli_getir(imza=""):
                 maliyet_eur += (brut_miktar_gram / 1000.0) * fiyat
             alerjenler |= alerjen_by_malzeme.get(malzeme_id, set())
 
-            malzeme_listesi.append({"ad": m.get("ad") or "?", "miktar_gram": kalem["miktar_gram"]})
+            malzeme_listesi.append({
+                "ad": m.get("ad") or "?",
+                "miktar_gram": kalem["miktar_gram"],
+                # YUZ ... DUZELTME (29 Eylul 2026): fire orani listede de gosterilsin
+                "fire_orani": m.get("fire_orani") or 0,
+            })
 
         gi = (gi_agirlikli / gi_karb_toplam) if gi_karb_toplam > 0 else None
 
@@ -256,9 +261,32 @@ st.caption(
 sutun_malzeme, sutun_bilgi = st.columns([1, 1])
 
 with sutun_malzeme:
+    # YUZ ... DUZELTME (29 Eylul 2026, Emre'nin geri bildirimi): tarifteki miktar
+    # NET (temizlenmis, kullanilacak) miktardir. Fire orani olan malzemede satin
+    # alinacak BRUT miktar ve hesabi acikca gosterilir: brut = net / (1 - fire).
+    # Ayrica porsiyon basina cig (net) agirlik gosterilir; pisirme sonrasi
+    # agirlik (buharlasma/su emme) henuz hesaplanmiyor.
     st.write(f"**Malzemeler ({porsiyon} porsiyon için)**")
+    _toplam_net = 0.0
     for m in tarif["malzemeler"]:
-        st.write(f"- {m['ad']}: {round(m['miktar_gram'] * olcek)} g")
+        _net = m["miktar_gram"] * olcek
+        _toplam_net += _net
+        _fire = m.get("fire_orani") or 0
+        if 0 < _fire < 1:
+            _brut = _net / (1 - _fire)
+            _fire_yuzde = f"{_fire * 100:.1f}".rstrip("0").rstrip(".").replace(".", ",")
+            _carpan = f"{1 - _fire:.3f}".rstrip("0").rstrip(".").replace(".", ",")
+            st.write(
+                f"- {m['ad']}: {round(_net)} g net "
+                f"(brüt {round(_brut)} g = {round(_net)} ÷ {_carpan}, %{_fire_yuzde} fire)"
+            )
+        else:
+            st.write(f"- {m['ad']}: {round(_net)} g")
+    _porsiyon_net = _toplam_net / porsiyon if porsiyon else 0
+    st.caption(
+        f"Porsiyon başına çiğ (net) ağırlık: {_porsiyon_net:.1f}".replace(".", ",")
+        + " g. Pişmiş porsiyon ağırlığı (buharlaşma ve su emme sonrası) henüz hesaplanmıyor."
+    )
 
 with sutun_bilgi:
     st.write("**Besin değerleri (toplam)**")

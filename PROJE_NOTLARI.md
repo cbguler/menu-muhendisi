@@ -12333,3 +12333,25 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
 - Bahri'nin karari: kullanim kayitlari 12 ay sonra otomatik silinsin.
   sql/184_kullanim_olaylari_12_ay_saklama.sql: pg_cron gerektirmeyen AFTER INSERT (statement) tetikleyici;
   ortalama her 100 yazmada bir 12 aydan eski kayitlari siler (SECURITY DEFINER; elle silme yasagi korunuyor).
+
+### 29 Eylul 2026 -- Menu Muhendisi 9: Emre'nin tarif geri bildirimi (Burdur Usulu Zeytinyagli Nohutlu Havuc)
+- Emre ve Gizem gastronomi mezunu ve asci. Emre'nin ilk tarif incelemesi:
+  1) Talimat dili: "havuclari kaziyip kucuk kup dograyin" yerine "Havuclarin dis kabugunu soyacak
+     yardimiyla temizleyin; ardindan tavla zari buyuklugunde kucuk kupler halinde dograyin."; "kuru sogani
+     ince yarim ay dilimleyin" yerine "Kuru sogani boydan ikiye bolun ve piyazlik (yarim ay) seklinde
+     olabildigince ince dilimleyin."
+  2) Malzemelerde SU eksik (daha once su calismasi yapilmisti, bu tarif kacmis).
+  3) Gramaj toplami 120 porsiyon icin az: Bahri'nin hesabi cig toplam / 120 = 83,8 g (kural 12: sebze
+     porsiyonu ~200 g). Porsiyonun uretim sonrasi gramaji parantez icinde belirtilmeli.
+  4) Fire oranlari hesaba katiliyor mu? Malzeme listesinde her malzemenin yaninda fire kadar artirilmis
+     miktar matematiksel olarak gosterilmeli.
+  Bahri: bunlar TUM tariflere uygulansin.
+- Mevcut durum: fire orani 3 Eylul'den beri MALIYETE dahil (brut = net / (1 - fire), 77. migration), ama
+  malzeme listesinde gosterilmiyordu. Tarif miktarlari NET.
+- pages/5_Tarif_Kutuphanesi.py: malzeme listesinde fire orani olan malzemelerde "X g net (brut Y g =
+  X / (1-fire), %F fire)"; porsiyon basina cig net agirlik. Pismis agirlik henuz hesaplanmiyor.
+- Teshis: sql/185_teshis_tarif_kalitesi.sql (1000 tarif, tarif basina porsiyon gramaji / su / fire bos),
+  sql/185b_teshis_malzeme_fire.sql (malzeme fire degerleri).
+- Planlanan: su eksik tariflere SU satiri + isil asama baglantisi; kategori bazli hedef porsiyon
+  gramajlari (Emre ile) ve gramaj olcekleme; pismis agirlik (verim katsayisi, kaynak gerekli);
+  talimat dili icin Emre'nin terim kurallari + parti parti yeniden yazim.
