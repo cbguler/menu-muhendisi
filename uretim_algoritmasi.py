@@ -22,6 +22,20 @@
 # henuz eklenmedi -- bir sonraki adim.
 
 import random
+import time
+
+# YUZ ... DUZELTME (11 Ekim 2026, Menu Muhendisi 9): Aylik Menu uretimi
+# uzun sure calisip hic sonuc vermeden duruyordu. Sebep: 9 Eylul'de (YUZ
+# YIRMI ALTINCI DUZELTME) arama SINIRSIZ (exhaustive) yapilmisti; o gun
+# kutuphane 241 tarifti. Kutuphane 1000 tarife cikinca uclu (t1,t2,t3)
+# sayisi ~64 kat buyudu; cok sayida besin hedefi secildiginde tam eslesme
+# cogu ogunde YOK, bu yuzden her ogun 3 kademenin BUTUN havuzunu taramaya
+# calisiyordu -> bir ay icin saatler; Streamlit Cloud oturumu o surede
+# kesiyor. Duzeltme: her ogune ZAMAN butcesi. Tam eslesme bulunursa hemen
+# doner (eskisi gibi); bulunamazsa butce bitince o ana kadarki EN YAKIN
+# uclu kullanilir (eskisi gibi "Hedef disi" yerine en yakin sonuc).
+# Butce kademelere bolunur: %50 / %25 / %25.
+OGUN_SURE_BUTCESI_SN = 3.0
 
 # --- Anayasa madde 11: uyumsuzluk kurallari (etiket ciftleri) ---
 UYUMSUZLUK = [
@@ -246,7 +260,7 @@ def _grup3_tercih_sirasi(grup1_etiketler):
     return []
 
 
-def _ogun_dene(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele, deneme_sayisi, tekrara_izin_ver, mevsim_zorunlu=True, hedef=None, kullanilan_gun_taban=None):
+def _ogun_dene(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele, deneme_sayisi, tekrara_izin_ver, mevsim_zorunlu=True, hedef=None, kullanilan_gun_taban=None, bitis_zamani=None):
     """Verilen esneklik seviyesinde ogun kombinasyonu aramaya calisir.
     UYUMSUZLUK (madde 11) HER ZAMAN uygulanir, gevsetilmez -- haftalik-
     tekrar, mevsim kisiti kademeli olarak gevsetilebilir (hedef ARTIK
@@ -338,6 +352,9 @@ def _ogun_dene(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, 
                         en_iyi_uclu = (t1, t2, t3)
                     if degerlendirilen >= deneme_sayisi:
                         return None, en_iyi_uclu
+                    # YUZ ... DUZELTME (11 Ekim 2026): zaman butcesi (her 500 ucluda bir kontrol)
+                    if bitis_zamani is not None and degerlendirilen % 500 == 0 and time.monotonic() >= bitis_zamani:
+                        return None, en_iyi_uclu
                 break  # tercih edilenlerde hicbiri hedefe uymadi, tekrar deneme dongusune don
 
     return None, en_iyi_uclu
@@ -385,14 +402,17 @@ def ogun_olustur(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta
     en_iyi_genel_uclu = None
     en_iyi_genel_mesafe = None
 
-    for tekrara_izin_ver, mevsim_zorunlu, deneme_sayisi in (
-        (False, True, float("inf")),
-        (False, False, float("inf")),
-        (True, False, float("inf")),
+    # YUZ ... DUZELTME (11 Ekim 2026): kademe basina zaman butcesi (bkz. OGUN_SURE_BUTCESI_SN)
+    _baslangic = time.monotonic()
+    for tekrara_izin_ver, mevsim_zorunlu, deneme_sayisi, butce_payi in (
+        (False, True, float("inf"), 0.50),
+        (False, False, float("inf"), 0.75),
+        (True, False, float("inf"), 1.00),
     ):
         tam_sonuc, en_iyi_yakin = _ogun_dene(
             grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele,
             deneme_sayisi, tekrara_izin_ver, mevsim_zorunlu, hedef, kullanilan_gun_taban,
+            bitis_zamani=_baslangic + OGUN_SURE_BUTCESI_SN * butce_payi,
         )
         if tam_sonuc is not None:
             return tam_sonuc
@@ -440,7 +460,7 @@ def _fast_food_sec(grup4_havuz, birlesik_etiketler, rastgele):
     return rastgele.choice(adaylar)
 
 
-def hafta_olustur(tarifler, mevsim, rastgele, hedefler=None, gun_sayisi=7, gun_mevsimleri=None):
+def hafta_olustur(tarifler, mevsim, rastgele, hedefler=None, gun_sayisi=7, gun_mevsimleri=None, ilerleme=None):
     """tarifler: [{"ad","grup"(1/2/3, opsiyonel 4),"mevsim_etiketi","etiketler", ...besin}, ...]
     hedefler: {"Öğle": {"kalori":(min,max), ...}, "Akşam": {...}} ya da None.
     grup=4 (isletmenin kendi Icecek/Baslangic/Pizza/Burger receteleri)
@@ -487,6 +507,8 @@ def hafta_olustur(tarifler, mevsim, rastgele, hedefler=None, gun_sayisi=7, gun_m
                     kullanilan_gun_taban.add(_taban_kelime(t4["ad"]))
 
             gun["ogunler"][ogun_adi] = ogun_tarifleri
+            if ilerleme is not None:
+                ilerleme()  # YUZ ... DUZELTME (11 Ekim 2026): ekrandaki ilerleme cubugu
         hafta.append(gun)
     return hafta
 

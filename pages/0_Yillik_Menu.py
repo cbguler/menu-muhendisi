@@ -1298,6 +1298,20 @@ if st.button("Ay için menü üret", type="primary"):
     with st.spinner("Menü üretiliyor, lütfen bekleyin..."):
         gercek_haftalar = _ay_gercek_haftalari(yil_secimi, ay_secimi)
         haftalar = []
+        # YUZ ... DUZELTME (11 Ekim 2026): uretim artik ogun basina zaman
+        # butceli (uretim_algoritmasi.OGUN_SURE_BUTCESI_SN); ilerleme cubugu
+        # hangi ogunde olundugunu gosterir.
+        _toplam_ogun = sum(len(h) for h in gercek_haftalar) * 2
+        _ilerleme_cubugu = st.progress(0.0, text="Menü üretiliyor...")
+        _sayac = {"n": 0}
+
+        def _ilerle():
+            _sayac["n"] += 1
+            _ilerleme_cubugu.progress(
+                min(_sayac["n"] / max(_toplam_ogun, 1), 1.0),
+                text=f"Menü üretiliyor: {_sayac['n']} / {_toplam_ogun} öğün",
+            )
+
         for hafta_tarihleri in gercek_haftalar:
             # Deterministik tohum: haftanin Pazartesi gununun takvim sirasina
             # (toordinal) gore -- ayni yil+hafta her zaman ayni sonucu verir,
@@ -1308,13 +1322,14 @@ if st.button("Ay için menü üret", type="primary"):
             gun_mevsimleri = [_tarih_mevsimi(t) for t in hafta_tarihleri]
             hafta = hafta_olustur(
                 tarifler_zengin, None, rastgele, hedefler=hedefler,
-                gun_mevsimleri=gun_mevsimleri,
+                gun_mevsimleri=gun_mevsimleri, ilerleme=_ilerle,
             )
             # Ekranda gercek tarih/hafta gunu adi gosterebilmek icin, o gunun
             # gercek datetime.date'ini de tasiyoruz.
             for gun, tarih in zip(hafta, hafta_tarihleri):
                 gun["tarih"] = tarih
             haftalar.append(hafta)
+        _ilerleme_cubugu.empty()
     # YIRMI IKINCI DUZELTME (13 Agustos 2026, Oturum 11): kullanicinin
     # "gecmis bir tarih icin uretilen menu, gercek servis kaydiyla
     # karistirilabilir" endisesi uzerine -- uretimi ENGELLEMIYORUZ (test/

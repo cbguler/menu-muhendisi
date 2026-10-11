@@ -12374,3 +12374,19 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
 - Emre_Gizem_tarif_sorulari.xlsx: (1) 35 belirsiz ifade + ornek + yaklasik gecis + bos "dogru ifade";
   (2) 18 malzemenin DB fire / USDA fire karsilastirmasi + bos "karar"; (3) yemek grubu bazinda porsiyon
   gramaji ozeti + bos hedef cig/pismis gramaj. Gecis sayilari repodaki talimat dosyalarindan, YAKLASIK.
+
+### 11 Ekim 2026 -- Menu Muhendisi 9: Aylik Menu uretimi takiliyordu (DUZELTILDI)
+- Belirti: "Ay icin menu uret" uzun sure calisip sonuc vermeden duruyor. Streamlit logunda hata yok (sadece
+  use_container_width uyarilari). Ekranda 32 besin hedefinin hepsi secili, "Ogun basina besin degerleri
+  hedefi uygula" acik.
+- Kok neden: uretim_algoritmasi.ogun_olustur 9 Eylul'den beri SINIRSIZ (exhaustive) arama yapiyordu (YUZ YIRMI
+  ALTINCI DUZELTME, o gun kutuphane 241 tarif, olcum 518.698 uclu / 14,5 sn). Kutuphane 1000 tarife cikinca uclu
+  sayisi ~64 kat buyudu; cok hedef secilince tam eslesme cogu ogunde yok ve her ogun 3 kademenin tum havuzunu
+  tariyor -> bir ay icin saatler; Streamlit Cloud oturumu kesiliyor.
+- Duzeltme: OGUN_SURE_BUTCESI_SN = 3.0 (ogun basina, kademeler %50/%75/%100 kumulatif). Tam eslesme bulunursa
+  hemen doner; bulunamazsa butce bitince en yakin uclu (eski davranisla ayni sonuc tipi). Sayfada ilerleme
+  cubugu ("x / y ogun").
+- Test (sahte 1000 tarif, imkansiz hedef = en kotu durum): yeni kod 1 hafta 42 sn (14 ogun x 3 sn); eski kod
+  ayni testte 2 dakikada 1 haftayi bile bitiremedi. Kolay hedefte 0,01 sn. En kotu durumda bir ay ~3,5 dk.
+- Yan etki: zaman butcesi nedeniyle ayni tohumla sonuc artik tam deterministik degil (sunucu hizina bagli).
+- Gercek veriyle teyit edilmedi; Bahri ayni ayarla tekrar deneyecek.
