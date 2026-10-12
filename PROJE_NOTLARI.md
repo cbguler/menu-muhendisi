@@ -12569,3 +12569,60 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   Konya, Manisa, Rize, Samsun, Siirt, Tokat, Şırnak (+ "(Kimyonlu)" ve "(Baharatlı)" gruplari).
   Bu illerin cogunda miktarli ve tam bir CI et yemegi yok; bulunanlar eksikli (porsiyon/sure). Yeni bulunan:
   Diyarbakır Patlıcanlı Kazan Kebabı (CI 1143, 8 kisilik, tam veri) -- Diyarbakir'in baska bir kopyasi icin.
+- SONUC (12 Ekim 17:28): 188 Supabase'de calisti, 6/6 TAMAM.
+
+### 12 Ekim 2026 -- YUZ KOPYA DUZELTME: kaynak karari ve Parti 3 (sql/189)
+- Bahri'nin karari (kaynak): once Turk Patent CI tescil belgesi; yoksa Kultur ve Turizm Bakanligi / il kultur
+  mudurlugu yayinlari ve miktarli akademik calismalar (tez, makale). Eksik degerler TAHMIN olarak isaretlenir.
+- CI veri tabani toplu indirildi (ci.turkpatent.gov.tr /Data/GetList, urun grubu 51 "Yemekler ve corbalar" ve
+  54 "Firincilik, hamur isleri, tatlilar"): 531 + 387 tescilli kayit, 912 belge metni. Il bazinda aday listesi
+  bu metinlerden cikariliyor (artik tek tek web aramasi gerekmiyor).
+- Kalan kopya kapsami (besin degeri imzasiyla yeniden hesap): 51 kopya grubu, 220 tarif; her gruptan biri genel
+  ad olarak kalirsa ~169 donusum.
+- Parti 3 donusumleri:
+  - Adıyaman Usulü Etli Kavurma -> Adıyaman Kavurmalı Hıtap (CI 1895)
+  - Ağrı Usulü Etli Kavurma -> Doğubayazıt Abdigör Köftesi (CI 310)
+  - Erzurum Usulü Etli Kavurma -> Hınıs Köftesi (CI 1655, kıymalı iç)
+  - Kastamonu Usulü Etli Kavurma -> Kastamonu Tiridi (CI 474)
+  - Konya Usulü Etli Kavurma -> Konya Çullama (CI 1049)
+  - Manisa Usulü Etli Kavurma -> Akhisar Köfte (CI 322)
+  - Şırnak Usulü Etli Kavurma -> Cizre Meyre (CI 1465, grup 2 corba)
+  - Kars Usulü Etli Kavurma -> Kars Erişte Pilavı (CI 1871, grup 2 pilav)
+  Yerel PostgreSQL 16 testi 8/8 TAMAM, grup 2 atamalari dogrulandi.
+- TAHMIN ve kararlar (Emre/Gizem onayi bekleniyor):
+  - Adıyaman Usulü Etli Kavurma -> Adıyaman Kavurmalı Hıtap (CI 1895):
+    - 1 adet hıtap = 1 porsiyon TAHMİN (belge 10 adet için veriyor).
+    - Fırın sıcaklığı belgede yok (fırıncı ocağı, 15 dk); hamur dinlendirme süresi yok: 30 dk TAHMİN.
+    - 3 orta soğan = 3 x 110 g; 1 demet maydanoz = 50 g TAHMİN. Taze sarımsak katalogda ayrı yok: SARIMSAK. Kuşbaşı dana: DANA BUT (karar).
+  - Ağrı Usulü Etli Kavurma -> Doğubayazıt Abdigör Köftesi (CI 310):
+    - Porsiyon sayısı belgede yok: 1 kg et için 6 porsiyon TAHMİN (~167 g çiğ et/porsiyon).
+    - 1 yumurta = 50 g. Tuz 'bir tutam' + haşlama suyundan: 1,5 g/porsiyon TAHMİN. Haşlama süresi ('pişene kadar') 15 dk TAHMİN; soğanla dövme 15 dk TAHMİN.
+    - Belgede un türü yok: BUĞDAY UNU (karar).
+  - Erzurum Usulü Etli Kavurma -> Hınıs Köftesi (CI 1655):
+    - Belgede üç iç harç seçeneği var (aşmalı, pirinçli, kıymalı); kıymalı seçildi (karar). Porsiyon 5-6 -> 5,5.
+    - Aralıkların orta değeri alındı. Kaynağa göre tuz porsiyon başı ~8,6 g, karabiber ~4,5 g -- yüksek; Emre/Gizem onayı gerekli.
+    - Kıyma türü belgede yok: DANA KIYMA; bulgur türü yok: İNCE BULGUR (karar).
+    - Kaplama yumurtası (2 adet) ve kızartmada emilen yağ (55 g) belgede yok: TAHMİN. Dış harç ve şekillendirme 50 dk TAHMİN.
+  - Kastamonu Usulü Etli Kavurma -> Kastamonu Tiridi (CI 474):
+    - Belge kişi sayısı vermiyor; '6 simit (~110 g) + 50-60 g kıyma' 1 porsiyon kabul edildi TAHMİN.
+    - Simitlerin emdiği kemik suyu 150 g, 'üzerini örtecek kadar' yoğurt 150 g TAHMİN. Kıyma kavurma 10 dk TAHMİN.
+    - Kemik suyu katalogdaki ET SUYU ile, manda yoğurdu YOĞURT (TAM) ile eşlendi. İsteğe bağlı tereyağı malzemeye eklenmedi.
+  - Konya Usulü Etli Kavurma -> Konya Çullama (CI 1049):
+    - 4 yumurta = 4 x 50 g. Pirinç yarı haşlama (8 dk) ve kızartma (10 dk) süreleri belgede yok: TAHMİN.
+    - Haşlama suyundaki 10 g tuz (dökülen suda kalır) malzemeye eklenmedi. Un türü yok: BUĞDAY UNU (karar).
+  - Manisa Usulü Etli Kavurma -> Akhisar Köfte (CI 322):
+    - Porsiyon: belge '100 g'da 6 köfte' diyor; çiğ ağırlık 6 x 16 g = 96 g alındı (köfte 15-17 g).
+    - Izgara süresi belgede yok: 10 dk TAHMİN. Servis pidesi 50 g, tereyağı 5 g TAHMİN.
+    - Alaca dana eti katalogda ayrı yok: DANA KIYMA. Ön hazırlık (doğrama, çekme, yoğurma, şekil) 30 dk TAHMİN.
+  - Şırnak Usulü Etli Kavurma -> Cizre Meyre (CI 1465):
+    - Toplam pişirme 80 dk TAHMİN (belge: 60. dakikada yarpuz, sonra 'iyice yumuşayıncaya kadar').
+    - Kuru yarpuz katalogda yok: KURU NANE ile eşlendi. Dövme buğday: BUĞDAY (TAM TANE). Dolmalık kabak: KABAK. İsteğe bağlı yumurta eklenmedi.
+    - Grup 1 kopya yerine grup 2 çorba konuldu (Şırnak'ın belgeli ana yemeği yok). Mevsim: kabak ve soğuk servis nedeniyle yaz (karar).
+  - Kars Usulü Etli Kavurma -> Kars Erişte Pilavı (CI 1871):
+    - 2 orta patates = 2 x 213 g, 2 yumurta = 2 x 50 g TAHMİN. Patates kızartma yağı (5 g/porsiyon) ve süresi (10 dk), erişte haşlama süresi (10 dk) belgede yok: TAHMİN.
+    - Erişte hamuru (500 g un) pilavdaki '500 g erişte' için kullanıldı; hamur suyu kurutmada uçar ama ağırlık olarak yazıldı. Hamur yapımı ve kesme 60 dk TAHMİN.
+    - Sarı yağ: SADEYAĞ. Grup 1 kopya yerine grup 2 pilav konuldu (Kars'ın belgeli tek yemeği). Tuz porsiyon başı 5 g (belgeye göre).
+- Etli Kavurma grubunda kalanlar: Rize (CI 1599 porsiyon sorusu Emre'de), Siirt (Siirt Kiteli CI 1574: belge kac
+  adet/porsiyon ciktigini vermiyor, Emre'ye sorulacak), Balıkesir (Balıkesir Etli Çorba CI 1785 uygun, 100
+  porsiyonluk; sonraki parti), Bayburt, Giresun, Samsun, Tokat (CI'da uygun miktarli yemek yok veya kutuphanede
+  zaten var -> Kultur Bakanligi / akademik kaynak aranacak).
