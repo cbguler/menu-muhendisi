@@ -12408,3 +12408,25 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
 - requirements.txt: numpy acikca eklendi (zaten pandas ile kuruluyordu).
 - GERCEK VERIYLE TEYIT EDILMEDI. Eger gercek veride 32 hedefin hepsini tutturan uclu yoksa sonuc yine "hedef
   disi" olur; bu durumda sorun hedef araliklari/kutuphane, arama degil.
+
+### 12 Ekim 2026 (ikinci) -- Aylik Menu: gercek veriyle kok neden bulundu
+- Teshis 186 (sorgu hizi, Bahri'nin kimligiyle RLS dahil): 15-55 ms, satir sayilari dogru -> veritabani/RLS
+  sorun DEGIL. Teshis 186b: 1000 tarifin besin degerleri (uygulama formuluyle) CSV olarak alindi.
+- Gercek veriyle motor (kis, 32 VARSAYILAN hedef): kis havuzundaki 7,3 milyon uclunun ~670 bini tum hedefleri
+  tutuyor; ay 1,4 sn, 70/70 hedefte.
+- Bahri'nin ekranindaki hedefler varsayilan DEGIL, "Hastane (Genel/Standart Diyet)" sablonunun degerleri
+  (kalori 630-840, karb 92-119, sodyum 0-900, lif 7-11, D vitamini 7-15 mcg, ...). Bu hedeflerle 7,3 milyon
+  uclunun HICBIRI tum hedefleri tutmuyor (en buyuk engel D vitamini: kis havuzunda tek yemekte D >= 7 mcg olan
+  sadece 11 tarif; D gevsetilse bile sadece 83 uclu). Yani "hepsi hedef disi" sonucu matematiksel olarak zorunlu.
+- Ayrica bulunan HATA (eski kodda da vardi): tam eslesme yoksa en yakin uclu 3. kademeden (tekrar serbest)
+  geldigi icin AYNI ogun her gun tekrarlaniyordu. Duzeltme: en yakin uclu, uyumlu uclusu olan EN SIKI kademeden
+  (hafta ici tekrarsiz + mevsim) secilir.
+- Yeni: uretim_algoritmasi.tam_eslesme_var_mi (en gevsek kosullarla tek tam tarama; yoksa hicbir ogunde yok)
+  ve hedef_engelleri (rastgele uclulerde hedef bazinda tutturamama orani). Sayfa, uretimden once ogun basina
+  kontrol eder; tam eslesme yoksa 1. asamayi atlar ve "bu hedefler tutturulamiyor, en cok engel olanlar: ..."
+  uyarisi gosterir.
+- Gercek veri sonucu: varsayilan hedefler ay 1 sn, 0/70 hedef disi; Hastane sablonu ay 31 sn (yerel), 70/70 hedef
+  disi + uyari (engeller: D vitamini %95, karbonhidrat %87, kalori %73), 27 farkli ogun (haftalar arasi tekrar,
+  kural haftalik oldugu icin serbest).
+- Acik: Hastane sablonunun D vitamini (7-15 mcg/ogun) ve karbonhidrat araliklari Turk mutfagi kutuphanesiyle
+  uyumlu degil; sablonun gozden gecirilmesi Bahri'nin karari.

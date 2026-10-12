@@ -20,7 +20,7 @@ import streamlit as st
 
 from db import get_supabase, oturumu_uygula
 from besin_sabitleri import TUM_BESIN_ALANLARI, BESIN_ETIKET, BESIN_ARALIK, kanonik_sirala
-from uretim_algoritmasi import hafta_olustur, ogun_olustur, _taban_kelime, _hedef_mesafesi, _fast_food_sec
+from uretim_algoritmasi import hafta_olustur, ogun_olustur, _taban_kelime, _hedef_mesafesi, _fast_food_sec, tam_eslesme_var_mi, hedef_engelleri
 
 # DOKSAN ALTINCI DUZELTME (4 Eylul 2026): TEMEL_5 dosyanin EN BASINA
 # tasindi -- daha once _gun_popup_govdesini_ciz'in icinde (cok asagida)
@@ -1305,6 +1305,18 @@ if st.button("Ay için menü üret", type="primary"):
         _ilerleme_cubugu = st.progress(0.0, text="Menü üretiliyor...")
         _sayac = {"n": 0}
         _uretim_baslangic = time.monotonic()
+        # YUZ ... DUZELTME (12 Ekim 2026): once bu hedeflerle kutuphanede TUM
+        # hedefleri tutan bir ogun olup olmadigi kontrol edilir. Yoksa her ogunde
+        # bosuna tam tarama yapilmaz ve kullaniciya hangi hedeflerin engel
+        # oldugu gosterilir.
+        _tam_eslesme_yok = set()
+        _hedef_uyarilari = []
+        for _ogun_adi_k, _hedef_k in (hedefler or {}).items():
+            if _hedef_k and not tam_eslesme_var_mi(tarifler_zengin, _hedef_k):
+                _tam_eslesme_yok.add(_ogun_adi_k)
+                _engeller = hedef_engelleri(tarifler_zengin, _hedef_k)[:3]
+                _hedef_uyarilari.append((_ogun_adi_k, _engeller))
+        st.session_state["yillik_menu_hedef_uyarilari"] = _hedef_uyarilari
 
         def _ilerle():
             _sayac["n"] += 1
@@ -1323,7 +1335,7 @@ if st.button("Ay için menü üret", type="primary"):
             gun_mevsimleri = [_tarih_mevsimi(t) for t in hafta_tarihleri]
             hafta = hafta_olustur(
                 tarifler_zengin, None, rastgele, hedefler=hedefler,
-                gun_mevsimleri=gun_mevsimleri, ilerleme=_ilerle,
+                gun_mevsimleri=gun_mevsimleri, ilerleme=_ilerle, tam_eslesme_yok=_tam_eslesme_yok,
             )
             # Ekranda gercek tarih/hafta gunu adi gosterebilmek icin, o gunun
             # gercek datetime.date'ini de tasiyoruz.
@@ -1349,6 +1361,14 @@ if st.button("Ay için menü üret", type="primary"):
 if st.session_state.get("yillik_menu_uretim_suresi") is not None and st.session_state.get("yillik_menu_aylik"):
     _sure = int(st.session_state["yillik_menu_uretim_suresi"])
     st.caption(f"Son üretim süresi: {_sure // 60} dk {_sure % 60} sn")
+    for _ogun_adi_u, _engeller_u in st.session_state.get("yillik_menu_hedef_uyarilari") or []:
+        _engel_metni = ", ".join(f"{BESIN_ETIKET.get(k, k)} (%{v:.0f})" for k, v in _engeller_u)
+        st.warning(
+            f"{_ogun_adi_u} hedefleri bu kütüphaneyle birlikte tutturulamıyor: tüm hedefleri aynı anda "
+            f"karşılayan hiçbir {_ogun_adi_u.lower()} öğünü yok. Bu yüzden her öğün hedefe en yakın "
+            f"seçenekle dolduruldu. En çok engel olan hedefler (rastgele öğünlerde tutturulamama oranı): "
+            f"{_engel_metni}. Bu hedeflerin aralığını genişletmeyi düşünebilirsin."
+        )
 
 RENKLER = {1: "#D85A30", 2: "#639922", 3: "#1D9E75"}
 

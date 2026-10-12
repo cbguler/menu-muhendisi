@@ -300,7 +300,7 @@ def _besin_matrisi(tarifler, hedef_anahtarlari):
     return deger, var, gk, kk
 
 
-def _ogun_dene(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele, deneme_sayisi, tekrara_izin_ver, mevsim_zorunlu=True, hedef=None, kullanilan_gun_taban=None, bitis_zamani=None, mesafe_hesapla=True, sadece_mesafe=False, onceki_en_iyi=None):
+def _ogun_dene(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele, deneme_sayisi, tekrara_izin_ver, mevsim_zorunlu=True, hedef=None, kullanilan_gun_taban=None, bitis_zamani=None, mesafe_hesapla=True, sadece_mesafe=False, onceki_en_iyi=None, tercih_uygula=True):
     """Verilen esneklik seviyesinde ogun kombinasyonu arar.
     sadece_mesafe=True: tam eslesme ARANMAZ (cagiran, olmadigini zaten
     biliyor), sadece en yakin uclu -- ogun_olustur'un 2. asamasi, daha hizli.
@@ -509,7 +509,7 @@ def _ogun_dene(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, 
             continue
         # madde 13: satir basina tercih edilen t3 kumesi
         aday = gecerli
-        tercih_sirasi = _grup3_tercih_sirasi(t1["etiketler"])
+        tercih_sirasi = _grup3_tercih_sirasi(t1["etiketler"]) if tercih_uygula else []
         if tercih_sirasi:
             secildi = np.zeros(gecerli.shape[0], dtype=bool)
             aday = np.zeros_like(gecerli)
@@ -540,7 +540,7 @@ def _ogun_dene(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, 
     return None, en_iyi_uclu
 
 
-def ogun_olustur(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele, hedef=None, kullanilan_gun_taban=None):
+def ogun_olustur(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele, hedef=None, kullanilan_gun_taban=None, tam_eslesme_ara=True):
     """Tek bir ogun (Ogle veya Aksam) icin I+II+III grup tarifi secer.
     Kademeli esneme sirasi (UYUMSUZLUK/madde 11 hicbirinde gevsetilmez):
       1) mevsime uygun + hafta icinde tekrarsiz + besin hedefi icinde
@@ -586,12 +586,13 @@ def ogun_olustur(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta
     # 1. ASAMA -- TAM ESLESME: 3 kademe sirayla, her biri TAM taranir
     #    (exhaustive, vektorize). Bir kademede eslesme varsa MUTLAKA bulunur
     #    (9 Eylul'deki "ne kadar surerse sursun en iyi sonuc" kurali korunur).
-    # 2. ASAMA -- EN YAKIN: hicbir kademede tam eslesme yoksa en yakin uclu
-    #    3 kademede sirayla aranir (eskisi gibi en kucugu secilir); bir
-    #    kademenin en iyisi sonrakinin baslangic siniri olur, boylece sonraki
-    #    kademeler cok daha hizli budanir. Toplam sure OGUN_MESAFE_SINIRI_SN
-    #    ile sinirli (sinira ulasilirsa o ana kadarki en iyi kullanilir).
-    for tekrara_izin_ver, mevsim_zorunlu in ((False, True), (False, False), (True, False)):
+    # 2. ASAMA -- EN YAKIN: hicbir kademede tam eslesme yoksa en yakin uclu,
+    #    uyumlu uclusu olan EN SIKI kademeden secilir (asagidaki not). Sure
+    #    OGUN_MESAFE_SINIRI_SN ile sinirli.
+    # tam_eslesme_ara=False: cagiran (hafta_olustur), bu hedeflerle kutuphanede
+    # HICBIR tam eslesme olmadigini onceden kanitladi (bkz. tam_eslesme_var_mi);
+    # 1. asama bosuna taranmaz.
+    for tekrara_izin_ver, mevsim_zorunlu in (((False, True), (False, False), (True, False)) if tam_eslesme_ara else ()):
         tam_sonuc, _ = _ogun_dene(
             grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele,
             float("inf"), tekrara_izin_ver, mevsim_zorunlu, hedef, kullanilan_gun_taban,
@@ -599,19 +600,24 @@ def ogun_olustur(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta
         )
         if tam_sonuc is not None:
             return tam_sonuc
+    # YUZ ... DUZELTME (12 Ekim 2026, ikinci): tam eslesme YOKSA en yakin uclu
+    # artik EN SIKI kademeden (hafta ici tekrarsiz + mevsime uygun) secilir;
+    # o kademede hic uyumlu uclu yoksa bir sonrakine gecilir. Eskiden en yakin
+    # uclu 3 kademenin en kucugu seciliyordu; 3. kademe tekrara izin verdigi
+    # icin AYNI uclu her gun "en yakin" cikiyor ve menu her gun ayni yemeklerden
+    # olusuyordu (Bahri'nin 12 Ekim ekran goruntusu: Ocak'ta her ogle Ispanakli
+    # Yumurta + Mercimekli Bulgur + Kadayifli Sut Tatlisi).
     _bitis = time.monotonic() + OGUN_MESAFE_SINIRI_SN
-    en_iyi = None
+    en_iyi_genel_uclu = None
     for tekrara_izin_ver, mevsim_zorunlu in ((False, True), (False, False), (True, False)):
-        if time.monotonic() >= _bitis:
-            break
         _, uclu = _ogun_dene(
             grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele,
             float("inf"), tekrara_izin_ver, mevsim_zorunlu, hedef, kullanilan_gun_taban,
-            bitis_zamani=_bitis, mesafe_hesapla=True, sadece_mesafe=True, onceki_en_iyi=en_iyi,
+            bitis_zamani=_bitis, mesafe_hesapla=True, sadece_mesafe=True,
         )
-        if uclu is not None and (en_iyi is None or uclu is not en_iyi[1]):
-            en_iyi = (_hedef_mesafesi(*uclu, hedef), uclu)
-    en_iyi_genel_uclu = en_iyi[1] if en_iyi else None
+        if uclu is not None:
+            en_iyi_genel_uclu = uclu
+            break
 
     if en_iyi_genel_uclu is not None:
         return en_iyi_genel_uclu
@@ -651,7 +657,41 @@ def _fast_food_sec(grup4_havuz, birlesik_etiketler, rastgele):
     return rastgele.choice(adaylar)
 
 
-def hafta_olustur(tarifler, mevsim, rastgele, hedefler=None, gun_sayisi=7, gun_mevsimleri=None, ilerleme=None):
+def tam_eslesme_var_mi(tarifler, hedef):
+    """YUZ ... DUZELTME (12 Ekim 2026): bu hedeflerle kutuphanede TUM hedefleri
+    tutturan EN AZ BIR uclu var mi? En gevsek kosullarla (mevsim yok, tekrar
+    serbest, tamamlayici tercihi yok) tam tarama yapar; burada yoksa hicbir
+    ogunde de yoktur. Boylece imkansiz hedeflerle her ogun icin bosuna tam
+    tarama yapilmaz ve kullaniciya neden hedef disi kaldigi soylenebilir."""
+    if not hedef:
+        return True
+    g = [[t for t in tarifler if t["grup"] == k] for k in (1, 2, 3)]
+    if not all(g):
+        return True
+    tam, _ = _ogun_dene(g[0], g[1], g[2], None, set(), random.Random(0), float("inf"),
+                        True, False, hedef, set(), mesafe_hesapla=False, tercih_uygula=False)
+    return tam is not None
+
+
+def hedef_engelleri(tarifler, hedef, ornek_sayisi=20000):
+    """Rastgele uclulerde her besin hedefinin ne siklikla tutturulamadigi
+    (yuzde, buyukten kucuge). Kullaniciya hangi hedefin sorun cikardigini
+    gostermek icin; uyumluluk kurallari gozetilmez (sadece besin toplami)."""
+    g = [[t for t in tarifler if t["grup"] == k] for k in (1, 2, 3)]
+    if not hedef or not all(g):
+        return []
+    r = random.Random(0)
+    say = {k: 0 for k in hedef}
+    for _ in range(ornek_sayisi):
+        b = ogun_besin_toplami(r.choice(g[0]), r.choice(g[1]), r.choice(g[2]))
+        for k, (alt, ust) in hedef.items():
+            d = b.get(k)
+            if d is not None and not (alt <= d <= ust):
+                say[k] += 1
+    return sorted(((k, 100.0 * v / ornek_sayisi) for k, v in say.items() if v), key=lambda x: -x[1])
+
+
+def hafta_olustur(tarifler, mevsim, rastgele, hedefler=None, gun_sayisi=7, gun_mevsimleri=None, ilerleme=None, tam_eslesme_yok=None):
     """tarifler: [{"ad","grup"(1/2/3, opsiyonel 4),"mevsim_etiketi","etiketler", ...besin}, ...]
     hedefler: {"Öğle": {"kalori":(min,max), ...}, "Akşam": {...}} ya da None.
     grup=4 (isletmenin kendi Icecek/Baslangic/Pizza/Burger receteleri)
@@ -684,6 +724,7 @@ def hafta_olustur(tarifler, mevsim, rastgele, hedefler=None, gun_sayisi=7, gun_m
             t1, t2, t3 = ogun_olustur(
                 grup1, grup2, grup3, gun_mevsimi, kullanilan_hafta, rastgele, hedef,
                 kullanilan_gun_taban,
+                tam_eslesme_ara=ogun_adi not in (tam_eslesme_yok or ()),
             )
             for t in (t1, t2, t3):
                 kullanilan_hafta.add(t["ad"])
