@@ -1187,6 +1187,18 @@ with sag3:
                 for _anahtar, _aralik in _degerler.items():
                     st.session_state[f"{_ogun_adi}_{_anahtar}_alt"] = float(_aralik[0])
                     st.session_state[f"{_ogun_adi}_{_anahtar}_ust"] = float(_aralik[1])
+        else:
+            # YUZ ... DUZELTME (12 Ekim 2026): KAYITLI HEDEFI OLMAYAN bir profile
+            # (ör. "Özel Hizmet Profili") gecildiginde, ONCEKI profilin hedef
+            # rakamlari ekrandaki min/maks kutularinda KALIYORDU. Bahri'nin 12 Ekim
+            # ekraninda Ozel Hizmet Profili seciliyken "Hastane" sablonunun
+            # rakamlari (D vitamini 7-15 mcg vb.) duruyordu; bu hedeflerle
+            # kutuphanede hicbir ogun tum hedefleri tutturamiyor -> 70/70 hedef disi.
+            # Artik hedefi olmayan profilde kutular VARSAYILAN araliklara doner.
+            for _ogun_adi in ("Öğle", "Akşam"):
+                for _anahtar, *_ in TUM_BESIN_ALANLARI:
+                    st.session_state.pop(f"{_ogun_adi}_{_anahtar}_alt", None)
+                    st.session_state.pop(f"{_ogun_adi}_{_anahtar}_ust", None)
 
 # YUZ OTUZ BESINCI DUZELTME (9 Eylul 2026): Bahri'nin bildirdigi sorun --
 # "Ay" acilir listesi (12 secenek) sayfanin alt kenarina yakin

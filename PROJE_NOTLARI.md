@@ -12430,3 +12430,13 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   kural haftalik oldugu icin serbest).
 - Acik: Hastane sablonunun D vitamini (7-15 mcg/ogun) ve karbonhidrat araliklari Turk mutfagi kutuphanesiyle
   uyumlu degil; sablonun gozden gecirilmesi Bahri'nin karari.
+
+### 12 Ekim 2026 (ucuncu) -- Hedef kutularinda onceki profilin rakamlari kaliyordu (KOK NEDEN)
+- 08:43 ekran: yeni kod calisiyor (37 sn, cesitli ogunler, "tutturulamiyor" uyarisi) ama hedefler hala Hastane
+  sablonu rakamlari, Ozel Hizmet Profili seciliyken.
+- Kok neden (pages/0_Yillik_Menu.py, profil imzasi blogu): kayitli hedefi OLAN bir profil secilince rakamlari
+  min/maks kutularina yaziliyor; kayitli hedefi OLMAYAN profile (Ozel Hizmet Profili) gecilince kutular
+  temizlenmiyordu -> onceki profilin (Hastane sablonu uygulanmis bir profil) rakamlari kaliyordu. Sayfa
+  yenilense bile, acilista once varsayilan (hedefli) profil yuklenip sonra Ozel Hizmet secildigi icin ayni sey.
+- Duzeltme: hedefi olmayan profile gecince Ogle/Aksam min/maks kutulari silinir, widget'lar varsayilan
+  araliklarla (BESIN_ARALIK) yeniden olusur. Gercek veri + varsayilan 32 hedef: ay 1,4 sn, 70/70 hedefte.
