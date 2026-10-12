@@ -12456,3 +12456,69 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   "_beni_hatirla" isaretliyse yeni refresh token cereze (5 sn bekleme ile) yaziliyor. _beni_hatirla: cerezden
   geri yuklemede True, giriste "Beni hatirla" kutusuna gore.
 - Test: gercek kullanimda en az 1-2 saat sonra / ertesi gun teyit edilecek.
+
+### 12 Ekim 2026 -- YUZ KOPYA DUZELTME, Parti 1: "Etli Kavurma" kopyalari gercek yoresel tariflere (sql/187)
+- Bahri'nin kararlari: her kopya gercek yoresel tarife donusturulur; belgelenmis varyanti olmayan kopya o ilin
+  gercek ve belgelenmis bir yemegiyle degistirilir; pilot yok, dogrudan partiler halinde.
+- Kaynak: Turk Patent Cografi Isaret (CI) tescil belgeleri (ci.turkpatent.gov.tr). Talimatin sonuna "Kaynak: ...
+  Tescil No ..." satiri yazildi. Malzeme miktarlari = belgedeki toplam / porsiyon sayisi (kutuphane kurali:
+  1 porsiyon bazinda). Kopya; menu_ogeleri, menu_takvimi_ogeleri veya kayitli_aylik_menuler'de kullaniliyorsa
+  DOKUNULMAZ (dogrulama tablosunda "ATLANDI" gorunur). Malzeme on kontrolu: biri eksikse hicbir sey degismez.
+  Yerel PostgreSQL 16 uzerinde sahte semayla test edildi (tam calisma, kullanimdaki kopyayi atlama, tekrar
+  calistirma, eksik malzemede tam geri alma).
+- Donusumler (eski kopya silinir, yeni tarif grup 1'e eklenir):
+  - Kilis Usulü Etli Kavurma -> Kilis Tava (CI 1017)
+  - Niğde Usulü Etli Kavurma -> Niğde Tavası (CI 1421)
+  - Kahramanmaraş Usulü Etli Kavurma -> Maraş Eli Böğründe (CI 1250)
+  - Gaziantep Usulü Etli Kavurma -> Gaziantep Simit Kebabı (CI 729)
+  - Gaziantep Usulü Etli Kavurma (Kimyonlu) -> Gaziantep Yenidünya Kebabı (CI 743)
+  - Şanlıurfa Usulü Etli Kavurma -> Şanlıurfa Tepsi Kebabı (CI 1171)
+  - Diyarbakır Usulü Etli Kavurma -> Diyarbakır Ayvalı Kavurma (CI 1139)
+  - Mersin Usulü Etli Kavurma -> "Etli Kavurma" (bolge Genel; Mersin'in belgelenmis ana yemegi Tantuni zaten var)
+- TAHMIN ve kararlar (Emre/Gizem onayi bekleniyor):
+  - Kilis Usulü Etli Kavurma -> Kilis Tava (CI 1017):
+    - Porsiyon sayısı: kaynak 1 kg etlik tarifi kişi sayısı vermeden veriyor; tepsi 8 eşit dilime kesildiği için 8 porsiyon kabul edildi.
+    - Mevsime göre patlıcan veya patates seçeneğinden yıl boyu bulunan patates seçildi (karar).
+  - Niğde Usulü Etli Kavurma -> Niğde Tavası (CI 1421):
+    - Kaynaktaki 'kırmızı toz biber' katalogda ayrı yok; PUL BİBER ile eşlendi.
+    - Kaynak 'koyun veya kuzu, but veya döş' diyor; KUZU ETİ (BUT) seçildi (karar).
+  - Kahramanmaraş Usulü Etli Kavurma -> Maraş Eli Böğründe (CI 1250):
+    - Porsiyon: belge kişi sayısı vermiyor; 150 g et esaslı miktarlar 1 porsiyon kabul edildi.
+    - 1 büyük domates = 182 g (USDA FoodData Central 'large' ölçüsü).
+    - 5-6 yeşil biber = 5,5 x 15 g = 82,5 g (sivri biber adet ağırlığı TAHMİN).
+    - 5-6 diş sarımsak = 5,5 x 3 g = 16,5 g (USDA 1 diş = 3 g).
+    - Maraş biberi katalogda ayrı yok; PUL BİBER ile eşlendi. Dana yerine kuzu seçildi (kuyruk yağı gerekmiyor).
+  - Gaziantep Usulü Etli Kavurma -> Gaziantep Simit Kebabı (CI 729):
+    - Kaynaktaki aralıkların orta değeri alındı: kıyma 150-210 -> 180 g, bulgur 10-30 -> 20 g, baharatlar 2-5 -> 3,5 g.
+    - Bulgur ıslatma suyu miktarı yok: 20 g (bulgurla eşit) TAHMİN.
+    - Izgara süresi kaynakta yok: 8 dk TAHMİN. Mangal kömürü enerji tablosunda olmadığı için doğalgaz yazıldı.
+    - İsteğe bağlı kuru nane ve çam fıstığı malzemeye eklenmedi, talimatta seçenek olarak geçiyor.
+  - Gaziantep Usulü Etli Kavurma (Kimyonlu) -> Gaziantep Yenidünya Kebabı (CI 743):
+    - Porsiyon: kaynak 4-6 kişilik; orta değer 5 porsiyon alındı.
+    - Kıyma 750-800 g -> 775 g (orta değer).
+    - 1 tatlı kaşığı karabiber = 3 g TAHMİN; tuz kaynakta 'damak tadına göre': 1,5 g/porsiyon TAHMİN.
+    - 1 çay bardağı su = 100 g TAHMİN.
+    - Mevsim: yenidünya mevsimi nedeniyle ilkbahar (karar).
+  - Şanlıurfa Usulü Etli Kavurma -> Şanlıurfa Tepsi Kebabı (CI 1171):
+    - 6 Birecik patlıcanı = 6 x 120 g TAHMİN (Birecik patlıcanı küçük-orta boy).
+    - 10 kırmızı veya yeşil biber = 10 x 30 g TAHMİN; YEŞİL BİBER ile eşlendi.
+    - Kaynak 'erkek kuzu eti' diyor, parça belirtmiyor; KUZU ETİ (KOL) seçildi (karar).
+    - Fırın süresi 50-60 dk -> 55 dk (orta değer).
+  - Diyarbakır Usulü Etli Kavurma -> Diyarbakır Ayvalı Kavurma (CI 1139):
+    - 2 orta boy ayva = 2 x 250 g TAHMİN.
+    - Tırnaklı pide miktarı kaynakta yok: 40 g/porsiyon TAHMİN.
+    - Pide kızartma süresi kaynakta yok: 5 dk TAHMİN.
+    - Kaynak '40 g tereyağı veya 100 g kuyruk yağı' diyor; tereyağı seçildi (karar). Mevsim: ayva nedeniyle sonbahar (karar).
+- Not: CI belgelerinin porsiyonlari kutuphane ortalamasindan buyuk (or. Niğde Tavası 250 g et/porsiyon, ~610 kcal).
+  Kaynaga sadik kalindi; porsiyon gramaji karari (Emre/Gizem grup hedefleri) gelince olceklenecek.
+- Talimat ifadeleri, Emre/Gizem'in 35 belirsiz ifade cevaplari gelince kutuphane genelinde tekrar gozden gecirilecek.
+- Kalan "Etli Kavurma" kopyalari (19): Adıyaman, Ağrı, Balıkesir, Batman, Bayburt, Elazığ, Erzurum, Giresun, Iğdır,
+  Kars, Kastamonu, Kırşehir, Konya, Manisa, Rize, Samsun, Siirt, Tokat, Şırnak.
+- Sonraki partiler icin bulunmus CI kaynaklari (eksikleri ile): Siirt Kiteli 1574 (porsiyon yok), Kırşehir Süla
+  Kabağı 1134 (kuzu kaburga katalogda yok) / Çirleme 948 (sure yok), Batman Piçik 1508 (tuz yok), Bayburt Ekşi
+  Lahana 648 (porsiyon yok), Erzurum Hink 1435 (ağız sütü katalogda yok) / Çiriş 1194, Ağrı Yaprak Döneri 1271
+  (porsiyon, sure yok), Kars Erişte Pilavı 1871, Elazığ Sırın 1355, Kastamonu Tiridi 474, Konya Fırın Kebabı 1113
+  (sure yok), Diyarbakır Üsküre 868 / Et Eşkenesi 993, Şanlıurfa Keme Boranısı 450. Manisa Kebabı ve Kastamonu
+  Banduma icin miktarli CI belgesi bulunamadi.
+- Yeni fark edilen kopya: "Konya Etli Ekmek" ile "Etli Ekmek (Konya)" ayni yemek (X Usulü kalibina uymadigi icin
+  ilk analizde yakalanmamisti). Sonraki partide ele alinacak.
