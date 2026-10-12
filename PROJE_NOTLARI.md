@@ -12440,3 +12440,19 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   yenilense bile, acilista once varsayilan (hedefli) profil yuklenip sonra Ozel Hizmet secildigi icin ayni sey.
 - Duzeltme: hedefi olmayan profile gecince Ogle/Aksam min/maks kutulari silinir, widget'lar varsayilan
   araliklarla (BESIN_ARALIK) yeniden olusur. Gercek veri + varsayilan 32 hedef: ay 1,4 sn, 70/70 hedefte.
+
+### 12 Ekim 2026 -- "Beni hatirla" KOK NEDENI (kutuphane kaynak kodundan dogrulandi)
+- supabase-auth 2.32 (_sync/gotrue_client.py): _save_session her cagrildiginda (set_session, refresh_session,
+  giris) _start_auto_refresh_token ile ARKA PLAN zamanlayicisi kurar; erisim token'inin bitmesine EXPIRY_MARGIN
+  (10 sn) kala refresh token'i kendiliginden yeniler ve yeni oturumu kaydederken zamanlayiciyi TEKRAR kurar.
+  Refresh token tek kullanimlik -> cerezdeki token gecersiz olur. Zamanlayici istemciye referans tuttugu icin
+  sekme kapansa da saatte bir yenilemeye devam eder. Sonuc: girisin ~1 saat sonrasindan itibaren cerezdeki token
+  her zaman eski; sonraki ziyarette refresh_session hata verir, cerez silinir, giris ekrani gelir. Gecmisteki
+  cerez okuma/yazma bekleme duzeltmeleri bu yuzden ise yaramadi.
+- Dogrulama: kutuphaneyle test -- varsayilan istemcide _save_session sonrasi zamanlayici VAR, ClientOptions(
+  auto_refresh_token=False) ile YOK.
+- Duzeltme: db.py get_supabase -> ClientOptions(auto_refresh_token=False). app.py: her calismada erisim
+  token'inin bitmesine 2 dk'dan az kaldiysa refresh_session KENDIMIZ cagiriyoruz; yeni oturum session_state'e,
+  "_beni_hatirla" isaretliyse yeni refresh token cereze (5 sn bekleme ile) yaziliyor. _beni_hatirla: cerezden
+  geri yuklemede True, giriste "Beni hatirla" kutusuna gore.
+- Test: gercek kullanimda en az 1-2 saat sonra / ertesi gun teyit edilecek.

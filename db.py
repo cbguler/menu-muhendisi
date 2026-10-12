@@ -11,7 +11,7 @@ import time
 
 import extra_streamlit_components as stx
 import streamlit as st
-from supabase import create_client, Client
+from supabase import create_client, Client, ClientOptions
 
 
 def get_supabase() -> Client:
@@ -29,8 +29,18 @@ def get_supabase() -> Client:
     oturum basina tutuluyor.
     """
     if "_supabase_istemcisi" not in st.session_state:
+        # YUZ ... DUZELTME (12 Ekim 2026, "Beni hatirla"): auto_refresh_token=False.
+        # supabase-auth (2.32) her oturum kaydinda arka planda bir zamanlayici
+        # kuruyor ve erisim token'inin suresi bitmeden ~10 sn once refresh
+        # token'i KENDILIGINDEN yeniliyor (gotrue_client._start_auto_refresh_token).
+        # Refresh token tek kullanimlik oldugu icin bu, cerezdeki token'i
+        # gecersiz kiliyordu; zamanlayici her yenilemede kendini tekrar kurdugu
+        # icin sekme kapansa bile saatte bir yenilemeye devam ediyordu. Sonuc:
+        # bir saatten sonra cerez her zaman eski -> sonraki ziyarette giris ekrani.
+        # Artik yenilemeyi SADECE app.py yapiyor ve yeni token'i cereze yaziyor.
         st.session_state["_supabase_istemcisi"] = create_client(
-            st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_ANON_KEY"]
+            st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_ANON_KEY"],
+            options=ClientOptions(auto_refresh_token=False),
         )
     return st.session_state["_supabase_istemcisi"]
 

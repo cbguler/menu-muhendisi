@@ -257,6 +257,7 @@ if st.session_state.oturum is None:
             yenilenen = supabase.auth.refresh_session(saklanan_refresh)
             st.session_state.oturum = yenilenen.session
             st.session_state["_giris_turu"] = "hatirla"  # kullanim istatistigi (sql/183)
+            st.session_state["_beni_hatirla"] = True  # saatlik yenilemede cerez de guncellensin
             # ONEMLI: Supabase refresh token'lari TEK KULLANIMLIK (rotation) --
             # her basarili yenilemede yeni bir refresh_token doner, eskisi
             # gecersiz olur. Cerezi burada guncellemezsek "beni hatirla"
@@ -316,6 +317,7 @@ if st.session_state.oturum is None:
                     sonuc = giris_yap(email, sifre)
                     st.session_state.oturum = sonuc.session
                     st.session_state["_giris_turu"] = "sifre"  # kullanim istatistigi (sql/183)
+                    st.session_state["_beni_hatirla"] = bool(beni_hatirla)
                     st.session_state.pop("_giris_kaydedildi", None)
                     if beni_hatirla:
                         cerezler.set(
@@ -493,7 +495,23 @@ if st.session_state.oturum is None:
 # tekrar set_session cagirmak basarisiz oluyordu. Cozum: ayni "sessizce
 # temizleyip giris ekranina don" korumasi (cerez-tabanli yenileme icin
 # zaten mevcuttu, satir ~221 civari) BURAYA da eklendi.
+# YUZ ... DUZELTME (12 Ekim 2026, "Beni hatirla" kok nedeni -- bkz. db.py
+# get_supabase): kutuphanenin arka plan yenilemesi kapatildi. Erisim token'inin
+# suresi dolmak uzereyse (2 dk kala) yenilemeyi BURADA biz yapiyoruz ve yeni
+# refresh token'i hem oturuma hem -- "Beni hatirla" aciksa -- cereze yaziyoruz.
+# Boylece cerezdeki token her zaman GECERLI olan son token oluyor.
 try:
+    _oturum_simdiki = st.session_state.oturum
+    if (_oturum_simdiki.expires_at or 0) - time.time() < 120:
+        _yeni_oturum = supabase.auth.refresh_session(_oturum_simdiki.refresh_token).session
+        st.session_state.oturum = _yeni_oturum
+        if st.session_state.get("_beni_hatirla"):
+            cerezler.set(
+                "refresh_token", _sifrele(_yeni_oturum.refresh_token),
+                expires_at=datetime.now(timezone.utc) + timedelta(days=BENI_HATIRLA_GUN),
+                key="refresh_token_suresi_dolan_yenile",
+            )
+            time.sleep(5)  # cerez yazimi tamamlanmadan calisma bitmesin (bkz. yukaridaki yenileme yolu)
     supabase.auth.set_session(
         st.session_state.oturum.access_token, st.session_state.oturum.refresh_token
     )
