@@ -12390,3 +12390,21 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   ayni testte 2 dakikada 1 haftayi bile bitiremedi. Kolay hedefte 0,01 sn. En kotu durumda bir ay ~3,5 dk.
 - Yan etki: zaman butcesi nedeniyle ayni tohumla sonuc artik tam deterministik degil (sunucu hizina bagli).
 - Gercek veriyle teyit edilmedi; Bahri ayni ayarla tekrar deneyecek.
+
+### 12 Ekim 2026 -- Menu Muhendisi 9: 11 Ekim duzeltmesi GERI ALINDI, tam arama numpy ile hizlandirildi
+- Bahri: uretim cok yavas ve 70/70 ogun "hedef disi" (Aralik 2026, Ozel Hizmet Profili, 32 besin hedefinin
+  hepsi secili). Sebep: 11 Ekim'deki ogun basina 3 sn zaman butcesi aramayi rastgele bir alt kumeye indirdi;
+  tam eslesmeler bulunamadi ve her ogun butcenin tamamini harcadi (Claude'un hatasi).
+- Yeni uretim_algoritmasi._ogun_dene: ayni kurallar, TAM arama; t1 karistirilmis sirada, her t1 icin tum
+  (t2,t3) ciftleri numpy matrisinde. Kural/tercih (madde 11, 13, temel tur, ikili t1+t2 uyumu) ve hedef/mesafe
+  formulleri aynen. Budama: hedefte hucre kalmazsa ve mesafe en iyinin altina inemezse t1 atlanir.
+- ogun_olustur iki asamali: (1) tam eslesme 3 kademede sirayla, zaman siniri YOK; (2) hic yoksa en yakin uclu
+  3 kademede, kademeler arasi en iyi paylasilarak, toplam OGUN_MESAFE_SINIRI_SN = 5 sn ile sinirli.
+- Esdegerlik testleri (eski 9 Eylul tam-arama surumuyle, sahte veri): kademe duzeyi 900 deneme FARK 0;
+  en yakin 292 deneme FARK 0; ogun duzeyi 400 deneme, 400'u ayni (sinira ulasilmayan boyutlarda).
+- Hiz (sahte 1000 tarif, 32 hedef): eslesme varsa hafta < 1 sn; HIC eslesme yoksa ogun ~7 sn (tam eslesme
+  aramasi ~2,3 sn + en yakin <= 5 sn) -> en kotu durumda ay ~8 dk. Eski Python tam aramasi ayni durumda saatler.
+- Sayfa: "Son uretim suresi" yazisi; "Tekrar Dene" 30 deneme -> 1 (tam aramada tekrar ayni sonucu verir).
+- requirements.txt: numpy acikca eklendi (zaten pandas ile kuruluyordu).
+- GERCEK VERIYLE TEYIT EDILMEDI. Eger gercek veride 32 hedefin hepsini tutturan uclu yoksa sonuc yine "hedef
+  disi" olur; bu durumda sorun hedef araliklari/kutuphane, arama degil.

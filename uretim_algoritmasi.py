@@ -24,18 +24,21 @@
 import random
 import time
 
-# YUZ ... DUZELTME (11 Ekim 2026, Menu Muhendisi 9): Aylik Menu uretimi
-# uzun sure calisip hic sonuc vermeden duruyordu. Sebep: 9 Eylul'de (YUZ
-# YIRMI ALTINCI DUZELTME) arama SINIRSIZ (exhaustive) yapilmisti; o gun
-# kutuphane 241 tarifti. Kutuphane 1000 tarife cikinca uclu (t1,t2,t3)
-# sayisi ~64 kat buyudu; cok sayida besin hedefi secildiginde tam eslesme
-# cogu ogunde YOK, bu yuzden her ogun 3 kademenin BUTUN havuzunu taramaya
-# calisiyordu -> bir ay icin saatler; Streamlit Cloud oturumu o surede
-# kesiyor. Duzeltme: her ogune ZAMAN butcesi. Tam eslesme bulunursa hemen
-# doner (eskisi gibi); bulunamazsa butce bitince o ana kadarki EN YAKIN
-# uclu kullanilir (eskisi gibi "Hedef disi" yerine en yakin sonuc).
-# Butce kademelere bolunur: %50 / %25 / %25.
-OGUN_SURE_BUTCESI_SN = 3.0
+import numpy as np
+
+# YUZ ... DUZELTME (12 Ekim 2026, Menu Muhendisi 9): 11 Ekim'deki "ogun basina
+# 3 sn zaman butcesi" duzeltmesi GERI ALINDI -- aramayi rastgele bir alt
+# kumeye indirdigi icin 32 hedefin hepsi seciliyken Aralik'ta 70 ogunun
+# 70'i "hedef disi" cikti (Bahri: "her zaman uydugu hedefleri asiyor").
+# Yeni cozum: arama yine TAM (exhaustive, 9 Eylul'deki YUZ YIRMI ALTINCI
+# DUZELTME'nin istedigi gibi), ama en ic iki dongu (t2 x t3) numpy ile tek
+# seferde hesaplaniyor (bkz. _ogun_dene). Kurallar, kademe sirasi, tercih
+# (madde 13) mantigi ve hedef/mesafe formulleri AYNEN korundu; eski Python
+# surumuyle esdegerlik testle dogrulandi (PROJE_NOTLARI, 12 Ekim).
+# Tam eslesme aramasinda zaman siniri YOK. Hicbir tam eslesme yoksa "en
+# yakin" arama OGUN_MESAFE_SINIRI_SN ile sinirli (bkz. ogun_olustur).
+OGUN_MESAFE_SINIRI_SN = 5.0
+_TEMEL_4 = ("kalori", "protein", "yag", "karbonhidrat")
 
 # --- Anayasa madde 11: uyumsuzluk kurallari (etiket ciftleri) ---
 UYUMSUZLUK = [
@@ -260,102 +263,279 @@ def _grup3_tercih_sirasi(grup1_etiketler):
     return []
 
 
-def _ogun_dene(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele, deneme_sayisi, tekrara_izin_ver, mevsim_zorunlu=True, hedef=None, kullanilan_gun_taban=None, bitis_zamani=None):
-    """Verilen esneklik seviyesinde ogun kombinasyonu aramaya calisir.
-    UYUMSUZLUK (madde 11) HER ZAMAN uygulanir, gevsetilmez -- haftalik-
-    tekrar, mevsim kisiti kademeli olarak gevsetilebilir (hedef ARTIK
-    hicbir kademede tamamen birakilmiyor, bkz. asagida).
+def _etiket_maskesi(etiketler, bit_haritasi):
+    m = 0
+    for e in etiketler:
+        bit = bit_haritasi.get(e)
+        if bit is not None:
+            m |= bit
+    return m
 
-    SEKSEN YEDINCI DUZELTME (4 Eylul 2026): Bahri'nin kesin talebi --
-    "Hedef Dışı" sonucu kabul edilemez, algoritma alternatif denemeye
-    devam etmeli. Iki degisiklik:
-    1) (t1, t2) taramasi ARTIK rastgele.choice ile TEKRARLI/ COPYA
-       DUSEBILEN bir ornekleme DEGIL -- KARISTIRILMIS listeler uzerinde
-       SISTEMLI dolasiyor, ayni butce ile CIDDI olcude daha fazla
-       FARKLI kombinasyon fiilen deneniyor (eskiden ayni cift birden
-       fazla kez rastgele secilip butceyi bosa harcayabiliyordu).
-    2) Fonksiyon artik (tam_sonuc, en_iyi_yakin_sonuc) ikilisi donduruyor:
-       - tam_sonuc: hedefi TAM saglayan uclu, yoksa None.
-       - en_iyi_yakin_sonuc: uyumluluk kurallarina uyan (uyumsuzluk
-         DAHIL) VE hedefe EN YAKIN uclu -- tam bir eslesme yoksa bile
-         cagiran taraf bunu "en iyi ihtimal" olarak kullanabilir.
 
-    DOKSAN DOKUZUNCU DUZELTME (4 Eylul 2026): Bugun "haftalik-farkinda"
-    (mesafe_hedefi ile yumusak yonlendirme) bir tasarim denendi, 3 farkli
-    varyantla TEST edildi (bkz. PROJE_NOTLARI, 4 Eylul) -- HICBIRI basit
-    (bu) yaklasimdan ACIKCA daha iyi cikmadi, biri daha da KOTU cikti.
-    Bu yuzden EN GUVENILIR/kanitlanmis hali olan BU versiyona GERI
-    DONULDU. Genisletilmis (TEMEL_5 disi) ogelerin gercekten guvenilir
-    sekilde iyilestirilmesi, muhtemelen daha derin bir arastirma/tasarim
-    calismasi gerektiriyor -- bkz. Bahri'ye iletilen not (nutrient
-    sayisini azaltma onerisi)."""
+def _besin_matrisi(tarifler, hedef_anahtarlari):
+    """tarifler icin (deger, var_mi) matrisleri ve GI yardimci vektorleri.
+    ogun_besin_toplami ile AYNI kurallar: TEMEL_4 eksikse 0; genisletilmis
+    oge eksikse 'yok' (ucunde de yoksa toplam None -> kontrol atlanir)."""
+    n = len(tarifler)
+    deger = np.zeros((n, len(hedef_anahtarlari)), dtype=np.float64)
+    var = np.ones((n, len(hedef_anahtarlari)), dtype=bool)
+    gk = np.zeros(n, dtype=np.float64)
+    kk = np.zeros(n, dtype=np.float64)
+    for i, t in enumerate(tarifler):
+        for j, k in enumerate(hedef_anahtarlari):
+            if k == "gi":
+                continue
+            v = t.get(k)
+            if k in _TEMEL_4:
+                deger[i, j] = v or 0
+            elif v is None:
+                var[i, j] = False
+            else:
+                deger[i, j] = v
+        gi = t.get("gi")
+        karb = t.get("karbonhidrat") or 0
+        if gi is not None and karb > 0:
+            gk[i] = gi * karb
+            kk[i] = karb
+    return deger, var, gk, kk
+
+
+def _ogun_dene(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele, deneme_sayisi, tekrara_izin_ver, mevsim_zorunlu=True, hedef=None, kullanilan_gun_taban=None, bitis_zamani=None, mesafe_hesapla=True, sadece_mesafe=False, onceki_en_iyi=None):
+    """Verilen esneklik seviyesinde ogun kombinasyonu arar.
+    sadece_mesafe=True: tam eslesme ARANMAZ (cagiran, olmadigini zaten
+    biliyor), sadece en yakin uclu -- ogun_olustur'un 2. asamasi, daha hizli.
+    mesafe_hesapla=False: sadece TAM eslesme aranir (en yakin hesaplanmaz,
+    budama cok daha erken devreye girer) -- ogun_olustur'un 1. asamasi.
+    UYUMSUZLUK (madde 11) HER ZAMAN uygulanir; haftalik tekrar ve mevsim
+    kisiti kademeli gevsetilir (bkz. ogun_olustur). Donus:
+    (tam_sonuc, en_iyi_yakin): hedefi tam saglayan uclu (yoksa None) ve
+    uyumlu ucluler icinde hedefe EN YAKIN olan.
+
+    Tarihce: SEKSEN YEDINCI DUZELTME (4 Eylul: sistemli tarama + en yakin
+    sonuc), DOKSAN DOKUZUNCU DUZELTME (haftalik-farkinda denemeler geri
+    alindi), YUZ YIRMI ALTINCI DUZELTME (9 Eylul: tam/exhaustive arama).
+
+    YUZ ... DUZELTME (12 Ekim 2026): ayni mantik numpy ile. t1 adaylari
+    karistirilmis sirada tek tek dolasilir; her t1 icin BUTUN (t2, t3)
+    ciftleri bir matriste ayni anda degerlendirilir:
+      - t2: t1 ile ayni temel yemek turu degil + t1 ile uyumlu,
+      - t3: t1/t2 ile ayni temel tur degil + uclu uyumlu,
+      - madde 13 tercihi: t1'in tamamlayici etiket sirasindaki ILK etiket
+        icin o satirda uygun t3 varsa SADECE o etikettekiler, yoksa tum
+        uyumlu t3'ler (eski "tercih_edilenler, yoksa aday3_uyumlu").
+    Hedefi saglayan ucluler arasindan secim rastgele (eski surumde
+    karistirilmis siradaki ilk isabet -- ayni olasilik dagilimi).
+    deneme_sayisi artik kullanilmiyor (her zaman tam arama); geriye
+    donuk uyumluluk icin parametre olarak duruyor."""
+    import time as _time
+
     aday1_ham = _aday_havuzu(grup1_havuz, mevsim, kullanilan_hafta, tekrara_izin_ver, mevsim_zorunlu, kullanilan_gun_taban)
     aday2_ham = _aday_havuzu(grup2_havuz, mevsim, kullanilan_hafta, tekrara_izin_ver, mevsim_zorunlu, kullanilan_gun_taban)
     aday3_ham = _aday_havuzu(grup3_havuz, mevsim, kullanilan_hafta, tekrara_izin_ver, mevsim_zorunlu, kullanilan_gun_taban)
     if not (aday1_ham and aday2_ham and aday3_ham):
         return None, None
 
+    # --- Etiket bitleri: uyumsuzluk + istisna + tamamlayici etiketler ---
+    ilgili = set()
+    for a_, b_ in UYUMSUZLUK:
+        ilgili.update((a_, b_))
+    ilgili.add("sporcu_uygun")
+    for tercihler in TAMAMLAYICI.values():
+        ilgili.update(tercihler)
+    bit = {e: 1 << i for i, e in enumerate(sorted(ilgili))}
+    istisna_bit = bit["sporcu_uygun"]
+    kurallar = []
+    for a_, b_ in UYUMSUZLUK:
+        kurallar.append((bit[a_], bit[b_], (a_ == "pilav_makarna_borek" and b_ == "tatli")))
+
+    def _uyumsuz(m):
+        """m: birlesik etiket maskesi (numpy int64 dizi) -> uyumsuz mu (bool dizi)"""
+        kotu = np.zeros(m.shape, dtype=bool)
+        for ba, bb, istisnali in kurallar:
+            ikisi = ((m & ba) != 0) & ((m & bb) != 0)
+            if istisnali:
+                ikisi &= (m & istisna_bit) == 0
+            kotu |= ikisi
+        return kotu
+
+    taban_id = {}
+
+    def _tid(ad):
+        tb = _taban_kelime(ad)
+        if tb not in taban_id:
+            taban_id[tb] = len(taban_id)
+        return taban_id[tb]
+
+    hedef = hedef or {}
+    anahtarlar = list(hedef.keys())
+    alt = np.array([hedef[k][0] for k in anahtarlar], dtype=np.float64)
+    ust = np.array([hedef[k][1] for k in anahtarlar], dtype=np.float64)
+    genislik = np.where((ust - alt) == 0, 1.0, ust - alt)
+    gi_sutunu = anahtarlar.index("gi") if "gi" in anahtarlar else None
+
+    # BUDAMA SIRASI: hedefi en sik ihlal edilen besin ogeleri once hesaplansin
+    # ki mesafe hizla buyusun ve kaybeden t1'ler erken elensin. Sira, rastgele
+    # ornek uclulerden olculur; SONUCU degistirmez, sadece hizi etkiler.
+    if anahtarlar:
+        _orn = random.Random(len(aday1_ham) * 7919 + len(aday3_ham))
+        _ihlal = [0.0] * len(anahtarlar)
+        for _ in range(min(400, len(aday1_ham) * len(aday2_ham) * len(aday3_ham))):
+            _b = ogun_besin_toplami(_orn.choice(aday1_ham), _orn.choice(aday2_ham), _orn.choice(aday3_ham))
+            for _j, _k in enumerate(anahtarlar):
+                _d = _b.get(_k)
+                if _d is not None:
+                    _a, _u = hedef[_k]
+                    _g = (_u - _a) or 1.0
+                    _ihlal[_j] += max(_a - _d, 0.0, _d - _u) / _g
+        _sira = sorted(range(len(anahtarlar)), key=lambda _j: -_ihlal[_j])
+        anahtarlar = [anahtarlar[_j] for _j in _sira]
+        alt = alt[_sira]
+        ust = ust[_sira]
+        genislik = genislik[_sira]
+        gi_sutunu = anahtarlar.index("gi") if "gi" in anahtarlar else None
+
+    D2, V2, GK2, KK2 = _besin_matrisi(aday2_ham, anahtarlar)
+    D3, V3, GK3, KK3 = _besin_matrisi(aday3_ham, anahtarlar)
+    orta = (alt + ust) / 2.0
+    yarim = (ust - alt) / 2.0
+    ters_genislik = 1.0 / genislik
+    tumu_var = (V2.all(axis=0) & V3.all(axis=0)) if len(anahtarlar) else np.zeros(0, dtype=bool)
+    if gi_sutunu is not None:
+        tumu_var[gi_sutunu] = False
+    M2 = np.array([_etiket_maskesi(t["etiketler"], bit) for t in aday2_ham], dtype=np.int64)
+    M3 = np.array([_etiket_maskesi(t["etiketler"], bit) for t in aday3_ham], dtype=np.int64)
+    T2 = np.array([_tid(t["ad"]) for t in aday2_ham], dtype=np.int64)
+    T3 = np.array([_tid(t["ad"]) for t in aday3_ham], dtype=np.int64)
+
     aday1_karisik = list(aday1_ham)
     rastgele.shuffle(aday1_karisik)
 
     en_iyi_mesafe = None
     en_iyi_uclu = None
-    degerlendirilen = 0  # (t1,t2,t3) UCLU sayisi -- SEKSEN SEKIZINCI
-    # DUZELTME'de (4 Eylul 2026) havuz buyuklugunden BAGIMSIZ SABIT bir
-    # tavandi; YUZ YIRMI ALTINCI DUZELTME (9 Eylul 2026) ile deneme_
-    # sayisi artik float("inf") gelebiliyor -- bu durumda asagidaki
-    # kontrol hicbir zaman tetiklenmez, dongu havuzu DOGAL olarak
-    # tuketene kadar devam eder (tam/exhaustive arama).
+    if onceki_en_iyi is not None:
+        # onceki kademelerin en iyisi: bu kademede ancak ondan KESIN daha
+        # iyisi kabul edilir (eski "mesafe < en_iyi_genel_mesafe" ile ayni)
+        en_iyi_mesafe, en_iyi_uclu = onceki_en_iyi
+
+    if sadece_mesafe and hedef:
+        # BASLANGIC SINIRI: kurallara uyan rastgele ucluler arasindan en iyisi,
+        # budamanin ilk t1'den itibaren etkili olmasi icin. Sadece tamamlayici
+        # tercihi (madde 13) OLMAYAN t1'ler orneklenir -- o t1'lerde her uyumlu
+        # t3 gecerli aday oldugu icin secilen uclu kesinlikle KURALA UYGUN; yani
+        # bu sadece bir baslangic noktasi, nihai sonucun en iyi olma garantisini
+        # bozmaz (daha iyisi varsa asagidaki tam tarama onu bulur).
+        _t1_tercihsiz = [t for t in aday1_ham if not _grup3_tercih_sirasi(t["etiketler"])]
+        if _t1_tercihsiz:
+            _orn = random.Random(len(aday1_ham) * 104729 + len(aday2_ham))
+            for _ in range(3000):
+                a1 = _orn.choice(_t1_tercihsiz)
+                a2 = _orn.choice(aday2_ham)
+                a3 = _orn.choice(aday3_ham)
+                if len({_taban_kelime(a1["ad"]), _taban_kelime(a2["ad"]), _taban_kelime(a3["ad"])}) < 3:
+                    continue
+                # eski kuralla ayni: once t1+t2 ikilisi, sonra uclu uyumlu olmali
+                if not _uyumlu_mu(set(a1["etiketler"]) | set(a2["etiketler"])):
+                    continue
+                if not _uyumlu_mu(set(a1["etiketler"]) | set(a2["etiketler"]) | set(a3["etiketler"])):
+                    continue
+                m = _besin_mesafesi(ogun_besin_toplami(a1, a2, a3), hedef)
+                if en_iyi_mesafe is None or m < en_iyi_mesafe:
+                    en_iyi_mesafe, en_iyi_uclu = m, (a1, a2, a3)
 
     for t1 in aday1_karisik:
-        t1_taban = _taban_kelime(t1["ad"])
-        aday2_havuzu = [t for t in aday2_ham if _taban_kelime(t["ad"]) != t1_taban]
-        if not aday2_havuzu:
+        if bitis_zamani is not None and _time.monotonic() >= bitis_zamani:
+            break
+        tb1 = _tid(t1["ad"])
+        m1 = _etiket_maskesi(t1["etiketler"], bit)
+        # t2 adaylari
+        s2 = (T2 != tb1) & ~_uyumsuz(M2 | m1)
+        if not s2.any():
             continue
-        aday2_uyumlu = [t for t in aday2_havuzu if _uyumlu_mu(set(t1["etiketler"]) | set(t["etiketler"]))]
-        if not aday2_uyumlu:
-            continue
-        aday2_karisik = list(aday2_uyumlu)
-        rastgele.shuffle(aday2_karisik)
-
-        for t2 in aday2_karisik:
-            t2_taban = _taban_kelime(t2["ad"])
-            birlesik_12 = set(t1["etiketler"]) | set(t2["etiketler"])
-            tercih_sirasi = _grup3_tercih_sirasi(t1["etiketler"])
-
-            aday3_havuzu = [t for t in aday3_ham if _taban_kelime(t["ad"]) not in (t1_taban, t2_taban)]
-            if not aday3_havuzu:
-                continue
-            aday3_uyumlu = [t for t in aday3_havuzu if _uyumlu_mu(birlesik_12 | set(t["etiketler"]))]
-            if not aday3_uyumlu:
-                continue
-
-            tercih_edilenler = []
-            for tercih_etiket in tercih_sirasi:
-                tercih_edilenler = [t for t in aday3_uyumlu if tercih_etiket in t["etiketler"]]
-                if tercih_edilenler:
+        i2 = np.nonzero(s2)[0]
+        # 1) BESIN KONTROLU (anahtar anahtar, bellek dostu). BUDAMA: mesafe her
+        #    anahtarda sadece artar; hicbir hucre hem hedefte olamiyor hem de
+        #    simdiye kadarki en iyi mesafenin altinda kalamiyorsa bu t1 atlanir
+        #    (kural/tercih matrisi hic kurulmadan). Sonuc degismez: atlanan
+        #    hucreler zaten kazanamayacak hucrelerdir.
+        d1, v1, gk1, kk1 = _besin_matrisi([t1], anahtarlar)
+        hedefte = np.ones((len(i2), len(aday3_ham)), dtype=bool)
+        mesafe = np.zeros(hedefte.shape, dtype=np.float64) if mesafe_hesapla else None
+        sinir = np.inf if en_iyi_mesafe is None else en_iyi_mesafe
+        budandi = False
+        for j in range(len(anahtarlar)):
+            if j == gi_sutunu:
+                pay = gk1[0] + GK2[i2][:, None] + GK3[None, :]
+                payda = kk1[0] + KK2[i2][:, None] + KK3[None, :]
+                var_mi = payda > 0
+                with np.errstate(divide="ignore", invalid="ignore"):
+                    toplam = np.where(var_mi, pay / np.where(var_mi, payda, 1.0), 0.0)
+            else:
+                toplam = d1[0, j] + D2[i2, j][:, None] + D3[None, :, j]
+                var_mi = v1[0, j] | V2[i2, j][:, None] | V3[None, :, j]
+            if sadece_mesafe:
+                # |toplam - orta| - yarim_genislik, sifirin altindaysa 0
+                ihlal = np.abs(toplam - orta[j])
+                ihlal -= yarim[j]
+                np.maximum(ihlal, 0.0, out=ihlal)
+                ihlal *= ters_genislik[j]
+                if not tumu_var[j]:
+                    ihlal *= var_mi
+                mesafe += ihlal
+                if not (mesafe < sinir).any():
+                    budandi = True
                     break
+                continue
+            alti = toplam < alt[j]
+            ustu = toplam > ust[j]
+            hedefte &= ~(var_mi & (alti | ustu))
+            if mesafe_hesapla:
+                mesafe += np.where(var_mi & alti, (alt[j] - toplam) / genislik[j], 0.0)
+                mesafe += np.where(var_mi & ustu, (toplam - ust[j]) / genislik[j], 0.0)
+            if not hedefte.any() and (not mesafe_hesapla or not (mesafe < sinir).any()):
+                budandi = True
+                break
+        if budandi:
+            continue
+        if sadece_mesafe:
+            hedefte[:] = False
 
-            for aday_listesi in (tercih_edilenler, aday3_uyumlu):
-                if not aday_listesi:
-                    continue
-                karisik = list(aday_listesi)
-                rastgele.shuffle(karisik)
-                for t3 in karisik:
-                    degerlendirilen += 1
-                    besin = ogun_besin_toplami(t1, t2, t3)
-                    if _besin_hedefte_mi(besin, hedef):
-                        return (t1, t2, t3), (t1, t2, t3)
-                    mesafe = _besin_mesafesi(besin, hedef)
-                    if en_iyi_mesafe is None or mesafe < en_iyi_mesafe:
-                        en_iyi_mesafe = mesafe
-                        en_iyi_uclu = (t1, t2, t3)
-                    if degerlendirilen >= deneme_sayisi:
-                        return None, en_iyi_uclu
-                    # YUZ ... DUZELTME (11 Ekim 2026): zaman butcesi (her 500 ucluda bir kontrol)
-                    if bitis_zamani is not None and degerlendirilen % 500 == 0 and time.monotonic() >= bitis_zamani:
-                        return None, en_iyi_uclu
-                break  # tercih edilenlerde hicbiri hedefe uymadi, tekrar deneme dongusune don
+        # 2) KURAL MATRISI: (t2, t3) gecerliligi (temel tur + madde 11)
+        gecerli = (
+            (T3[None, :] != tb1)
+            & (T3[None, :] != T2[i2][:, None])
+            & ~_uyumsuz((M2[i2] | m1)[:, None] | M3[None, :])
+        )
+        if not gecerli.any():
+            continue
+        # madde 13: satir basina tercih edilen t3 kumesi
+        aday = gecerli
+        tercih_sirasi = _grup3_tercih_sirasi(t1["etiketler"])
+        if tercih_sirasi:
+            secildi = np.zeros(gecerli.shape[0], dtype=bool)
+            aday = np.zeros_like(gecerli)
+            for etiket in tercih_sirasi:
+                etiketli = gecerli & ((M3 & bit[etiket]) != 0)[None, :]
+                satir_var = etiketli.any(axis=1) & ~secildi
+                aday[satir_var] = etiketli[satir_var]
+                secildi |= satir_var
+            aday[~secildi] = gecerli[~secildi]
+        hedefte &= aday
+
+        if hedefte.any():
+            satirlar, sutunlar = np.nonzero(hedefte)
+            k = rastgele.randrange(len(satirlar))
+            uclu = (t1, aday2_ham[i2[satirlar[k]]], aday3_ham[sutunlar[k]])
+            return uclu, uclu
+
+        if not mesafe_hesapla:
+            continue
+        mesafe_aday = np.where(aday, mesafe, np.inf)
+        konum = int(np.argmin(mesafe_aday))
+        en_kucuk = float(mesafe_aday.flat[konum])
+        if np.isfinite(en_kucuk) and (en_iyi_mesafe is None or en_kucuk < en_iyi_mesafe):
+            r, c = divmod(konum, mesafe_aday.shape[1])
+            en_iyi_mesafe = en_kucuk
+            en_iyi_uclu = (t1, aday2_ham[i2[r]], aday3_ham[c])
 
     return None, en_iyi_uclu
 
@@ -402,25 +582,36 @@ def ogun_olustur(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta
     en_iyi_genel_uclu = None
     en_iyi_genel_mesafe = None
 
-    # YUZ ... DUZELTME (11 Ekim 2026): kademe basina zaman butcesi (bkz. OGUN_SURE_BUTCESI_SN)
-    _baslangic = time.monotonic()
-    for tekrara_izin_ver, mevsim_zorunlu, deneme_sayisi, butce_payi in (
-        (False, True, float("inf"), 0.50),
-        (False, False, float("inf"), 0.75),
-        (True, False, float("inf"), 1.00),
-    ):
-        tam_sonuc, en_iyi_yakin = _ogun_dene(
+    # YUZ ... DUZELTME (12 Ekim 2026): iki asamali arama.
+    # 1. ASAMA -- TAM ESLESME: 3 kademe sirayla, her biri TAM taranir
+    #    (exhaustive, vektorize). Bir kademede eslesme varsa MUTLAKA bulunur
+    #    (9 Eylul'deki "ne kadar surerse sursun en iyi sonuc" kurali korunur).
+    # 2. ASAMA -- EN YAKIN: hicbir kademede tam eslesme yoksa en yakin uclu
+    #    3 kademede sirayla aranir (eskisi gibi en kucugu secilir); bir
+    #    kademenin en iyisi sonrakinin baslangic siniri olur, boylece sonraki
+    #    kademeler cok daha hizli budanir. Toplam sure OGUN_MESAFE_SINIRI_SN
+    #    ile sinirli (sinira ulasilirsa o ana kadarki en iyi kullanilir).
+    for tekrara_izin_ver, mevsim_zorunlu in ((False, True), (False, False), (True, False)):
+        tam_sonuc, _ = _ogun_dene(
             grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele,
-            deneme_sayisi, tekrara_izin_ver, mevsim_zorunlu, hedef, kullanilan_gun_taban,
-            bitis_zamani=_baslangic + OGUN_SURE_BUTCESI_SN * butce_payi,
+            float("inf"), tekrara_izin_ver, mevsim_zorunlu, hedef, kullanilan_gun_taban,
+            mesafe_hesapla=False,
         )
         if tam_sonuc is not None:
             return tam_sonuc
-        if en_iyi_yakin is not None:
-            mesafe = _hedef_mesafesi(*en_iyi_yakin, hedef)
-            if en_iyi_genel_mesafe is None or mesafe < en_iyi_genel_mesafe:
-                en_iyi_genel_mesafe = mesafe
-                en_iyi_genel_uclu = en_iyi_yakin
+    _bitis = time.monotonic() + OGUN_MESAFE_SINIRI_SN
+    en_iyi = None
+    for tekrara_izin_ver, mevsim_zorunlu in ((False, True), (False, False), (True, False)):
+        if time.monotonic() >= _bitis:
+            break
+        _, uclu = _ogun_dene(
+            grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele,
+            float("inf"), tekrara_izin_ver, mevsim_zorunlu, hedef, kullanilan_gun_taban,
+            bitis_zamani=_bitis, mesafe_hesapla=True, sadece_mesafe=True, onceki_en_iyi=en_iyi,
+        )
+        if uclu is not None and (en_iyi is None or uclu is not en_iyi[1]):
+            en_iyi = (_hedef_mesafesi(*uclu, hedef), uclu)
+    en_iyi_genel_uclu = en_iyi[1] if en_iyi else None
 
     if en_iyi_genel_uclu is not None:
         return en_iyi_genel_uclu

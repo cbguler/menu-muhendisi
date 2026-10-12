@@ -12,6 +12,7 @@ import json
 import math
 import os
 import random
+import time
 
 import streamlit as st
 
@@ -1298,12 +1299,12 @@ if st.button("Ay için menü üret", type="primary"):
     with st.spinner("Menü üretiliyor, lütfen bekleyin..."):
         gercek_haftalar = _ay_gercek_haftalari(yil_secimi, ay_secimi)
         haftalar = []
-        # YUZ ... DUZELTME (11 Ekim 2026): uretim artik ogun basina zaman
-        # butceli (uretim_algoritmasi.OGUN_SURE_BUTCESI_SN); ilerleme cubugu
-        # hangi ogunde olundugunu gosterir.
+        # YUZ ... DUZELTME (11-12 Ekim 2026): ilerleme cubugu hangi ogunde
+        # olundugunu gosterir; uretim suresi kaydedilip ekranda yazilir.
         _toplam_ogun = sum(len(h) for h in gercek_haftalar) * 2
         _ilerleme_cubugu = st.progress(0.0, text="Menü üretiliyor...")
         _sayac = {"n": 0}
+        _uretim_baslangic = time.monotonic()
 
         def _ilerle():
             _sayac["n"] += 1
@@ -1330,6 +1331,7 @@ if st.button("Ay için menü üret", type="primary"):
                 gun["tarih"] = tarih
             haftalar.append(hafta)
         _ilerleme_cubugu.empty()
+        st.session_state["yillik_menu_uretim_suresi"] = time.monotonic() - _uretim_baslangic
     # YIRMI IKINCI DUZELTME (13 Agustos 2026, Oturum 11): kullanicinin
     # "gecmis bir tarih icin uretilen menu, gercek servis kaydiyla
     # karistirilabilir" endisesi uzerine -- uretimi ENGELLEMIYORUZ (test/
@@ -1343,6 +1345,10 @@ if st.button("Ay için menü üret", type="primary"):
         "ay": ay_secimi, "yil": yil_secimi, "haftalar": haftalar, "gecmis_ay_mi": _gecmis_ay_mi,
     }
     st.session_state["yillik_menu_hedefler"] = hedefler
+
+if st.session_state.get("yillik_menu_uretim_suresi") is not None and st.session_state.get("yillik_menu_aylik"):
+    _sure = int(st.session_state["yillik_menu_uretim_suresi"])
+    st.caption(f"Son üretim süresi: {_sure // 60} dk {_sure % 60} sn")
 
 RENKLER = {1: "#D85A30", 2: "#639922", 3: "#1D9E75"}
 
@@ -2136,7 +2142,11 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                                     _hedef2 = (hedefler or {}).get(_ogun_adi_hedef)
                                     _en_iyi_uclu = None
                                     _en_iyi_mesafe = None
-                                    for _deneme in range(30):
+                                    # YUZ ... DUZELTME (12 Ekim 2026): ogun_olustur artik TAM
+                                    # arama yapiyor -- tam eslesme varsa ilk denemede bulunur,
+                                    # yoksa tekrar denemek ayni (en yakin) sonucu verir. Eski 30
+                                    # deneme, eslesme olmayan ogunde ~30 kat bekleme demekti.
+                                    for _deneme in range(1):
                                         _rastgele_deneme = random.Random()
                                         _kullanilan_hafta_deneme = set(_kullanilan_hafta_disarida)
                                         _kullanilan_gun_taban_deneme = set(_kullanilan_gun_taban_disarida)
