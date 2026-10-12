@@ -12522,3 +12522,50 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   Banduma icin miktarli CI belgesi bulunamadi.
 - Yeni fark edilen kopya: "Konya Etli Ekmek" ile "Etli Ekmek (Konya)" ayni yemek (X Usulü kalibina uymadigi icin
   ilk analizde yakalanmamisti). Sonraki partide ele alinacak.
+- SONUC (12 Ekim 17:14): 187 Supabase'de calisti, 8/8 satir TAMAM (eski kopya kalmadi, malzeme/asama sayilari
+  beklenenle ayni, kaynak satiri yazili). "Etli Kavurma" eski malzemeleriyle (4 malzeme, 2 asama) duruyor.
+
+### 12 Ekim 2026 -- YUZ KOPYA DUZELTME, Parti 2 (sql/188)
+- Ayni yontem ve guvenlik kurallari (187). SQL ureteci tekrar kullanilabilir hale getirildi (motor + parti
+  verisi); yerel PostgreSQL 16 sahte semayla test edildi, 6/6 TAMAM.
+- Donusumler:
+  - Iğdır Usulü Etli Kavurma -> Iğdır Bozbaş (CI 792, 1 kisilik)
+  - Batman Usulü Etli Kavurma -> Batman Piçik Yemeği (CI 1508, ~6 kisilik, etsiz, grup 1 vejetaryen)
+  - Elazığ Usulü Etli Kavurma -> Elazığ Sırın Yemeği (CI 1355, ~8 kisilik, etsiz, grup 1 vejetaryen)
+  - Kırşehir Usulü Etli Kavurma -> Kırşehir Çirleme Yemeği (CI 948, 4-6 kisilik)
+  - Kopya cifti "Konya Etli Ekmek" -> CI 214'e gore "Konya Etliekmek" (eski tarifte kuzu kiyma vardi, belge
+    dana/duve kaburga kiymasi diyor); "Etli Ekmek (Konya)" -> genel "Etli Ekmek" (bolge Genel)
+- TAHMIN ve kararlar (Emre/Gizem onayi bekleniyor):
+  - Iğdır Usulü Etli Kavurma -> Iğdır Bozbaş (CI 792):
+    - Fırın sıcaklığı kaynakta yok (sadece 'taş fırında 6 saat'): 150°C TAHMİN.
+    - 1 dilim domates = 20 g, 1 orta soğan = 110 g (USDA 'medium') TAHMİN.
+    - Maşrapaya konan et suyu miktarı yok: 150 g TAHMİN.
+    - 'Koyun incik eti' katalogda yok; KOYUN ETİ (KOL) ile eşlendi (kemikli ağırlık, fire ayrıca konuşulmalı).
+  - Batman Usulü Etli Kavurma -> Batman Piçik Yemeği (CI 1508):
+    - Köftelik ve ince bulgur katalogda tek kalem: ikisi de İNCE BULGUR (500 g) ile eşlendi.
+    - Kaynakta '1 litre su' var ama hamur suyu ile haşlama suyu ayrılmamış: hamura giren su 300 g (50 g/porsiyon) TAHMİN.
+    - Tuz ve pul biber miktarı kaynakta yok: 1 g + 1 g/porsiyon TAHMİN. Bulama unu 5 g/porsiyon TAHMİN. 2 diş sarımsak = 6 g.
+    - Hamur dinlendirme ('bir süre') 30 dk, haşlama 10 dk TAHMİN.
+  - Elazığ Usulü Etli Kavurma -> Elazığ Sırın Yemeği (CI 1355):
+    - Yufka açma ve sac süresi kaynakta yok: yaklaşık 25 yufka için toplam 60 dk TAHMİN; dizme 15 dk TAHMİN.
+    - 7-8 diş sarımsak = 7,5 x 3 g. Tuzlu tereyağı katalogda ayrı yok: TEREYAĞI. İsteğe bağlı pul biber eklenmedi.
+  - Kırşehir Usulü Etli Kavurma -> Kırşehir Çirleme Yemeği (CI 948):
+    - Porsiyon: kaynak 4-6 kişilik; orta değer 5 alındı.
+    - Haşlama (60 dk) ve son pişirme (30 dk) süreleri kaynakta yok ('yumuşayana kadar'): TAHMİN.
+    - 200 ml pekmez x 1,37 g/ml = 274 g (yoğunluk TAHMİN). 1 orta soğan = 110 g. Aralıkların orta değeri alındı (tuz 12,5 g, pul biber 7,5 g, karabiber 7,5 g).
+    - Üzerini örtecek et suyu: 100 g/porsiyon TAHMİN. 'Kuşbaşı dana' için DANA BUT seçildi (karar).
+    - Salça malzeme listesinde var ama kaynağın yönteminde adımı yok: soğanla kavurma adımına konuldu (karar).
+    - Porsiyon başı yaklaşık 950 kcal: kaynak miktarları büyük, Emre/Gizem onayı gerekli.
+  - Konya Etli Ekmek -> Konya Etliekmek (CI 214):
+    - Kopya çifti: 'Konya Etli Ekmek' ile 'Etli Ekmek (Konya)' aynı yemekti. Biri CI belgesine göre yeniden yazıldı (eski tarifte kuzu kıyma vardı, belge dana/düve kaburga diyor), diğeri genel 'Etli Ekmek' oldu.
+    - 1 etliekmek = 1 porsiyon TAHMİN (belge kişi sayısı vermiyor, 4-6 parçaya kesilerek servis ediliyor).
+    - Hamur suyu belgede yok ('optimum miktarda'): %60 (una göre) TAHMİN -> 180 g hamurda 111,7 g un, 67 g su. Maya %0,1-0,2 -> %0,15.
+- BEKLEMEDE: Rize Etli Karalahana Sarması (CI 1599). Belge 30 yaprak, 400 g et, 270 g pirinc, ~84 g aycicek +
+  ~91 g zeytinyagi icin "3 porsiyon" diyor -> porsiyon basi ~1360 kcal. Belge hatasi olabilir; porsiyon sayisi
+  Emre/Gizem'e sorulacak, cevaba gore eklenecek. Rize kopyasi o zamana kadar duruyor.
+- Yuksek kalorili kalanlar (kaynaga sadik): Kırşehir Çirleme ~1020 kcal, Elazığ Sırın ~840 kcal/porsiyon;
+  porsiyon gramaji kararina kadar boyle.
+- Kalan "Etli Kavurma" kopyalari (15): Adıyaman, Ağrı, Balıkesir, Bayburt, Erzurum, Giresun, Kars, Kastamonu,
+  Konya, Manisa, Rize, Samsun, Siirt, Tokat, Şırnak (+ "(Kimyonlu)" ve "(Baharatlı)" gruplari).
+  Bu illerin cogunda miktarli ve tam bir CI et yemegi yok; bulunanlar eksikli (porsiyon/sure). Yeni bulunan:
+  Diyarbakır Patlıcanlı Kazan Kebabı (CI 1143, 8 kisilik, tam veri) -- Diyarbakir'in baska bir kopyasi icin.
