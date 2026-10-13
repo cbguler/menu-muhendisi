@@ -12626,3 +12626,583 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   adet/porsiyon ciktigini vermiyor, Emre'ye sorulacak), Balıkesir (Balıkesir Etli Çorba CI 1785 uygun, 100
   porsiyonluk; sonraki parti), Bayburt, Giresun, Samsun, Tokat (CI'da uygun miktarli yemek yok veya kutuphanede
   zaten var -> Kultur Bakanligi / akademik kaynak aranacak).
+
+### 13 Ekim 2026 -- 189 DOGRULANDI ve kopya donusumu BUYUK PARTILERE gecti (sql/190)
+- 189 sonucu: 8/8 TAMAM (eski_kalan 0, malzeme ve asama sayilari tuttu, kaynak yazili).
+- Bahri: "boyle azar azar devam ettikce cok uzayacak". Partiler 6-8 tariften ~100+ degisiklige cikarildi.
+- Calisma ortami sifirlandi (konteyner yenilendi); CI belgeleri yeniden indirildi (918 tescilli kaydin 915'i),
+  uretec (motor.py) 187-189 kalibindan yeniden kuruldu, yerel PostgreSQL deneme veritabani 186b listesinden
+  yeniden olusturuldu.
+- Kopya kapsami yeniden hesaplandi (186b besin imzasi ayni olan tarifler): 61 grup / 259 tarif. 187-189'da 22
+  donusum + 1 yeniden adlandirma yapildi. Kalan: 193 donusum + 41 genel temsilci yeniden adlandirma.
+  Kural: grubun genel adi kutuphanede yoksa gruptan bir tarif o adla (bolge Genel) kalir; genel ad zaten
+  varsa (ornek Zeytinyagli Pirasa, Etli Kavurma) gruptaki kopyalarin hepsi donusur. Ayni genel ada sahip iki
+  ayri grup varsa (Etli Bulgur Pilavi, Etli Nohutlu Patlican, Etli Nohutlu Bulgur) ikinci grup tamamen donusur.
+- Kategori esnekligi: ilin belgeli yemekleri kopyanin grubuna uymuyorsa baska gruptan belgeli yemek konuldu
+  (187-189'daki Kars/Sirnak uygulamasi gibi); yeni tarifin grubu kendi turune gore verildi.
+- sql/190 (buyuk parti 1): 69 donusum + 41 genel temsilci = 110 degisiklik. Yerel test: 110/110 TAMAM;
+  ikinci calistirmada 0 degisiklik (tekrar calistirma guvenli); menude kullanilan kopya testi: ATLANDI dogru.
+  Sonuc tablosunun ilk satiri _OZET (kac TAMAM / ATLANDI / HATA).
+- 190 donusumleri ve TAHMINLER (Emre/Gizem onayi bekleniyor):
+  - Anamur Usulü Zeytinyağlı Bakla -> Anamur Batırığı (CI 1534, ~1206 kcal/porsiyon)
+    - Domates kurusu katalogda yok: domates salçası ile karşılandı (30 g kurusu -> porsiyonda 7,5 g salça).
+    - 50 g limon -> ~16 g limon suyu (porsiyonda 4 g).
+    - Çorba kıvamı için soğuk su miktarı belgede yok: porsiyonda 150 g.
+    - Belgedeki 4 kişilik miktarlar porsiyon başına yaklaşık 1200 kcal veriyor (500 g yer fıstığı). Emre/Gizem onayı gerekli.
+  - Ankara Usulü Etli Kavurma (Kimyonlu) -> Kazan Kavurması (CI 1225, ~268 kcal/porsiyon)
+    - Belgedeki "bir porsiyon 150 g" çiğ karışım olarak okundu: %9 soğan, %9 tereyağı, kalan et.
+    - Tuz belgede porsiyon başına 5-10 g: ortalama 7,5 g alındı.
+    - Kavurma sırasında 1-2 dakikada bir karıştırma için aktif süre 70 dk kabul edildi.
+  - Ankara Usulü Zeytinyağlı Pırasa -> Beypazarı Dolması (CI 1115, ~523 kcal/porsiyon)
+    - Belgede kişi sayısı yok: toplam ~3,8 kg ham karışım 10 porsiyon kabul edildi.
+    - Sıvı yağ türü belirtilmemiş: ayçiçek yağı (170 ml x 0,92).
+    - 2 limonun suyu ~60 g kabul edildi.
+    - Sarma süresi (10 porsiyon, serçe parmak boyu) 60 dk kabul edildi.
+  - Balıkesir Usulü Etli Kavurma -> Balıkesir Etli Çorba (CI 1785, ~333 kcal/porsiyon)
+    - Kaval kemiği katalogda yok; kemik suyu haşlama suyuyla temsil edildi.
+    - Kemik suyu miktarı belgede yok: kâse 150-200 g olduğundan porsiyonda toplam 175 g su kabul edildi.
+    - 16 yumurta sarısı x 17 g; aralıklı miktarların ortası alındı.
+    - Tatlı toz kırmızı biber: TATLIKA KIRMIZI BİBER.
+  - Balıkesir Usulü Kavurmalı Yumurta -> Balıkesir Düğün Çorbası (CI 1562, ~475 kcal/porsiyon)
+    - Kemikli tavuk göğsü (20 kg/100) için %20 kemik payı düşüldü: porsiyonda 160 g.
+    - Servis bileşenleri belgede "1 servis tabağı için" verilmiş; porsiyona maydanoz 2 g, karabiber 0,5 g, limon suyu 5 g kabul edildi.
+    - 20 yumurta sarısı x 17 g.
+  - Bayburt Usulü Etli Kavurma -> Bayburt Ekşi Lahana (CI 648, ~601 kcal/porsiyon)
+    - Belgede kişi sayısı yok: 4 porsiyon kabul edildi.
+    - Lahana turşusu: KONSERVE TURŞU; kurutulmuş kemikli kaburga: SIĞIR KABURGA.
+    - 1 büyük soğan 150 g; 2 yemek kaşığı salça 30 g; "üzerini geçecek kadar" su porsiyonda 200 g.
+  - Bayburt Usulü Zeytinyağlı Nohutlu Havuç -> Bayburt Yalancı Dolma (CI 844, ~718 kcal/porsiyon)
+    - Belgede kişi sayısı yok: 8 porsiyon kabul edildi.
+    - 1 orta lahana 900 g; 3 su bardağı bulgur 510 g; 1 su bardağı un 110 g; 3 büyük soğan 330 g; 5 yemek kaşığı salça 75 g; 2 su bardağı su 400 g.
+    - Kırmızı biber ve tuz miktarı belgede yok: porsiyonda 1 g ve 2 g.
+    - Kurutulmuş kemikli et: SIĞIR KABURGA.
+  - Bayburt Usulü Kavurmalı Yumurta -> Bayburt Lor Dolması (CI 292, ~399 kcal/porsiyon)
+    - Belgede kişi sayısı yok: toplam ~2,7 kg için 8 porsiyon kabul edildi.
+    - Evelik otu: LABADA.
+    - Fırın süresi belgede yok: 30 dk kabul edildi.
+  - Bayburt Usulü Zeytinyağlı Nohut -> Bayburt Kara Pancar Yemeği (CI 678, ~465 kcal/porsiyon)
+    - Belgede kişi sayısı yok: 6 porsiyon kabul edildi.
+    - Kuru evelik katalogda yok: LABADA (taze) aynı ağırlıkla yazıldı; kuru ürün daha yoğun olduğundan besin değeri düşük kalır.
+    - 2 büyük soğan 220 g; 1 çay bardağı bulgur 85 g; 1 su bardağı yeşil mercimek 190 g; yarım çay bardağı yağ 45 g; tuz 9 g ve pul biber 3 g (belgede miktar yok).
+    - Pişirme süresi belgede yok: 45 dk.
+  - Bitlis Usulü Zeytinyağlı Nohutlu Havuç -> Bitlis Katıklı Dolma (CI 1614, ~437 kcal/porsiyon)
+    - Kış kabağı katalogda yok: KABAK; 1 kış kabağı 1,5 kg kabul edildi.
+    - 2 soğan 220 g; 3-4 yeşil biber 60 g; 2-3 diş sarımsak 12,5 g; kuru reyhan (2-3 g) katalogda yok, yazılmadı.
+  - Bitlis Usulü Zeytinyağlı Semizotu -> Bitlis Ciğer Taplaması (CI 1652, ~320 kcal/porsiyon)
+    - Kuzu/koyun karaciğeri katalogda yok: dana karaciğeri ile karşılandı.
+    - 1 soğan 110 g; 3 sivri biber 45 g; kuru reyhan (2 g) katalogda yok.
+    - Haşlama suyu (2,5 l) süzülüp atıldığından porsiyona yalnızca yoğurma suyu (250 ml) yazıldı.
+  - Burdur Usulü Zeytinyağlı Nohutlu Havuç -> Burdur Şiş Köftesi (CI 155, ~602 kcal/porsiyon)
+    - Keçi veya sığır kaburga kıyması: SIĞIR KIYMA.
+    - Porsiyondaki pide miktarı belgede yok (pide 220 g'lık bezelerden yapılır): yarım pide 110 g kabul edildi.
+    - Izgara süresi belgede yok: 12 dk.
+  - Bursa Usulü Etli Kavurma (Kimyonlu) -> İnegöl Büryanı (CI 1606, ~658 kcal/porsiyon)
+    - 10 tavuk butu x ~150 g kabul edildi (belge 10 adet diyor).
+    - 5 orta soğan 550 g.
+  - Bursa Usulü Etli Nohutlu Kavurma -> Bursa Pideli Köfte (CI 930, ~906 kcal/porsiyon)
+    - Belgede porsiyon kıyma miktarı yok: 150 g kıyma, yarım pide (110 g) kabul edildi.
+    - Sos, tereyağı ve yoğurt miktarı belgede yok: porsiyonda 15 g salça + 60 g su, 15 g tereyağı, 80 g yoğurt.
+    - Bayat ekmek içi kıymanın %11'i (110 g/kg).
+  - Bursa Usulü Zeytinyağlı Kereviz -> Bursa Dede Çorbası (CI 1888, ~543 kcal/porsiyon)
+    - Çorba listesindeki 120 g un ve 50-60 g kesme hamur ile hamur tarifi (200-210 g un) aynı hamuru anlatıyor; porsiyona hamur tarifi esas alınarak un 51 g yazıldı.
+    - Belge "su veya tavuk suyu" diyor: tavuk suyu seçildi.
+  - Datça Usulü Izgara Karides -> Bodrum Çökertme Kebabı (CI 1759, ~1594 kcal/porsiyon)
+    - Kızartma için 400 ml ayçiçek yağının patatese geçen kısmı 15 g kabul edildi.
+    - Belgedeki kekik (15 g) türü belirtilmemiş: KEKİK; nane: TAZE NANE.
+    - Belgedeki 1 kişilik miktarlar porsiyonda ~1600 kcal veriyor (70 g tereyağı, 200 g süzme yoğurt). Emre/Gizem onayı gerekli.
+  - Fethiye Usulü Izgara Karides -> Muğla Sulu Kebabı (CI 1483, ~422 kcal/porsiyon)
+    - Kemikli oğlak eti: KEÇİ ETİ (BUT). Kemik (1 kg) katalogda yok; et suyuna geçen kısmı ayrıca yazılmadı.
+    - İç yağının (500 g) kevgirle toplanıp atılan kısmı bilinmiyor: porsiyonda %33'ü (16,7 g, DONYAĞI) kaldı kabul edildi.
+  - Muğla Usulü Zeytinyağlı Nohutlu Havuç -> Milas Vekilharcı (CI 1280, ~1135 kcal/porsiyon)
+    - Zeytinyağı 250 ml x 0,91; 2 demet maydanoz 100 g; 3 diş sarımsak 15 g.
+    - Belge "tavuk veya et suyu" diyor: tavuk suyu seçildi.
+  - Kilis Usulü Zeytinyağlı Nohutlu Kereviz -> Kilis Şıhılmahşe (CI 1229, ~490 kcal/porsiyon)
+    - 20 adet acurdan 10 porsiyon (porsiyonda 2 acur) kabul edildi.
+    - 2 orta soğan 220 g; 2 domates 220 g; yarım demet maydanoz 25 g; 4 diş sarımsak 20 g; sos suyu porsiyonda 30 g.
+    - Kızartma ve harç zeytinyağı (250 ml) tamamı porsiyona yazıldı.
+  - Kilis Usulü Zeytinyağlı Nohutlu Pırasa -> Kübbülmişviyye (CI 1277, ~755 kcal/porsiyon)
+    - Belgede kişi sayısı yok: toplam ~2,5 kg için 12 porsiyon kabul edildi.
+    - İç yağı: DONYAĞI; yağsız kıyma: DANA KIYMA.
+    - Pişirme süresi belgede yok: 15 dk.
+  - Kilis Usulü Etli Nohutlu Patlıcan -> Kilis Ekşili Kebabı (CI 1257, ~1186 kcal/porsiyon)
+    - Arpacık soğan: KURU SOĞAN. 1 tırnaklı pide 110 g kabul edildi.
+  - Konya Usulü Zeytinyağlı Nohutlu Kabak -> Konya Ekşili Kabak (CI 997, ~517 kcal/porsiyon)
+    - Asma kabağı: KABAK. Kemikli koyun kaburga ve ön kol: KOYUN ETİ (KOL).
+    - Koruk ekşisi katalogda yok: LİMON SUYU ile karşılandı.
+    - Kadife yaprağı katalogda yok, yazılmadı; 2-3 fesleğen yaprağı 2 g kabul edildi.
+  - Konya Usulü Zeytinyağlı Pırasa -> Konya Kuru Kabak Sarması (CI 901, ~331 kcal/porsiyon)
+    - Kuru kabak katalogda yok: KABAK aynı ağırlıkla yazıldı (kuru ürün daha yoğun; besin değeri düşük kalır).
+    - 1 soğan 110 g; 1 demet maydanoz 50 g; 1 domates 110 g; pişirme suyu porsiyonda 100 g; pişirme süresi belgede yok (40 dk).
+  - Konya Usulü Etli Kabak Yemeği -> Konya Patlıcan Tiridi (CI 1002, ~677 kcal/porsiyon)
+    - 1 tandır ekmeği 300 g (EKMEK (BEYAZ)); 1 soğan 110 g.
+    - Kızartma yağı miktarı belgede yok: patlıcanın emdiği yağ porsiyonda 12 g (ayçiçek yağı).
+  - Konya Usulü Zeytinyağlı Enginar -> Konya Tiridi (CI 1233, ~732 kcal/porsiyon)
+    - 2 tandır ekmeği 600 g (EKMEK (BEYAZ)); 1 demet maydanoz 50 g; kemikli kuzu eti: KUZU ETİ (KOL); mor soğan: KURU SOĞAN.
+  - Konya Usulü Etli Nohutlu Yahni -> Konya Çirli (CI 1048, ~360 kcal/porsiyon)
+    - Kemikli kuzu kaburgası: KUZU ETİ (SIRT); kuzu kuşbaşı: KUZU ETİ (BUT). Belgede tereyağının kullanıldığı adım yazmıyor; kavurmaya eklendi.
+  - Gaziantep Usulü Zeytinyağlı Nohutlu Kabak -> Gaziantep Kabaklama (CI 779, ~345 kcal/porsiyon)
+    - 5,5 porsiyon esas alındı; aralıklı miktarların ortası kullanıldı.
+    - Belgede nohut adımda geçiyor ama miktarı yok: porsiyonda 15 g.
+    - Et türü belirtilmemiş: KUZU ETİ (KOL). Tuz "istenilen miktarda": 1,5 g. Pişirme suyu belgede yok: porsiyonda 150 g.
+    - Sadeyağ ya da zeytinyağı: sadeyağ seçildi.
+  - Gaziantep Usulü Zeytinyağlı Nohutlu Pırasa -> Gaziantep Pirpirim Aşı (CI 964, ~378 kcal/porsiyon)
+    - Belgenin etsiz (taze pirpirim) yapımı esas alındı; 5,5 porsiyon, aralıkların ortası.
+    - Sumak ekşisi: LİMON SUYU ile karşılandı. Kuru sarımsak: SARIMSAK.
+    - 5-6 su bardağı sıcak su: porsiyonda 200 g. İsteğe bağlı domates kurusu, kuru biber ve karabiber yazılmadı.
+  - Hatay Usulü Zeytinyağlı Nohutlu Havuç -> Hatay Adesiye Yemeği (CI 1851, ~287 kcal/porsiyon)
+    - Bal kabağı katalogda yok: KABAK. 7 porsiyon, aralıkların ortası.
+    - Haşlanmış nohut ve az haşlanmış mercimek ağırlıkları kuru ağırlığa çevrildi (nohut x0,4; mercimek x0,4).
+  - Hatay Usulü Zeytinyağlı Enginar -> Antakya Zılk Sarması (CI 1583, ~561 kcal/porsiyon)
+    - Biber salçası/domates salçası: biber salçası seçildi. Zeytinyağı 150 ml x 0,91.
+  - Kayseri Usulü Etli Nohutlu Patlıcan -> Kayseri Fırın Ağzı Kebabı (CI 1064, ~1069 kcal/porsiyon)
+    - Taş fırın yerine elektrikli fırın (düşük ısı) kabul edildi.
+    - Kemikli pirzola ağırlığı kemikle birlikte yazıldı.
+  - Kayseri Usulü Izgara Tavuk Kanat -> Kayseri Tepsi Mantısı (CI 1059, ~1475 kcal/porsiyon)
+    - 2 diş sarımsak 10 g. Tepsi yağlama tereyağı 26 g.
+    - Kapatma süresi (4 porsiyon, 3x3 cm) 60 dk kabul edildi.
+  - Malatya Usulü Zeytinyağlı Nohutlu Havuç -> Malatya Tevek Yaprağı Sarması (CI 1116, ~976 kcal/porsiyon)
+    - 7 porsiyon kabul edildi. 1 soğan 110 g; 1 demet maydanoz 50 g; 1 limon 110 g. Toplam 500 ml ayçiçek yağı x 0,92.
+    - Acı biber salçası: KONSERVE BİBER SALÇASI. Salamura yaprak kullanıldığı için tuz yazılmadı.
+  - Malatya Usulü Zeytinyağlı Nohutlu Kabak -> Malatya Ispanaklı Ekşili Köftesi (CI 1259, ~639 kcal/porsiyon)
+    - Yarma katalogda yok: BULGUR. Siyah/yeşil mercimek: YEŞİL MERCİMEK. Malatya erik ekşisi: NAR EKŞİSİ ile karşılandı.
+    - Sıvı yağ 180 ml x 0,92.
+  - Malatya Usulü Etli Bulgur Pilavı -> Malatya Simit Pilavı (CI 1182, ~518 kcal/porsiyon)
+    - 2 orta soğan 220 g. Tuz belgede 20 g (porsiyonda 5 g) olarak yazıldı.
+  - Mardin Usulü Zeytinyağlı Nohutlu Havuç -> Mardin Alluciye (CI 1429, ~508 kcal/porsiyon)
+    - 5 porsiyon kabul edildi. Papaz eriği: ERİK.
+  - Mardin Usulü Etli Kavurma (Baharatlı) -> Mardin Kebabı (CI 1538, ~457 kcal/porsiyon)
+    - Toplam 1,2 kg karışım ve porsiyonda 4 x 50 g şiş -> 6 porsiyon. Kuzu boşluk eti: KUZU ETİ (BEL). 1 yeşil biber 15 g.
+  - Mardin Usulü Etli Bulgur Pilavı -> Mardin İncasiyye (CI 1627, ~846 kcal/porsiyon)
+    - 5 porsiyon. 3-4 arpacık soğan 75 g (KURU SOĞAN). Haşlama suyu belgede yok: porsiyonda 200 g. Yarım limon suyu 15 g.
+  - Mardin Usulü Etli Nohutlu Bulgur -> Mardin Irok (CI 1473, ~715 kcal/porsiyon)
+    - 54 adetten porsiyonda 4 adet -> 13,5 porsiyon. Dış harçtaki 200 g dana eti ve iç harçtaki 1 kg kıyma birlikte DANA KIYMA.
+    - Kızartma yağının (1 l) emilen kısmı porsiyonda 10 g; iç harç yağı 30 ml.
+  - Mardin Usulü Zeytinyağlı Biberli Patlıcan -> Mardin Harire (CI 1543, ~204 kcal/porsiyon)
+    - Pişirme süresi belgede yok: 20 dk.
+  - Ordu Usulü Zeytinyağlı Kereviz -> Ordu Zeytinyağlı Karalahana Sarması (CI 1426, ~430 kcal/porsiyon)
+    - Belgede kişi sayısı yok: 1,25 kg karalahana ve 325 g pirinç için 6 porsiyon kabul edildi. Pirinç/bulgur seçeneğinden pirinç seçildi.
+    - 2 soğan 220 g; 1 bağ maydanoz 50 g; sıvı yağ: ayçiçek yağı. Sarma pişirme suyu porsiyonda ~67 g kabul edildi.
+  - Ordu Usulü Etli Nohutlu Patlıcan -> Ordu İçli Tava (CI 1427, ~685 kcal/porsiyon)
+    - 4,5 porsiyon. 3 orta soğan 330 g; yarım bağ maydanoz 25 g; dolmalık fıstık: ÇAM FISTIĞI; iç pilav yağı 25 ml.
+    - Pişirme süresi belgede yok: 25 dk.
+  - Ordu Usulü Zeytinyağlı Taze Fasulye -> Ordu Fırın Fasulyesi Kavurması (CI 1747, ~101 kcal/porsiyon)
+    - 3,5 porsiyon. Kurutulmuş yeşil fasulye katalogda yok: TAZE FASULYE aynı ağırlıkla yazıldı (kuru ürün daha yoğun; besin değeri düşük kalır).
+    - 2 soğan 220 g.
+  - Ordu Usulü Elmalı Fındıklı Tatlı -> Ordu Fındıklı Burma Tatlısı (CI 1325, ~565 kcal/porsiyon)
+    - 85 adetten porsiyonda 4 adet -> 21 porsiyon.
+    - Açma nişastasının (1 kg) %20'sinin hamura geçtiği kabul edildi (porsiyonda ~10 g). Fırın süresi belgede yok: 30 dk.
+  - Ordu Usulü Etli Lahana -> Ordu Galdirik Kavurması (CI 1193, ~127 kcal/porsiyon)
+    - 7 porsiyon. Galdirik: KALDIRIK. 2 orta soğan 220 g. Aralıkların ortası alındı.
+  - Van Usulü Zeytinyağlı Nohutlu Havuç -> Van Erişte Aşı (CI 1712, ~597 kcal/porsiyon)
+    - Erişte katalogda yok: MAKARNA. Kurutulmuş/taze kırmızı biber: KIRMIZI BİBER (taze). İsteğe bağlı yoğurt, pul biber ve nane dahil edildi.
+  - Van Usulü Elmalı Ceviz Tatlısı -> Van Pastası (CI 805, ~780 kcal/porsiyon)
+    - 9 porsiyon. Tir buğdayından yapılan özel un yerine BUĞDAY UNU. 2 yumurta 100 g, 1 sarı 17 g.
+  - Van Usulü Balı ile Kaymaklı Tatlı -> Cembeli Tatlı (CI 1837, ~756 kcal/porsiyon)
+    - Bal, üzüm pekmezi ve/veya dut pekmezi seçeneğinden bal seçildi.
+  - Van Usulü Balı ile Ceviz Tabağı -> Murtuğa (CI 243, ~310 kcal/porsiyon)
+    - Tam buğday unu katalogda ayrı yok: BUĞDAY UNU.
+  - Van Usulü Etli Nohutlu Kavurma -> Van Tava Yemeği (CI 1711, ~867 kcal/porsiyon)
+    - Fırın süresi belgede yok ("düşük sıcaklıkta yavaş"): 150 dk. Kemikli kuzu eti: KUZU ETİ (KOL). Yeşil ve/veya kırmızı biberden yeşil biber seçildi.
+    - Belgede soğanın ve salçanın kullanıldığı adım yazmıyor; biberle birlikte dizildi.
+  - Van Usulü Etli Kavurma (Kimyonlu) -> Van Acem Köftesi (CI 1710, ~815 kcal/porsiyon)
+    - Tarhun otu: TAZE TARRAGON. Haşlanmış nohut kuru ağırlığa çevrildi (100 g x 0,4). İsteğe bağlı reyhan katalogda yok.
+  - Şanlıurfa Usulü Zeytinyağlı Nohutlu Kabak -> Urfa Su Kabağı Yemeği (CI 328, ~354 kcal/porsiyon)
+    - Su kabağı: KABAK. Ekşi nar suyu (4 nar) ağırlığı 600 g; NAR olarak yazıldı.
+    - 1 su bardağı nohut 170 g; 2 tatlı kaşığı şeker 10 g; 1 çay kaşığı tuz 5 g; 1 yemek kaşığı salça 15 g. İlikli kemikler katalogda yok.
+    - Pişirme süreleri belgede yok: 60 + 30 dk.
+  - Şanlıurfa Usulü Etli Bulgur Pilavı -> Urfa Üzlemeli Pilavı (CI 246, ~1195 kcal/porsiyon)
+    - Belgenin başındaki 1 litre su üzlemenin pişirme suyu kabul edildi.
+  - Şanlıurfa Usulü Zeytinyağlı Biberli Bulgur -> Urfa Lebenisi (CI 320, ~413 kcal/porsiyon)
+    - Belgede kişi sayısı yok: 2 kg yoğurt ve 500 g dövme için 8 porsiyon kabul edildi. Dövme: BUĞDAY (TAM TANE).
+    - Pişirme süresi belgede yok: 60 dk; soğutma 60 dk.
+  - Diyarbakır Usulü Zeytinyağlı Nohutlu Havuç -> Diyarbakır Ekşili Dolması (CI 1009, ~1047 kcal/porsiyon)
+    - 3 su bardağı Karacadağ pirinci 540 g; 2 su bardağı tane sumak 160 g (demlenip suyu kullanılır; tamamı yazıldı); 2 yemek kaşığı salça 30 g.
+    - 2 soğan 220 g; 1 demet maydanoz 50 g; 2 domates 220 g; 3-4 sivri biber 35 g + 500 g dolmalık biber. Reyhan (10 g) katalogda yok.
+    - Pişirme suyu porsiyonda 150 g.
+  - Diyarbakır Usulü Etli Bulgur Pilavı -> Diyarbakır Duvaklı Pilavı (CI 1140, ~752 kcal/porsiyon)
+    - Demleme süresi belgede yok: 15 dk.
+  - Erzurum Usulü Kavurmalı Yumurta -> Erzurum Çılbır (CI 1433, ~437 kcal/porsiyon)
+    - 1 bayat ekmek 300 g. 4 yumurta x 50 g.
+  - Erzurum Usulü Zeytinyağlı Pırasa -> Erzurum Çiriş Yemeği (CI 1194, ~130 kcal/porsiyon)
+    - Belgedeki 4 kişilik etsiz tarif esas alındı. 1 orta soğan 110 g; zeytinyağı 30 ml x 0,91.
+  - Erzurum Usulü Etli Nohutlu Patlıcan -> Erzurum Ekşili Dolma (CI 1246, ~723 kcal/porsiyon)
+    - Salor (dağ eriği) veya kızılcık pestili katalogda yok: KURUTULMUŞ ERIK ile karşılandı.
+    - 2 orta soğan 220 g; 5 diş sarımsak 25 g; su 450 ml (ortalama).
+  - Erzurum Usulü Zeytinyağlı Kuru Fasulye -> Erzurum Patates Boranisi (CI 1641, ~328 kcal/porsiyon)
+    - 7 porsiyon, aralıkların ortası. Haşlama suyu atıldığı için porsiyona yazılmadı.
+  - Erzurum Usulü Kete -> Erzurum Ketesi (CI 1318, ~673 kcal/porsiyon)
+    - Belgedeki iki yapımdan sini ketesi esas alındı (25 adet). Porsiyon 1 kete: hamur 40 g un + 10 g açma unu + 6 g iç harç unu; tereyağı 10 + 50 + 2.
+    - Üzerine sürülen yumurta miktarı belgede yok: 1 adet / 10 kete kabul edildi.
+  - Çorum Usulü Kavurmalı Yumurta -> Alaca Çılbır Yemeği (CI 1624, ~266 kcal/porsiyon)
+    - Belgedeki kıymalı yapım esas alındı. 3 yumurta x 50 g. Süreler belgede yok.
+  - Çorum Usulü Zeytinyağlı Nohut -> Osmancık Yaprak İçi Yemeği (CI 1750, ~100 kcal/porsiyon)
+    - Öğütülmüş kuru bakla: BAKLA (taze) aynı ağırlıkla. Sıvı yağ: ayçiçek yağı.
+  - Çankırı Usulü Etli Bulgur Pilavı -> Çankırı Bütün Et (CI 1399, ~984 kcal/porsiyon)
+    - Et ağırlığı kemikli (kol, incik, gerdan, kaburga) olarak yazıldı; porsiyonda 500 g kemikli et.
+    - Pişirme süresi belgede yok: 90 dk.
+  - Sivas Usulü Zeytinyağlı Nohutlu Havuç -> Divriği Pilavı (CI 564, ~830 kcal/porsiyon)
+    - 1 su bardağı nohut 170 g; 1 su bardağı üzüm 150 g; 1 soğan 110 g; 1 yemek kaşığı karabiber/yenibahar 7 g; yarım su bardağı yağ 45 g; 3 su bardağı et suyu 600 g; 4 bardak su 800 g; 1 yemek kaşığı tuz 15 g.
+    - Dana eti çiğ ağırlıkla (DANA BUT) yazıldı.
+  - Sivas Usulü Etli Bulgur Pilavı -> Ulaş Yaprak Döneri (CI 503, ~431 kcal/porsiyon)
+    - Pişmiş 100 g porsiyon için çiğ karışım 140 g kabul edildi (pişme kaybı ~%30); kuyruk yağı %25.
+    - 1 su bardağı zeytinyağı 200 ml. Döner pişirme süresi porsiyon için 45 dk kabul edildi.
+  - Sivas Usulü Zeytinyağlı Nohutlu Kereviz -> Ulaş Etli Pidesi (CI 502, ~697 kcal/porsiyon)
+    - 180 g hamur: 110 g un + 66 g su + tuz + maya (oranlar TAHMİN). Domates, soğan, biber ve maydanoz miktarları belgede yok.
+    - Fırın süresi belgede yok: 8 dk.
+  - Yozgat Usulü Etli Bulgur Pilavı -> Yozgat Desti Kebabı (CI 1471, ~482 kcal/porsiyon)
+    - Belgede kişi sayısı yok: 3 kg kuzu eti için 12 porsiyon (250 g) kabul edildi. Ağız hamuru yenmediği için yazılmadı.
+  - Yozgat Usulü Zeytinyağlı Kuru Fasulye -> Yozgat Tandır Kebabı (CI 265, ~343 kcal/porsiyon)
+    - Yarım domates 55 g; 2 baş soğan 220 g; tuz ve karabiber miktarı belgede yok (porsiyonda 2,5 g ve 0,5 g).
+    - Tandır (odun ateşi) enerji kaynağı katalog seçeneklerinde olmadığından doğalgaz yazıldı.
+- 190 genel temsilciler (malzeme ve talimat degismedi, sadece ad ve bolge=Genel):
+  - Bartın Usulü Zeytinyağlı Nohutlu Havuç -> Zeytinyağlı Nohutlu Havuç
+  - Ağrı Usulü Kavurmalı Yumurta -> Kavurmalı Yumurta
+  - Ağrı Usulü Elmalı Ceviz Tatlısı -> Elmalı Ceviz Tatlısı
+  - Adana Usulü Zeytinyağlı Nohutlu Kabak -> Zeytinyağlı Nohutlu Kabak
+  - Aydın Usulü Etli Bulgur Pilavı -> Etli Bulgur Pilavı
+  - Bingöl Usulü Zeytinyağlı Nohutlu Kereviz -> Zeytinyağlı Nohutlu Kereviz
+  - Anamur Usulü Izgara Karides -> Izgara Karides
+  - Diyarbakır Usulü Zeytinyağlı Nohutlu Pırasa -> Zeytinyağlı Nohutlu Pırasa
+  - Ağrı Usulü Zeytinyağlı Nohut -> Zeytinyağlı Nohut
+  - Çanakkale Usulü Izgara Levrek -> Izgara Levrek
+  - Aksaray Usulü Etli Kabak Yemeği -> Etli Kabak Yemeği
+  - Ankara Usulü Etli Nohutlu Patlıcan -> Etli Nohutlu Patlıcan
+  - Artvin Usulü Zeytinyağlı Kuru Fasulye -> Zeytinyağlı Kuru Fasulye
+  - Elazığ Usulü Kayısılı Komposto -> Kayısılı Komposto
+  - Adana Usulü Izgara Tavuk Kanat -> Izgara Tavuk Kanat
+  - Adana Usulü Nohutlu Kavurma -> Nohutlu Kavurma
+  - Afyon Usulü Kaymaklı Bal Tabağı -> Kaymaklı Bal Tabağı
+  - Aksaray Usulü Zeytinyağlı Nohutlu Patlıcan -> Zeytinyağlı Nohutlu Patlıcan
+  - Ankara Usulü Zeytinyağlı Nohutlu Bamya -> Zeytinyağlı Nohutlu Bamya
+  - Artvin Usulü Etli Lahana -> Etli Lahana
+  - Batman Usulü Etli Nohutlu Bulgur -> Etli Nohutlu Bulgur
+  - Kuşadası Usulü Elmalı Komposto -> Elmalı Komposto
+  - Adana Usulü Zeytinyağlı Biberli Patlıcan -> Zeytinyağlı Biberli Patlıcan
+  - Alanya Usulü Portakallı Zeytinyağlı Havuç -> Portakallı Zeytinyağlı Havuç
+  - Antalya Usulü Zeytinyağlı Nohutlu Bakla -> Zeytinyağlı Nohutlu Bakla
+  - Ardahan Usulü Kaşarlı Kete -> Kaşarlı Kete
+  - Artvin Usulü Cevizli Bal Tatlısı -> Cevizli Bal Tatlısı
+  - Bingöl Usulü Kuzu Kavurma -> Kuzu Kavurma
+  - Çanakkale Usulü Etli Enginar -> Etli Enginar
+  - Çorum Usulü Nohutlu Tavuk Sote -> Nohutlu Tavuk Sote
+  - Edirne Usulü Kirazlı Komposto -> Kirazlı Komposto
+  - Erzurum Usulü Etli Nohutlu Kavurma -> Etli Nohutlu Kavurma
+  - Giresun Usulü Elmalı Fındıklı Tatlı -> Elmalı Fındıklı Tatlı
+  - İstanbul Usulü Kirazlı Yoğurt Tatlısı -> Kirazlı Yoğurt Tatlısı
+  - İstanbul Usulü Zeytinyağlı Enginar Turşusu -> Zeytinyağlı Enginar Turşusu
+  - İzmir Usulü Etli Bamya -> Etli Bamya
+  - Kahramanmaraş Usulü Zeytinyağlı Patlıcan -> Zeytinyağlı Patlıcan
+  - Kilis Usulü Zeytinyağlı Biberli Bulgur -> Zeytinyağlı Biberli Bulgur
+  - Kırklareli Usulü Elmalı Tatlı -> Elmalı Tatlı
+  - Kırşehir Usulü Nohutlu Yahni -> Nohutlu Yahni
+  - Kumluca Usulü Zeytinyağlı Kabak -> Zeytinyağlı Kabak
+- EMRE/GIZEM ICIN: belge miktarlariyla porsiyon basina 900 kcal ve ustu cikan tarifler (porsiyon sayisi ya da
+  miktar yorumu kontrol edilmeli; belge oyle yaziyor ama menu hedeflerine girmesi zor):
+  - Bodrum Çökertme Kebabı: ~1594 kcal
+  - Kayseri Tepsi Mantısı: ~1475 kcal
+  - Anamur Batırığı: ~1206 kcal
+  - Urfa Üzlemeli Pilavı: ~1195 kcal
+  - Kilis Ekşili Kebabı: ~1186 kcal
+  - Milas Vekilharcı: ~1135 kcal
+  - Kayseri Fırın Ağzı Kebabı: ~1069 kcal
+  - Diyarbakır Ekşili Dolması: ~1047 kcal
+  - Çankırı Bütün Et: ~984 kcal
+  - Malatya Tevek Yaprağı Sarması: ~976 kcal
+  - Bursa Pideli Köfte: ~906 kcal
+
+### 13 Ekim 2026 -- sql/191 (buyuk parti 2): 80 donusum daha
+- 190 ile ayni kalip. Yerel test: 190'dan sonra calistirildiginda 80/80 TAMAM; ikinci calistirmada 0 degisiklik.
+- Bolge kopyalari (Marmara Usulu, Dogu Anadolu Usulu) o bolgedeki bir ilin CI yemegine donusturuldu
+  (Edirne, Bilecik, Hakkari, Erzurum). Ilce kopyalari (Soke, Nazilli, Kusadasi, Dikili, Odemis, Alanya, Salihli...)
+  once ilcenin, yoksa bagli oldugu ilin CI yemegine.
+- 191 donusumleri ve TAHMINLER (Emre/Gizem onayi bekleniyor):
+  - Giresun Usulü Etli Kavurma -> Alucra Oğlak Kebabı (CI 582, ~408 kcal/porsiyon)
+    - Belge bütün karkas veriyor (kiloyla satılır): porsiyon 250 g kemikli et kabul edildi. Oğlak eti: KEÇİ ETİ (BUT).
+    - Yüzeyde kalan terbiye tuzu porsiyonda 3 g kabul edildi.
+  - Giresun Usulü Kavurmalı Yumurta -> Giresun Fındık Ezmeli Kadayıf Tatlısı (CI 1345, ~760 kcal/porsiyon)
+    - Fındık unu (1 kg) ve kıyılmış fındık (200 g) toplamı FINDIK (İÇ) olarak yazıldı. Süt 1250 ml x 1,03. Fırın süresi belgede yok: 30 dk.
+  - Rize Usulü Kavurmalı Yumurta -> Çayeli Kuru Fasulye Yemeği (CI 312, ~893 kcal/porsiyon)
+    - Belgede kişi sayısı yok: 1 kg fasulye 8 porsiyon kabul edildi. Pişirme suyu porsiyonda 250 g.
+    - Tereyağı belgede 1 kg fasulyeye 400 g: porsiyonda 50 g.
+  - Rize Usulü Zeytinyağlı Nohutlu Kabak -> Derepazarı Pidesi (CI 324, ~875 kcal/porsiyon)
+    - Belgedeki üç pideden açık kıymalı seçildi. Hamur 50 kg un + 40 l su + 500 g tuz + 500 g yaş maya oranından 260 g'lık beze: 144 g un, 115 g su, 1,4 g tuz; yaş maya yerine KURU MAYA.
+    - 1 orta soğan 110 g; 2 çay kaşığı tuz 6 g (harçta, porsiyon tuzuna eklendi); 1 diş sarımsak 5 g; çeyrek bağ maydanoz 12,5 g; 1 çarliston biber 15 g.
+  - Rize Usulü Zeytinyağlı Pırasa -> Rize Pepeçurası (CI 703, ~366 kcal/porsiyon)
+    - Posa süzülüp atıldığından üzüm ağırlığının tamamı yazılması besin değerini biraz yüksek gösterir.
+  - Samsun Usulü Etli Kavurma -> Yakakent Mantısı (CI 251, ~743 kcal/porsiyon)
+    - Belgede kişi sayısı yok: 900 g un ve 500 g kıyma için 8 porsiyon kabul edildi. Hamur suyu porsiyonda 50 g.
+    - Yoğurtlu sunumdaki süzme yoğurt (600 g), sarımsak ve tereyağı (80 g) miktarları belgede yok: TAHMİN. Haşlama suyu yazılmadı.
+  - Samsun Usulü Zeytinyağlı Nohutlu Havuç -> Çarşamba Pidesi (CI 333, ~717 kcal/porsiyon)
+    - 145 g beze: un ~%60 (87 g), su 55 g; hamur tuzu 1,7 g + iç tuzu 3 g. Ev tipi ekşi maya / yaş maya yerine KURU MAYA (çok az).
+    - Fırın süresi belgede yok: 10 dk.
+  - Samsun Usulü Zeytinyağlı Bakla -> Çarşamba Keşkeği (CI 1495, ~768 kcal/porsiyon)
+    - Belgede kişi sayısı yok: 500 g döğme buğday için 8 porsiyon. 1 bütün tavuk 1,2 kg (kemiksiz et TAVUK BÜTÜN olarak).
+    - Pişirme ve güdelleme süreleri belgede yok.
+  - Samsun Usulü Elmalı Tatlı -> Çarşamba Kıvratması (CI 751, ~658 kcal/porsiyon)
+    - Belgede kişi sayısı yok: toplam ~4,7 kg ham karışım için 30 porsiyon kabul edildi.
+    - Açma nişastasının (500 g) %20'sinin hamura geçtiği kabul edildi.
+  - Siirt Usulü Etli Kavurma -> Siirt Kiteli (CI 1574, ~616 kcal/porsiyon)
+    - Belgede kişi sayısı yok (189'da beklemeye alınmıştı): 1 kg bulgur için 12 porsiyon, porsiyonda 2 köfte kabul edildi. Emre/Gizem onayı gerekli.
+    - Kuzu döş/kaburga kıyması: KUZU KIYMA. Reyhan katalogda yok: taze reyhan yerine MAYDANOZ, toz reyhan yazılmadı.
+    - Haşlanmış pirinç 180 g -> çiğ 72 g. Hamur suyu porsiyonda 30 g.
+  - Siirt Usulü Zeytinyağlı Nohutlu Kereviz -> Siirt Pırtike Çorbası (CI 1817, ~222 kcal/porsiyon)
+    - Tane sumağın yalnızca suyu kullanılıyor; tamamı (250 g) yazıldı, besin değeri yüksek görünür.
+  - Siirt Usulü Zeytinyağlı Nohutlu Patlıcan -> Siirt Gebole Tatlısı (CI 1675, ~432 kcal/porsiyon)
+    - Belgede kişi sayısı yok: toplam ~1,6 kg için 8 porsiyon kabul edildi. 200 ml pekmez x 1,35 = 270 g.
+  - Siirt Usulü Zeytinyağlı Nohutlu Bamya -> Siirt Varak Keek Tatlısı (CI 1799, ~481 kcal/porsiyon)
+    - 200 ml pekmez x 1,35 = 270 g.
+  - Söke Usulü Zeytinyağlı Nohutlu Havuç -> Söke Kulak Çorbası (CI 1761, ~398 kcal/porsiyon)
+    - 1 soğan 110 g. Haşlanmış nohut 150 g kuru ağırlığa çevrildi (x0,4). Et suyu ve/veya tavuk suyundan et suyu seçildi.
+    - Kızartma yağının (250 ml) emilen kısmı %10 kabul edildi. İsteğe bağlı tereyağlı sos dahil edildi.
+  - Söke Usulü Zeytinyağlı Pırasa -> Söke Pidesi (CI 1248, ~1080 kcal/porsiyon)
+    - Kavrulan kıymanın ~%40 su kaybettiği kabul edilerek 240 g harçtaki çiğ kıyma 109 g hesaplandı. 4 demet maydanoz 200 g.
+    - 190 g hamur: 141 g un, 46 g su; yaş maya yerine KURU MAYA. Çökelek: ÇÖKELEK (ÇORUM).
+  - Trabzon Usulü Zeytinyağlı Nohutlu Havuç -> Sürmene Pidesi (CI 553, ~1433 kcal/porsiyon)
+    - 240 g hamur: 146 g un, 90 g su. Kolot/civil karışımı köy peyniri katalogda yok: FETA PEYNİRİ (salamura beyaz peynir) ile karşılandı.
+  - Trabzon Usulü Zeytinyağlı Pırasa -> Hamsiköy Sütlacı (CI 255, ~275 kcal/porsiyon)
+    - Porsiyon 250 ml süt esas alınarak oranlandı. Yarım çay kaşığı tuz 2,5 g / 1 l süt. İsteğe bağlı tarçın ve fındık yazılmadı.
+  - Uşak Usulü Etli Bulgur Pilavı -> Karahallı Ciğeri (CI 1283, ~480 kcal/porsiyon)
+    - Belgedeki 30-35 g margarinin yarısı sacda kalıp süzüldüğü için porsiyona 16 g yazıldı. Aralıkların ortası alındı.
+  - Aksaray Usulü Kavurmalı Yumurta -> Aksaray İnceelek Tatlısı (CI 464, ~458 kcal/porsiyon)
+    - Belgede kişi sayısı yok: 14 yufka ve "porsiyon 150 g'dan az" bilgisiyle 14 porsiyon kabul edildi.
+    - Açma nişastasının (100 g) %20'si; şerbet limon suyu ~10 g. Aralıkların ortası alındı.
+  - Kars Usulü Kaşarlı Kete -> Kars Ketesi (CI 1366, ~679 kcal/porsiyon)
+    - Üç iç harçtan tuzlu iç harç seçildi; aralıkların ortası alındı. Maya türü belirtilmemiş: KURU MAYA.
+    - Üzerine sürülen yumurta miktarı belgede yok: 1 yumurta / 10 kete.
+  - Kırşehir Usulü Elmalı Ceviz Tatlısı -> Kırşehir Ahi Helvası (CI 1513, ~484 kcal/porsiyon)
+    - Belgede kişi sayısı yok: toplam ~1,7 kg için 12 porsiyon kabul edildi.
+  - Kütahya Usulü Elmalı Ceviz Tatlısı -> Gediz Höşmerimi (CI 1285, ~418 kcal/porsiyon)
+    - Belgede kişi sayısı yok: toplam ~4,9 kg için 20 porsiyon kabul edildi.
+    - Olgunlaştırılmamış taze inek peyniri katalogda yok: LOR PEYNİRİ ile karşılandı.
+  - Kütahya Usulü Kirazlı Yoğurt -> Kütahya Tosunumu (CI 1665, ~554 kcal/porsiyon)
+    - 15,5 adet -> porsiyonda 1 adet. Haşhaş ezmesi: HAŞHAŞ. Hamur suyu 550 ml (ortalama).
+  - Niğde Usulü Elmalı Cevizli Tatlı -> Niğde Sarım Burma Tatlısı (CI 1715, ~1049 kcal/porsiyon)
+    - Açma nişastasının (200 g) %20'si; tepsi yağı ayçiçek yağı seçildi. Su 75 ml (hamur) + 600 ml (şerbet).
+  - Niğde Usulü Zeytinyağlı Kereviz -> Bor Söğürmesi (CI 317, ~828 kcal/porsiyon)
+    - Belgede kişi sayısı yok: 1 kg kemikli sırt/kaburga eti için 4 porsiyon kabul edildi.
+    - Servis pidesinin porsiyon miktarı belgede yok: 110 g.
+  - Zonguldak Usulü Elmalı Ceviz Tatlısı -> Devrek Cevizli Kömeci (CI 516, ~406 kcal/porsiyon)
+    - Belgede kişi sayısı yok: toplam ~2,5 kg için 20 porsiyon kabul edildi. Esmer un + has un karışımı: BUĞDAY UNU.
+    - Belgede yoğurdun kullanıldığı adım yazmıyor; hamura dahil edildi.
+  - Erzincan Usulü Zeytinyağlı Nohutlu Kabak -> Erzincan Kesme Kadayıfı (CI 760, ~1702 kcal/porsiyon)
+    - 45 cm yuvarlak tepsi ve 12x12 cm dilim -> ~11 porsiyon kabul edildi. Bitkisel sıvı yağ: ayçiçek yağı.
+  - Erzincan Usulü Zeytinyağlı Nohut -> Erzincan Sütlacı (CI 1813, ~537 kcal/porsiyon)
+    - Üzerine konan hazır kesme kadayıf tatlısı (300 g) katalogda yok: KADAYIF ile karşılandı (şerbet ve ceviz dahil değil, besin değeri düşük kalır).
+    - Pirinç unu ve/veya nişastadan pirinç unu seçildi.
+  - Dikili Usulü Zeytinyağlı Semizotu -> Bergama Çığırtması (CI 1588, ~307 kcal/porsiyon)
+    - 5 ince uzun patlıcan 1 kg; 10-12 diş sarımsak 55 g. Belgede domates adımda geçiyor ama miktarı yok: 5 domates 550 g. Patlıcan bekletme tuzunun (8 g) suyla atıldığı kabul edildi.
+  - İzmir Usulü Zeytinyağlı Kabaklı Nohut -> İzmir Şambalisi (CI 205, ~365 kcal/porsiyon)
+    - Belge 1 kg irmik oranı veriyor, dilim sayısı yok: 30 dilim kabul edildi. Aralıkların ortası; süt seçildi; badem 2 g/dilim.
+    - Şerbetin tamamı yazıldı (tepside kalan kısım düşülmedi).
+  - İzmir Usulü Etli Kavurma (Kimyonlu) -> Tire Şiş Köfte (CI 671, ~556 kcal/porsiyon)
+    - Pişmiş 150 g porsiyon için çiğ kıyma 190 g (pişme kaybı ~%20). Tereyağlı domatesli sunum seçildi; tereyağı 10 g ve domates 50 g belgede yok.
+  - Ödemiş Usulü Nohutlu Tavuk Sote -> Ödemiş Köftesi (CI 720, ~964 kcal/porsiyon)
+    - Belgede porsiyonda 7 köfte yazıyor ama köfte ağırlığı yok: 1 kg et + 1 kg irmik 10 porsiyon kabul edildi.
+    - Ekmek 100 g, tereyağı 10 g, domates 40 g belgede yok.
+  - Elazığ Usulü Etli Kavurma (Kimyonlu) -> Palu Tava (CI 1814, ~715 kcal/porsiyon)
+    - Oğlak veya kuzu etinden kuzu seçildi (kemikli ağırlık). İç yağı ve/veya kuyruk yağı: KUYRUKYAĞI. Belgede tereyağının adımı yok; et üzerine eklendi.
+  - Elazığ Usulü Zeytinyağlı Pırasa -> Elazığ Taş Ekmeği Tatlısı (CI 1440, ~978 kcal/porsiyon)
+    - Şerbetin tamamı yazıldı; taş ekmeklerinin çektiği miktar bilinmiyor (besin değeri yüksek görünebilir). 2 yumurta 100 g.
+  - Kayseri Usulü Zeytinyağlı Pırasa -> Kayseri Kurşun Aşı Çorbası (CI 950, ~467 kcal/porsiyon)
+    - 7 porsiyon. 2 su bardağı bulgur 340 g; 2 yemek kaşığı un 20 g; 4 yemek kaşığı irmik 48 g; 1,5 su bardağı su 300 g; 1 su bardağı haşlanmış nohut/mercimek kuru ağırlığa çevrildi.
+    - 2 soğan 220 g; 1 çay bardağı yağ 70 g; limon suyu miktarı belgede yok (2 g).
+  - Kırıkkale Usulü Etli Bulgur Pilavı -> Karaahmetli Tokmak Köfte (CI 1781, ~702 kcal/porsiyon)
+    - Toplam ~7,6 kg hamurdan 150 g'lık beze; porsiyonda 2 beze kabul edildi. Sığır iç yağı: DONYAĞI. Mangal süresi belgede yok: 15 dk.
+  - Kırıkkale Usulü Zeytinyağlı Nohutlu Bamya -> Kırıkkale Keskin Tava (CI 311, ~805 kcal/porsiyon)
+    - Belgede kişi sayısı yok: 1 kg kemikli pirzola için 4 porsiyon. 4 domates 440 g; 2 baş sarımsak 50 g; 4 sivri biber 60 g; 2 çorba kaşığı tereyağı 30 g; 1 tatlı kaşığı tuz 5 g; 1 yemek kaşığı pul biber 7 g.
+  - Osmaniye Usulü Etli Bulgur Pilavı -> Osmaniye Zorkun Tava (CI 1477, ~615 kcal/porsiyon)
+    - Belgede kişi sayısı yok: 1 kg kuşbaşı için 4 porsiyon. 2 kırmızı soğan 220 g; 3 yeşil biber 45 g; 2 kırmızı biber 120 g; 15 diş sarımsak 75 g.
+  - Batman Usulü Zeytinyağlı Bakla -> Batman Şam Böreği (CI 302, ~742 kcal/porsiyon)
+    - Belgede kişi sayısı yok: 1 kg un ve 1 kg kıyma için 10 porsiyon kabul edildi. 5,5 soğan 605 g; 1 demet maydanoz 50 g.
+    - Ayçiçek yağının (300 ml) üçte birinin börek ve harçta kaldığı kabul edildi (porsiyonda ~9 g + hamur yağı).
+  - Muğla Usulü Zeytinyağlı Kereviz -> Milas Ekşili Köfte (CI 1209, ~800 kcal/porsiyon)
+    - Belgede kişi sayısı yok: 1 kg kıyma için 8 porsiyon. Kızartma zeytinyağının (150 ml) tamamı yazıldı.
+    - Haşlanmış nohut kuru ağırlığa çevrildi (x0,4). 3 diş sarımsak 15 g; 1 limon suyu 40 g; yarım demet maydanoz 25 g.
+  - Fethiye Usulü Zeytinyağlı Bakla -> Milas Çıntar Kavurması (CI 1490, ~258 kcal/porsiyon)
+    - Çıntar mantarı katalogda yok: MANTAR. 15-16 çıntar ~600 g kabul edildi. 1 orta soğan 110 g; maydanoz ve dereotu porsiyonda 2 g.
+  - Muğla Usulü Bal Kaymaklı Kahvaltı Tabağı -> Muğla Saraylısı (CI 346, ~396 kcal/porsiyon)
+    - Belge 1 kg ürün için miktar veriyor: porsiyon 100 g kabul edildi. Açma nişastasının (100 g) %20'si. Fırın süresi belgede yok: 35 dk; dinlendirme 2 saat.
+  - Tekirdağ Usulü Zeytinyağlı Bakla -> Küçükyoncalı Keşkeği (CI 1654, ~1312 kcal/porsiyon)
+    - 7 porsiyon. Pişirme suyu porsiyonda 150 g kabul edildi. Toplam tereyağı 500 g (keşkek + sos).
+    - Belgedeki miktarlar porsiyon başına ~1300 kcal veriyor (500 g tereyağı). Emre/Gizem onayı gerekli.
+  - Tekirdağ Usulü Zeytinyağlı Nohutlu Kereviz -> Çorlu Kuzu Ciğer Sarma (CI 1604, ~971 kcal/porsiyon)
+    - Kuzu ciğer takımı ve gömleği katalogda yok: 1 takım ~700 g; dana karaciğer, akciğer ve kalp ile karşılandı (böbrek/dalak dahil). Gömlek (zar yağı) yazılmadı.
+    - 3 soğan 330 g; 1 demet nane 50 g; yarım demet maydanoz 25 g; dolmalık fıstık: ÇAM FISTIĞI. Fırın süresi belgede yok: 25 dk.
+  - Tekirdağ Usulü Kirazlı Komposto -> Hayrabolu Tatlısı (CI 839, ~262 kcal/porsiyon)
+    - Belge yüzde oran veriyor: porsiyon 100 g hamur kabul edildi. Taze tuzsuz inek peyniri: LOR PEYNİRİ.
+    - Tatlının çektiği şerbet porsiyonda 50 g (25 g şeker + 25 g su) kabul edildi.
+  - İstanbul Usulü Etli Nohutlu Patlıcan -> Eminönü Balık Ekmek (CI 1860, ~463 kcal/porsiyon)
+    - Balık türü belgede yok (genellikle uskumru): PALAMUT ile karşılandı. İsteğe bağlı marul, soğan, limon miktarları TAHMİN.
+  - Karaman Usulü Zeytinyağlı Kereviz -> Karaman Şebit Pilavı (CI 1464, ~536 kcal/porsiyon)
+    - Et çiğ ağırlıkla yazıldı (haşlama ayrıca yapılır). Haşlanmış nohut kuru ağırlığa çevrildi (x0,4). Şebit suyu (200 ml) pilav suyuna dahil edildi.
+  - Nazilli Usulü Zeytinyağlı Kereviz -> Nazilli Pidesi (CI 594, ~596 kcal/porsiyon)
+    - Pide başına harç miktarı belgede yok: 150 g kabul edildi. 150 g hamur: 97 g un + 53 g su.
+    - Fırın süresi belgede yok: 8 dk.
+  - Sinop Usulü Zeytinyağlı Nohutlu Pırasa -> Sinop Mantısı (CI 973, ~1081 kcal/porsiyon)
+    - Haşlama suyundaki 20 g tuz atılan suda kaldığı için yazılmadı. 2 diş sarımsak 10 g.
+  - Eskişehir Usulü Izgara Tavuk Kanat -> Sivrihisar Kelem Dolması (CI 1189, ~411 kcal/porsiyon)
+    - Kepen kelemi: LAHANA; 10 yaprak 500 g. Göce (ince dövülmüş yarma): BUĞDAY (TAM TANE).
+  - Iğdır Usulü Kayısılı Komposto -> Iğdır Omaç Aşı Çorbası (CI 876, ~494 kcal/porsiyon)
+    - Belgede kişi sayısı yok: 5 l su ve 1 kg börülce için 12 porsiyon. Belge 250 g undan 300 g omaç hamuru (un+su) kullanıyor.
+    - Alça eriği: ERİK; kurutulmuş evelik: LABADA (taze, aynı ağırlıkla; besin değeri düşük kalır). Belgede alçanın kullanıldığı adım yok; evelikle eklendi.
+    - Karnıkara börülce: BÖRÜLCE (KURU). 2 acı biber 40 g; 1 soğan 110 g. Börülce 20 dakikada pişmeyebilir; Emre/Gizem kontrol etmeli.
+  - Malatya Usulü Kayısılı Komposto -> Arapgir Gelin Kız Helvası (CI 1843, ~599 kcal/porsiyon)
+    - Pudra şekeri: TOZ ŞEKER. Badem veya cevizden badem seçildi.
+  - Kocaeli Usulü Etli Kabak Yemeği -> Karamürsel Simit Dolması (CI 1407, ~504 kcal/porsiyon)
+    - Porsiyon 1/4 simit (100 g hamur) ve 75 g peynir kabul edildi. Kırık peynir: FETA PEYNİRİ. Yaş maya yerine KURU MAYA.
+    - Islatma sütü (porsiyonda ~25 g emilen), yumurta (porsiyonda 1/4) ve kızartma tereyağı (10 g) miktarları TAHMİN.
+  - Sakarya Usulü Etli Nohutlu Bulgur -> Adapazarı Islama Köftesi (CI 167, ~670 kcal/porsiyon)
+    - 1 orta soğan 110 g. Islama ekmeği miktarı belgede yok (porsiyonda 2 dilim): 60 g + köfte ekmeği 10 g. Kemik suyu (1 kg) porsiyonda 125 g; tamamının ekmeğe geçtiği kabul edildi.
+    - Belgedeki kırmızı biber (toplam 60 g) porsiyonda 7,5 g; yüksek görünüyor, kontrol edilmeli.
+  - Kuşadası Usulü Etli Enginar -> Aydın Yuvarlaması (CI 1198, ~871 kcal/porsiyon)
+    - 2 soğan 220 g. Kızartma yağının (250 ml) %40'ının köftede kaldığı kabul edildi. Haşlanmış nohut kuru ağırlığa çevrildi (x0,4). Salça domates+biber yarı yarıya.
+  - Şırnak Usulü Etli Kavurma (Kimyonlu) -> Şırnak Soryaz (CI 1679, ~534 kcal/porsiyon)
+    - Salamura soryaz (yabani sarımsak benzeri bitki) katalogda yok: TAZE SOĞAN ile karşılandı. 4,5 porsiyon; aralıkların ortası.
+    - Ayçiçek yağının (225 ml) tamamı yazıldı (porsiyonda ~46 g).
+  - Şırnak Usulü Zeytinyağlı Nohutlu Bakla -> Cizre Bırınczer (CI 1509, ~329 kcal/porsiyon)
+    - 15,5 porsiyon; aralıkların ortası. Zerdeçal veya safrandan zerdeçal seçildi.
+  - Şırnak Usulü Zeytinyağlı Patlıcan -> Şımşıpe (CI 301, ~437 kcal/porsiyon)
+    - 9 porsiyon. 3 baş soğan 330 g; 2 dolma kabağı 300 g; 1 patlıcan 250 g; 2 dolma biber 120 g; 2 domates 220 g; 1 çay bardağı tane sumak 70 g; 3 su bardağı su 600 g; 1 baş maydanoz 50 g.
+    - Pancar (ebegümeci/asma) yaprağı: PANCAR. Pişirme süresi belgede yok: 45 dk.
+  - Şırnak Usulü Kuzu Kavurma -> Cizre Luzine Tatlısı (CI 939, ~630 kcal/porsiyon)
+    - Belgede dilim sayısı yok: 34x44 cm tepsi için 30 dilim kabul edildi.
+  - Doğu Anadolu Usulü Karışık Turşu -> Hakkari Lalaped Tatlısı (CI 1601, ~1140 kcal/porsiyon)
+    - Bölge kopyası ("Doğu Anadolu Usulü") Doğu Anadolu illerinden Hakkari'nin belgeli tatlısına dönüştürüldü.
+    - Hamurdaki 200 ml sıvı yağ (184 g) + kızartma yağının (500 ml) emilen kısmı ~%20 (90 g) yazıldı. 2 yumurta 100 g; yarım limon suyu 18 g; isteğe bağlı vanilin yazılmadı.
+  - Doğu Anadolu Usulü Kayısı Kompostosu -> Erzurum Kuru Kayısı Kaysefesi (CI 1643, ~647 kcal/porsiyon)
+    - Bölge kopyası Erzurum'un belgeli yemeğine dönüştürüldü. 3,5 porsiyon; aralıkların ortası. Pişirme suyu belgede yok: porsiyonda 60 g.
+  - Marmara Usulü Karışık Turşu -> Uzunköprü Köftesi (CI 1777, ~287 kcal/porsiyon)
+    - Bölge kopyası ("Marmara Usulü") Marmara ilinden Edirne'nin belgeli yemeğine dönüştürüldü.
+    - Porsiyonda köfte sayısı belgede yok: 4 x 50 g kabul edildi. Izgara süresi belgede yok: 12 dk.
+  - Marmara Usulü Elmalı Komposto -> Bilecik Pazaryeri Helvası (CI 290, ~222 kcal/porsiyon)
+    - Bölge kopyası Marmara ilinden Bilecik'in belgeli tatlısına dönüştürüldü. Belge yüzde oran veriyor: porsiyon 50 g kabul edildi; dinlendirme süresi kısaltılarak 2 saat yazıldı.
+  - Marmara Usulü Vişne Kompostosu -> Bilecik Ekşili Kesme Çorba (CI 1796, ~356 kcal/porsiyon)
+    - Bölge kopyası Marmara ilinden Bilecik'in belgeli çorbasına dönüştürüldü. Kesme makarna/erişte: MAKARNA. Kızılcık kurusu: KIZILCIK (taze, aynı ağırlık). Ekşi erik: KURUTULMUŞ ERIK.
+  - Adana Usulü Etli Bulgur Pilavı -> Adana Şırdan (CI 575, ~329 kcal/porsiyon)
+    - Koyun şırdanı katalogda yok: DANA İŞKEMBE ile karşılandı, 1 şırdan 150 g kabul edildi. İç (perde) yağı: DONYAĞI.
+    - 1,5 yemek kaşığı pirinç 18 g; 1 yemek kaşığı iç yağı 10 g; 1 çay kaşığı karabiber 1 g. Haşlama suyunun tuzu yazılmadı.
+  - Manisa Usulü Zeytinyağlı Nohutlu Kabak -> Alaşehir Kapaması (CI 1032, ~1008 kcal/porsiyon)
+    - Bezeleri bekletme yağı (250 ml) ve kızartma yağından mantıda kalan miktar TAHMİN: ayçiçek 22,5 g, sadeyağ 2,5 g. Sos 30 g kemik suyu + 15 g sadeyağ TAHMİN.
+    - 0,5 kg soğan; yarım demet maydanoz 25 g; 2 yemek kaşığı karabiber 14 g; 1 yemek kaşığı tuz 15 g. Kemik suyu: ET SUYU.
+  - Salihli Usulü Kavurmalı Yumurta -> Kırkağaç Pideli Paça (CI 1579, ~765 kcal/porsiyon)
+    - Büyükbaş baş (kelle) eti katalogda yok: DANA DİL ile karşılandı. Pide hazır PİDE olarak yazıldı.
+    - Kemik suyu: ıslatma 55 g + 1-2 kepçe (~55 g) = 110 g. Aralıkların ortası alındı.
+  - Kırklareli Usulü Izgara Levrek -> Brakana Tatlısı (CI 1494, ~498 kcal/porsiyon)
+    - Belgede adet/kişi sayısı yok: toplam ~3,3 kg için 20 porsiyon kabul edildi. Katı yağ: MARGARİN. Fırın süresi belgede yok: 25 dk.
+  - Çanakkale Usulü Kavurmalı Yumurta -> Bayramiç Tahin Helvası (CI 843, ~251 kcal/porsiyon)
+    - Belge 100 kg ölçek veriyor: porsiyon 50 g helva kabul edildi. Sitrik asit (40-50 g/100 kg) ve çöven ekstraktı katalogda yok, yazılmadı.
+    - Kaynatma suyunun çoğu buharlaşır; su tamamı yazıldı.
+  - Çanakkale Usulü Zeytinyağlı Taze Fasulye -> Biga Peynir Tatlısı (CI 1312, ~258 kcal/porsiyon)
+    - Belge yüzde oran veriyor: porsiyon 100 g hamur. Teleme/tuzsuz taze peynir: LOR PEYNİRİ. Tatlının çektiği şerbet porsiyonda 50 g (25 g şeker + 25 g su) kabul edildi.
+  - Balıkesir Usulü Elmalı Ceviz Tatlısı -> Ayvalık Lor Tatlısı (CI 1305, ~349 kcal/porsiyon)
+    - 45 adetten porsiyonda 3 adet -> 15 porsiyon. Un seçeneği seçildi. Hamur suyu 600 g + şerbet suyu 1,5 l (ortalama); şerbetin tamamının çekildiği kabul edildi.
+  - Mersin Usulü Zeytinyağlı Nohutlu Havuç -> Mersin Kerebici (CI 426, ~629 kcal/porsiyon)
+    - ~200 adetten porsiyonda 2 adet -> 100 porsiyon. Ceviz porsiyonda 2 x 17,5 g. Çöven kökü katalogda yok; köpük için yalnız şeker (3,5 kg/100) ve suyu (5 l/100) yazıldı.
+  - Mersin Usulü Zeytinyağlı Nohutlu Kereviz -> Tarsus Fındık Lahmacunu (CI 538, ~683 kcal/porsiyon)
+    - Erkek koyun eti: KOYUN KIYMA. Kapya biber: KIRMIZI BİBER. 10 g yaş maya yerine 3,3 g KURU MAYA. Tuz harç (3 g) + hamur (5 g).
+  - Mersin Usulü Izgara Karides -> Tarsus Kebabı (CI 539, ~446 kcal/porsiyon)
+    - 130 g harç oranlandı (1 kg et, %17,5 kuyruk yağı, 200 g soğan, 150 g kapya, 15 g maydanoz, 12,5 g tuz). Kaburga: KOYUN ETİ (SIRT).
+    - Açık ekmek: LAVAŞ 60 g; garnitür domates 50 g, biber 15 g TAHMİN.
+  - Alanya Usulü Kavurmalı Yumurta -> Alanya Gülüklü Çorba (CI 459, ~691 kcal/porsiyon)
+    - Belgede kişi sayısı yok: 1,2 l su ve 1,5 kg işkembe için 6 porsiyon kabul edildi. Keçi işkembesi: DANA İŞKEMBE.
+    - İşkembe temizleme ve haşlama malzemeleri (soğan, limon, domates, tuz) atıldığı için yazılmadı. 2 limon suyu ~66 g + gülük limon suyu 100 ml.
+  - Alanya Usulü Elmalı Ceviz Tatlısı -> Antalya Kabak Tatlısı (CI 719, ~479 kcal/porsiyon)
+    - Bal kabağı: KABAK. Belgede kişi sayısı yok: 1,5 kg kabak için 8 porsiyon. Yarım limon suyu 16 g.
+  - Antalya Usulü Etli Kavurma (Kimyonlu) -> Antalya Topak Kızartması (CI 1613, ~582 kcal/porsiyon)
+    - Belgedeki "100-150 g kemikli keçi eti" kişi başı kabul edildi (5 kişilik). Aralıkların ortası. 1 orta soğan 110 g; 1,5 domates 165 g; 1,5 yeşil biber 22 g.
+    - Kırmızı toz biber belgede 50-70 g (porsiyonda 12 g) yüksek görünüyor; isteğe bağlı arpacık soğan, defne ve karanfil yazılmadı.
+  - Antalya Usulü Etli Kabak -> Antalya Serpme Böreği (CI 736, ~571 kcal/porsiyon)
+    - 125 g beze: 10 kg un + 5,5 l su + 275 g tuz oranından 79 g un. Yağlama 1-1,5 yemek kaşığı ayçiçek yağı.
+    - Kıymalı harcın (70 g) bileşen oranı belgede yok: 50 g kıyma, 15 g soğan, 3 g maydanoz, karabiber TAHMİN.
+  - Muş Usulü Etli Nohutlu Bulgur -> Muş Köftesi (CI 966, ~750 kcal/porsiyon)
+    - Belgede kişi sayısı yok: toplam ~3,5 kg için 12 porsiyon kabul edildi. 1 demet maydanoz/reyhan 50 g; su 1 l (hamura göre).
+    - Belgede baharatlar yüksek (kekik 100 g, pul biber 100 g, karabiber ve kimyon 50 g): porsiyonda kekik 8 g, pul biber 8 g. Emre/Gizem kontrol etmeli. Yağlı kıyma: KUZU KIYMA.
+  - Muş Usulü Zeytinyağlı Nohut -> Muş Çorti Aşı (CI 409, ~516 kcal/porsiyon)
+    - Belgede kişi sayısı yok: 750 g kemikli kuzu kol için 4 porsiyon. Çorti turşusu: KONSERVE TURŞU; yarma buğday: BUĞDAY (TAM TANE). Pişirme suyu porsiyonda 250 g.
+- EMRE/GIZEM ICIN (191): belge miktarlariyla porsiyon basina 900 kcal ve ustu:
+  - Erzincan Kesme Kadayıfı: ~1702 kcal
+  - Sürmene Pidesi: ~1433 kcal
+  - Küçükyoncalı Keşkeği: ~1312 kcal
+  - Hakkari Lalaped Tatlısı: ~1140 kcal
+  - Sinop Mantısı: ~1081 kcal
+  - Söke Pidesi: ~1080 kcal
+  - Niğde Sarım Burma Tatlısı: ~1049 kcal
+  - Alaşehir Kapaması: ~1008 kcal
+  - Elazığ Taş Ekmeği Tatlısı: ~978 kcal
+  - Çorlu Kuzu Ciğer Sarma: ~971 kcal
+  - Ödemiş Köftesi: ~964 kcal
+- KALAN 44 KOPYA (CI'da kullanilabilir belgeli yemek yok veya il havuzu tukendi). Bahri'nin kaynak kararina
+  gore (CI yoksa Kultur ve Turizm Bakanligi / il kultur mudurlugu yayini ya da miktarli akademik calisma) web
+  arastirmasiyla sonraki partide yapilacak:
+  - Rize Usulü Etli Kavurma
+  - Tokat Usulü Etli Kavurma
+  - Uşak Usulü Zeytinyağlı Nohutlu Havuç
+  - Yozgat Usulü Zeytinyağlı Nohutlu Havuç
+  - Kaş Usulü Kavurmalı Yumurta
+  - Kırklareli Usulü Kavurmalı Yumurta
+  - Kars Usulü Elmalı Ceviz Tatlısı
+  - Muş Usulü Elmalı Ceviz Tatlısı
+  - Sivas Usulü Elmalı Ceviz Tatlısı
+  - Denizli Usulü Zeytinyağlı Nohutlu Kabak
+  - Trabzon Usulü Etli Kavurma (Kimyonlu)
+  - Kars Usulü Zeytinyağlı Pırasa
+  - Karabük Usulü Etli Bulgur Pilavı
+  - Kars Usulü Zeytinyağlı Bakla
+  - Nevşehir Usulü Zeytinyağlı Bakla
+  - İstanbul Usulü Zeytinyağlı Nohutlu Kereviz
+  - Muş Usulü Zeytinyağlı Kereviz
+  - Silifke Usulü Zeytinyağlı Kereviz
+  - Kaş Usulü Izgara Karides
+  - Tekirdağ Usulü Izgara Karides
+  - Foça Usulü Zeytinyağlı Nohutlu Pırasa
+  - Tokat Usulü Zeytinyağlı Nohutlu Pırasa
+  - Manavgat Usulü Izgara Levrek
+  - Silifke Usulü Izgara Levrek
+  - Tokat Usulü Izgara Alabalık - basitleştirilmiş (Levrek ile)
+  - Siirt Usulü Etli Nohutlu Patlıcan
+  - Trabzon Usulü Zeytinyağlı Kuru Fasulye
+  - Batman Usulü Etli Kavurma (Baharatlı)
+  - Niğde Usulü Kayısılı Komposto
+  - Denizli Usulü Etli Nohutlu Kavurma
+  - Batman Usulü Zeytinyağlı Nohutlu Patlıcan
+  - Samsun Usulü Etli Lahana Yemeği
+  - Muş Usulü Zeytinyağlı Semizotu
+  - Yalova Usulü Zeytinyağlı Enginar
+  - Silifke Usulü Elmalı Komposto
+  - Kaş Usulü Portakallı Zeytinyağlı Havuç
+  - Antalya Usulü Zeytinyağlı Kereviz
+  - Side Usulü Zeytinyağlı Enginar Turşusu
+  - Mersin Usulü Etli Bamya
+  - Kars Usulü Etli Kavurma (Baharatlı)
+  - Tokat Usulü Zeytinyağlı Kabak
+  - Silifke Usulü Yoğurtlu Köfte
+  - Antalya Usulü Etli Nohutlu Patlıcan
+  - Elazığ Usulü Etli Nohutlu Bulgur
+- Rize Usulu Etli Kavurma: CI 1599 (Rize Etli Kara Lahana Sarmasi) porsiyon sorusu Emre'de (189'dan beri).
+- Not: Kirklareli Koftesi (CI 1827), Hatay Halavet Kebabi (CI 1766) ve İskilip Baklavası (CI 1764) PDF'leri indirilemedi
+  (Turk Patent sitesinde belge yok).
+
+### 13 Ekim 2026 -- sql/192: CI'si olmayan kopyalar icin akademik kaynak (parti 1, 5 donusum)
+- Bahri'nin karari: kalan 44 kopya icin akademik kaynakla devam.
+- Kaynak: Oktem, S. "Turizm Sektorunde Standart Recetelerin Onemi Kapsaminda Bir Calisma: Mersin Yoresel
+  Yemekleri" (Mersin Universitesi; Baskent Universitesi acik erisim arsivi). 26 standart recete, hepsi 4 porsiyon,
+  gram cinsinden. Mersin ve ilcesi Silifke kopyalari bununla donusturuldu. Yerel test: 5/5 TAMAM.
+- Talimatta kaynak satiri artik "**Kaynak:**" ile basliyor; dogrulama sutunu buna gore.
+- Donusumler ve TAHMINLER:
+  - Mersin Usulü Etli Bamya -> Mersin Topalak Çorbası (Öktem SR1, ~1031 kcal/porsiyon)
+    - Kemikli et türü belirtilmemiş: DANA KOL. 1 limon ~30 g suyu. Et ve nohut haşlama süresi belgede yok: 60 dk (nohut önceden ıslatılmış).
+    - Talimatta geçen zeytinyağının miktarı listede yok, yazılmadı. 1 litre su et suyu olarak kullanılıyor.
+  - Silifke Usulü Zeytinyağlı Kereviz -> Mersin Sarı Kabak Yemeği (Öktem SR11, ~353 kcal/porsiyon)
+    - Yarım bal kabağı 1 kg kabul edildi (KABAK). 2 baş soğan 220 g. Pekmez 1 yemek kaşığı 20 g. Pişirme süresi belgede yok: 45 dk.
+  - Silifke Usulü Izgara Levrek -> Mersin Döğme Pilavı (Öktem SR16, ~526 kcal/porsiyon)
+    - Haşlama süresi belgede yok: 45 dk.
+  - Silifke Usulü Elmalı Komposto -> Mersin Sütlü Tatlı Kabağı (Öktem SR25, ~729 kcal/porsiyon)
+    - Yarım tatlı kabağı 1 kg kabul edildi (KABAK). Süt 1,5 l x 1,03. Pişirme süresi belgede yok: 40 dk.
+  - Silifke Usulü Yoğurtlu Köfte -> Mersin Bastısı (Öktem SR10, ~382 kcal/porsiyon)
+    - 1 orta pancar 300 g; 12 kuru erik 100 g; 2 patates 426 g; 2 soğan 220 g. Haşlanmış nohut kuru ağırlığa çevrildi (x0,4).
+    - Dövülmüş domates kurusu (50 g) katalogda yok: domates salçası ile karşılandı.
+- Arastirma durumu (kalan 39 kopya): Kultur Portali (kulturportali.gov.tr) sayfalari otomatik okumaya kapali;
+  il e-kitaplarindan yalniz Mugla Mutfagi ve Corum Kultur Envanteri PDF'i bulundu (hedef illerde degil). YOK tez
+  merkezi ve bircok universite arsivi PDF indirmeye kapali (ornek: Siirt mutfagi tezi, Batman Univ. 2022).
+  MEB "Yoresel Turk Mutfagi" (3 cilt, 81 il, ogretmenlerin derlemesi) acik PDF olarak bulunamadi.
+  Yol: Bahri/Emre/Gizem'in elinde bu tur kitap ya da PDF varsa yuklenirse kalan kopyalar hizla donusturulur.
