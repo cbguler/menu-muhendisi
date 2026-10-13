@@ -669,6 +669,16 @@ st.session_state.ozellikler = abonelik_verisi["ozellikler"] or {}
 st.session_state.recete_limiti = abonelik_verisi["recete_limiti"]
 st.session_state.sube_limiti = abonelik_verisi["sube_limiti"]
 
+# EVDEKILERLE MENU (13 Ekim 2026, sql/194): hizmet isletme duzeyinde acilir/kapanir,
+# karari sahip verir. NULL = henuz sorulmadi (Ana Sayfa'da bir kez sorulur).
+# 194 calistirilmadiysa ya da okunamazsa hizmet kapali sayilir.
+try:
+    st.session_state.ev_menu_hizmeti = (
+        supabase.table("isletmeler").select("ev_menu_hizmeti").eq("id", ana_isletme_id).single().execute()
+    ).data.get("ev_menu_hizmeti")
+except Exception:
+    st.session_state.ev_menu_hizmeti = False
+
 def kontrol_paneli_sayfasi():
     # NOT (12 Agustos 2026, Oturum 11): logo artik burada cagrilmiyor --
     # ozel menu satirinin icine tasindi (asagida, sayfa gezinmesi bolumu).
@@ -714,6 +724,33 @@ def kontrol_paneli_sayfasi():
             return
         with open(yol, "rb") as f:
             st.video(f.read(), format="video/mp4", autoplay=True, loop=True, muted=True)
+
+    # EVDEKILERLE MENU (13 Ekim 2026): aboneligi aktif sahibe hizmeti bir kez sor.
+    if (
+        st.session_state.get("patron_mu")
+        and st.session_state.get("ev_menu_hizmeti") is None
+        and not st.session_state.get("odeme_bekleniyor")
+        and not st.session_state.get("salt_okunur")
+    ):
+        with st.container(border=True):
+            st.markdown("**Yeni hizmet: Evdekilerle Menü**")
+            st.write(
+                "Evdeki malzemeleri ve miktarlarını girersin; sistem bunları önce kullanan bir "
+                "haftalık menü kurar ve eksikler için kısa bir alışveriş listesi verir. "
+                "Kullanmak ister misin? Kararını sonra Abonelik sayfasından değiştirebilirsin."
+            )
+            _e1, _e2, _ = st.columns([1, 1, 4])
+            for _kolon, _deger, _etiket in ((_e1, True, "Evet, açılsın"), (_e2, False, "Hayır")):
+                if _kolon.button(_etiket, key=f"ev_menu_soru_{_deger}", type="primary" if _deger else "secondary"):
+                    _sonuc = (
+                        supabase.table("isletmeler").update({"ev_menu_hizmeti": _deger})
+                        .eq("id", st.session_state.ana_isletme_id).execute()
+                    )
+                    if _sonuc.data:
+                        st.session_state.ev_menu_hizmeti = _deger
+                        st.rerun()
+                    else:
+                        st.error("Kaydedilemedi (veritabanı güncellemeyi reddetti).")
 
     st.title("Menü Mühendisi'ne Hoş Geldin")
     st.write(
@@ -986,6 +1023,9 @@ tarif_kutuphanesi_sayfasi = st.Page(
     "pages/5_Tarif_Kutuphanesi.py", title="Tarif Kütüphanesi", url_path="tarif-kutuphanesi",
 )
 abonelik_sayfasi = st.Page("pages/6_Abonelik.py", title="Abonelik")
+evdekilerle_menu_sayfasi = st.Page(
+    "pages/2_Evdekilerle_Menu.py", title="Evdekilerle Menü", url_path="evdekilerle-menu",
+)
 
 sayfa_listesi = [kontrol_sayfasi]
 # UCUNCU KADEME: hic odeme yapmamis kullanici icin bu 4 sayfa navigasyona
@@ -1002,6 +1042,9 @@ if not st.session_state.odeme_bekleniyor:
         sayfa_listesi.append(recete_uretimi_sayfasi)
     if yetki("uygulama_tarifleri") >= 1:
         sayfa_listesi.append(tarif_kutuphanesi_sayfasi)
+    # Evdekilerle Menu: ilk surumde sadece sahip, hizmet aciksa (tasarim v3).
+    if st.session_state.patron_mu and st.session_state.get("ev_menu_hizmeti"):
+        sayfa_listesi.append(evdekilerle_menu_sayfasi)
 # Abonelik sayfasi herkese acik (personel orada sadece Hesap Bilgileri, cikis ve
 # yetkisi olan bolumleri gorur).
 sayfa_listesi.append(abonelik_sayfasi)

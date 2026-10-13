@@ -300,7 +300,7 @@ def _besin_matrisi(tarifler, hedef_anahtarlari):
     return deger, var, gk, kk
 
 
-def _ogun_dene(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele, deneme_sayisi, tekrara_izin_ver, mevsim_zorunlu=True, hedef=None, kullanilan_gun_taban=None, bitis_zamani=None, mesafe_hesapla=True, sadece_mesafe=False, onceki_en_iyi=None, tercih_uygula=True):
+def _ogun_dene(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele, deneme_sayisi, tekrara_izin_ver, mevsim_zorunlu=True, hedef=None, kullanilan_gun_taban=None, bitis_zamani=None, mesafe_hesapla=True, sadece_mesafe=False, onceki_en_iyi=None, tercih_uygula=True, ceza=None):
     """Verilen esneklik seviyesinde ogun kombinasyonu arar.
     sadece_mesafe=True: tam eslesme ARANMAZ (cagiran, olmadigini zaten
     biliyor), sadece en yakin uclu -- ogun_olustur'un 2. asamasi, daha hizli.
@@ -326,7 +326,15 @@ def _ogun_dene(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, 
     Hedefi saglayan ucluler arasindan secim rastgele (eski surumde
     karistirilmis siradaki ilk isabet -- ayni olasilik dagilimi).
     deneme_sayisi artik kullanilmiyor (her zaman tam arama); geriye
-    donuk uyumluluk icin parametre olarak duruyor."""
+    donuk uyumluluk icin parametre olarak duruyor.
+
+    ceza (13 Ekim 2026, Evdekilerle Menu): {tarif_adi: sayi} -- verilirse
+    hedefi TAM saglayan ucluler arasindan rastgele degil, ceza TOPLAMI en
+    kucuk olan secilir (esitlerde rastgele) ve bunun icin butun t1'ler
+    taranir (ilk isabette durulmaz). Besin hedefi yine once gelir: ceza
+    sadece hedefte olan ucluler arasinda karar verir. sadece_mesafe
+    asamasinda (hicbir tam eslesme yokken) ceza KULLANILMAZ. ceza=None iken
+    davranis ve rastgele sayi tuketimi eskisiyle birebir aynidir."""
     import time as _time
 
     aday1_ham = _aday_havuzu(grup1_havuz, mevsim, kullanilan_hafta, tekrara_izin_ver, mevsim_zorunlu, kullanilan_gun_taban)
@@ -406,6 +414,11 @@ def _ogun_dene(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, 
     M3 = np.array([_etiket_maskesi(t["etiketler"], bit) for t in aday3_ham], dtype=np.int64)
     T2 = np.array([_tid(t["ad"]) for t in aday2_ham], dtype=np.int64)
     T3 = np.array([_tid(t["ad"]) for t in aday3_ham], dtype=np.int64)
+    if ceza is not None:
+        C2 = np.array([float(ceza.get(t["ad"], 0.0)) for t in aday2_ham], dtype=np.float64)
+        C3 = np.array([float(ceza.get(t["ad"], 0.0)) for t in aday3_ham], dtype=np.float64)
+    en_iyi_ceza = None
+    en_iyi_ceza_uclu = None
 
     aday1_karisik = list(aday1_ham)
     rastgele.shuffle(aday1_karisik)
@@ -523,9 +536,19 @@ def _ogun_dene(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, 
 
         if hedefte.any():
             satirlar, sutunlar = np.nonzero(hedefte)
-            k = rastgele.randrange(len(satirlar))
-            uclu = (t1, aday2_ham[i2[satirlar[k]]], aday3_ham[sutunlar[k]])
-            return uclu, uclu
+            if ceza is None:
+                k = rastgele.randrange(len(satirlar))
+                uclu = (t1, aday2_ham[i2[satirlar[k]]], aday3_ham[sutunlar[k]])
+                return uclu, uclu
+            # Evdekilerle Menu: hedefteki ucluler arasindan en kucuk ceza
+            toplam_ceza = float(ceza.get(t1["ad"], 0.0)) + C2[i2[satirlar]] + C3[sutunlar]
+            en_kucuk_ceza = float(toplam_ceza.min())
+            if en_iyi_ceza is None or en_kucuk_ceza < en_iyi_ceza - 1e-9:
+                esitler = np.nonzero(toplam_ceza <= en_kucuk_ceza + 1e-9)[0]
+                k = int(esitler[rastgele.randrange(len(esitler))])
+                en_iyi_ceza = en_kucuk_ceza
+                en_iyi_ceza_uclu = (t1, aday2_ham[i2[satirlar[k]]], aday3_ham[sutunlar[k]])
+            continue
 
         if not mesafe_hesapla:
             continue
@@ -537,10 +560,12 @@ def _ogun_dene(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, 
             en_iyi_mesafe = en_kucuk
             en_iyi_uclu = (t1, aday2_ham[i2[r]], aday3_ham[c])
 
+    if en_iyi_ceza_uclu is not None:
+        return en_iyi_ceza_uclu, en_iyi_ceza_uclu
     return None, en_iyi_uclu
 
 
-def ogun_olustur(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele, hedef=None, kullanilan_gun_taban=None, tam_eslesme_ara=True):
+def ogun_olustur(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele, hedef=None, kullanilan_gun_taban=None, tam_eslesme_ara=True, ceza=None):
     """Tek bir ogun (Ogle veya Aksam) icin I+II+III grup tarifi secer.
     Kademeli esneme sirasi (UYUMSUZLUK/madde 11 hicbirinde gevsetilmez):
       1) mevsime uygun + hafta icinde tekrarsiz + besin hedefi icinde
@@ -596,7 +621,7 @@ def ogun_olustur(grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta
         tam_sonuc, _ = _ogun_dene(
             grup1_havuz, grup2_havuz, grup3_havuz, mevsim, kullanilan_hafta, rastgele,
             float("inf"), tekrara_izin_ver, mevsim_zorunlu, hedef, kullanilan_gun_taban,
-            mesafe_hesapla=False,
+            mesafe_hesapla=False, ceza=ceza,
         )
         if tam_sonuc is not None:
             return tam_sonuc

@@ -393,6 +393,25 @@ if _patron:
                         "gerekiyor."
                     )
 
+    # EVDEKILERLE MENU (13 Ekim 2026, sql/194): hizmeti ac/kapat. Karar ana
+    # isletme duzeyinde tutulur (app.py navigasyonu buna bakar).
+    st.subheader("Evdekilerle Menü")
+    _ev_acik = bool(st.session_state.get("ev_menu_hizmeti"))
+    _ev_yeni = st.toggle(
+        "Evdekilerle Menü hizmeti açık", value=_ev_acik,
+        help="Evdeki malzemelerle haftalık menü kuran sayfa. Kapatırsan sayfa menüden kalkar; girdiğin stok silinmez.",
+    )
+    if _ev_yeni != _ev_acik:
+        _ev_sonuc = (
+            supabase.table("isletmeler").update({"ev_menu_hizmeti": _ev_yeni})
+            .eq("id", st.session_state.get("ana_isletme_id")).execute()
+        )
+        if _ev_sonuc.data:
+            st.session_state.ev_menu_hizmeti = _ev_yeni
+            st.rerun()
+        else:
+            st.error("Kaydedilemedi (veritabanı güncellemeyi reddetti).")
+
     st.divider()
 if _patron or yetki("maliyet_ayarlari") >= 1:
 

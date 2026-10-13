@@ -13218,3 +13218,19 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   Bunlar eski genel tariflerin kendi degerleri, 190'da yalniz adlari degisti. 185 teshisindeki porsiyon gramaji
   isiyle ayni kapsamda ele alinacak.
 - Sirada: kalan 39 kopya (CI'siz) icin akademik/resmi kaynak; kaynak yuklenirse hizla donusturulur.
+
+### 13 Ekim 2026 -- Efe Turkoglu'nun kaydi ve "Evdekilerle Menu"
+- Efe'nin kaydi (efeturkoglu1@gmail.com): sql/193 (teshis + aktivasyon; gecici sifre icerdigi icin depoya EKLENMEDI)
+  sonucu: hesap hic olusmamis, auth olayi yok, dogrulanmamis baska hesap yok. Bahri sonradan "dikkate alma" dedi;
+  is beklemede. Kok sebep teyit edilmedi (adaylar: kayit tetikleyicisi hatasi ya da Supabase kayit/e-posta siniri).
+- Evdekilerle Menu (oneri Efe, tasarim ev_stok_menu_tasarim_v3.md). Bahri'nin kararlari: esnek mod; varsayilan 3 porsiyon,
+  2 ogun, ikisi de secilebilir; ayri sayfa; ogunde 2 tarif secenegi; gun 1-7; hizmet aboneye sorulur, ac/kapa abonede;
+  besin hedefi > stok; e-posta gonderimi ertelendi.
+- sql/194 (isletmeler.ev_menu_hizmeti, isletmeler.ev_menu_ayarlari, ev_stogu + RLS): canlida dogrulandi (2/true/1/false/0).
+- Kod: uretim_algoritmasi.py ogun_olustur/_ogun_dene'ye istege bagli `ceza` parametresi (verilmezse davranis birebir ayni:
+  18 senaryoda eski/yeni cikti esit). ev_menu.py (stok, ceza = eksik_g - karsilanan_g, gun gun stoktan dusme, 2 tarif icin
+  bos III. grup), pages/2_Evdekilerle_Menu.py, app.py (Ana Sayfa'da bir kez soru + navigasyon), 6_Abonelik.py (ac/kapa).
+- Bilinen sinirlar: ayni ogundeki iki tarif ayni stok kalemini isterse secim sirasindaki ceza yaklasik; hedef tam
+  tutturulamayan ogunlerde stok etkisiz; fire hesaba katilmiyor; ilk surumde sadece kutuphane tarifleri, sadece sahip.
+- Yerel test (154 tariflik ornek kutuphane): stok tercihiyle haftada 5,3-6,8 kg stok kullanildi, tercihsiz 4,3-5,4 kg.
+  1078 tarifle 14 ogun 1-2 sn.
