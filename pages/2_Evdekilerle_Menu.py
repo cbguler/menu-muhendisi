@@ -15,7 +15,7 @@ import random
 import pandas as pd
 import streamlit as st
 
-from besin_sabitleri import TUM_BESIN_ALANLARI
+from besin_sabitleri import TUM_BESIN_ALANLARI, BESIN_ETIKET, BESIN_ARALIK, kanonik_sirala
 from db import get_supabase, oturumu_uygula
 import ev_menu as E
 
@@ -116,7 +116,7 @@ def _kutuphane_getir(imza=""):
 @st.cache_data(ttl=3600)
 def _katalog_getir(imza=""):
     return _sayfalayarak_getir(
-        lambda: supabase.table("malzemeler").select("id, ad, diger_adlar, yogunluk").order("ad")
+        lambda: supabase.table("malzemeler").select("id, ad, diger_adlar, yogunluk, mevsim, bozulma_suresi").order("ad")
     )
 
 
@@ -235,41 +235,36 @@ else:
 # ---------------------------------------------------------------------
 st.subheader("2. Menü ayarları")
 ayar = _ayarlar_getir()
-profiller = [p for p in _profiller_getir() if p.get("hedefler")]
-_HEDEF_YOK = "__hedef_yok__"
-profil_secenekleri = [p["id"] for p in profiller] + [_HEDEF_YOK]
-varsayilan_profil = ayar.get("hedef_profil_id")
-if varsayilan_profil not in profil_secenekleri:
-    ev_profili = next((p["id"] for p in profiller if p["ad"].strip().upper() == "EV"), None)
-    varsayilan_profil = ev_profili or _HEDEF_YOK
-_profil_adi = {p["id"]: p["ad"] for p in profiller}
-_profil_adi[_HEDEF_YOK] = "Besin hedefi kullanma"
 
-a1, a2, a3 = st.columns(3)
+a1, a2, a3, a4 = st.columns(4)
 porsiyon = a1.number_input("Kişi (porsiyon) sayısı", min_value=1, max_value=10, value=int(ayar.get("porsiyon", 3)))
+_ogun_kodlari = list(E.OGUN_SECENEKLERI.keys())
 ogun_kodu = a2.selectbox(
-    "Öğün", list(E.OGUN_SECENEKLERI.keys()),
-    index=list(E.OGUN_SECENEKLERI.keys()).index(ayar.get("ogun", "iki")) if ayar.get("ogun", "iki") in E.OGUN_SECENEKLERI else 0,
+    "Öğün", _ogun_kodlari,
+    index=_ogun_kodlari.index(ayar.get("ogun")) if ayar.get("ogun") in _ogun_kodlari else 0,
     format_func=lambda k: {"iki": "2 öğün (Öğle + Akşam)", "ogle": "Sadece Öğle", "aksam": "Sadece Akşam"}[k],
 )
 gun_sayisi = a3.number_input("Gün sayısı", min_value=1, max_value=7, value=int(ayar.get("gun", 7)))
-b1, b2, b3 = st.columns(3)
-baslangic = b1.date_input("Başlangıç günü", value=datetime.date.today(), format="DD.MM.YYYY")
-hedef_profil = b2.selectbox(
-    "Besin hedefi", profil_secenekleri, index=profil_secenekleri.index(varsayilan_profil),
-    format_func=lambda k: _profil_adi[k],
-    help="Porsiyon profillerine kaydettiğin besin hedefleri (Abonelik sayfası). Öncelik besin hedefindedir; "
-    "stok, hedefi tutturan seçenekler arasında karar verir.",
-)
-b3.write("")
-iki_tarif = b3.checkbox(
-    "Öğünde 2 tarif (ana yemek + yan yemek)", value=bool(ayar.get("iki_tarif", False)),
-    help="İşaretsizse her öğün 3 tariften oluşur (ana yemek, yan yemek, tamamlayıcı).",
-)
-if iki_tarif and hedef_profil != _HEDEF_YOK:
-    st.caption(
-        "Not: besin hedefleri 3 tariflik öğüne göre girildiyse 2 tarifte tutmayabilir; o öğünlerde "
-        "hedefe en yakın seçenek alınır ve stok o öğünde dikkate alınmaz."
+baslangic = a4.date_input("Başlangıç günü", value=datetime.date.today(), format="DD.MM.YYYY")
+
+t1, t2 = st.columns(2)
+with t1:
+    _TARIF_SAYISI = {
+        2: "Öğünde 2 tarif (ana yemek + yan yemek)",
+        3: "Öğünde 3 tarif (ana yemek + yan yemek + tamamlayıcı)",
+    }
+    tarif_sayisi = st.radio(
+        "Öğündeki tarif sayısı", [2, 3], index=0 if ayar.get("iki_tarif") else 1,
+        format_func=lambda k: _TARIF_SAYISI[k],
+    )
+    iki_tarif = tarif_sayisi == 2
+with t2:
+    mevsim_kontrolu = st.checkbox(
+        "Malzemenin mevsimini dikkate al", value=bool(ayar.get("mevsim_kontrolu", True)),
+        help="Menünün o günkü mevsiminde bulunmayan TAZE bir malzemeyi (ör. kışın taze fasulye, yazın hamsi) "
+        "isteyen tarif önerilmez. Kontrol sadece taze ürünlere (raf ömrü 30 gün ve altı) uygulanır; bakliyat, "
+        "tahıl, baharat, kuruyemiş gibi yıl boyu bulunan ürünler kısıtlanmaz. Evdeki malzemeler, temel "
+        "malzemeler ve katalogda mevsimi girilmemiş malzemeler de muaftır.",
     )
 
 temel_adlar_katalog = [a for a in E.TEMEL_MALZEMELER if a in id_by_ad]
@@ -281,12 +276,98 @@ temel_secili = st.multiselect(
 temel_idler = {id_by_ad[a] for a in temel_secili}
 
 # ---------------------------------------------------------------------
+# 2b) Besin Degerleri Hedefi (Aylik Menu'deki bolumle ayni alanlar)
+# ---------------------------------------------------------------------
+ogunler = E.OGUN_SECENEKLERI[ogun_kodu]
+profiller = [p for p in _profiller_getir() if p.get("hedefler")]
+
+
+def _hedefleri_yukle(hedef_sozlugu):
+    """Bir hedef sozlugunu ({ogun: {anahtar: [alt, ust]}}) ekrandaki kutulara yazar."""
+    anahtarlar = {a for o in (hedef_sozlugu or {}).values() for a in o}
+    st.session_state["ev_hedef_anahtarlari"] = kanonik_sirala(anahtarlar) if anahtarlar else \
+        ["kalori", "protein", "yag", "karbonhidrat", "gi"]
+    for ogun_adi in ("Öğle", "Akşam"):
+        for anahtar, *_ in TUM_BESIN_ALANLARI:
+            st.session_state.pop(f"ev_{ogun_adi}_{anahtar}_alt", None)
+            st.session_state.pop(f"ev_{ogun_adi}_{anahtar}_ust", None)
+    for ogun_adi, degerler in (hedef_sozlugu or {}).items():
+        for anahtar, aralik in degerler.items():
+            if anahtar not in BESIN_ARALIK:
+                continue
+            _min, _max = float(BESIN_ARALIK[anahtar][0]), float(BESIN_ARALIK[anahtar][1])
+            st.session_state[f"ev_{ogun_adi}_{anahtar}_alt"] = min(max(float(aralik[0]), _min), _max)
+            st.session_state[f"ev_{ogun_adi}_{anahtar}_ust"] = min(max(float(aralik[1]), _min), _max)
+
+
+# Ilk acilista: kayitli kendi hedefleri; yoksa "EV" profili; yoksa varsayilan araliklar.
+# Not: Streamlit, sayfadan cikildiginda widget anahtarlarini siler; anahtar yoksa
+# kayitli ayarlardan yeniden yuklenir.
+if "ev_hedef_kullan" not in st.session_state:
+    _ev_profili = next((p for p in profiller if p["ad"].strip().upper() == "EV"), None)
+    _baslangic_hedef = ayar.get("hedefler") or (_ev_profili or {}).get("hedefler")
+    st.session_state["ev_hedef_kullan"] = bool(ayar.get("hedef_kullan", _baslangic_hedef is not None))
+    _hedefleri_yukle(_baslangic_hedef)
+
+hedefler = None
+with st.container(border=True):
+    st.markdown("#### Besin Değerleri Hedefi")
+    hedef_kullan = st.checkbox("**Öğün başına besin değerleri hedefi uygula (opsiyonel)**", key="ev_hedef_kullan")
+    if hedef_kullan:
+        if profiller:
+            p1, p2 = st.columns([3, 1])
+            _yuklenecek = p1.selectbox(
+                "Porsiyon profilinden hedef yükle", [p["id"] for p in profiller],
+                format_func=lambda i: next(p["ad"] for p in profiller if p["id"] == i),
+                help="Abonelik sayfasındaki \"Profil Başına Besin Hedefleri\" bölümünde kaydettiğin hedefler.",
+            )
+            p2.write("")
+            p2.write("")
+            if p2.button("Yükle", use_container_width=True):
+                _hedefleri_yukle(next(p["hedefler"] for p in profiller if p["id"] == _yuklenecek))
+                st.rerun()
+        st.caption(
+            "Önce hangi besin değerlerini hedeflemek istediğini seç; sadece seçtiklerin için min/maks aralığı "
+            "gösterilir. Öncelik besin hedefindedir: evdeki malzemeler, hedefi tutturan seçenekler arasında "
+            "karar verir."
+        )
+        secili_anahtarlar = st.multiselect(
+            "Hedeflenecek besin değerleri", options=[a for a, *_ in TUM_BESIN_ALANLARI],
+            format_func=lambda a: BESIN_ETIKET[a], key="ev_hedef_anahtarlari",
+        )
+        hedefler = {}
+        for ogun_adi in ogunler:
+            with st.expander(f"{ogun_adi} hedefleri", expanded=False):
+                hedefler[ogun_adi] = {}
+                if not secili_anahtarlar:
+                    st.caption("Yukarıdan en az bir besin değeri seçmelisin.")
+                for anahtar in secili_anahtarlar:
+                    etiket = BESIN_ETIKET[anahtar]
+                    minv, maxv, def_alt, def_ust = (float(x) for x in BESIN_ARALIK[anahtar])
+                    c1, c2 = st.columns(2)
+                    _k_alt, _k_ust = f"ev_{ogun_adi}_{anahtar}_alt", f"ev_{ogun_adi}_{anahtar}_ust"
+                    # Anahtar session_state'te varsa value verilmez (Streamlit uyarisini onler).
+                    alt = c1.number_input(f"{etiket} — min", min_value=minv, max_value=maxv, key=_k_alt,
+                                          **({} if _k_alt in st.session_state else {"value": def_alt}))
+                    ust = c2.number_input(f"{etiket} — maks", min_value=minv, max_value=maxv, key=_k_ust,
+                                          **({} if _k_ust in st.session_state else {"value": def_ust}))
+                    hedefler[ogun_adi][anahtar] = (alt, ust)
+        if iki_tarif:
+            st.caption(
+                "Not: 2 tarifli öğünde hedefleri 3 tarife göre girdiysen tutmayabilir; o öğünlerde hedefe en yakın "
+                "seçenek alınır ve evdeki malzemeler o öğünde dikkate alınmaz."
+            )
+
+# ---------------------------------------------------------------------
 # 3) Menu kur
 # ---------------------------------------------------------------------
 if st.button("Menüyü oluştur", type="primary", disabled=_SALT_OKUNUR):
     yeni_ayar = {
         "porsiyon": int(porsiyon), "ogun": ogun_kodu, "gun": int(gun_sayisi), "iki_tarif": bool(iki_tarif),
-        "hedef_profil_id": hedef_profil if hedef_profil != _HEDEF_YOK else None,
+        "mevsim_kontrolu": bool(mevsim_kontrolu),
+        "hedef_kullan": bool(hedef_kullan),
+        "hedefler": {o: {a: [float(v[0]), float(v[1])] for a, v in h.items()} for o, h in (hedefler or {}).items()}
+        or ayar.get("hedefler"),
         "temel_haric": [a for a in temel_adlar_katalog if a not in temel_secili],
     }
     try:
@@ -294,10 +375,6 @@ if st.button("Menüyü oluştur", type="primary", disabled=_SALT_OKUNUR):
     except Exception:
         pass  # ayar kaydi basarisiz olsa da menu kurulur
     tarifler, tarif_malzemeleri = _kutuphane_getir(imza=_IMZA)
-    hedefler = None
-    if hedef_profil != _HEDEF_YOK:
-        hedefler = next(p["hedefler"] for p in profiller if p["id"] == hedef_profil)
-    ogunler = E.OGUN_SECENEKLERI[ogun_kodu]
     tarihler = [baslangic + datetime.timedelta(days=i) for i in range(int(gun_sayisi))]
     cubuk = st.progress(0.0, text="Menü kuruluyor...")
     _toplam_adim = len(tarihler) * len(ogunler)
@@ -307,14 +384,18 @@ if st.button("Menüyü oluştur", type="primary", disabled=_SALT_OKUNUR):
         _sayac[0] += 1
         cubuk.progress(min(_sayac[0] / _toplam_adim, 1.0), text=f"Menü kuruluyor... {_sayac[0]}/{_toplam_adim} öğün")
 
+    malzeme_mevsim = (
+        E.malzeme_mevsim_haritasi(katalog) if mevsim_kontrolu else None
+    )
     sonuc = E.menu_olustur(
         tarifler, tarif_malzemeleri, stok, int(porsiyon), ogunler,
         [E.tarih_mevsimi(t) for t in tarihler], bool(iki_tarif), hedefler,
-        random.Random(), temel_idler, ilerleme=_ilerle,
+        random.Random(), temel_idler, ilerleme=_ilerle, malzeme_mevsim=malzeme_mevsim,
     )
     cubuk.empty()
     st.session_state["ev_menu_sonuc"] = {
         "sonuc": sonuc, "tarihler": tarihler, "baslangic_stok": dict(stok), "porsiyon": int(porsiyon),
+        "tarif_sayisi": len(tarifler),
     }
 
 # ---------------------------------------------------------------------
@@ -326,6 +407,13 @@ if kayit:
     _GUNLER = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"]
     st.divider()
     st.subheader(f"Menü ({kayit['porsiyon']} kişilik)")
+    _mevsim_disi = sonuc.get("mevsim_disi_gun") or {}
+    if _mevsim_disi:
+        st.caption(
+            f"Malzeme mevsimi kontrolü: günün mevsiminde bulunmayan malzeme istediği için "
+            f"{min(_mevsim_disi.values())}-{max(_mevsim_disi.values())} tarif (toplam {kayit.get('tarif_sayisi', '?')} içinden) "
+            "o günlerde önerilmedi."
+        )
     for gun, tarih in zip(sonuc["gunler"], kayit["tarihler"]):
         with st.container(border=True):
             st.markdown(f"**{tarih.strftime('%d.%m.%Y')} {_GUNLER[tarih.weekday()]}**")

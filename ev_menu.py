@@ -67,6 +67,72 @@ _MEVSIM_BY_AY = {12: "kis", 1: "kis", 2: "kis", 3: "ilkbahar", 4: "ilkbahar", 5:
                  6: "yaz", 7: "yaz", 8: "yaz", 9: "sonbahar", 10: "sonbahar", 11: "sonbahar"}
 
 
+_MEVSIM_SIRASI = ["ilkbahar", "yaz", "sonbahar", "kis"]
+
+
+def _sade(metin):
+    """Turkce harfleri sadelestirip kucuk harfe cevirir ('Kış' -> 'kis')."""
+    m = metin.strip().replace("İ", "i").replace("I", "ı").lower()
+    return m.replace("ı", "i").replace("ş", "s").replace("ç", "c").replace("ğ", "g").replace("ö", "o").replace("ü", "u")
+
+
+def malzeme_mevsimleri(metin):
+    """malzemeler.mevsim metnini mevsim kumesine cevirir. Katalogdaki bicimler:
+    'Yıl boyunca', 'Yaz', 'Yaz-Sonbahar', 'İlkbahar-Sonbahar', 'Kış-İlkbahar',
+    'Sonbahar - Kış'. Iki mevsimli yazim bir ARALIKTIR (ilkbahar -> yaz ->
+    sonbahar -> kis dongusunde baslangictan bitise, ikisi dahil): 'İlkbahar-Sonbahar'
+    = ilkbahar + yaz + sonbahar. Bos/taninmayan -> None (bilinmiyor: kisitlama yok)."""
+    if not metin or not metin.strip():
+        return None
+    m = _sade(metin)
+    if "yil boyunca" in m:
+        return set(_MEVSIM_SIRASI)
+    parcalar = [p.strip() for p in m.split("-")]
+    if not parcalar or any(p not in _MEVSIM_SIRASI for p in parcalar):
+        return None
+    if len(parcalar) == 1:
+        return {parcalar[0]}
+    bas, son = _MEVSIM_SIRASI.index(parcalar[0]), _MEVSIM_SIRASI.index(parcalar[-1])
+    kume = set()
+    i = bas
+    while True:
+        kume.add(_MEVSIM_SIRASI[i])
+        if i == son:
+            break
+        i = (i + 1) % 4
+    return kume
+
+
+# Katalogdaki "mevsim" alani HASAT mevsimidir; nohut, pirinc, bulgur, ceviz, sarimsak,
+# tarcin gibi dayanikli urunler de mevsimli isaretli ama yil boyu bulunur. Bu yuzden
+# mevsim kontrolu sadece TAZE urunlere uygulanir: bozulma_suresi bu esigin altinda
+# olanlar (katalogda mevsimli 167 malzemenin 97'si 1-30 gun, kalanlari 90 gun ve uzeri).
+TAZE_URUN_BOZULMA_GUN = 30
+
+
+def malzeme_mevsim_haritasi(katalog):
+    """katalog: [{"id", "mevsim", "bozulma_suresi"}, ...] -> {id: mevsim kumesi ya da None}.
+    Dayanikli (bozulma_suresi > esik ya da bilinmiyor) malzemeler None: kisitlanmaz."""
+    harita = {}
+    for m in katalog:
+        b = m.get("bozulma_suresi")
+        taze = b is not None and b <= TAZE_URUN_BOZULMA_GUN
+        harita[m["id"]] = malzeme_mevsimleri(m.get("mevsim")) if taze else None
+    return harita
+
+
+def mevsimde_mi(kalemler, mevsim, malzeme_mevsim, muaf_idler):
+    """Tarifin temel olmayan ve evde olmayan butun malzemeleri bu mevsimde mi?
+    Mevsimi bilinmeyen malzeme engel sayilmaz."""
+    for mid, _g in kalemler:
+        if mid in muaf_idler:
+            continue
+        kume = malzeme_mevsim.get(mid)
+        if kume is not None and mevsim not in kume:
+            return False
+    return True
+
+
 def tarih_mevsimi(tarih):
     """0_Yillik_Menu.py'deki MEVSIM_AYLARI ile ayni esleme."""
     return _MEVSIM_BY_AY[tarih.month]
@@ -135,12 +201,17 @@ def stoktan_dus(ihtiyac, stok):
 
 
 def menu_olustur(tarifler, tarif_malzemeleri, stok, porsiyon, ogunler, gun_mevsimleri,
-                 iki_tarif, hedefler, rastgele, temel_idler, ilerleme=None):
+                 iki_tarif, hedefler, rastgele, temel_idler, ilerleme=None, malzeme_mevsim=None):
     """tarifler: motorun bekledigi liste ({"ad","grup","mevsim_etiketi","etiketler", besin...}).
     tarif_malzemeleri: {tarif_adi: [(malzeme_id, porsiyon_basi_gram), ...]}
     stok: {malzeme_id: gram} (DEGISTIRILMEZ; kopyasi uzerinde calisilir)
     ogunler: ("Öğle", "Akşam") gibi; gun_mevsimleri: her gunun mevsimi (gun sayisi = uzunluk)
     hedefler: {"Öğle": {...}, "Akşam": {...}} ya da None.
+    malzeme_mevsim: {malzeme_id: mevsim kumesi ya da None} -- verilirse (Bahri,
+      13 Ekim: "malzemenin mevsimi de dikkate alinsin") o gunun mevsiminde
+      bulunmayan bir malzemeyi isteyen tarif o gun ONERILMEZ. Muaf: temel
+      malzemeler ve baslangicta evde olan malzemeler (evde varsa mevsimi
+      onemsiz). Bir grupta hic tarif kalmazsa o grup o gun filtresiz kullanilir.
 
     Donus sozlugu:
       gunler: [{"gun": 1, "ogunler": {"Öğle": {"tarifler": [...], "stoktan_yuzde": x}}}, ...]
@@ -148,10 +219,9 @@ def menu_olustur(tarifler, tarif_malzemeleri, stok, porsiyon, ogunler, gun_mevsi
       kullanilan: {malzeme_id: g}
       kalan: {malzeme_id: g}
     """
-    grup1 = [t for t in tarifler if t["grup"] == 1]
-    grup2 = [t for t in tarifler if t["grup"] == 2]
-    grup3 = [BOS_TARIF] if iki_tarif else [t for t in tarifler if t["grup"] == 3]
     kalan = dict(stok)
+    muaf_idler = set(temel_idler) | {mid for mid, g in stok.items() if g > 0}
+    mevsim_disi_gun = {}
     ihtiyaclar = {
         ad: tarif_ihtiyaci(kalemler, porsiyon, temel_idler)
         for ad, kalemler in tarif_malzemeleri.items()
@@ -163,6 +233,16 @@ def menu_olustur(tarifler, tarif_malzemeleri, stok, porsiyon, ogunler, gun_mevsi
     for gun_no, mevsim in enumerate(gun_mevsimleri, 1):
         gun = {"gun": gun_no, "ogunler": {}}
         kullanilan_gun_taban = set()
+        gun_tarifleri = tarifler
+        if malzeme_mevsim:
+            uygun = [t for t in tarifler
+                     if mevsimde_mi(tarif_malzemeleri.get(t["ad"], ()), mevsim, malzeme_mevsim, muaf_idler)]
+            mevsim_disi_gun[gun_no] = len(tarifler) - len(uygun)
+            gun_tarifleri = uygun
+        grup1 = [t for t in gun_tarifleri if t["grup"] == 1] or [t for t in tarifler if t["grup"] == 1]
+        grup2 = [t for t in gun_tarifleri if t["grup"] == 2] or [t for t in tarifler if t["grup"] == 2]
+        grup3 = [BOS_TARIF] if iki_tarif else (
+            [t for t in gun_tarifleri if t["grup"] == 3] or [t for t in tarifler if t["grup"] == 3])
         for ogun_adi in ogunler:
             ceza = {ad: tarif_cezasi(ih, kalan) for ad, ih in ihtiyaclar.items()}
             secilen = ogun_olustur(
@@ -190,7 +270,8 @@ def menu_olustur(tarifler, tarif_malzemeleri, stok, porsiyon, ogunler, gun_mevsi
             if ilerleme is not None:
                 ilerleme()
         gunler.append(gun)
-    return {"gunler": gunler, "eksik": toplam_eksik, "kullanilan": toplam_kullanilan, "kalan": kalan}
+    return {"gunler": gunler, "eksik": toplam_eksik, "kullanilan": toplam_kullanilan, "kalan": kalan,
+            "mevsim_disi_gun": mevsim_disi_gun}
 
 
 def pratik_miktar(gram):

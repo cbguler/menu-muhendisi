@@ -1192,7 +1192,12 @@ st.markdown(
     "[class*='st-key-nav_buton_masaustu_'] {"
     "  background-color: #E1F5EE; border: 1px solid #0F6E56;"
     "  border-radius: 8px; padding: 0.25rem 0.3rem; text-align: center;"
-    "  width: 190px !important;"
+    # YUZ ... DUZELTME (13 Ekim 2026): Evdekilerle Menu ile admin oturumunda 7
+    # sayfa oldu, Admin alt satira dustu. Genislik artik sayfa sayisina gore:
+    # en fazla 190px, ama satira sigmiyorsa butun kutular AYNI olcude daralir
+    # (ekran - logo payi 164px - kenar/kaydirma payi - kutu aralari) / sayfa sayisi.
+    f"  width: min(190px, calc((100vw - 164px - 3.5rem - {len(sayfa_listesi) - 1} * 0.7rem) / {len(sayfa_listesi)})) !important;"
+    "  white-space: nowrap; overflow: hidden;"
     "}"
     "[class*='st-key-nav_buton_masaustu_'] a {"
     "  color: #085041 !important; text-decoration: none !important;"

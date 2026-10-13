@@ -13234,3 +13234,12 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   tutturulamayan ogunlerde stok etkisiz; fire hesaba katilmiyor; ilk surumde sadece kutuphane tarifleri, sadece sahip.
 - Yerel test (154 tariflik ornek kutuphane): stok tercihiyle haftada 5,3-6,8 kg stok kullanildi, tercihsiz 4,3-5,4 kg.
   1078 tarifle 14 ogun 1-2 sn.
+- 13 Ekim (v2, Bahri'nin ekran goruntusu sonrasi): (1) ust menu kutulari sayfa sayisina gore esit daraliyor
+  (en fazla 190px; 7 sayfada 1440px ekranda ~165px), Admin alt satira dusmuyor; (2) sayfaya "Besin Degerleri
+  Hedefi" bolumu (Aylik Menu ile ayni alanlar; profilden yukle; kendi hedefleri ev_menu_ayarlari'na kaydedilir);
+  (3) "Ogunde 2 tarif" / "Ogunde 3 tarif" secimi; (4) Bahri: "malzemenin mevsimi de dikkate alinsin" ->
+  gunun mevsiminde olmayan TAZE malzemeyi isteyen tarif onerilmez. Katalogdaki mevsim alani HASAT mevsimi
+  (nohut, pirinc, bulgur, ceviz, sarimsak, tarcin da mevsimli isaretli), bu yuzden kontrol sadece
+  bozulma_suresi <= 30 gun olanlara uygulanir (mevsimli 167 malzemenin 97'si). Muaf: evdekiler, temel
+  malzemeler, mevsimi bos olanlar. Ornek kutuphanede (154 tarif) elenen: kis 57, ilkbahar 61, yaz 15,
+  sonbahar 12; kis/ilkbaharda en sik sebep DOMATES (37 tarif) ve YESIL BIBER (25) -- katalogda "Yaz-Sonbahar".
