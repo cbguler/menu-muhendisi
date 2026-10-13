@@ -13206,3 +13206,15 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   merkezi ve bircok universite arsivi PDF indirmeye kapali (ornek: Siirt mutfagi tezi, Batman Univ. 2022).
   MEB "Yoresel Turk Mutfagi" (3 cilt, 81 il, ogretmenlerin derlemesi) acik PDF olarak bulunamadi.
   Yol: Bahri/Emre/Gizem'in elinde bu tur kitap ya da PDF varsa yuklenirse kalan kopyalar hizla donusturulur.
+
+### 13 Ekim 2026 -- 190/191/192 gercek veritabani sonuclari
+- sql/190: 110 TAMAM / 0 ATLANDI / 0 HATA (69 donusum + 41 genel temsilci). Ilk gonderilen 190.csv yanlislikla
+  191'in sonucuydu; sql/190_dogrulama.sql (salt okunur SELECT, 190'in 4. bolumu) ile ayrica dogrulandi.
+- sql/191: 80 TAMAM / 0 ATLANDI / 0 HATA.
+- sql/192: 5 TAMAM / 0 ATLANDI / 0 HATA.
+- Toplam: 154 donusum + 41 genel temsilci yeniden adlandirma canlida. Hicbir kopya menude kullanildigi icin atlanmadi.
+- Gozlem (Emre/Gizem'e, porsiyon gramaji karariyla birlikte): 41 genel temsilcinin cig porsiyon gramaji dusuk
+  (ornek: Kavurmalı Yumurta 74,6 g, Zeytinyağlı Nohutlu Havuç 83,8 g, Etli Lahana 111,1 g, Kuzu Kavurma 101,3 g).
+  Bunlar eski genel tariflerin kendi degerleri, 190'da yalniz adlari degisti. 185 teshisindeki porsiyon gramaji
+  isiyle ayni kapsamda ele alinacak.
+- Sirada: kalan 39 kopya (CI'siz) icin akademik/resmi kaynak; kaynak yuklenirse hizla donusturulur.
