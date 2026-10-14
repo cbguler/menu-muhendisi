@@ -13259,3 +13259,10 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   Bahri kopyaladigi ekran goruntusunu yukleyemiyordu (st.file_uploader panodan yapistirmayi desteklemiyor).
   Yerel Chromium testinde (Playwright, gercek pano) gorsel bilesenden uygulamaya geldi. Tarayici ilk kullanimda pano
   izni ister; Chrome/Edge'de denendi, Firefox denenmedi.
+- 14 Ekim (v3d): "Panodan yapistir" DUGMESI Streamlit Cloud'da CALISMADI (Bahri). Sebep yerelde dogrulandi:
+  streamlit-paste-button panoyu navigator.clipboard.read() ile okuyor; Streamlit Cloud uygulamayi ic ice cercevede
+  actigi icin tarayici engelliyor ("The Clipboard API has been blocked because of a permissions policy"). Ilk
+  testim dis cercevesiz yapildigi icin bunu yakalamadi. Cozum: kendi bileseni (HTML'i pages/2_Evdekilerle_Menu.py icinde gomulu, calisma aninda
+  gecici klasore yazilip tanitiliyor; ayri klasor gerekmesin diye) -- tiklanip Ctrl+V (ya da sag tik > Yapistir) yapilan bir kutu, tarayicinin normal "paste" olayini kullanir,
+  izin gerektirmez. Ic ice cercevede gercek Ctrl+V ile Playwright testi gecti. streamlit-paste-button
+  requirements'tan cikarildi.
