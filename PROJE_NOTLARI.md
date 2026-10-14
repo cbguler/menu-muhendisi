@@ -13299,3 +13299,14 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   ve 1 g altindaki miktarlar "1 g'dan az". Ornek: 7 gun x 2 ogun x 3 tarif ile 27 sayfa (tarif metinleri uzun).
 - Tarif videosu: Bahri videoyu saklama/depolama yuku nedeniyle istemedi. Oneri: tarife sadece video BAGLANTISI
   (YouTube/Instagram) kaydedilsin; karar bekliyor.
+- 15 Ekim (v4b, Bahri'nin "Etli Lahana Sarmasi" denemesi): (1) sabit es anlamlilar (ai_okuma.ORTAK_ESANLAM /
+  TARIF_ESANLAM; veritabanindan bagimsiz): salca -> KONSERVE DOMATES SALÇASI, biber salcasi -> KONSERVE BİBER SALÇASI,
+  sivi yag/siviyag -> ZEYTİNYAĞI (Bahri: ev yemeklerinde zeytinyagi; sadece tarif okumada), reyhan -> TAZE FESLEĞEN,
+  dereotu -> TAZE DEREOTU; yaygin varsayilanlar: pirinc, un, sut, yogurt, yumurta, sogan, seker, kiyma. (2) "domates
+  biber karisik" salca iki satira bolunur (miktar yari yariya). (3) Malzeme bos gecilmez: kesin karsilik yoksa model
+  adaylardan secer, secemezse en olasi aday konur ve Not'ta "kontrol et" yazar. (4) Tarif adi malzeme satiri olarak
+  gelirse atilir (ekranda 'Etli Lahana Sarmasi' 200 g kiyma olarak gelip kiymayi iki kez saydiriyordu). (5) Tablo
+  gram esasli: Miktar + Birim (g/kg) stok icin; Not sutununda "Tarifte: 3 su bardagi ≈ 540 g (1 su bardagi ≈ 180 g)".
+  Prompt'a tutam (taze yesillik ~5 g, baharat ~1 g), demet, cay bardagi yag karsiliklari eklendi. (6) Ekranda reyhan
+  KURU MAYA'ya eslesmisti: katalog 1 saatlik onbellekteydi (195 oncesi yuklenmis); katalog onbellegi 10 dk'ya indi ve
+  surum parametresiyle 195'e baglandi. (7) Fis tablosunda "Tahmini" yerine aciklamali "Not".

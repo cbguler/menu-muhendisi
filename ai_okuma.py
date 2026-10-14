@@ -152,20 +152,46 @@ class KatalogEslestirici:
         return [ad for _, ad in puanlar[:n]]
 
 
+# Sabit es anlamlilar (15 Ekim 2026, Bahri). Veritabanindaki diger_adlar'dan bagimsiz, once bunlara bakilir.
+# Anahtar: tr_buyuk(ad). TARIF_ESANLAM sadece tarif okumada (ev yemegi baglami) kullanilir.
+ORTAK_ESANLAM = {
+    "REYHAN": "TAZE FESLEĞEN", "MOR REYHAN": "TAZE FESLEĞEN", "FESLEĞEN": "TAZE FESLEĞEN",
+    "DEREOTU": "TAZE DEREOTU", "DERE OTU": "TAZE DEREOTU",
+    "SALÇA": "KONSERVE DOMATES SALÇASI", "DOMATES SALÇASI": "KONSERVE DOMATES SALÇASI",
+    "BİBER SALÇASI": "KONSERVE BİBER SALÇASI", "ACI BİBER SALÇASI": "KONSERVE BİBER SALÇASI",
+    "TATLI BİBER SALÇASI": "KONSERVE BİBER SALÇASI",
+    # Tarifte turu yazilmadiginda yaygin varsayilanlar (Not sutununda gosterilir, kullanici degistirebilir)
+    "PİRİNÇ": "PİRİNÇ (HAM)", "UN": "BUĞDAY UNU", "SÜT": "SÜT (TAM YAĞ)", "YOĞURT": "YOĞURT (TAM)",
+    "YUMURTA": "TAVUK YUMURTASI", "SOĞAN": "KURU SOĞAN", "ŞEKER": "TOZ ŞEKER", "KIYMA": "DANA KIYMA",
+}
+# Bahri: "Sivi yag tariflerde genelde aycicek yagi diye gecse de ev yemeklerinde daha cok zeytinyagi kullanilir."
+TARIF_ESANLAM = {"SIVI YAĞ": "ZEYTİNYAĞI", "SIVIYAĞ": "ZEYTİNYAĞI", "YAĞ": "ZEYTİNYAĞI"}
+
 _ESLEME_SISTEM = (
-    "Malzeme adlarını bir gıda kataloğuyla eşleştiriyorsun. Her malzeme için verilen ADAYLAR arasından "
-    "anlamca en uygun olanı AYNEN yaz; hiçbiri uygun değilse null yaz, aday dışında ad yazma. "
-    "Sadece JSON: {\"eslesmeler\":[{\"no\":1,\"katalog_adi\":\"...\" ya da null}]}"
+    "Malzeme adlarını bir gıda kataloğuyla eşleştiriyorsun. Her malzeme için verilen ADAYLAR arasından anlamca "
+    "en uygun olanı AYNEN yaz. Yöresel ve eş anlamlı adları dikkate al (ör. reyhan = fesleğen). Bir malzemeyi "
+    "boş bırakma: tam karşılık yoksa en yakın olanı seç. Aday dışında ad yazma. "
+    "Sadece JSON: {\"eslesmeler\":[{\"no\":1,\"katalog_adi\":\"...\"}]}"
 )
 
 
-def eslestir(api_anahtari, model, adlar, katalog):
-    """adlar: ['kıyma', 'soğan', ...] -> her biri icin katalog adi ya da None.
-    Once yerel kesin esleme; kalanlar icin adayli kucuk bir Groq istegi. Istek basarisiz
-    olursa (sinir vb.) kelime ortakligi olan en iyi aday kullanilir, yoksa None."""
+def eslestir(api_anahtari, model, adlar, katalog, esanlam=None):
+    """adlar: ['kıyma', 'soğan', ...] -> [(katalog adi ya da None, kaynak), ...]
+    kaynak: 'kesin' (tam ad / diger_adlar), 'esanlam' (sabit es anlamli), 'secim' (model adaylardan secti),
+    'yakin' (model secemedi ya da istek yapilamadi: en olasi aday -- kullanici kontrol etmeli), None (aday yok).
+    Bahri (15 Ekim): malzemeler bos gecilmesin -- aday varsa her zaman bir ad konur."""
     es = KatalogEslestirici(katalog)
-    sonuc = [es.kesin(a) for a in adlar]
-    bekleyen = [(i, a, es.adaylar(a)) for i, a in enumerate(adlar) if sonuc[i] is None and a]
+    sozluk = dict(ORTAK_ESANLAM)
+    sozluk.update(esanlam or {})
+    sonuc = []
+    for a in adlar:
+        k = es.kesin(a)
+        if k:
+            sonuc.append((k, "kesin"))
+            continue
+        e = sozluk.get(tr_buyuk(a)) if a else None
+        sonuc.append((e, "esanlam") if e and e in es.ad_kumesi else (None, None))
+    bekleyen = [(i, a, es.adaylar(a)) for i, a in enumerate(adlar) if sonuc[i][0] is None and a]
     bekleyen = [(i, a, ad) for i, a, ad in bekleyen if ad]
     if not bekleyen:
         return sonuc
@@ -177,14 +203,10 @@ def eslestir(api_anahtari, model, adlar, katalog):
         secimler = {int(e.get("no")): e.get("katalog_adi") for e in (veri.get("eslesmeler") or [])
                     if isinstance(e, dict) and str(e.get("no", "")).isdigit()}
     except OkumaHatasi:
-        secimler = None
+        secimler = {}
     for no, (i, a, ad) in enumerate(bekleyen, 1):
-        if secimler is not None:
-            secim = secimler.get(no)
-            sonuc[i] = secim if secim in ad else None
-        else:
-            # Yedek: ikinci istek yapilamadi; kelime ortakligi olan ilk aday (kullanici tabloda kontrol eder)
-            sonuc[i] = ad[0] if any(w in _sade(ad[0]) for w in _sade(a)) else None
+        secim = secimler.get(no)
+        sonuc[i] = (secim, "secim") if secim in ad else (ad[0], "yakin")
     return sonuc
 
 
@@ -205,13 +227,17 @@ BIRIMLER = ["g", "kg", "ml", "l", "adet", "su bardağı", "çay bardağı", "yem
 
 _TARIF_SISTEM = (
     "Bir yemek tarifini (metin ve/veya ekran görüntüsü) okuyorsun. Tek tarifi çıkar, başka dildeyse Türkçeye "
-    "çevir. HER malzemeyi ayrı yaz: bir satırda birden fazla malzeme varsa (ör. 'maydanoz, dereotu', 'tuz ve "
-    "karabiber') her birini ayrı satır yap; isteğe bağlı ve süsleme malzemelerini de atlama. Her malzeme için: "
-    "tarifte yazan metin, sade Türkçe genel ad (ör. 'ground beef' -> 'dana kıyma', 'reyhan' -> 'reyhan'), "
-    "miktar (sayı) ve birim. Birim şunlardan biri olsun: " + ", ".join(BIRIMLER) + ". Ayrıca toplam gram "
-    "tahmini ver (1 su bardağı un ~120 g, pirinç ~180 g, su/süt ~200 g; 1 yemek kaşığı yağ ~13 g, salça ~17 g; "
-    "1 orta soğan ~110 g; 1 yumurta ~50 g; 1 diş sarımsak ~4 g). Miktar yazmıyorsa (ör. 'tuz', 'isteğe göre') "
-    "makul bir miktar tahmin et ve tahmin=true yaz. Kategori: ana_yemek, corba, salata ya da tatli. Kişi sayısı "
+    "çevir. Tarifin ADINI malzeme olarak yazma. HER malzemeyi ayrı yaz: bir satırda birden fazla malzeme varsa "
+    "(ör. 'maydanoz, dereotu', 'tuz ve karabiber') her birini ayrı satır yap; 'domates biber karışık salça' gibi "
+    "karışık salçayı da domates salçası ve biber salçası olarak iki satıra böl, miktarı eşit paylaştır. İsteğe "
+    "bağlı ve süsleme malzemelerini atlama. Her malzeme için: tarifte yazan metin, sade Türkçe genel ad "
+    "(ör. 'ground beef' -> 'dana kıyma'), tarifteki miktar (sayı) ve birim. Birim şunlardan biri olsun: "
+    + ", ".join(BIRIMLER) + ". Mutlaka toplam GRAM ver (1 su bardağı un ~120 g, pirinç ~180 g, bulgur ~170 g, "
+    "şeker ~190 g, su/süt ~200 g; 1 çay bardağı yağ ~90 g; 1 yemek kaşığı yağ ~13 g, salça ~17 g, un ~10 g; "
+    "1 tatlı kaşığı ~5 g; 1 çay kaşığı tuz/baharat ~3-5 g; 1 tutam taze yeşillik (maydanoz, dereotu, nane) ~5 g; "
+    "1 tutam baharat/tuz ~1 g; 1 demet maydanoz/dereotu ~50 g; 1 orta soğan ~110 g, büyük ~150 g; 1 orta lahana "
+    "~1000 g; 1 yumurta ~50 g; 1 diş sarımsak ~4 g). Miktar yazmıyorsa (ör. 'tuz', 'isteğe göre') makul bir "
+    "miktar tahmin et ve tahmin=true yaz. Kategori: ana_yemek, corba, salata ya da tatli. Kişi sayısı "
     "yazmıyorsa tahmin et, porsiyon_tahmin=true. Hazırlanışı numaralı, sade Türkçe yaz. Sadece JSON: "
     '{"ad":"...","kategori":"...","porsiyon":sayı,"porsiyon_tahmin":true/false,'
     '"malzemeler":[{"metin":"tarifte yazan","malzeme":"Türkçe genel ad","miktar":sayı,"birim":"...",'
@@ -233,14 +259,15 @@ def fis_oku(api_anahtari, gorsel_urlleri, katalog, model=VARSAYILAN_MODEL):
         raise OkumaHatasi("Fiş fotoğrafı yok.")
     veri = _cagir(api_anahtari, model, _FIS_SISTEM, "Fişi oku.", gorsel_urlleri)
     urunler = [u for u in (veri.get("urunler") or []) if isinstance(u, dict)]
-    katalog_adlari = eslestir(api_anahtari, model, [str(u.get("urun") or "") for u in urunler], katalog)
+    eslesme = eslestir(api_anahtari, model, [str(u.get("urun") or "") for u in urunler], katalog)
     return [{
         "fis_satiri": str(u.get("fis_satiri") or "")[:120],
         "urun": str(u.get("urun") or "")[:80],
         "katalog_adi": k,
+        "eslesme": kaynak,
         "gram": _sayi(u.get("gram")),
         "tahmin": bool(u.get("tahmin")),
-    } for u, k in zip(urunler, katalog_adlari)]
+    } for u, (k, kaynak) in zip(urunler, eslesme)]
 
 
 def tarif_oku(api_anahtari, metin, gorsel_urlleri, katalog, model=VARSAYILAN_MODEL):
@@ -254,12 +281,14 @@ def tarif_oku(api_anahtari, metin, gorsel_urlleri, katalog, model=VARSAYILAN_MOD
     metin_siniri = max(1000, int((TPM_SINIRI - 1000 - GORSEL_TOKEN * n - 600) * 1.8))
     istek = "TARİF:\n" + ((metin or "").strip()[:metin_siniri] or "(görsellerde)")
     veri = _cagir(api_anahtari, model, _TARIF_SISTEM, istek, gorsel_urlleri)
-    ham = [m for m in (veri.get("malzemeler") or []) if isinstance(m, dict)]
-    katalog_adlari = eslestir(api_anahtari, model, [str(m.get("malzeme") or m.get("metin") or "") for m in ham], katalog)
+    tarif_adi = str(veri.get("ad") or "").strip()[:100]
+    ham = _malzemeleri_temizle([m for m in (veri.get("malzemeler") or []) if isinstance(m, dict)], tarif_adi)
+    eslesme = eslestir(api_anahtari, model, [str(m.get("malzeme") or m.get("metin") or "") for m in ham],
+                       katalog, esanlam=TARIF_ESANLAM)
     kategori = veri.get("kategori") if veri.get("kategori") in KATEGORILER else "ana_yemek"
     porsiyon = _sayi(veri.get("porsiyon"))
     return {
-        "ad": str(veri.get("ad") or "").strip()[:100],
+        "ad": tarif_adi,
         "kategori": kategori,
         "porsiyon": int(round(porsiyon)) if porsiyon else 4,
         "porsiyon_tahmin": bool(veri.get("porsiyon_tahmin")) or not porsiyon,
@@ -267,10 +296,35 @@ def tarif_oku(api_anahtari, metin, gorsel_urlleri, katalog, model=VARSAYILAN_MOD
             "metin": str(m.get("metin") or m.get("malzeme") or "")[:120],
             "ad": str(m.get("malzeme") or "")[:60],
             "katalog_adi": k,
+            "eslesme": kaynak,
             "miktar": _sayi(m.get("miktar")),
             "birim": m.get("birim") if m.get("birim") in BIRIMLER else ("g" if _sayi(m.get("gram")) else "adet"),
             "gram": _sayi(m.get("gram")),
             "tahmin": bool(m.get("tahmin")),
-        } for m, k in zip(ham, katalog_adlari)],
+            "not": m.get("_not", ""),
+        } for m, (k, kaynak) in zip(ham, eslesme)],
         "talimat": str(veri.get("talimat") or "").strip()[:6000],
     }
+
+
+def _malzemeleri_temizle(ham, tarif_adi):
+    """(1) Tarifin adi malzeme satiri olarak gelmisse atilir (15 Ekim: 'Etli Lahana Sarmasi' 200 g kiyma olarak
+    gelmisti). (2) 'domates biber karisik' salca model bolmediyse burada iki satira bolunur (miktar yari yariya)."""
+    ad_sade = _sade(tarif_adi)
+    temiz = []
+    for m in ham:
+        metin_sade = _sade(m.get("metin") or "")
+        if ad_sade and (metin_sade == ad_sade or _sade(m.get("malzeme") or "") == ad_sade):
+            continue
+        malz = " ".join(_sade(m.get("malzeme") or ""))
+        birlesik = malz + " " + " ".join(_sade(m.get("metin") or ""))
+        # Model zaten bolduyse malzeme adi tek tur icerir (DOMATES ya da BIBER); o zaman bolunmez.
+        tek_tur = ("DOMATES" in malz) != ("BIBER" in malz)
+        if "SALCA" in birlesik and "DOMATES" in birlesik and "BIBER" in birlesik and not tek_tur:
+            yari = {k: (_sayi(m.get(k)) / 2 if _sayi(m.get(k)) else m.get(k)) for k in ("miktar", "gram")}
+            for ad in ("domates salçası", "biber salçası"):
+                temiz.append(dict(m, malzeme=ad, miktar=yari["miktar"], gram=yari["gram"],
+                                  _not="karışık salça ikiye bölündü"))
+            continue
+        temiz.append(m)
+    return temiz

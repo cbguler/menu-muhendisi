@@ -189,8 +189,9 @@ def _stoga_ekle(mid, gram, mevcut):
     return yeni
 
 
-@st.cache_data(ttl=3600)
-def _katalog_getir(imza=""):
+@st.cache_data(ttl=600)
+def _katalog_getir(imza="", surum=195):
+    # surum: katalogu degistiren son migration (195: reyhan/dereotu diger adlari). Degisince onbellek yenilenir.
     return _sayfalayarak_getir(
         lambda: supabase.table("malzemeler").select("id, ad, diger_adlar, yogunluk, mevsim, bozulma_suresi").order("ad")
     )
@@ -353,18 +354,21 @@ with st.expander("Market fişinden ekle", expanded=False):
             "Ürün": r["urun"],
             "Malzeme": r["katalog_adi"],
             "Gram": r["gram"],
-            "Tahmini": "evet" if r["tahmin"] else "",
+            "Not": "; ".join(x for x in (
+                "paket boyutu fişte yazmıyor, tahmin edildi" if r["tahmin"] else "",
+                "kesin karşılık yok, en yakın seçildi: kontrol et" if r.get("eslesme") == "yakin" else "",
+                "katalogda karşılığı yok, Malzeme sütunundan seç" if not r["katalog_adi"] else "",
+            ) if x),
         } for r in _fis])
         _fis_duzen = st.data_editor(
             _fis_df, hide_index=True, use_container_width=True, key="fis_tablosu",
-            disabled=["Fişte yazan", "Ürün", "Tahmini"],
+            disabled=["Fişte yazan", "Ürün", "Not"],
             column_config={
                 "Malzeme": st.column_config.SelectboxColumn(options=katalog_adlari, help="Katalogdaki karşılığı"),
                 "Gram": st.column_config.NumberColumn(min_value=0.0, step=10.0, format="%.0f"),
-                "Tahmini": st.column_config.TextColumn(help="Miktar fişte yazmıyordu; paket boyutu tahmin edildi."),
+                "Not": st.column_config.TextColumn(width="large"),
             },
         )
-        st.caption("\"Tahmini\" işaretli satırlarda miktar paket boyutundan tahmin edildi (TAHMİN); kontrol et.")
         f1, f2 = st.columns([1, 1])
         if f1.button("İşaretlileri stoğa ekle", type="primary", disabled=_SALT_OKUNUR):
             _eklenen, _atlanan = 0, 0
@@ -474,24 +478,41 @@ with st.expander("Yeni tarif ekle", expanded=bool(st.session_state.get("ev_tarif
         _t_aylar = st.multiselect(
             "Sunulabilir aylar (boş = her ay)", E.AYLAR, key=f"tt_ay_{_ts}",
         )
-        # 15 Ekim 2026 (Bahri): "Gram (toplam)" yerine Miktar + Birim; "Tahmini" yerine aciklamali "Not".
-        # Kaydedilen deger yine gramdir: E.birimden_grama ile cevrilir ve tablonun altinda gosterilir.
-        def _not_metni(m):
-            if not m.get("katalog_adi"):
-                return f"Katalogda bulunamadı ({m.get('ad') or m.get('metin', '')}); Malzeme sütunundan seç"
+        # 15 Ekim 2026 (Bahri): stok girdi/cikti gram uzerinden tutuldugu icin Miktar + Birim GRAM (ya da kg)
+        # olarak gelir; tarifteki olcu ("3 su bardağı") ve gram hesabi Not sutununda ozetlenir. Hicbir malzeme
+        # bos gecilmez: kesin karsilik yoksa en yakin aday konur ve Not'ta "kontrol et" yazar.
+        def _gram_ve_not(m):
+            mid = id_by_ad.get(m.get("katalog_adi"))
+            g = m.get("gram")
+            notlar = []
+            miktar, birim = m.get("miktar"), m.get("birim")
+            if not g and miktar:
+                g, _ack = E.birimden_grama(miktar, birim, m.get("katalog_adi"), (malzeme_by_id.get(mid) or {}).get("yogunluk"))
+            if miktar and birim and birim not in ("g", "kg") and g:
+                _birim_notu = f" (1 {birim} ≈ {g / miktar:.0f} g)" if abs(miktar - 1) > 1e-9 else ""
+                notlar.append(f"Tarifte: {miktar:g} {birim} ≈ {g:.0f} g{_birim_notu}")
             if m.get("tahmin"):
-                return "Miktar tarifte yazmıyor; tahmin edildi"
-            return ""
+                notlar.append("miktar tarifte yazmıyor, tahmin edildi")
+            if m.get("not"):
+                notlar.append(m["not"])
+            if m.get("eslesme") == "esanlam" and m.get("ad"):
+                # "domates salçası" -> KONSERVE DOMATES SALÇASI gibi ad zaten katalog adinda geciyorsa not gereksiz
+                _kel = set(A._sade(m["katalog_adi"] or ""))
+                if not all(w in _kel for w in A._sade(m["ad"])):
+                    notlar.append(f"'{m['ad']}' → {m['katalog_adi']}")
+            if m.get("eslesme") == "yakin":
+                notlar.append(f"'{m.get('ad') or m.get('metin')}' için kesin karşılık yok, en yakın seçildi: kontrol et")
+            if not m.get("katalog_adi"):
+                notlar.append("katalogda karşılığı yok, Malzeme sütunundan seç")
+            if not g:
+                notlar.append("gram hesaplanamadı, Miktar'a gram gir")
+            return (round(g, 1) if g else None), "; ".join(notlar)
 
         def _satir(m):
-            miktar, birim = m.get("miktar"), m.get("birim")
-            if miktar is None and m.get("gram"):
-                miktar, birim = m.get("gram"), "g"
+            g, notu = _gram_ve_not(m)
             return {"Tarifte yazan": m.get("metin", ""), "Malzeme": m.get("katalog_adi"),
-                    "Miktar": miktar, "Birim": birim or "g", "Not": _not_metni(m)}
+                    "Miktar": g, "Birim": "g", "Not": notu}
 
-        _referans = {m.get("metin", ""): (m.get("miktar"), m.get("birim"), m.get("gram"))
-                     for m in _taslak["malzemeler"] if m.get("gram")}
         _malz_df = pd.DataFrame(
             [_satir(m) for m in _taslak["malzemeler"]]
             or [{"Tarifte yazan": "", "Malzeme": None, "Miktar": None, "Birim": "g", "Not": ""}]
@@ -500,36 +521,29 @@ with st.expander("Yeni tarif ekle", expanded=bool(st.session_state.get("ev_tarif
             _malz_df, hide_index=True, use_container_width=True, num_rows="dynamic", key=f"tt_malz_{_ts}",
             column_config={
                 "Malzeme": st.column_config.SelectboxColumn(options=katalog_adlari, help="Katalogdaki karşılığı (yazarak ara)"),
-                "Miktar": st.column_config.NumberColumn(min_value=0.0, step=0.5, format="%g", help="Tarifin tamamı için"),
-                "Birim": st.column_config.SelectboxColumn(options=E.BIRIMLER, required=True),
+                "Miktar": st.column_config.NumberColumn(min_value=0.0, step=5.0, format="%g",
+                                                        help="Tarifin tamamı için; stok hesabı bu değerle yapılır"),
+                "Birim": st.column_config.SelectboxColumn(options=["g", "kg"], required=True),
                 "Not": st.column_config.TextColumn(disabled=True, width="large"),
             },
         )
-        # Gram karsiliklari (kaydedilecek degerler)
-        _kalemler, _sorunlu, _onizleme = [], [], []
+        st.caption(
+            "Miktarlar stok ve besin hesabı için grama çevrildi; tariftaki ölçünün (su bardağı, kaşık, tutam) "
+            "gram karşılığı Not sütununda. Değer yanlışsa Miktar'ı düzeltebilirsin."
+        )
+        _kalemler, _sorunlu = [], []
         for r in _malz_duzen.to_dict("records"):
             _ad = r.get("Malzeme") if isinstance(r.get("Malzeme"), str) else None
             _yazan = r.get("Tarifte yazan") or ""
-            if not _ad:
-                if _yazan or (r.get("Miktar") is not None and not pd.isna(r.get("Miktar"))):
-                    _sorunlu.append(_yazan or "(adsız satır)")
-                continue
-            _mid = id_by_ad.get(_ad)
             _miktar = None if r.get("Miktar") is None or pd.isna(r.get("Miktar")) else float(r["Miktar"])
-            _g, _aciklama = E.birimden_grama(
-                _miktar, r.get("Birim"), _ad, (malzeme_by_id.get(_mid) or {}).get("yogunluk"), _referans.get(_yazan),
-            )
-            _onizleme.append({"Malzeme": _ad, "Miktar": f"{_miktar:g} {r.get('Birim')}" if _miktar else "-",
-                              "Gram karşılığı": f"{_g:.0f} g" if _g else "-", "Açıklama": _aciklama})
-            if _g:
-                _kalemler.append((_mid, _g))
-            else:
-                _sorunlu.append(f"{_ad} ({_aciklama})")
-        if _onizleme:
-            st.caption("Kaydedilecek gram karşılıkları (besin ve stok hesabı bunlarla yapılır):")
-            st.dataframe(pd.DataFrame(_onizleme), hide_index=True, use_container_width=True)
+            if not _ad and not _yazan and not _miktar:
+                continue  # bos satir
+            if not _ad or not _miktar or _miktar <= 0:
+                _sorunlu.append(_yazan or _ad or "(adsız satır)")
+                continue
+            _kalemler.append((id_by_ad[_ad], _miktar * (1000.0 if r.get("Birim") == "kg" else 1.0)))
         if _sorunlu:
-            st.warning("Kaydedilmeyecek satırlar: " + "; ".join(_sorunlu))
+            st.warning("Malzemesi ya da miktarı eksik olduğu için kaydedilmeyecek: " + "; ".join(_sorunlu))
         _t_talimat = st.text_area("Hazırlanışı", value=_taslak.get("talimat", ""), height=160, key=f"tt_tal_{_ts}")
         k1, k2 = st.columns([1, 1])
         if k1.button("Tarifi kaydet", type="primary", disabled=_SALT_OKUNUR or _tarif_limit_doldu):
