@@ -13271,3 +13271,11 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   Streamlit 1.65 ile ic ice cercevede gercek Ctrl+V Playwright testi gecti (image.png yuklendi). Ozelligin
   hangi Streamlit surumunde geldigi kesinlestirilemedi; requirements'ta streamlit>=1.65 yapildi (test edilen surum).
   Panoyu bir dugmeyle okumak Streamlit Cloud cercevesinde tarayici tarafindan engelleniyor; bu yuzden ayri dugme yok.
+- 15 Ekim (v3g): Groq ucretsiz katman siniri ("Request too large ... ITPM Limit 7000, Requested 7226"). Sebep: her
+  istege ~600 kalemlik katalog listesi ekleniyordu (gercekte ~5.000 token) + gorsel basina 2.048 token. ai_okuma.py
+  iki adima bolundu: (1) katalogsuz okuma (Turkce genel ad + gram), (2) yerel esleme (tam ad / diger_adlar), kalanlar
+  icin malzeme basina en fazla 10 aday adla kucuk bir esleme istegi (14 malzeme ~1.000 token). Esleme istegi sinira
+  takilirsa kelime ortakligi olan ilk aday alinir (tabloda kontrol). Gorsel siniri 3 -> 2 (2 x 2.048 + metin);
+  metin uzunlugu gorsel sayisina gore kirpilir. Sinir hatasinda "bir dakika bekleyip tekrar dene" mesaji.
+  Yerel aday testi: 18 yaygin addan (sut, un, kiyma, sogan, yumurta, salca, sivi yag, nane...) dogru katalog adi 16'sinin
+  aday listesinde var; kalan 2'si (irmik, ekmek) icin beklenen ad zaten tanimsizdi, adaylarda IRMIK ve EKMEK (BEYAZ) cikti.

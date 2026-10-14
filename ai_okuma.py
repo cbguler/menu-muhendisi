@@ -5,18 +5,22 @@
 #   - tarif_oku: yapistirilan metin ve/veya ekran goruntuleri (sosyal medya
 #     tarifi) -> tarif adi, kategori, porsiyon, malzemeler (katalog adi + gram),
 #     hazirlik talimati
-# Yabanci dildeki urun/malzeme adlari Turkceye cevrilip katalogdaki (malzemeler
-# tablosu) EN YAKIN ada eslenir; boylece besin degerleri katalogdan gelir.
+# Yabanci dildeki urun/malzeme adlari Turkceye cevrilir ve katalogdaki
+# (malzemeler tablosu) karsiligina eslenir; boylece besin degerleri katalogdan gelir.
 # Model ciktisi KESIN kabul edilmez: sayfa her satiri kullaniciya bir tabloda
-# gosterir, kullanici duzeltip onaylamadan hicbir sey kaydedilmez. Modelin
-# uydurdugu (katalogda olmayan) adlar burada yakin eslesmeyle duzeltilir ya da
-# bos birakilir.
+# gosterir, kullanici duzeltip onaylamadan hicbir sey kaydedilmez.
 #
-# Anahtar: Streamlit Secrets'ta GROQ_API_KEY_IKON (Menu Muhendisi'nin ayri Groq
-# hesabi; TrendSurf'un anahtariyla limit paylasmasin diye -- PROJE_NOTLARI 30
-# Agustos). Model: Groq belgelerinde (console.groq.com/docs/vision, 14 Ekim 2026)
-# goruntu destekleyen tek model "qwen/qwen3.8-27b". Groq modelleri degisebildigi
-# icin Secrets'ta GROQ_GORSEL_MODEL ile degistirilebilir.
+# IKI ADIM (15 Ekim 2026): Groq ucretsiz katmaninda bu model icin dakikada 7.000 girdi
+# token siniri var (Bahri'nin ekraninda: "Limit 7000, Requested 7226"). Ilk surum her
+# istege ~600 kalemlik katalogun tamamini ekliyordu (~5.000 token) + gorsel basina 2.048.
+# Artik:
+#   1) Okuma: model sadece metni/gorseli okur, KATALOGSUZ (kucuk istek).
+#   2) Esleme: adlar once yerelde (tam ad / diger_adlar) eslenir; eslenemeyenler icin her
+#      malzemeye en fazla 8 aday ad iceren kucuk ikinci bir istek gider. Bu istek de sinira
+#      takilirsa okuma bozulmaz: o malzemeler tabloda bos (ya da en yakin aday) gelir.
+#
+# Anahtar: Streamlit Secrets'ta GROQ_API_KEY_IKON. Model: Groq belgelerinde (14 Ekim 2026)
+# goruntu destekleyen tek model "qwen/qwen3.8-27b"; Secrets'ta GROQ_GORSEL_MODEL ile degisir.
 
 import base64
 import difflib
@@ -24,14 +28,21 @@ import io
 import json
 
 VARSAYILAN_MODEL = "qwen/qwen3.8-27b"
-EN_FAZLA_GORSEL = 3          # Groq: istek basina en fazla 3 goruntu
-GORSEL_UZUN_KENAR = 1600     # piksel; fis yazisi okunur kalir, istek kucuk olur
+EN_FAZLA_GORSEL = 2          # gorsel basina 2.048 token sayiliyor; 2 gorsel + metin sinirin altinda kalir
+GORSEL_UZUN_KENAR = 1600     # piksel; yazi okunur kalir (token sayisini degistirmez, istek boyutunu kucultur)
+ADAY_SAYISI = 10
+TPM_SINIRI = 7000            # Groq ucretsiz katman, bu model: dakikada girdi token (15 Ekim 2026 hata mesajindan)
+GORSEL_TOKEN = 2048          # Groq: gorsel basina sayilan token
 
 KATEGORILER = {"ana_yemek": "Ana Yemek", "corba": "Çorba", "salata": "Salata", "tatli": "Tatlı"}
 
 
 class OkumaHatasi(Exception):
     pass
+
+
+class SinirHatasi(OkumaHatasi):
+    """Groq dakikalik token/istek siniri."""
 
 
 def _istemci(api_anahtari):
@@ -66,74 +77,140 @@ def _cagir(api_anahtari, model, sistem, metin, gorseller=()):
             temperature=0,
         )
     except Exception as e:
-        raise OkumaHatasi(f"Okuma servisine ulaşılamadı: {e}")
+        metin_hata = str(e)
+        if "rate_limit" in metin_hata or "Error code: 429" in metin_hata or "Error code: 413" in metin_hata:
+            raise SinirHatasi(
+                "Okuma servisinin (Groq, ücretsiz katman) dakikalık sınırı doldu. Bir dakika bekleyip tekrar dene; "
+                "sorun sürerse daha az görselle (ya da sadece metinle) dene."
+            )
+        raise OkumaHatasi(f"Okuma servisine ulaşılamadı: {metin_hata}")
     try:
         return json.loads(yanit.choices[0].message.content)
     except Exception:
-        raise OkumaHatasi("Okuma servisi anlaşılır bir sonuç döndürmedi; daha net bir fotoğrafla tekrar dene.")
+        raise OkumaHatasi("Okuma servisi anlaşılır bir sonuç döndürmedi; daha net bir görselle tekrar dene.")
 
 
+# ---------------------------------------------------------------------
+# Katalog esleme
+# ---------------------------------------------------------------------
 def tr_buyuk(metin):
     """Turkce buyuk harf: 'i' -> 'İ', 'ı' -> 'I' (Python'un upper()'i 'i'yi 'I' yapar)."""
     return str(metin).strip().replace("i", "İ").replace("ı", "I").upper()
 
 
-def katalog_eslestirici(katalog):
-    """katalog: [{"ad", "diger_adlar"}] -> (ad listesi, esle(ad) fonksiyonu).
-    esle: modelin verdigi adi katalogdaki gercek ada cevirir; bulamazsa None."""
-    adlar = [m["ad"] for m in katalog]
-    ad_kumesi = set(adlar)
-    takma = {}
-    for m in katalog:
-        for d in (m.get("diger_adlar") or []):
-            if d:
-                takma[tr_buyuk(d)] = m["ad"]
+def _sade(metin):
+    """Karsilastirma icin: Turkce harfleri sadelestir, buyuk harf, noktalama yerine bosluk."""
+    m = tr_buyuk(metin)
+    for a, b in (("İ", "I"), ("Ş", "S"), ("Ç", "C"), ("Ğ", "G"), ("Ö", "O"), ("Ü", "U"), ("Â", "A")):
+        m = m.replace(a, b)
+    return "".join(c if c.isalnum() else " " for c in m).split()
 
-    def esle(aday):
+
+class KatalogEslestirici:
+    def __init__(self, katalog):
+        self.adlar = [m["ad"] for m in katalog]
+        self.ad_kumesi = set(self.adlar)
+        self.takma = {}
+        for m in katalog:
+            for d in (m.get("diger_adlar") or []):
+                if d:
+                    self.takma[tr_buyuk(d)] = m["ad"]
+        self._kelimeler = {ad: _sade(ad) for ad in self.adlar}
+
+    def kesin(self, aday):
+        """Tam ad ya da diger_adlar eslesmesi; yoksa None."""
         if not aday:
             return None
         a = tr_buyuk(aday)
-        if a in ad_kumesi:
+        if a in self.ad_kumesi:
             return a
-        if a in takma:
-            return takma[a]
-        yakin = difflib.get_close_matches(a, adlar + list(takma), n=1, cutoff=0.82)
-        if yakin:
-            return takma.get(yakin[0], yakin[0])
-        return None
+        return self.takma.get(a)
 
-    return adlar, esle
+    def adaylar(self, aday, n=ADAY_SAYISI):
+        """Kelime ortakligi + benzerlik puanina gore en olasi katalog adlari."""
+        if not aday:
+            return []
+        k = _sade(aday)
+        if not k:
+            return []
+        birlesik = " ".join(k)
+        puanlar = []
+        for ad, kel in self._kelimeler.items():
+            ortak = 0
+            for w in k:
+                for c in kel:
+                    # tam ayni; ya da biri digerinin basi (Turkce ek: UN -> UNU, SUT -> SUTU)
+                    if w == c or (c.startswith(w) and len(c) - len(w) <= 2) or (
+                            len(w) >= 3 and len(c) >= 3 and (c.startswith(w) or w.startswith(c))):
+                        ortak += 1
+                        break
+            oran = difflib.SequenceMatcher(None, birlesik, " ".join(kel)).ratio()
+            puan = 2.0 * ortak + oran
+            if ortak or oran >= 0.6:
+                puanlar.append((puan, ad))
+        puanlar.sort(key=lambda x: -x[0])
+        return [ad for _, ad in puanlar[:n]]
 
 
+_ESLEME_SISTEM = (
+    "Malzeme adlarını bir gıda kataloğuyla eşleştiriyorsun. Her malzeme için verilen ADAYLAR arasından "
+    "anlamca en uygun olanı AYNEN yaz; hiçbiri uygun değilse null yaz, aday dışında ad yazma. "
+    "Sadece JSON: {\"eslesmeler\":[{\"no\":1,\"katalog_adi\":\"...\" ya da null}]}"
+)
+
+
+def eslestir(api_anahtari, model, adlar, katalog):
+    """adlar: ['kıyma', 'soğan', ...] -> her biri icin katalog adi ya da None.
+    Once yerel kesin esleme; kalanlar icin adayli kucuk bir Groq istegi. Istek basarisiz
+    olursa (sinir vb.) kelime ortakligi olan en iyi aday kullanilir, yoksa None."""
+    es = KatalogEslestirici(katalog)
+    sonuc = [es.kesin(a) for a in adlar]
+    bekleyen = [(i, a, es.adaylar(a)) for i, a in enumerate(adlar) if sonuc[i] is None and a]
+    bekleyen = [(i, a, ad) for i, a, ad in bekleyen if ad]
+    if not bekleyen:
+        return sonuc
+    metin = "\n".join(
+        f"{no}. {a} -> ADAYLAR: {' | '.join(ad)}" for no, (_i, a, ad) in enumerate(bekleyen, 1)
+    )
+    try:
+        veri = _cagir(api_anahtari, model, _ESLEME_SISTEM, metin)
+        secimler = {int(e.get("no")): e.get("katalog_adi") for e in (veri.get("eslesmeler") or [])
+                    if isinstance(e, dict) and str(e.get("no", "")).isdigit()}
+    except OkumaHatasi:
+        secimler = None
+    for no, (i, a, ad) in enumerate(bekleyen, 1):
+        if secimler is not None:
+            secim = secimler.get(no)
+            sonuc[i] = secim if secim in ad else None
+        else:
+            # Yedek: ikinci istek yapilamadi; kelime ortakligi olan ilk aday (kullanici tabloda kontrol eder)
+            sonuc[i] = ad[0] if any(w in _sade(ad[0]) for w in _sade(a)) else None
+    return sonuc
+
+
+# ---------------------------------------------------------------------
+# 1. adim: okuma (katalogsuz)
+# ---------------------------------------------------------------------
 _FIS_SISTEM = (
-    "Bir market fişini okuyan yardımcısın. Fişteki GIDA ürünlerini çıkar; poşet, deterjan, temizlik, "
-    "kozmetik, indirim, KDV, toplam, ödeme satırlarını ATLA. Ürün adı başka bir dildeyse Türkçeye çevir. "
-    "Her ürün için verilen KATALOG listesinden anlamca en uygun adı AYNEN (büyük harf, katalogda yazdığı "
-    "gibi) seç; uygun ad yoksa null yaz, ad uydurma. Miktarı gram olarak tahmin et: tartılı ürünlerde "
-    "fişteki kg değeri (1,250 KG -> 1250), paketli ürünlerde ürün adındaki paket boyutu x adet "
-    "(SÜT 1 LT x 2 -> 2060; sıvılarda 1 litre yaklaşık 1000-1030 g). Boyut yazmıyorsa yaygın paket "
-    "boyutunu tahmin et ve tahmin=true işaretle. Yalnızca JSON döndür: "
-    '{"urunler":[{"fis_satiri":"...","urun":"Türkçe ürün adı","katalog_adi":"... ya da null",'
-    '"gram":sayı,"tahmin":true/false}]}'
+    "Bir market fişini okuyorsun. Sadece GIDA ürünlerini çıkar; poşet, deterjan, temizlik, kozmetik, indirim, "
+    "KDV, toplam ve ödeme satırlarını atla. Ürün adını sade Türkçe genel adıyla yaz (marka yazma; başka dildeyse "
+    "çevir; ör. 'ONIONS' -> 'kuru soğan', 'DANA KIYMA %20' -> 'dana kıyma'). Miktarı gram olarak ver: tartılı "
+    "ürünlerde fişteki kg (1,250 KG -> 1250); paketli ürünlerde paket boyutu x adet (SÜT 1 LT x 2 -> 2060; "
+    "1 litre ~1000-1030 g). Boyut yazmıyorsa yaygın paket boyutunu tahmin et ve tahmin=true yaz. Sadece JSON: "
+    '{"urunler":[{"fis_satiri":"...","urun":"...","gram":sayı,"tahmin":true/false}]}'
 )
 
 _TARIF_SISTEM = (
-    "Sosyal medyadan ya da bir metinden alınmış bir yemek tarifini okuyan yardımcısın. Metin ve/veya "
-    "görsellerdeki TEK bir tarifi çıkar. Başka dildeyse Türkçeye çevir. Her malzeme için verilen KATALOG "
-    "listesinden anlamca en uygun adı AYNEN seç; uygun ad yoksa null yaz, ad uydurma. Ölçüleri grama çevir "
-    "(1 su bardağı un ~120 g, 1 su bardağı pirinç ~180 g, 1 su bardağı su/süt ~200 g, 1 yemek kaşığı yağ "
-    "~13 g, 1 yemek kaşığı salça ~17 g, 1 tatlı kaşığı ~5 g, 1 çay kaşığı tuz ~5 g, 1 orta soğan ~110 g, "
-    "1 yumurta ~50 g, 1 diş sarımsak ~4 g); ölçü yoksa ya da çevirmen gerekiyorsa tahmin=true işaretle. "
-    "Kategori şunlardan biri olsun: ana_yemek, corba, salata, tatli. Porsiyon (kaç kişilik) yazmıyorsa "
-    "tahmin et ve porsiyon_tahmin=true yaz. Hazırlık adımlarını numaralı, sade Türkçe yaz. Yalnızca JSON döndür: "
-    '{"ad":"...","kategori":"...","porsiyon":sayı,"porsiyon_tahmin":true/false,'
-    '"malzemeler":[{"metin":"tarifte yazan","katalog_adi":"... ya da null","gram":sayı,"tahmin":true/false}],'
+    "Bir yemek tarifini (metin ve/veya ekran görüntüsü) okuyorsun. Tek tarifi çıkar, başka dildeyse Türkçeye "
+    "çevir. Her malzemenin sade Türkçe genel adını yaz (ör. 'ground beef' -> 'dana kıyma', 'flour' -> 'buğday "
+    "unu'). Ölçüleri grama çevir (1 su bardağı un ~120 g, pirinç ~180 g, su/süt ~200 g; 1 yemek kaşığı yağ ~13 g, "
+    "salça ~17 g; 1 tatlı kaşığı ~5 g; 1 çay kaşığı tuz ~5 g; 1 orta soğan ~110 g; 1 yumurta ~50 g; 1 diş "
+    "sarımsak ~4 g); ölçü yoksa ya da tahmin ettiysen tahmin=true. Kategori: ana_yemek, corba, salata ya da "
+    "tatli. Kişi sayısı yazmıyorsa tahmin et, porsiyon_tahmin=true. Hazırlanışı numaralı, sade Türkçe yaz. "
+    'Sadece JSON: {"ad":"...","kategori":"...","porsiyon":sayı,"porsiyon_tahmin":true/false,'
+    '"malzemeler":[{"metin":"tarifte yazan","malzeme":"Türkçe genel ad","gram":sayı,"tahmin":true/false}],'
     '"talimat":"1. ...\\n2. ..."}'
 )
-
-
-def _katalog_metni(adlar):
-    return "KATALOG:\n" + "\n".join(adlar)
 
 
 def _sayi(x):
@@ -148,20 +225,16 @@ def fis_oku(api_anahtari, gorsel_urlleri, katalog, model=VARSAYILAN_MODEL):
     """Donus: [{"fis_satiri", "urun", "katalog_adi" (gercek ad ya da None), "gram", "tahmin"}]"""
     if not gorsel_urlleri:
         raise OkumaHatasi("Fiş fotoğrafı yok.")
-    adlar, esle = katalog_eslestirici(katalog)
-    veri = _cagir(api_anahtari, model, _FIS_SISTEM, _katalog_metni(adlar) + "\n\nFişi oku.", gorsel_urlleri)
-    satirlar = []
-    for u in (veri.get("urunler") or []):
-        if not isinstance(u, dict):
-            continue
-        satirlar.append({
-            "fis_satiri": str(u.get("fis_satiri") or "")[:120],
-            "urun": str(u.get("urun") or "")[:80],
-            "katalog_adi": esle(u.get("katalog_adi")) or esle(u.get("urun")),
-            "gram": _sayi(u.get("gram")),
-            "tahmin": bool(u.get("tahmin")),
-        })
-    return satirlar
+    veri = _cagir(api_anahtari, model, _FIS_SISTEM, "Fişi oku.", gorsel_urlleri)
+    urunler = [u for u in (veri.get("urunler") or []) if isinstance(u, dict)]
+    katalog_adlari = eslestir(api_anahtari, model, [str(u.get("urun") or "") for u in urunler], katalog)
+    return [{
+        "fis_satiri": str(u.get("fis_satiri") or "")[:120],
+        "urun": str(u.get("urun") or "")[:80],
+        "katalog_adi": k,
+        "gram": _sayi(u.get("gram")),
+        "tahmin": bool(u.get("tahmin")),
+    } for u, k in zip(urunler, katalog_adlari)]
 
 
 def tarif_oku(api_anahtari, metin, gorsel_urlleri, katalog, model=VARSAYILAN_MODEL):
@@ -169,26 +242,26 @@ def tarif_oku(api_anahtari, metin, gorsel_urlleri, katalog, model=VARSAYILAN_MOD
     "katalog_adi", "gram", "tahmin"}], "talimat"}"""
     if not (metin or "").strip() and not gorsel_urlleri:
         raise OkumaHatasi("Tarif metni ya da ekran görüntüsü yok.")
-    adlar, esle = katalog_eslestirici(katalog)
-    istek = _katalog_metni(adlar) + "\n\nTARİF:\n" + ((metin or "").strip()[:8000] or "(görsellerde)")
+    # Dakikalik token siniri: gorsel sayisina gore metin kisaltilir (Turkce metinde ~1,8 karakter/token
+    # olarak hesaplandi; 15 Ekim'deki gercek istekte katalog listesi beklenenin ~1,8 kati token tuttu).
+    n = len(list(gorsel_urlleri or [])[:EN_FAZLA_GORSEL])
+    metin_siniri = max(1000, int((TPM_SINIRI - 1000 - GORSEL_TOKEN * n - 600) * 1.8))
+    istek = "TARİF:\n" + ((metin or "").strip()[:metin_siniri] or "(görsellerde)")
     veri = _cagir(api_anahtari, model, _TARIF_SISTEM, istek, gorsel_urlleri)
+    ham = [m for m in (veri.get("malzemeler") or []) if isinstance(m, dict)]
+    katalog_adlari = eslestir(api_anahtari, model, [str(m.get("malzeme") or m.get("metin") or "") for m in ham], katalog)
     kategori = veri.get("kategori") if veri.get("kategori") in KATEGORILER else "ana_yemek"
     porsiyon = _sayi(veri.get("porsiyon"))
-    malzemeler = []
-    for m in (veri.get("malzemeler") or []):
-        if not isinstance(m, dict):
-            continue
-        malzemeler.append({
-            "metin": str(m.get("metin") or "")[:120],
-            "katalog_adi": esle(m.get("katalog_adi")) or esle(m.get("metin")),
-            "gram": _sayi(m.get("gram")),
-            "tahmin": bool(m.get("tahmin")),
-        })
     return {
         "ad": str(veri.get("ad") or "").strip()[:100],
         "kategori": kategori,
         "porsiyon": int(round(porsiyon)) if porsiyon else 4,
         "porsiyon_tahmin": bool(veri.get("porsiyon_tahmin")) or not porsiyon,
-        "malzemeler": malzemeler,
+        "malzemeler": [{
+            "metin": str(m.get("metin") or m.get("malzeme") or "")[:120],
+            "katalog_adi": k,
+            "gram": _sayi(m.get("gram")),
+            "tahmin": bool(m.get("tahmin")),
+        } for m, k in zip(ham, katalog_adlari)],
         "talimat": str(veri.get("talimat") or "").strip()[:6000],
     }

@@ -318,7 +318,7 @@ with st.expander("Market fişinden ekle", expanded=False):
             "eklenmesi gerekiyor."
         )
     st.caption(
-        "Fişin fotoğrafını yükle ya da yapıştır, veya kamerayla çek (en fazla 3 fotoğraf; uzun fişi parça parça çekebilirsin). "
+        f"Fişin fotoğrafını yükle ya da yapıştır, veya kamerayla çek (en fazla {A.EN_FAZLA_GORSEL} fotoğraf; uzun fişi parça parça çekebilirsin). "
         "Fotoğraf okunmak için Groq'a gönderilir. Başka dildeki ürün adları Türkçeye çevrilip kataloğumuzdaki "
         "malzemeyle eşlenir. Gıda dışı ürünler atlanır. Okunan her satırı aşağıdaki tabloda kontrol et; "
         "sadece işaretlediklerin stoğa eklenir."
@@ -423,7 +423,7 @@ with st.expander("Yeni tarif ekle", expanded=bool(st.session_state.get("ev_tarif
     # Ctrl+V). Panoyu bir DUGMEYLE okumak (Clipboard API) Streamlit Cloud'un ic ice cercevesinde
     # tarayici tarafindan engelleniyor -- 14 Ekim'de iki bilesen denendi, ikisi de olmadi.
     _tarif_gorselleri = st.file_uploader(
-        "Ekran görüntüsü (en fazla 3): \"Upload\" ile seç ya da kopyaladığın görseli yapıştırmak için "
+        f"Ekran görüntüsü (en fazla {A.EN_FAZLA_GORSEL}): \"Upload\" ile seç ya da kopyaladığın görseli yapıştırmak için "
         "bu alana tıklayıp Ctrl+V yap",
         type=["jpg", "jpeg", "png", "webp"], accept_multiple_files=True, key="tarif_gorselleri",
     )
