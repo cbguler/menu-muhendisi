@@ -63,6 +63,9 @@ OGUN_SECENEKLERI = {
     "aksam": ("Akşam",),
 }
 
+AYLAR = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+         "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"]
+
 _MEVSIM_BY_AY = {12: "kis", 1: "kis", 2: "kis", 3: "ilkbahar", 4: "ilkbahar", 5: "ilkbahar",
                  6: "yaz", 7: "yaz", 8: "yaz", 9: "sonbahar", 10: "sonbahar", 11: "sonbahar"}
 
@@ -200,8 +203,44 @@ def stoktan_dus(ihtiyac, stok):
     return karsilanan, eksik, kullanilan
 
 
+def _ogun_stoktan_dus(adlar, ihtiyaclar, kalan, toplam_eksik, toplam_kullanilan):
+    """Bir ogunun tariflerini sirayla stoktan duser; toplamlari yerinde gunceller.
+    Donus: evdeki malzemeden karsilanan yuzde (ihtiyac yoksa None)."""
+    ihtiyac_toplam = 0.0
+    karsilanan_toplam = 0.0
+    for ad in adlar:
+        ih = ihtiyaclar.get(ad, {})
+        ihtiyac_toplam += sum(ih.values())
+        k, e, u = stoktan_dus(ih, kalan)
+        karsilanan_toplam += k
+        for mid, g in e.items():
+            toplam_eksik[mid] = toplam_eksik.get(mid, 0.0) + g
+        for mid, g in u.items():
+            toplam_kullanilan[mid] = toplam_kullanilan.get(mid, 0.0) + g
+    return (100.0 * karsilanan_toplam / ihtiyac_toplam) if ihtiyac_toplam > 0 else None
+
+
+def menuyu_yeniden_hesapla(gun_tarifleri, tarif_malzemeleri, stok, porsiyon, temel_idler):
+    """Elle duzenlenmis menunun stok hesabi. gun_tarifleri: [{"Öğle": [ad, ...], "Akşam": [...]}, ...]
+    Donus: menu_olustur ile ayni sekil (gunler, eksik, kullanilan, kalan)."""
+    ihtiyaclar = {ad: tarif_ihtiyaci(k, porsiyon, temel_idler) for ad, k in tarif_malzemeleri.items()}
+    kalan = dict(stok)
+    toplam_eksik, toplam_kullanilan = {}, {}
+    gunler = []
+    for gun_no, ogunler in enumerate(gun_tarifleri, 1):
+        gun = {"gun": gun_no, "ogunler": {}}
+        for ogun_adi, adlar in ogunler.items():
+            gun["ogunler"][ogun_adi] = {
+                "tarifler": list(adlar),
+                "stoktan_yuzde": _ogun_stoktan_dus(adlar, ihtiyaclar, kalan, toplam_eksik, toplam_kullanilan),
+            }
+        gunler.append(gun)
+    return {"gunler": gunler, "eksik": toplam_eksik, "kullanilan": toplam_kullanilan, "kalan": kalan}
+
+
 def menu_olustur(tarifler, tarif_malzemeleri, stok, porsiyon, ogunler, gun_mevsimleri,
-                 iki_tarif, hedefler, rastgele, temel_idler, ilerleme=None, malzeme_mevsim=None):
+                 iki_tarif, hedefler, rastgele, temel_idler, ilerleme=None, malzeme_mevsim=None,
+                 gun_aylari=None, tarif_aylari=None):
     """tarifler: motorun bekledigi liste ({"ad","grup","mevsim_etiketi","etiketler", besin...}).
     tarif_malzemeleri: {tarif_adi: [(malzeme_id, porsiyon_basi_gram), ...]}
     stok: {malzeme_id: gram} (DEGISTIRILMEZ; kopyasi uzerinde calisilir)
@@ -212,6 +251,9 @@ def menu_olustur(tarifler, tarif_malzemeleri, stok, porsiyon, ogunler, gun_mevsi
       bulunmayan bir malzemeyi isteyen tarif o gun ONERILMEZ. Muaf: temel
       malzemeler ve baslangicta evde olan malzemeler (evde varsa mevsimi
       onemsiz). Bir grupta hic tarif kalmazsa o grup o gun filtresiz kullanilir.
+    gun_aylari / tarif_aylari: her gunun ay adi ("Ocak"...) ve {tarif_adi: ay adlari kumesi}.
+      Kullanicinin kendi tariflerinde "sunulabilir aylar" (receteler.uygun_aylar) secildiyse
+      tarif sadece o aylarda onerilir; bos kume = kisitlama yok.
 
     Donus sozlugu:
       gunler: [{"gun": 1, "ogunler": {"Öğle": {"tarifler": [...], "stoktan_yuzde": x}}}, ...]
@@ -234,10 +276,13 @@ def menu_olustur(tarifler, tarif_malzemeleri, stok, porsiyon, ogunler, gun_mevsi
         gun = {"gun": gun_no, "ogunler": {}}
         kullanilan_gun_taban = set()
         gun_tarifleri = tarifler
+        if tarif_aylari and gun_aylari:
+            _ay = gun_aylari[gun_no - 1]
+            gun_tarifleri = [t for t in gun_tarifleri if not tarif_aylari.get(t["ad"]) or _ay in tarif_aylari[t["ad"]]]
         if malzeme_mevsim:
-            uygun = [t for t in tarifler
+            uygun = [t for t in gun_tarifleri
                      if mevsimde_mi(tarif_malzemeleri.get(t["ad"], ()), mevsim, malzeme_mevsim, muaf_idler)]
-            mevsim_disi_gun[gun_no] = len(tarifler) - len(uygun)
+            mevsim_disi_gun[gun_no] = len(gun_tarifleri) - len(uygun)
             gun_tarifleri = uygun
         grup1 = [t for t in gun_tarifleri if t["grup"] == 1] or [t for t in tarifler if t["grup"] == 1]
         grup2 = [t for t in gun_tarifleri if t["grup"] == 2] or [t for t in tarifler if t["grup"] == 2]
@@ -250,22 +295,13 @@ def menu_olustur(tarifler, tarif_malzemeleri, stok, porsiyon, ogunler, gun_mevsi
                 (hedefler or {}).get(ogun_adi), kullanilan_gun_taban, ceza=ceza,
             )
             secilen = [t for t in secilen if t["ad"] != BOS_TARIF_ADI]
-            ogun_ihtiyac = 0.0
-            ogun_karsilanan = 0.0
             for t in secilen:
                 kullanilan_hafta.add(t["ad"])
                 kullanilan_gun_taban.add(_taban_kelime(t["ad"]))
-                ih = ihtiyaclar.get(t["ad"], {})
-                ogun_ihtiyac += sum(ih.values())
-                k, e, u = stoktan_dus(ih, kalan)
-                ogun_karsilanan += k
-                for mid, g in e.items():
-                    toplam_eksik[mid] = toplam_eksik.get(mid, 0.0) + g
-                for mid, g in u.items():
-                    toplam_kullanilan[mid] = toplam_kullanilan.get(mid, 0.0) + g
+            adlar = [t["ad"] for t in secilen]
             gun["ogunler"][ogun_adi] = {
-                "tarifler": [t["ad"] for t in secilen],
-                "stoktan_yuzde": (100.0 * ogun_karsilanan / ogun_ihtiyac) if ogun_ihtiyac > 0 else None,
+                "tarifler": adlar,
+                "stoktan_yuzde": _ogun_stoktan_dus(adlar, ihtiyaclar, kalan, toplam_eksik, toplam_kullanilan),
             }
             if ilerleme is not None:
                 ilerleme()

@@ -13243,3 +13243,15 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   bozulma_suresi <= 30 gun olanlara uygulanir (mevsimli 167 malzemenin 97'si). Muaf: evdekiler, temel
   malzemeler, mevsimi bos olanlar. Ornek kutuphanede (154 tarif) elenen: kis 57, ilkbahar 61, yaz 15,
   sonbahar 12; kis/ilkbaharda en sik sebep DOMATES (37 tarif) ve YESIL BIBER (25) -- katalogda "Yaz-Sonbahar".
+- 14 Ekim (v3, Bahri): (1) Market fisi okuma: fis fotografi (en fazla 3, kamera da olur) Groq goruntu modeline
+  gider (ai_okuma.py, model varsayilan "qwen/qwen3.8-27b" -- 14 Ekim'de Groq vision belgesinde listelenen tek model;
+  Secrets'ta GROQ_GORSEL_MODEL ile degistirilebilir; anahtar GROQ_API_KEY_IKON). Gida disi satirlar atlanir, yabanci
+  adlar Turkceye cevrilip katalog adina eslenir (model + yerel yakin eslesme; katalogda olmayan ad bos birakilir).
+  Okunanlar tabloda gosterilir, kullanici duzeltip isaretlediklerini stoga ekler. (2) Kendi tarifi ekleme: elle, metin
+  yapistirarak ya da sosyal medya ekran goruntusuyle (baglantidan okuma YOK: Instagram/TikTok giris istiyor). Tarif
+  10 porsiyona olceklenip receteler/recete_malzemeleri'ne kaydedilir (Recete Uretimi ile ayni kural; plan tarif
+  limiti uygulanir). Kendi tarifler menu havuzuna girer ("Kendi tariflerimi de kullan"), uygun_aylar kisiti
+  uygulanir. (3) Kurulan menude gun secip tarif degistirme; stok/alisveris listesi yeniden hesaplanir
+  (ev_menu.menuyu_yeniden_hesapla). Yerel test (sahte veritabani + sahte Groq yaniti): fis 4 satirdan 3'u eslesti,
+  uydurma ad bos kaldi; 4 kisilik tarif 10 porsiyona dogru olceklendi; duzenleme sonrasi eksik listesi guncellendi.
+  Gercek Groq cagrisi henuz denenmedi.
