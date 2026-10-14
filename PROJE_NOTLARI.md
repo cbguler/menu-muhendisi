@@ -13279,3 +13279,15 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   metin uzunlugu gorsel sayisina gore kirpilir. Sinir hatasinda "bir dakika bekleyip tekrar dene" mesaji.
   Yerel aday testi: 18 yaygin addan (sut, un, kiyma, sogan, yumurta, salca, sivi yag, nane...) dogru katalog adi 16'sinin
   aday listesinde var; kalan 2'si (irmik, ekmek) icin beklenen ad zaten tanimsizdi, adaylarda IRMIK ve EKMEK (BEYAZ) cikti.
+- 15 Ekim (v3h, Bahri'nin lahana sarmasi denemesi sonrasi): (1) okuma artik ayni satirdaki birden fazla malzemeyi
+  ("maydanoz dereotu") ayri satirlara boluyor, istege bagli/susleme malzemelerini atlamiyor; (2) reyhan ayri kayit
+  olarak EKLENMEDI: reyhan = feslegen (Ocimum basilicum), katalogda besin degerleriyle TAZE FESLEĞEN olarak var;
+  sql/195 ile diger_adlar'a REYHAN, MOR REYHAN, FESLEĞEN ve TAZE DEREOTU'na DEREOTU eklendi; (3) tarif tablosunda
+  "Gram (toplam)" yerine Miktar + Birim (g, kg, ml, l, adet, su bardagi, cay bardagi, yemek/tatli/cay kasigi, dis,
+  demet, tutam); gram ev_menu.birimden_grama ile hesaplanip tablonun altinda gosteriliyor (okunan tarifteki ayni
+  birimin gram orani kullanilir; yoksa olcu kabi x yogunluk (sadece <= 1,3 g/ml; toz seker 1,59 ve tuz 2,16 tane
+  yogunlugu oldugu icin kullanilmaz) ya da genel karsilik -- TAHMIN); (4) "Tahmini" sutunu yerine aciklamali "Not".
+- Bahri'nin sorulari (15 Ekim): (a) tarif videosu -- Groq Whisper mp4/webm kabul ediyor (ucretsiz katmanda 25 MB);
+  yuklenen video -> konusma metni -> tarif okuma mumkun; baglantidan (Instagram/TikTok/YouTube) indirme yok.
+  Karar bekliyor. (b) Evdekilerle Menu ciktisi su an sayfada; PDF (menu + alisveris listesi + stok raporu +
+  tarifler) henuz yok, reportlab kurulu; karar bekliyor.

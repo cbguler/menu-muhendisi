@@ -200,16 +200,22 @@ _FIS_SISTEM = (
     '{"urunler":[{"fis_satiri":"...","urun":"...","gram":sayı,"tahmin":true/false}]}'
 )
 
+BIRIMLER = ["g", "kg", "ml", "l", "adet", "su bardağı", "çay bardağı", "yemek kaşığı",
+            "tatlı kaşığı", "çay kaşığı", "diş", "demet", "tutam"]
+
 _TARIF_SISTEM = (
     "Bir yemek tarifini (metin ve/veya ekran görüntüsü) okuyorsun. Tek tarifi çıkar, başka dildeyse Türkçeye "
-    "çevir. Her malzemenin sade Türkçe genel adını yaz (ör. 'ground beef' -> 'dana kıyma', 'flour' -> 'buğday "
-    "unu'). Ölçüleri grama çevir (1 su bardağı un ~120 g, pirinç ~180 g, su/süt ~200 g; 1 yemek kaşığı yağ ~13 g, "
-    "salça ~17 g; 1 tatlı kaşığı ~5 g; 1 çay kaşığı tuz ~5 g; 1 orta soğan ~110 g; 1 yumurta ~50 g; 1 diş "
-    "sarımsak ~4 g); ölçü yoksa ya da tahmin ettiysen tahmin=true. Kategori: ana_yemek, corba, salata ya da "
-    "tatli. Kişi sayısı yazmıyorsa tahmin et, porsiyon_tahmin=true. Hazırlanışı numaralı, sade Türkçe yaz. "
-    'Sadece JSON: {"ad":"...","kategori":"...","porsiyon":sayı,"porsiyon_tahmin":true/false,'
-    '"malzemeler":[{"metin":"tarifte yazan","malzeme":"Türkçe genel ad","gram":sayı,"tahmin":true/false}],'
-    '"talimat":"1. ...\\n2. ..."}'
+    "çevir. HER malzemeyi ayrı yaz: bir satırda birden fazla malzeme varsa (ör. 'maydanoz, dereotu', 'tuz ve "
+    "karabiber') her birini ayrı satır yap; isteğe bağlı ve süsleme malzemelerini de atlama. Her malzeme için: "
+    "tarifte yazan metin, sade Türkçe genel ad (ör. 'ground beef' -> 'dana kıyma', 'reyhan' -> 'reyhan'), "
+    "miktar (sayı) ve birim. Birim şunlardan biri olsun: " + ", ".join(BIRIMLER) + ". Ayrıca toplam gram "
+    "tahmini ver (1 su bardağı un ~120 g, pirinç ~180 g, su/süt ~200 g; 1 yemek kaşığı yağ ~13 g, salça ~17 g; "
+    "1 orta soğan ~110 g; 1 yumurta ~50 g; 1 diş sarımsak ~4 g). Miktar yazmıyorsa (ör. 'tuz', 'isteğe göre') "
+    "makul bir miktar tahmin et ve tahmin=true yaz. Kategori: ana_yemek, corba, salata ya da tatli. Kişi sayısı "
+    "yazmıyorsa tahmin et, porsiyon_tahmin=true. Hazırlanışı numaralı, sade Türkçe yaz. Sadece JSON: "
+    '{"ad":"...","kategori":"...","porsiyon":sayı,"porsiyon_tahmin":true/false,'
+    '"malzemeler":[{"metin":"tarifte yazan","malzeme":"Türkçe genel ad","miktar":sayı,"birim":"...",'
+    '"gram":sayı,"tahmin":true/false}],"talimat":"1. ...\\n2. ..."}'
 )
 
 
@@ -259,7 +265,10 @@ def tarif_oku(api_anahtari, metin, gorsel_urlleri, katalog, model=VARSAYILAN_MOD
         "porsiyon_tahmin": bool(veri.get("porsiyon_tahmin")) or not porsiyon,
         "malzemeler": [{
             "metin": str(m.get("metin") or m.get("malzeme") or "")[:120],
+            "ad": str(m.get("malzeme") or "")[:60],
             "katalog_adi": k,
+            "miktar": _sayi(m.get("miktar")),
+            "birim": m.get("birim") if m.get("birim") in BIRIMLER else ("g" if _sayi(m.get("gram")) else "adet"),
             "gram": _sayi(m.get("gram")),
             "tahmin": bool(m.get("tahmin")),
         } for m, k in zip(ham, katalog_adlari)],

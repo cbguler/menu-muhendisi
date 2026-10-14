@@ -473,37 +473,69 @@ with st.expander("Yeni tarif ekle", expanded=bool(st.session_state.get("ev_tarif
         _t_aylar = st.multiselect(
             "Sunulabilir aylar (boş = her ay)", E.AYLAR, key=f"tt_ay_{_ts}",
         )
+        # 15 Ekim 2026 (Bahri): "Gram (toplam)" yerine Miktar + Birim; "Tahmini" yerine aciklamali "Not".
+        # Kaydedilen deger yine gramdir: E.birimden_grama ile cevrilir ve tablonun altinda gosterilir.
+        def _not_metni(m):
+            if not m.get("katalog_adi"):
+                return f"Katalogda bulunamadı ({m.get('ad') or m.get('metin', '')}); Malzeme sütunundan seç"
+            if m.get("tahmin"):
+                return "Miktar tarifte yazmıyor; tahmin edildi"
+            return ""
+
+        def _satir(m):
+            miktar, birim = m.get("miktar"), m.get("birim")
+            if miktar is None and m.get("gram"):
+                miktar, birim = m.get("gram"), "g"
+            return {"Tarifte yazan": m.get("metin", ""), "Malzeme": m.get("katalog_adi"),
+                    "Miktar": miktar, "Birim": birim or "g", "Not": _not_metni(m)}
+
+        _referans = {m.get("metin", ""): (m.get("miktar"), m.get("birim"), m.get("gram"))
+                     for m in _taslak["malzemeler"] if m.get("gram")}
         _malz_df = pd.DataFrame(
-            [{"Tarifte yazan": m.get("metin", ""), "Malzeme": m.get("katalog_adi"), "Gram (toplam)": m.get("gram"),
-              "Tahmini": "evet" if m.get("tahmin") else ""} for m in _taslak["malzemeler"]]
-            or [{"Tarifte yazan": "", "Malzeme": None, "Gram (toplam)": None, "Tahmini": ""}]
+            [_satir(m) for m in _taslak["malzemeler"]]
+            or [{"Tarifte yazan": "", "Malzeme": None, "Miktar": None, "Birim": "g", "Not": ""}]
         )
         _malz_duzen = st.data_editor(
             _malz_df, hide_index=True, use_container_width=True, num_rows="dynamic", key=f"tt_malz_{_ts}",
             column_config={
-                "Malzeme": st.column_config.SelectboxColumn(options=katalog_adlari, help="Katalogdaki karşılığı"),
-                "Gram (toplam)": st.column_config.NumberColumn(
-                    min_value=0.0, step=5.0, format="%.0f", help="Tarifin tamamı için (kişi sayısı kadar) gram"),
-                "Tahmini": st.column_config.TextColumn(disabled=True),
+                "Malzeme": st.column_config.SelectboxColumn(options=katalog_adlari, help="Katalogdaki karşılığı (yazarak ara)"),
+                "Miktar": st.column_config.NumberColumn(min_value=0.0, step=0.5, format="%g", help="Tarifin tamamı için"),
+                "Birim": st.column_config.SelectboxColumn(options=E.BIRIMLER, required=True),
+                "Not": st.column_config.TextColumn(disabled=True, width="large"),
             },
         )
-        st.caption(
-            "Malzemesi boş kalan satırlar (katalogda karşılığı bulunamayanlar) kaydedilmez; listeden seçebilirsin. "
-            "\"Tahmini\" satırlarda ölçü grama tahminen çevrildi (TAHMİN)."
-        )
+        # Gram karsiliklari (kaydedilecek degerler)
+        _kalemler, _sorunlu, _onizleme = [], [], []
+        for r in _malz_duzen.to_dict("records"):
+            _ad = r.get("Malzeme") if isinstance(r.get("Malzeme"), str) else None
+            _yazan = r.get("Tarifte yazan") or ""
+            if not _ad:
+                if _yazan or (r.get("Miktar") is not None and not pd.isna(r.get("Miktar"))):
+                    _sorunlu.append(_yazan or "(adsız satır)")
+                continue
+            _mid = id_by_ad.get(_ad)
+            _miktar = None if r.get("Miktar") is None or pd.isna(r.get("Miktar")) else float(r["Miktar"])
+            _g, _aciklama = E.birimden_grama(
+                _miktar, r.get("Birim"), _ad, (malzeme_by_id.get(_mid) or {}).get("yogunluk"), _referans.get(_yazan),
+            )
+            _onizleme.append({"Malzeme": _ad, "Miktar": f"{_miktar:g} {r.get('Birim')}" if _miktar else "-",
+                              "Gram karşılığı": f"{_g:.0f} g" if _g else "-", "Açıklama": _aciklama})
+            if _g:
+                _kalemler.append((_mid, _g))
+            else:
+                _sorunlu.append(f"{_ad} ({_aciklama})")
+        if _onizleme:
+            st.caption("Kaydedilecek gram karşılıkları (besin ve stok hesabı bunlarla yapılır):")
+            st.dataframe(pd.DataFrame(_onizleme), hide_index=True, use_container_width=True)
+        if _sorunlu:
+            st.warning("Kaydedilmeyecek satırlar: " + "; ".join(_sorunlu))
         _t_talimat = st.text_area("Hazırlanışı", value=_taslak.get("talimat", ""), height=160, key=f"tt_tal_{_ts}")
         k1, k2 = st.columns([1, 1])
         if k1.button("Tarifi kaydet", type="primary", disabled=_SALT_OKUNUR or _tarif_limit_doldu):
-            _kalemler = []
-            for r in _malz_duzen.to_dict("records"):
-                _mid = id_by_ad.get(r.get("Malzeme"))
-                _g = r.get("Gram (toplam)")
-                if _mid and _g is not None and not pd.isna(_g) and float(_g) > 0:
-                    _kalemler.append((_mid, float(_g)))
             if not _t_ad.strip():
                 st.error("Tarif adı boş olamaz.")
             elif not _kalemler:
-                st.error("En az bir malzeme (katalogdan seçilmiş ve gramı girilmiş) gerekli.")
+                st.error("En az bir malzeme (katalogdan seçilmiş, miktarı ve birimi girilmiş) gerekli.")
             else:
                 try:
                     _kisaltma = ((supabase.table("isletmeler").select("kisaltma").eq("id", _ISLETME_ID)

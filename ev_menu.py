@@ -48,6 +48,53 @@ ADET_GRAM = {
     "DOMATES": 110.0,
 }
 
+# Tarif malzemesi birimleri (15 Ekim 2026, Bahri: "Gram toplam yerine miktar ve birim").
+# Kaydedilen deger yine gramdir; donusum birimden_grama() ile yapilir.
+BIRIMLER = ["g", "kg", "ml", "l", "adet", "su bardağı", "çay bardağı", "yemek kaşığı",
+            "tatlı kaşığı", "çay kaşığı", "diş", "demet", "tutam"]
+# Hacim birimleri (ml). TAHMİN: Turkiye'de yaygin mutfak olculeri.
+BIRIM_ML = {"ml": 1.0, "l": 1000.0, "su bardağı": 200.0, "çay bardağı": 100.0,
+            "yemek kaşığı": 15.0, "tatlı kaşığı": 10.0, "çay kaşığı": 5.0}
+# Adet benzeri birimler icin genel karsiliklar (g). TAHMİN.
+BIRIM_GENEL_GRAM = {"diş": 4.0, "demet": 50.0, "tutam": 1.0}
+
+
+def birimden_grama(miktar, birim, malzeme_adi=None, yogunluk=None, referans=None):
+    """Miktar + birim -> gram. Donus: (gram ya da None, aciklama).
+    referans: okuma sirasinda modelin ayni malzeme icin verdigi (miktar, birim, gram) --
+    ayni birimde kalindiysa modelin malzemeye ozgu donusumu oranlanarak kullanilir
+    (ör. "3 su bardağı pirinç = 540 g" -> 2 su bardağı = 360 g)."""
+    try:
+        m = float(miktar)
+    except (TypeError, ValueError):
+        return None, "miktar yok"
+    if m <= 0:
+        return None, "miktar yok"
+    birim = (birim or "g").strip()
+    if birim == "g":
+        return m, ""
+    if birim == "kg":
+        return m * 1000.0, ""
+    if referans:
+        r_m, r_b, r_g = referans
+        try:
+            if r_b == birim and float(r_m) > 0 and float(r_g) > 0:
+                return m * float(r_g) / float(r_m), "okunan tariften oranlandı"
+        except (TypeError, ValueError):
+            pass
+    if birim == "adet":
+        g = ADET_GRAM.get(malzeme_adi)
+        return (m * g, "adet ağırlığı TAHMİN") if g else (None, "bu malzeme için adet ağırlığı yok; gram gir")
+    if birim in BIRIM_ML:
+        # Yogunluk sadece sivi/yari sivi (<= 1,3 g/ml) icin kullanilir; katalogdaki bazi taneli
+        # urunlerde (toz seker 1,59, tuz 2,16) deger tane yogunlugudur, kasik/bardak icin yanlis olur.
+        y = float(yogunluk) if yogunluk and 0 < float(yogunluk) <= 1.3 else 1.0
+        return m * BIRIM_ML[birim] * y, "ölçü kabından çevrildi, TAHMİN"
+    if birim in BIRIM_GENEL_GRAM:
+        return m * BIRIM_GENEL_GRAM[birim], "genel karşılık, TAHMİN"
+    return None, "bilinmeyen birim"
+
+
 # 2 tarifli ogun (I. grup ana yemek + II. grup yan yemek): motor uclu bekledigi
 # icin III. grup yerine bu bos "tarif" verilir. Besin degeri 0, etiketi yok,
 # hicbir kurala takilmaz ve kullanilan tarif listelerine eklenmez.
