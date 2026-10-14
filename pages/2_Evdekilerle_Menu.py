@@ -25,6 +25,7 @@ from besin_sabitleri import TUM_BESIN_ALANLARI, BESIN_ETIKET, BESIN_ARALIK, kano
 from db import get_supabase, oturumu_uygula
 import ai_okuma as A
 import ev_menu as E
+import ev_menu_pdf
 
 st.set_page_config(page_title="Evdekilerle Menü", page_icon="assets/favicon.png", layout="wide")
 
@@ -278,7 +279,7 @@ if stok:
     satirlar = sorted(
         ({"malzeme_id": mid, "Malzeme": (malzeme_by_id.get(mid) or {}).get("ad", "?"),
           "Miktar (g)": round(g, 1), "Sil": False} for mid, g in stok.items()),
-        key=lambda r: r["Malzeme"],
+        key=lambda r: E.tr_sirala_anahtari(r["Malzeme"]),
     )
     duzenlenen = st.data_editor(
         pd.DataFrame(satirlar), hide_index=True, use_container_width=True, disabled=["Malzeme"] if not _SALT_OKUNUR else True,
@@ -840,7 +841,7 @@ if kayit:
             ({"Malzeme": (malzeme_by_id.get(mid) or {}).get("ad", "?"),
               "Gereken": E.gram_yazisi(g),
               "Önerilen alım": E.gram_yazisi(E.pratik_miktar(g))} for mid, g in sonuc["eksik"].items()),
-            key=lambda r: r["Malzeme"],
+            key=lambda r: E.tr_sirala_anahtari(r["Malzeme"]),
         )
         st.dataframe(liste, hide_index=True, use_container_width=True)
         st.caption(
@@ -858,14 +859,59 @@ if kayit:
               "Evde olan": E.gram_yazisi(g),
               "Kullanılan": E.gram_yazisi(sonuc["kullanilan"].get(mid, 0.0)),
               "Kalan": E.gram_yazisi(sonuc["kalan"].get(mid, 0.0))} for mid, g in bas.items()),
-            key=lambda r: r["Malzeme"],
+            key=lambda r: E.tr_sirala_anahtari(r["Malzeme"]),
         )
         st.dataframe(rapor, hide_index=True, use_container_width=True)
         kullanilmayan = sorted(
-            (malzeme_by_id.get(mid) or {}).get("ad", "?") for mid in bas if sonuc["kullanilan"].get(mid, 0.0) <= 0
+            ((malzeme_by_id.get(mid) or {}).get("ad", "?") for mid in bas if sonuc["kullanilan"].get(mid, 0.0) <= 0),
+            key=E.tr_sirala_anahtari,
         )
         if kullanilmayan:
             st.caption("Bu menüde değerlendirilemeyenler: " + ", ".join(kullanilmayan))
         st.caption("Stok kaydın değişmedi; bu rapor sadece bu menüye göre bir hesaptır.")
     else:
         st.caption("Stok boş olduğu için rapor yok.")
+
+    # -----------------------------------------------------------------
+    # PDF (15 Ekim 2026): menu + alisveris listesi + stok raporu + tarifler
+    # -----------------------------------------------------------------
+    st.subheader("PDF")
+    st.caption(
+        "Menü, alışveriş listesi (işaretleme kutularıyla), stok raporu ve menüdeki tariflerin "
+        f"{kayit['porsiyon']} kişiye göre malzemeleri ve hazırlanışı tek PDF'te."
+    )
+    _pdf_anahtari = f"{kayit.get('surum', 0)}|{id(sonuc)}"
+    _pdf = st.session_state.get("ev_menu_pdf")
+    if not _pdf or _pdf[0] != _pdf_anahtari:
+        if st.button("PDF hazırla"):
+            try:
+                with st.spinner("PDF hazırlanıyor..."):
+                    _, _pdf_tarif_malz, _ = _havuzu_kur(kayit.get("kendi_kullan", True))
+                    _adlar = sorted({t for g in sonuc["gunler"] for o in g["ogunler"].values() for t in o["tarifler"]})
+                    # Ad cakismasinda kendi tarife eklenen " (kendi)" son eki veritabaninda yok
+                    _gercek = {a: (a[:-len(" (kendi)")] if a.endswith(" (kendi)") else a) for a in _adlar}
+                    _talimat_satirlari = (
+                        supabase.table("receteler").select("ad, isletme_id, hazirlik_talimati")
+                        .in_("ad", sorted(set(_gercek.values()))).execute()
+                    ).data or []
+                    _kutuphane_tal = {r["ad"]: r.get("hazirlik_talimati") for r in _talimat_satirlari if not r.get("isletme_id")}
+                    _kendi_tal = {r["ad"]: r.get("hazirlik_talimati") for r in _talimat_satirlari if r.get("isletme_id")}
+                    _talimatlar = {}
+                    for _a, _g in _gercek.items():
+                        _talimatlar[_a] = (_kendi_tal.get(_g) if _a != _g else (_kutuphane_tal.get(_g) or _kendi_tal.get(_g)))
+                    _isletme_adi = ((supabase.table("isletmeler").select("ad").eq("id", _ISLETME_ID).single()
+                                     .execute().data or {}).get("ad") or "")
+                    _bayt = ev_menu_pdf.ev_menu_pdf_olustur(
+                        _isletme_adi, kayit["tarihler"], sonuc, kayit["porsiyon"],
+                        {m["id"]: m["ad"] for m in katalog}, _pdf_tarif_malz, _talimatlar,
+                        kayit["baslangic_stok"], kayit.get("temel_idler", set()),
+                    )
+                st.session_state["ev_menu_pdf"] = (_pdf_anahtari, _bayt)
+                st.rerun()
+            except Exception as e:
+                st.error(f"PDF hazırlanamadı: {e}")
+    else:
+        st.download_button(
+            "PDF'i indir", data=_pdf[1], type="primary",
+            file_name=f"evdekilerle_menu_{kayit['tarihler'][0].isoformat()}.pdf", mime="application/pdf",
+        )

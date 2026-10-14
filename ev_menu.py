@@ -366,7 +366,18 @@ def pratik_miktar(gram):
     return int(math.ceil(gram / adim) * adim)
 
 
+_TR_ALFABE = "ABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVWXYZ"
+
+
+def tr_sirala_anahtari(metin):
+    """Turkce alfabe sirasi (Python'un varsayilani Ç, Ö, Ü, İ, Ş'yi sona atar)."""
+    m = str(metin or "").replace("i", "İ").replace("ı", "I").upper()
+    return [(_TR_ALFABE.index(c) if c in _TR_ALFABE else 100 + ord(c)) for c in m]
+
+
 def gram_yazisi(gram):
+    if 0 < gram < 1:
+        return "1 g'dan az"
     if gram >= 1000:
         return f"{gram / 1000:.2f}".rstrip("0").rstrip(".").replace(".", ",") + " kg"
     return f"{gram:.0f} g"

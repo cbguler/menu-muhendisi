@@ -13291,3 +13291,11 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   yuklenen video -> konusma metni -> tarif okuma mumkun; baglantidan (Instagram/TikTok/YouTube) indirme yok.
   Karar bekliyor. (b) Evdekilerle Menu ciktisi su an sayfada; PDF (menu + alisveris listesi + stok raporu +
   tarifler) henuz yok, reportlab kurulu; karar bekliyor.
+- 15 Ekim (v4, Bahri: "PDF olmasi gereken bir ozellik"): ev_menu_pdf.py (yeni, reportlab, DejaVu Sans; gorunum Aylik
+  Menu PDF'leriyle ayni: her sayfada logo + Menu Muhendisi + isletme adi). Bolumler: Menu (gun gun, ogun basina
+  evdeki malzemeden karsilanan %), Alman gerekenler (isaretleme sutunuyla), Stok raporu, Tarifler (menudeki her tarif
+  bir kez; kisi sayisina gore olceklenmis malzemeler, temel malzemeler "(evde var)", hazirlanis). Sayfada "PDF hazirla"
+  -> "PDF'i indir"; menu duzenlenince PDF yeniden hazirlanir. Turkce alfabe siralamasi (ev_menu.tr_sirala_anahtari)
+  ve 1 g altindaki miktarlar "1 g'dan az". Ornek: 7 gun x 2 ogun x 3 tarif ile 27 sayfa (tarif metinleri uzun).
+- Tarif videosu: Bahri videoyu saklama/depolama yuku nedeniyle istemedi. Oneri: tarife sadece video BAGLANTISI
+  (YouTube/Instagram) kaydedilsin; karar bekliyor.
