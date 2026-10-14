@@ -13255,3 +13255,7 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   (ev_menu.menuyu_yeniden_hesapla). Yerel test (sahte veritabani + sahte Groq yaniti): fis 4 satirdan 3'u eslesti,
   uydurma ad bos kaldi; 4 kisilik tarif 10 porsiyona dogru olceklendi; duzenleme sonrasi eksik listesi guncellendi.
   Gercek Groq cagrisi henuz denenmedi.
+- 14 Ekim (v3c): tarif ve fis bolumlerine "Panodan yapistir" (streamlit-paste-button, requirements'a eklendi).
+  Bahri kopyaladigi ekran goruntusunu yukleyemiyordu (st.file_uploader panodan yapistirmayi desteklemiyor).
+  Yerel Chromium testinde (Playwright, gercek pano) gorsel bilesenden uygulamaya geldi. Tarayici ilk kullanimda pano
+  izni ister; Chrome/Edge'de denendi, Firefox denenmedi.

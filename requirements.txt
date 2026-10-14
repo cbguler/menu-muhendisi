@@ -7,3 +7,4 @@ starlette<1.4
 groq
 reportlab>=4.0
 numpy
+streamlit-paste-button

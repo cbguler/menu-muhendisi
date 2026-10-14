@@ -16,6 +16,8 @@
 # kullaniciya tabloda gosterilir, onaylanmadan kaydedilmez.
 
 import datetime
+import hashlib
+import io
 import random
 
 import pandas as pd
@@ -177,6 +179,45 @@ def _groq_ayarlari():
         return None, A.VARSAYILAN_MODEL
 
 
+def _panodan_gorseller(anahtar):
+    """Panodaki (clipboard) gorseli tek tusla alir (streamlit-paste-button bileseni;
+    tarayici ilk kullanimda pano izni ister). Yapistirilanlar oturumda en fazla
+    A.EN_FAZLA_GORSEL adet tutulur. Donus: [bayt, ...]."""
+    liste = st.session_state.setdefault(f"{anahtar}_liste", [])
+    try:
+        from streamlit_paste_button import paste_image_button
+    except Exception:
+        return [b for _, b in liste]
+    p1, p2 = st.columns([1, 3], vertical_alignment="center")
+    with p1:
+        sonuc = paste_image_button(
+            "Panodan yapıştır", text_color="#085041", background_color="#E1F5EE",
+            hover_background_color="#C9EBDD", key=anahtar,
+        )
+    if sonuc.image_data is not None:
+        tampon = io.BytesIO()
+        sonuc.image_data.convert("RGB").save(tampon, format="PNG")
+        bayt = tampon.getvalue()
+        ozet = hashlib.md5(bayt).hexdigest()
+        # Bilesen son yapistirilan gorseli her yenilemede tekrar dondurur; ayni
+        # gorsel ikinci kez eklenmesin (Temizle'den sonra da geri gelmesin).
+        if st.session_state.get(f"{anahtar}_son") != ozet:
+            st.session_state[f"{anahtar}_son"] = ozet
+            if len(liste) < A.EN_FAZLA_GORSEL:
+                liste.append((ozet, bayt))
+    with p2:
+        st.caption(
+            "Ekran görüntüsünü kopyaladıktan sonra bu düğmeye bas (tarayıcı ilk seferde pano izni ister). "
+            f"En fazla {A.EN_FAZLA_GORSEL} görsel."
+        )
+    if liste:
+        st.image([b for _, b in liste], width=140)
+        if st.button("Yapıştırılanları temizle", key=f"{anahtar}_temizle"):
+            liste.clear()
+            st.rerun()
+    return [b for _, b in liste]
+
+
 def _stoga_ekle(mid, gram, mevcut):
     yeni = mevcut.get(mid, 0.0) + gram
     supabase.table("ev_stogu").upsert(
@@ -318,7 +359,7 @@ with st.expander("Market fişinden ekle", expanded=False):
             "eklenmesi gerekiyor."
         )
     st.caption(
-        "Fişin fotoğrafını yükle ya da kamerayla çek (en fazla 3 fotoğraf; uzun fişi parça parça çekebilirsin). "
+        "Fişin fotoğrafını yükle, panodan yapıştır ya da kamerayla çek (en fazla 3 fotoğraf; uzun fişi parça parça çekebilirsin). "
         "Fotoğraf okunmak için Groq'a gönderilir. Başka dildeki ürün adları Türkçeye çevrilip kataloğumuzdaki "
         "malzemeyle eşlenir. Gıda dışı ürünler atlanır. Okunan her satırı aşağıdaki tabloda kontrol et; "
         "sadece işaretlediklerin stoğa eklenir."
@@ -326,13 +367,14 @@ with st.expander("Market fişinden ekle", expanded=False):
     _fis_dosyalari = st.file_uploader(
         "Fiş fotoğrafı", type=["jpg", "jpeg", "png", "webp"], accept_multiple_files=True, key="fis_dosyalari",
     )
+    _fis_panodan = _panodan_gorseller("fis_pano")
     _fis_kamera = st.camera_input("ya da kamerayla çek", key="fis_kamera") if st.toggle("Kamerayı aç", key="fis_kamera_ac") else None
     if st.button("Fişi oku", disabled=_SALT_OKUNUR or not _groq_anahtar):
-        _veriler = [f.getvalue() for f in (_fis_dosyalari or [])][: A.EN_FAZLA_GORSEL]
+        _veriler = ([f.getvalue() for f in (_fis_dosyalari or [])] + _fis_panodan)[: A.EN_FAZLA_GORSEL]
         if _fis_kamera is not None and len(_veriler) < A.EN_FAZLA_GORSEL:
             _veriler.append(_fis_kamera.getvalue())
         if not _veriler:
-            st.error("Önce bir fiş fotoğrafı yükle ya da çek.")
+            st.error("Önce bir fiş fotoğrafı yükle, panodan yapıştır ya da kamerayla çek.")
         else:
             try:
                 with st.spinner("Fiş okunuyor..."):
@@ -422,19 +464,21 @@ with st.expander("Yeni tarif ekle", expanded=bool(st.session_state.get("ev_tarif
         "Ekran görüntüsü (isteğe bağlı, en fazla 3)", type=["jpg", "jpeg", "png", "webp"],
         accept_multiple_files=True, key="tarif_gorselleri",
     )
+    _tarif_panodan = _panodan_gorseller("tarif_pano")
+    _tarif_gorsel_baytlari = ([f.getvalue() for f in (_tarif_gorselleri or [])] + _tarif_panodan)[: A.EN_FAZLA_GORSEL]
     o1, o2 = st.columns([1, 1])
     if o1.button("Metinden / görselden oku", disabled=_SALT_OKUNUR or not _groq_anahtar):
-        if not (_okuma_metni or "").strip() and not _tarif_gorselleri:
+        if not (_okuma_metni or "").strip() and not _tarif_gorsel_baytlari:
             st.warning(
                 "Okunacak bir şey yok. Önce yukarıdaki \"Tarif metni\" kutusuna tarifi yapıştır ya da "
-                "\"Ekran görüntüsü\" alanından tarifin görselini yükle, sonra bu düğmeye bas."
+                "\"Ekran görüntüsü\" alanından görseli yükle ya da \"Panodan yapıştır\" ile kopyaladığın görseli ekle, sonra bu düğmeye bas."
             )
         else:
             try:
                 with st.spinner("Tarif okunuyor..."):
                     _okunan = A.tarif_oku(
                         _groq_anahtar, _okuma_metni,
-                        [A.gorseli_hazirla(f.getvalue()) for f in (_tarif_gorselleri or [])][: A.EN_FAZLA_GORSEL],
+                        [A.gorseli_hazirla(b) for b in _tarif_gorsel_baytlari],
                         katalog, _groq_model,
                     )
                 st.session_state["ev_tarif_taslak"] = _okunan
