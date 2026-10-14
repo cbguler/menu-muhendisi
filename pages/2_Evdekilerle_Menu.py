@@ -424,18 +424,24 @@ with st.expander("Yeni tarif ekle", expanded=bool(st.session_state.get("ev_tarif
     )
     o1, o2 = st.columns([1, 1])
     if o1.button("Metinden / görselden oku", disabled=_SALT_OKUNUR or not _groq_anahtar):
-        try:
-            with st.spinner("Tarif okunuyor..."):
-                _okunan = A.tarif_oku(
-                    _groq_anahtar, _okuma_metni,
-                    [A.gorseli_hazirla(f.getvalue()) for f in (_tarif_gorselleri or [])][: A.EN_FAZLA_GORSEL],
-                    katalog, _groq_model,
-                )
-            st.session_state["ev_tarif_taslak"] = _okunan
-            st.session_state["ev_tarif_taslak_surum"] = st.session_state.get("ev_tarif_taslak_surum", 0) + 1
-            st.rerun()
-        except A.OkumaHatasi as e:
-            st.error(str(e))
+        if not (_okuma_metni or "").strip() and not _tarif_gorselleri:
+            st.warning(
+                "Okunacak bir şey yok. Önce yukarıdaki \"Tarif metni\" kutusuna tarifi yapıştır ya da "
+                "\"Ekran görüntüsü\" alanından tarifin görselini yükle, sonra bu düğmeye bas."
+            )
+        else:
+            try:
+                with st.spinner("Tarif okunuyor..."):
+                    _okunan = A.tarif_oku(
+                        _groq_anahtar, _okuma_metni,
+                        [A.gorseli_hazirla(f.getvalue()) for f in (_tarif_gorselleri or [])][: A.EN_FAZLA_GORSEL],
+                        katalog, _groq_model,
+                    )
+                st.session_state["ev_tarif_taslak"] = _okunan
+                st.session_state["ev_tarif_taslak_surum"] = st.session_state.get("ev_tarif_taslak_surum", 0) + 1
+                st.rerun()
+            except A.OkumaHatasi as e:
+                st.error(str(e))
     if o2.button("Elle boş tarif başlat"):
         st.session_state["ev_tarif_taslak"] = dict(_BOS_TASLAK)
         st.session_state["ev_tarif_taslak_surum"] = st.session_state.get("ev_tarif_taslak_surum", 0) + 1
