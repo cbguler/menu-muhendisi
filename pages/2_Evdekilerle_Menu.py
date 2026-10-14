@@ -15,9 +15,7 @@
 # degistirme. Fis ve tarif okuma ai_okuma.py (Groq) ile; okunan her sey
 # kullaniciya tabloda gosterilir, onaylanmadan kaydedilmez.
 
-import base64
 import datetime
-import hashlib
 import random
 
 import pandas as pd
@@ -179,134 +177,6 @@ def _groq_ayarlari():
         return None, A.VARSAYILAN_MODEL
 
 
-_PANO_BILESENI = None
-
-# Yapistirma kutusunun HTML'i burada gomulu: calisma aninda gecici klasore yazilip
-# Streamlit bileseni olarak tanitilir (depoda ayri klasor/dosya gerekmesin diye).
-_PANO_HTML = r"""<!doctype html>
-<html>
-<head>
-<meta charset="utf-8">
-<style>
-  html, body { margin: 0; padding: 0; background: transparent; }
-  body { font-family: "Source Sans Pro", "Source Sans 3", sans-serif; font-size: 15px; }
-  #kutu {
-    box-sizing: border-box; width: 100%; min-height: 64px; padding: 14px 16px;
-    border: 2px dashed #0F6E56; border-radius: 8px; background: #E1F5EE; color: #085041;
-    text-align: center; cursor: text; outline: none; caret-color: transparent;
-    white-space: normal; overflow: hidden;
-  }
-  #kutu:focus { border-style: solid; background: #D3EFE4; }
-</style>
-</head>
-<body>
-<!-- contenteditable: Ctrl+V ve sag tik > Yapistir bu kutuda "paste" olayi uretir.
-     Panoyu okumak icin izin (Clipboard API) GEREKMEZ; Streamlit Cloud'un ic ice
-     cercevesinde de calisir. Yazi yazilmasi engellenir. -->
-<div id="kutu" contenteditable="true" spellcheck="false"></div>
-<script>
-  var kutu = document.getElementById("kutu");
-  var etiket = "Buraya tıkla ve Ctrl+V ile yapıştır";
-
-  function gonder(tip, ek) {
-    var m = { isStreamlitMessage: true, type: tip };
-    for (var k in ek) { m[k] = ek[k]; }
-    window.parent.postMessage(m, "*");
-  }
-  function yukseklik() { gonder("streamlit:setFrameHeight", { height: document.body.scrollHeight + 4 }); }
-  function yaz(metin) { kutu.textContent = metin; yukseklik(); }
-
-  window.addEventListener("message", function (e) {
-    if (e.data && e.data.type === "streamlit:render") {
-      var a = e.data.args || {};
-      if (a.etiket && a.etiket !== etiket) { etiket = a.etiket; yaz(etiket); }
-    }
-  });
-
-  // Yazi girisini engelle (sadece yapistirma kabul edilir)
-  kutu.addEventListener("beforeinput", function (e) {
-    if (e.inputType !== "insertFromPaste") { e.preventDefault(); }
-  });
-  kutu.addEventListener("drop", function (e) { e.preventDefault(); });
-
-  kutu.addEventListener("paste", function (e) {
-    e.preventDefault();
-    var ogeler = (e.clipboardData && e.clipboardData.items) || [];
-    var dosya = null;
-    for (var i = 0; i < ogeler.length; i++) {
-      if (ogeler[i].kind === "file" && ogeler[i].type.indexOf("image/") === 0) { dosya = ogeler[i].getAsFile(); break; }
-    }
-    if (!dosya) { yaz("Panoda görsel yok. Ekran görüntüsünü kopyalayıp tekrar dene."); return; }
-    var okuyucu = new FileReader();
-    okuyucu.onload = function () {
-      gonder("streamlit:setComponentValue", { value: { veri: okuyucu.result, zaman: Date.now() }, dataType: "json" });
-      yaz("Görsel alındı. Başka görsel için tekrar yapıştırabilirsin.");
-    };
-    okuyucu.readAsDataURL(dosya);
-  });
-
-  yaz(etiket);
-  gonder("streamlit:componentReady", { apiVersion: 1 });
-  yukseklik();
-</script>
-</body>
-</html>
-"""
-
-
-def _pano_bileseni():
-    """Yapistirma kutusu. Ilk denemede kullanilan hazir bilesen (streamlit-paste-button)
-    panoyu Clipboard API ile okuyordu; Streamlit Cloud uygulamayi ic ice cercevede actigi
-    icin tarayici bunu engelliyordu ("blocked because of a permissions policy" -- 14 Ekim'de
-    yerelde ayni cerceve duzeniyle dogrulandi). Bu kutu tarayicinin normal yapistirma
-    olayini (Ctrl+V / sag tik > Yapistir) kullanir; izin gerektirmez."""
-    global _PANO_BILESENI
-    if _PANO_BILESENI is None:
-        import os
-        import tempfile
-        import streamlit.components.v1 as components
-        klasor = os.path.join(tempfile.gettempdir(), "mm_pano_yapistir")
-        os.makedirs(klasor, exist_ok=True)
-        yol = os.path.join(klasor, "index.html")
-        try:
-            mevcut = open(yol, encoding="utf-8").read()
-        except OSError:
-            mevcut = None
-        if mevcut != _PANO_HTML:
-            with open(yol, "w", encoding="utf-8") as f:
-                f.write(_PANO_HTML)
-        _PANO_BILESENI = components.declare_component("pano_yapistir", path=klasor)
-    return _PANO_BILESENI
-
-
-def _panodan_gorseller(anahtar):
-    """Kopyalanan gorseli (ekran goruntusu) yapistirma kutusundan alir. Yapistirilanlar
-    oturumda en fazla A.EN_FAZLA_GORSEL adet tutulur. Donus: [bayt, ...]."""
-    liste = st.session_state.setdefault(f"{anahtar}_liste", [])
-    try:
-        deger = _pano_bileseni()(etiket="Kopyaladığın görseli yapıştırmak için buraya tıkla, sonra Ctrl+V "
-                                 "(ya da sağ tık > Yapıştır)", key=anahtar, default=None)
-    except Exception:
-        deger = None
-    if isinstance(deger, dict) and deger.get("veri") and st.session_state.get(f"{anahtar}_son") != deger.get("zaman"):
-        # Bilesen son degeri her yenilemede tekrar dondurur; ayni yapistirma bir kez eklenir.
-        st.session_state[f"{anahtar}_son"] = deger.get("zaman")
-        try:
-            bayt = base64.b64decode(deger["veri"].split(";base64,", 1)[1])
-            if len(liste) < A.EN_FAZLA_GORSEL:
-                liste.append((hashlib.md5(bayt).hexdigest(), bayt))
-            else:
-                st.warning(f"En fazla {A.EN_FAZLA_GORSEL} görsel eklenebilir.")
-        except Exception:
-            st.error("Yapıştırılan görsel okunamadı.")
-    if liste:
-        st.image([b for _, b in liste], width=140)
-        if st.button("Yapıştırılanları temizle", key=f"{anahtar}_temizle"):
-            liste.clear()
-            st.rerun()
-    return [b for _, b in liste]
-
-
 def _stoga_ekle(mid, gram, mevcut):
     yeni = mevcut.get(mid, 0.0) + gram
     supabase.table("ev_stogu").upsert(
@@ -448,22 +318,22 @@ with st.expander("Market fişinden ekle", expanded=False):
             "eklenmesi gerekiyor."
         )
     st.caption(
-        "Fişin fotoğrafını yükle, panodan yapıştır ya da kamerayla çek (en fazla 3 fotoğraf; uzun fişi parça parça çekebilirsin). "
+        "Fişin fotoğrafını yükle ya da yapıştır, veya kamerayla çek (en fazla 3 fotoğraf; uzun fişi parça parça çekebilirsin). "
         "Fotoğraf okunmak için Groq'a gönderilir. Başka dildeki ürün adları Türkçeye çevrilip kataloğumuzdaki "
         "malzemeyle eşlenir. Gıda dışı ürünler atlanır. Okunan her satırı aşağıdaki tabloda kontrol et; "
         "sadece işaretlediklerin stoğa eklenir."
     )
     _fis_dosyalari = st.file_uploader(
-        "Fiş fotoğrafı", type=["jpg", "jpeg", "png", "webp"], accept_multiple_files=True, key="fis_dosyalari",
+        "Fiş fotoğrafı: \"Upload\" ile seç ya da kopyaladığın görseli yapıştırmak için bu alana tıklayıp Ctrl+V yap",
+        type=["jpg", "jpeg", "png", "webp"], accept_multiple_files=True, key="fis_dosyalari",
     )
-    _fis_panodan = _panodan_gorseller("fis_pano")
     _fis_kamera = st.camera_input("ya da kamerayla çek", key="fis_kamera") if st.toggle("Kamerayı aç", key="fis_kamera_ac") else None
     if st.button("Fişi oku", disabled=_SALT_OKUNUR or not _groq_anahtar):
-        _veriler = ([f.getvalue() for f in (_fis_dosyalari or [])] + _fis_panodan)[: A.EN_FAZLA_GORSEL]
+        _veriler = [f.getvalue() for f in (_fis_dosyalari or [])][: A.EN_FAZLA_GORSEL]
         if _fis_kamera is not None and len(_veriler) < A.EN_FAZLA_GORSEL:
             _veriler.append(_fis_kamera.getvalue())
         if not _veriler:
-            st.error("Önce bir fiş fotoğrafı yükle, panodan yapıştır ya da kamerayla çek.")
+            st.error("Önce bir fiş fotoğrafı yükle (ya da yapıştır) veya kamerayla çek.")
         else:
             try:
                 with st.spinner("Fiş okunuyor..."):
@@ -549,18 +419,21 @@ with st.expander("Yeni tarif ekle", expanded=bool(st.session_state.get("ev_tarif
         "Metin ve görseller okunmak için Groq'a gönderilir; başka dildeki tarifler Türkçeye çevrilir."
     )
     _okuma_metni = st.text_area("Tarif metni (isteğe bağlı)", key="tarif_metni", height=120)
+    # Panodan yapistirma: Streamlit'in kendi yukleme alani yapistirmayi destekliyor (alana tiklayip
+    # Ctrl+V). Panoyu bir DUGMEYLE okumak (Clipboard API) Streamlit Cloud'un ic ice cercevesinde
+    # tarayici tarafindan engelleniyor -- 14 Ekim'de iki bilesen denendi, ikisi de olmadi.
     _tarif_gorselleri = st.file_uploader(
-        "Ekran görüntüsü (isteğe bağlı, en fazla 3)", type=["jpg", "jpeg", "png", "webp"],
-        accept_multiple_files=True, key="tarif_gorselleri",
+        "Ekran görüntüsü (en fazla 3): \"Upload\" ile seç ya da kopyaladığın görseli yapıştırmak için "
+        "bu alana tıklayıp Ctrl+V yap",
+        type=["jpg", "jpeg", "png", "webp"], accept_multiple_files=True, key="tarif_gorselleri",
     )
-    _tarif_panodan = _panodan_gorseller("tarif_pano")
-    _tarif_gorsel_baytlari = ([f.getvalue() for f in (_tarif_gorselleri or [])] + _tarif_panodan)[: A.EN_FAZLA_GORSEL]
+    _tarif_gorsel_baytlari = [f.getvalue() for f in (_tarif_gorselleri or [])][: A.EN_FAZLA_GORSEL]
     o1, o2 = st.columns([1, 1])
     if o1.button("Metinden / görselden oku", disabled=_SALT_OKUNUR or not _groq_anahtar):
         if not (_okuma_metni or "").strip() and not _tarif_gorsel_baytlari:
             st.warning(
                 "Okunacak bir şey yok. Önce yukarıdaki \"Tarif metni\" kutusuna tarifi yapıştır ya da "
-                "\"Ekran görüntüsü\" alanından görseli yükle ya da kopyaladığın görseli yapıştırma kutusuna yapıştır, sonra bu düğmeye bas."
+                "\"Ekran görüntüsü\" alanına görseli yükle ya da alana tıklayıp Ctrl+V ile yapıştır, sonra bu düğmeye bas."
             )
         else:
             try:

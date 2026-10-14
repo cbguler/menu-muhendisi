@@ -13266,3 +13266,8 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   gecici klasore yazilip tanitiliyor; ayri klasor gerekmesin diye) -- tiklanip Ctrl+V (ya da sag tik > Yapistir) yapilan bir kutu, tarayicinin normal "paste" olayini kullanir,
   izin gerektirmez. Ic ice cercevede gercek Ctrl+V ile Playwright testi gecti. streamlit-paste-button
   requirements'tan cikarildi.
+- 14 Ekim (v3f): v3e'deki yapistirma kutusu (kendi bileseni) Bahri'nin ekraninda HIC GORUNMEDI (sebep belirlenemedi).
+  Iki bilesen de birakildi. Streamlit'in kendi st.file_uploader'i yapistirmayi destekliyor: alana tiklayip Ctrl+V.
+  Streamlit 1.65 ile ic ice cercevede gercek Ctrl+V Playwright testi gecti (image.png yuklendi). Ozelligin
+  hangi Streamlit surumunde geldigi kesinlestirilemedi; requirements'ta streamlit>=1.65 yapildi (test edilen surum).
+  Panoyu bir dugmeyle okumak Streamlit Cloud cercevesinde tarayici tarafindan engelleniyor; bu yuzden ayri dugme yok.
