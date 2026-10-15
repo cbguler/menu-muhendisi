@@ -13310,3 +13310,9 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   Prompt'a tutam (taze yesillik ~5 g, baharat ~1 g), demet, cay bardagi yag karsiliklari eklendi. (6) Ekranda reyhan
   KURU MAYA'ya eslesmisti: katalog 1 saatlik onbellekteydi (195 oncesi yuklenmis); katalog onbellegi 10 dk'ya indi ve
   surum parametresiyle 195'e baglandi. (7) Fis tablosunda "Tahmini" yerine aciklamali "Not".
+- 15 Ekim: Ana Sayfa'ya "Evdekilerle Menü" tanitim bolumu eklendi (Aylik Menu'nun altinda; malzeme girisi + fis
+  okuma, kendi tarifleri, ayarlar, oncelik sirasi, elle duzenleme, alisveris listesi/stok raporu/PDF; hizmetin
+  istege bagli oldugu notu). Gorsel: assets/tanitim_evdekilerle_menu.png (henuz yok; Bahri Gemini ile uretecek,
+  16:9, diger tanitim gorselleriyle ayni duz renkli vektor uslup). Dosya yokken sayfa kirilmaz, yerine not gosterir.
+  Guncelleme: Bahri tanitimi video olarak hazirladi -> assets/tanitim_evdekilerle_menu.mp4 (st.video, otomatik/sessiz/
+  dongu; mevcut _video_varsa_goster). Aylik Menu tanitimindaki "Excel'e indir" maddesi Bahri'nin istegiyle kaldirildi.

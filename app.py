@@ -993,10 +993,48 @@ def kontrol_paneli_sayfasi():
         "doğrudan gidersin.\n"
         "- **Aylık malzeme listesi:** Üretilen ayın tüm malzeme "
         "ihtiyacını \"Aylık Malzeme Listesi\" ile tek bir listede "
-        "toplayıp satın alma için kullanabilirsin.\n"
-        "- **Excel'e indir:** Üretilen menüyü, ekrandaki kart "
-        "görünümüyle birebir aynı biçimde tek tıkla indirebilirsin."
+        "toplayıp satın alma için kullanabilirsin."
     )
+
+    st.divider()
+
+    # ---- 5) Evdekilerle Menü (15 Ekim 2026; oneri: Efe Turkoglu) ----
+    sutun_metin, sutun_gorsel = st.columns([1.1, 1])
+    with sutun_metin:
+        st.header("Evdekilerle Menü")
+        st.write(
+            "Evdeki (ya da mutfaktaki) malzemeleri ve miktarlarını girersin; sistem bunları önce kullanan "
+            "bir haftalık menü kurar, eksik kalanlar için kısa bir alışveriş listesi verir. Menü her durumda "
+            "tam çıkar: malzeme yetmeyen yerde alışveriş listesi uzar."
+        )
+        st.markdown(
+            "- **Malzeme girişi:** Malzemeyi yazarak arayıp gram, kg, adet, ml ya da litre olarak eklersin. "
+            "Market fişinin fotoğrafını yükleyip, yapıştırıp ya da kamerayla çekip okutabilirsin; gıda dışı "
+            "satırlar atlanır, başka dildeki ürün adları Türkçeye çevrilip kataloğumuzdaki malzemeyle eşlenir. "
+            "Okunan her satırı kontrol edip onaylarsın.\n"
+            "- **Kendi tariflerin:** Tarifini elle girebilir, bir metinden ya da sosyal medyada gördüğün bir "
+            "paylaşımın ekran görüntüsünden okutabilirsin. \"3 su bardağı pirinç\", \"1 tutam maydanoz\" "
+            "gibi ölçüler grama çevrilir, hesabı yanında gösterilir. Kendi tariflerin menüde kütüphane "
+            "tarifleriyle birlikte kullanılır.\n"
+            "- **Ayarlar:** Kişi sayısı, öğün (öğle, akşam ya da ikisi), gün sayısı (1-7), öğünde 2 ya da 3 "
+            "tarif, isteğe bağlı besin değeri hedefleri ve malzemenin mevsimi (o mevsimde bulunmayan taze "
+            "ürünü isteyen tarifler önerilmez).\n"
+            "- **Önce besin hedefi, sonra evdekiler:** Kurallara ve besin hedefine uyan seçenekler arasından "
+            "evdeki malzemeyi en çok kullanan seçilir; her öğünün altında evdeki malzemeden ne kadarının "
+            "karşılandığı yazar.\n"
+            "- **Elle düzenleme:** Kurulan menüde istediğin günün tarifini değiştirirsin; alışveriş listesi "
+            "ve stok raporu yeniden hesaplanır.\n"
+            "- **Alışveriş listesi, stok raporu ve PDF:** Neyin alınacağını, evdekilerden neyin ne kadar "
+            "kullanılıp neyin arttığını görürsün; menü, liste, rapor ve tarifleri (kişi sayısına göre "
+            "malzemeleri ve hazırlanışıyla) tek PDF olarak indirirsin."
+        )
+        st.caption(
+            "Bu hizmet isteğe bağlıdır: aboneliğin başladığında bir kez sorulur, istediğin zaman Abonelik "
+            "sayfasından açıp kapatabilirsin."
+        )
+    with sutun_gorsel:
+        # Bahri tanitimi video olarak hazirladi (15 Ekim 2026)
+        _video_varsa_goster("tanitim_evdekilerle_menu.mp4")
 
     st.divider()
     st.caption("Üst menüden istediğin bölüme geçip çalışmaya başlayabilirsin.")
