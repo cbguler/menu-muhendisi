@@ -1233,9 +1233,9 @@ st.markdown(
     # YUZ ... DUZELTME (13 Ekim 2026): Evdekilerle Menu ile admin oturumunda 7
     # sayfa oldu, Admin alt satira dustu. Genislik artik sayfa sayisina gore:
     # en fazla 190px, ama satira sigmiyorsa butun kutular AYNI olcude daralir
-    # (ekran - logo payi 104px - kenar/kaydirma payi - kutu aralari) / sayfa sayisi.
-    # 15 Ekim 2026: logo 144px -> 84px oldugu icin logo payi 164px -> 104px.
-    f"  width: min(190px, calc((100vw - 104px - 3.5rem - {len(sayfa_listesi) - 1} * 0.7rem) / {len(sayfa_listesi)})) !important;"
+    # (ekran - logo payi 130px - kenar/kaydirma payi - kutu aralari) / sayfa sayisi.
+    # 15 Ekim 2026: logo 144px -> 110px oldugu icin logo payi 164px -> 130px.
+    f"  width: min(190px, calc((100vw - 130px - 3.5rem - {len(sayfa_listesi) - 1} * 0.7rem) / {len(sayfa_listesi)})) !important;"
     "  white-space: nowrap; overflow: hidden;"
     "}"
     "[class*='st-key-nav_buton_masaustu_'] a {"
@@ -1250,7 +1250,7 @@ st.markdown(
     # davranisi iptal edildi). Satir, logonun (144px) SAG kenarindan
     # baslasin diye sol bosluk (padding) logo genisligi + aradaki
     # bosluk kadar (20px) verildi.
-    ".st-key-nav_buton_satiri { padding-left: 104px !important; }"  # 84px logo + 20px (15 Ekim 2026)
+    ".st-key-nav_buton_satiri { padding-left: 130px !important; }"  # 110px logo + 20px (15 Ekim 2026)
     ".st-key-nav_buton_satiri div[data-testid='stHorizontalBlock'] {"
     "  justify-content: flex-start !important; flex-wrap: wrap !important;"
     "}"
@@ -1444,13 +1444,13 @@ with open("assets/logo.png", "rb") as _f:
 # gizli/temiz video hilesinde yoktu) -- bu, mobil uyumluluk icin
 # BILINCLI kabul edilen bir taviz (bkz. _video_varsa_goster yorumu).
 # YUZ ... DUZELTME (15 Ekim 2026, Bahri): basliktaki video KALDIRILDI; logo solda, "Menü Mühendisi"
-# ortada eski yerlerine dondu ve baslik inceltildi (144px -> 84px, yazi 4rem -> 2.6rem). Yazinin
+# ortada eski yerlerine dondu ve baslik inceltildi (144px -> 110px, yazi 4rem -> 2.6rem). Yazinin
 # soluna ve sagina serpistirilmis malzeme susleri (Gemini ile uretilecek) icin yer acildi:
 # assets/baslik_malzeme_sol.png ve assets/baslik_malzeme_sag.png VARSA gosterilir, yoksa bos kalir
 # (sayfa kirilmaz). Eski baslik_susu_sol/sag.png bilincli olarak kullanilmiyor (eski tasarim).
 # Gorseller base64 ile gomuluyor (bu dosyada kanitlanmis yontem: st.image ozel HTML icinde
 # guvenilir degil -- bkz. yukaridaki KIRK ALTINCI DUZELTME).
-_BASLIK_YUKSEKLIK_PX = 84
+_BASLIK_YUKSEKLIK_PX = 110  # Bahri 15 Ekim: 84 yerine 110 (susler daha iyi gorunsun)
 
 
 def _png_b64(yol):
@@ -1467,15 +1467,19 @@ _sus_sag_b64 = _png_b64("assets/baslik_malzeme_sag.png")
 def _sus_img(b64):
     if not b64:
         return ""
+    # 15 Ekim 2026: dar ekranda sol sus logonun ustune biniyordu. Susler artik daralabiliyor
+    # (flex-shrink + min-width:0); oran object-fit:contain ile korunur, gorsel kuculur.
     return (f"<img src='data:image/png;base64,{b64}' style='height:{_BASLIK_YUKSEKLIK_PX}px; width:auto; "
-            "max-width:24vw; object-fit:contain;'/>")
+            "max-width:24vw; min-width:0; flex:0 1 auto; object-fit:contain;'/>")
 
 
 st.markdown(
     f"<div style='position:relative; height:{_BASLIK_YUKSEKLIK_PX}px; margin:0; padding:0;'>"
     f"<img src='data:image/png;base64,{_logo_b64}' style='height:{_BASLIK_YUKSEKLIK_PX}px; width:auto; "
     "position:absolute; left:0; top:0;'/>"
-    "<div style='height:100%; display:flex; align-items:center; justify-content:center; gap:20px;'>"
+    # Iki yanda logo payi (110px logo + 20px) birakilir: yazi tam ortada kalir, susler logoya degmez.
+    "<div style='height:100%; display:flex; align-items:center; justify-content:center; gap:20px; "
+    "padding:0 130px; box-sizing:border-box;'>"
     + _sus_img(_sus_sol_b64)
     + "<span style='font-size:2.6rem; font-weight:700; color:#0F6E56; line-height:1; "
     "white-space:nowrap;'>Menü Mühendisi</span>"

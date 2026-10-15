@@ -13320,3 +13320,12 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   Mühendisi" ortada eski yerlerine dondu, baslik inceltildi (logo 144 -> 84px, yazi 4rem -> 2.6rem; mobil logo
   72 -> 52px). Yazinin solu/sagi icin istege bagli susler: assets/baslik_malzeme_sol.png ve baslik_malzeme_sag.png
   (Gemini ile uretilecek; yoksa bos). Ust menu sol boslugu ve buton genislik hesabi logo payi 164 -> 104px.
+  Bahri onizlemeden sonra 110 px secti (84 px'te susler kucuk kaliyordu): logo 110 px, ust menu sol boslugu 130 px.
+  Susler Gemini'den geldi; beyaz arka plan seffaflastirildi, bos kenarlar kirpildi, 330 px yukseklige indirildi
+  (sol 1023x330, sag 1004x330).
+
+### 15 Ekim 2026 — Baslik susleri yenilendi (Gemini, ikinci tur)
+- Bahri yeni promptla daha yogun iki gorsel uretti: solda malzemeler (domates, biber, patlican, sogan, sarimsak, maydanoz, dereotu, mor reyhan, limon, zeytinyagi, mercimek, pirinc, nohut, yumurta, patates), sagda hazir yemekler (mercimek corbasi, coban salatasi, karniyarik, pilav, kuru fasulye, manti, yaprak sarma, sutlac).
+- Isleme: kenara bagli beyaz arka plan ve yemeklerin arasinda kalan kapali beyaz bosluklar seffaflastirildi; yemegin icindeki beyazlar (manti yogurdu, pilav, cam sise, pirinc kasesi) koruma alanlariyla korundu. Bos kenarlar kirpildi. Gorseller her sayfada base64 ile gomuldugu icin hafifletildi: 220 px yukseklik (110 px basligin 2 kati, retina ekranda net) ve 256 renk PNG; sol 673x220 (73 KB), sag 666x220 (92 KB). Tam kalite surumler toplam 1,5 MB idi.
+- Dar ekranda (1280 px) sol sus logonun ustune biniyordu. Duzeltme: yazi+sus grubuna iki yandan 130 px pay, susler flex ile daralabilir (min-width:0, object-fit:contain). 1920/1440/1280 px'te onizleme ile kontrol edildi.
+- Eski baslik videolari (baslik_video_masaustu.mp4, baslik_video_mobil.mp4) Bahri'nin karariyla simdilik duruyor. Tariflere video baglantisi eklenmeyecek (Bahri karari).
