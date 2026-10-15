@@ -13329,3 +13329,14 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
 - Isleme: kenara bagli beyaz arka plan ve yemeklerin arasinda kalan kapali beyaz bosluklar seffaflastirildi; yemegin icindeki beyazlar (manti yogurdu, pilav, cam sise, pirinc kasesi) koruma alanlariyla korundu. Bos kenarlar kirpildi. Gorseller her sayfada base64 ile gomuldugu icin hafifletildi: 220 px yukseklik (110 px basligin 2 kati, retina ekranda net) ve 256 renk PNG; sol 673x220 (73 KB), sag 666x220 (92 KB). Tam kalite surumler toplam 1,5 MB idi.
 - Dar ekranda (1280 px) sol sus logonun ustune biniyordu. Duzeltme: yazi+sus grubuna iki yandan 130 px pay, susler flex ile daralabilir (min-width:0, object-fit:contain). 1920/1440/1280 px'te onizleme ile kontrol edildi.
 - Eski baslik videolari (baslik_video_masaustu.mp4, baslik_video_mobil.mp4) Bahri'nin karariyla simdilik duruyor. Tariflere video baglantisi eklenmeyecek (Bahri karari).
+
+### 15 Ekim 2026 — Ana Sayfa aciklamalari yenilendi
+- Bahri: "tum sayfalardaki tum prosedurleri ozetleyerek aciklamalara yansit". Her sayfa kodundan (dugme adlari, adimlar) okunarak yazildi.
+- Yeni: "Ilk kez kullaniyorsan" (sayfalar arasi 5 adimlik sira), "Tarif Kutuphanesi" bolumu, "Abonelik ve Ayarlar" bolumu (plan/onay, subeler, personel ve yetkiler, isletme bilgileri, maliyet ayarlari, porsiyon profilleri ve hazir besin hedefi sablonlari, hesap).
+- Bolum sirasi ust menuyle ayni: Aylik Menu, Recete Uretimi, Satisa Acma, Tarif Kutuphanesi, Evdekilerle Menu, Abonelik.
+- Duzeltilen eski/yanlis ifadeler:
+  - Recete Uretimi: "genel gider dahil" kaldirildi (maliyet ayarlarinda genel gider yok; gercek maliyet malzeme+enerji+iscilik). Isil islem alanlari gercek form alanlariyla yazildi; 10 porsiyon kurali, sunulabilir aylar, recete siniri eklendi.
+  - Satisa Acma: sayfada olmayan "fiyatlandirma denemeleri" maddesi kaldirildi; Aktif anahtari ve Menuden sil eklendi. Kar marji hesabindaki porsiyon maliyetinin MALZEME maliyeti oldugu acikca yazildi (menu_ogesi_karlilik gorunumu recete_guncel_maliyet kullaniyor; enerji/isclik dahil degil).
+  - Aylik Menu: "4 haftalik" yerine gercek takvim haftalari; "Aylik Malzeme Listesi" yerine gercek dugme adi "Aylik Sarf Listesi" ve icerigi; Kaydet, PDF secenekleri, porsiyon profili, Ozel Hizmet Profili, profil besin hedefleri, kendi recetelerini katma dugmesi eklendi.
+  - Amac: "haftalik/aylik/mevsimlik/yillik menu uretir" -> ay ay uretilip kaydedilerek mevsimlik/yillik plan.
+- Acik soru (Bahri'ye): Satisa Acma'daki kar marji malzeme maliyetine gore; gercek maliyete (enerji+isclik dahil) gore mi hesaplansin?

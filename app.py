@@ -754,15 +754,34 @@ def kontrol_paneli_sayfasi():
 
     st.title("Menü Mühendisi'ne Hoş Geldin")
     st.write(
-        "Bu sayfa, uygulamanın tüm bölümlerini kısaca tanıtır. İstediğin "
-        "an üst menüden doğrudan çalışmaya başlayabilirsin — aşağısı "
-        "sadece neyin nerede olduğunu görmen için. Çıkış yapmak için "
-        "üst menüdeki **Abonelik** sayfasına bak."
+        "Bu sayfa uygulamanın bölümlerini ve her bölümde işlerin hangi sırayla yapıldığını özetler. "
+        "İstediğin an üst menüden doğrudan çalışmaya başlayabilirsin. Çıkış yapmak için üst menüdeki "
+        "**Abonelik** sayfasının en altındaki \"Çıkış yap\" düğmesini kullan."
     )
 
     _tarif_sayisi, _malzeme_sayisi = _ana_sayfa_kutuphane_sayilari()
 
     _video_varsa_goster("tanitim_video.mp4")
+
+    # 15 Ekim 2026: ilk kez kullanan icin sayfalar arasi siralama (Bahri: prosedurleri ozetle).
+    st.subheader("İlk kez kullanıyorsan")
+    st.markdown(
+        "1. **Abonelik:** İşletme bilgilerini (ad, kısaltma) gir. Elektrik, doğalgaz ve personel saat "
+        "ücretini kendi rakamlarınla düzelt. Kaç kişiye yemek çıkardığını porsiyon profili olarak tanımla; "
+        "istersen profile besin hedefi ekle.\n"
+        "2. **Tarif Kütüphanesi:** Hazır tariflere, besin değerlerine ve maliyetlerine göz at.\n"
+        "3. **Aylık Menü:** Bölgeyi, beslenme tarzını, ayı ve porsiyon profilini seçip menünü üret. "
+        "Sonra kaydet, PDF'ini al, sarf listesini çıkar.\n"
+        "4. **Reçete Üretimi:** Kendi yemeklerin için reçete oluştur, gerçek maliyetini gör ve satışa aç. "
+        "Bu reçeteleri Aylık Menü'ye de katabilirsin.\n"
+        "5. **Evdekilerle Menü** (hizmet açıksa): Evdeki malzemelerle günlük ya da haftalık menü kur, "
+        "alışveriş listesini al."
+    )
+    st.caption(
+        "Personel hesabıyla giriş yaptıysan yalnızca yetkin olan sayfaları ve bölümleri görürsün. "
+        "Birden fazla işletmen ya da şuben varsa hangisinde çalıştığını sayfanın üstündeki seçiciden "
+        "değiştirirsin."
+    )
 
     st.divider()
 
@@ -801,12 +820,11 @@ def kontrol_paneli_sayfasi():
     )
 
     st.markdown(
-        f"- **Bölge / mevsim gözeten üretim:** 7 coğrafi bölgenin "
-        f"{_tarif_sayisi} tariflik kütüphanesinden, mevsime uygun "
-        "ürünleri önceliklendirerek haftalık/aylık/mevsimlik/yıllık menü "
-        "üretir — anayasa kuralları (grup dengesi, tekrar etmeme, "
-        "uyumsuz kombinasyonların engellenmesi) her menünün tutarlı ve "
-        "dengeli olmasını garanti eder.\n"
+        f"- **Bölge / mevsim gözeten üretim:** Klasik tarifler ve 7 coğrafi bölgeden oluşan "
+        f"{_tarif_sayisi} tariflik kütüphaneden, mevsime uygun ürünleri öne alarak seçtiğin ay için "
+        "menü üretir; ayları tek tek üretip kaydederek mevsimlik ya da yıllık planını kurarsın. Anayasa "
+        "kuralları (grup dengesi, tekrar etmeme, uyumsuz kombinasyonların engellenmesi) her menünün "
+        "tutarlı ve dengeli olmasını sağlar.\n"
         "- **Vegan ve vejetaryen seçimi:** Aylık Menü sayfasında "
         "\"Tümü / Vejetaryen / Vegan\" arasından seçim yapabilir, "
         "istersen ayrıca belirli alerjenleri (süt, yumurta, gluten vb.) "
@@ -884,116 +902,140 @@ def kontrol_paneli_sayfasi():
 
     st.divider()
 
-    # ---- 1) Reçete Üretimi (eskiden "Reçeteler" + "Üretim Aşamaları"
-    # diye iki ayrı sayfaydı, kullanıcı talebiyle 6 Ağustos 2026'da
-    # birleştirildi) ----
+    # ANA SAYFA ACIKLAMALARI (15 Ekim 2026, Bahri: "tum sayfalardaki tum prosedurleri ozetleyerek
+    # aciklamalara yansit"). Bolumler ust menudeki sirayla: Aylik Menu, Recete Uretimi (+ Satisa Acma),
+    # Tarif Kutuphanesi, Evdekilerle Menu, Abonelik. Her bolum sayfadaki gercek adimlari ve dugme
+    # adlarini izler; sayfa degisirse bu metin de guncellenmeli. Gorseller ayni dosya adlariyla duruyor.
+
+    # ---- 1) Aylık Menü ----
+    st.header("Aylık Menü")
+    _gorsel_varsa_goster("tanitim_yillik_menu.png", use_container_width=True)
+    st.write(
+        f"{_tarif_sayisi} tariflik genel Türk mutfağı kütüphanesinden (Klasik tarifler + 7 coğrafi bölge) "
+        "seçtiğin ay için gün gün menü üretir. Menü ayın gerçek takvim haftalarına (Pazartesi–Pazar) göre "
+        "kurulur; ayın ilk ve son haftası komşu aya taşan günleri de içerir. Her gün öğle ve akşam öğünü "
+        "vardır, her öğünde üç gruptan birer tarif bulunur: ana yemek, yardımcı yemek, tamamlayıcı."
+    )
+    st.markdown("**Nasıl kullanılır**")
+    st.markdown(
+        "1. **Bölge seç:** Hiçbir bölge seçili değilken tüm kütüphane kullanılır. Bir bölge düğmesine "
+        "tıklamak sadece o bölgeyi devreye alır; birden fazla bölge seçebilirsin. İşletme kısaltmanla "
+        "görünen düğme, Reçete Üretimi'nde oluşturduğun kendi reçetelerini de menüye katar.\n"
+        "2. **Beslenme tarzı ve alerjen:** Tümü / Vejetaryen / Vegan arasından seçersin. Hariç tuttuğun "
+        "alerjenleri (süt, yumurta, gluten vb.) içeren tarifler menüye hiç girmez.\n"
+        "3. **Yıl ve ay:** Seçtiğin ayın mevsimine uygun tarifler öne alınır.\n"
+        "4. **Porsiyon profili:** Maliyet ve sarf listesi seçtiğin profilin kişi sayısına göre hesaplanır. "
+        "Profilleri Abonelik sayfasında tanımlarsın. Tek seferlik bir davet ya da organizasyon için "
+        "\"Özel Hizmet Profili\"ni seçip kişi sayısını girersin. Profilin daha önce kaydedilmiş aylık "
+        "menüleri varsa listeden açabilirsin.\n"
+        "5. **Besin hedefi (isteğe bağlı):** Profilde kayıtlı besin hedefleri varsa otomatik uygulanır. "
+        "Yoksa öğle ve akşam için ayrı ayrı, istediğin besin değerlerinin (32 besin ögesinden seçerek) "
+        "alt ve üst sınırını girersin; algoritma bu aralığa uyan öğünleri öne alır.\n"
+        "6. **\"Ay için menü üret\"** düğmesine basarsın."
+    )
+    st.markdown("**Sonuçta neler var**")
+    st.markdown(
+        "- **Hafta tabloları:** Günler yan yana, öğle ve akşam tarifleri hizalı görünür. Bir yemeğin "
+        "adına tıklarsan Tarif Kütüphanesi'nde o tarif, seçtiğin porsiyon sayısıyla açılır.\n"
+        "- **Günün ayrıntıları:** Gün düğmesi (mobilde \"Ayrıntılar / Maliyet\") o günün kalori, protein, "
+        "yağ, karbonhidrat, glisemik indeks, alerjen ve porsiyon maliyetini gösterir. Besin hedefinin "
+        "dışında kalan öğün işaretlenir; \"Tekrar Dene\" kurallara uyan yeni bir öğün önerir, \"Kaydet\" "
+        "ile kabul edersin.\n"
+        "- **Kurallar:** Bir tarif aynı hafta içinde mümkün olduğunca tekrar etmez; birbiriyle uyuşmayan "
+        "yemekler (ör. zeytinyağlı ile etli sebze) aynı öğünde çıkmaz.\n"
+        "- **Aylık Menüyü Kaydet:** Menü, seçili profil ve ay için kaydedilir. Aynı ayı yeniden "
+        "kaydedersen önceki kaydın üzerine yazılır.\n"
+        "- **Aylık Menüyü PDF'e indir:** Sade (tüm ay tek sayfada, yemek adları) ya da Detaylı (her hafta "
+        "ayrı sayfada, besin değerleriyle); A4 ya da B3; dikey ya da yatay.\n"
+        "- **Aylık Sarf Listesi:** Ayın malzeme ihtiyacı iki bölümde gelir: en az 30 gün saklanabilen "
+        "dayanıklı malzemeler ay başında tek seferde alınacak liste olarak, taze malzemeler hafta hafta. "
+        "Her hafta için enerji tüketimi (kWh), işçilik saati ve gereken personel; sonunda genel toplam "
+        "tutar ve ayın en yoğun haftasına göre gereken en az personel sayısı yazar. Fiyatı tanımlı olmayan "
+        "malzemeler toplama katılmaz ve işaretlenir. Liste PDF olarak indirilebilir."
+    )
+
+    st.divider()
+
+    # ---- 2) Reçete Üretimi ----
     sutun_metin, sutun_gorsel = st.columns([1.1, 1])
     with sutun_metin:
         st.header("Reçete Üretimi")
         st.write(
-            "İşletmene özel kendi yemek reçetelerini burada oluşturursun "
-            "(Çorba, Ana Yemek, Salata, Tatlı, İçecek, Başlangıç, Pizza, "
-            "Burger kategorileri) — malzemelerini ve miktarlarını "
-            "girersin, sistem güncel malzeme fiyatlarına göre porsiyon "
-            "maliyetini ve porsiyon başı kaloriyi anlık olarak hesaplar."
+            "İşletmene özel reçetelerini burada oluşturursun ve her birinin malzeme, enerji ve işçilik "
+            "dahil gerçek porsiyon maliyetini görürsün. Kategoriler: Çorba, Ana Yemek, Salata, Tatlı, "
+            "İçecek, Başlangıç, Pizza, Burger."
         )
-        st.write(
-            "Aynı sayfada, hemen altında pişirme sürecini aşama aşama "
-            "tarif edersin: her aşamada malzemeyi nerede, kaç dereceye "
-            "kadar ısıttığını seçeneklerden seçersin; aşamalar arasında "
-            "hangisinin hangisinden önce bitmesi gerektiğini (ya da hangi "
-            "aşamaların aynı anda/paralel yapılabildiğini) belirlersin. "
-            "Bağımlı olmayan aşamalar otomatik olarak paralel sayılır, "
-            "sistem gerçek toplam üretim süresini (kritik yol) buna göre "
-            "hesaplar. Bu veriyle malzeme + enerji + işçilik + genel "
-            "gider dahil **gerçek porsiyon maliyetini** çıkarır. "
-            "Elektrik/doğalgaz birim fiyatını, personel saat ücretini ve "
-            "genel gider payını kendi işletme ayarlarından belirlersin."
+        st.markdown(
+            "1. **Reçeteyi oluştur:** Ad, kategori, hazırlık süresi ve reçetenin sunulabileceği aylar "
+            "(boş bırakırsan her ay). Her reçete 10 porsiyon üzerinden girilir; böylece bütün hesaplar "
+            "aynı ölçüde kalır. İşletme kısaltman tanımlıysa reçete adının sonuna eklenir, ör. "
+            "\"Tavuk Sote (ACM)\". Planındaki reçete sınırı dolduysa yeni reçete eklenemez.\n"
+            "2. **Malzemeleri ekle:** Malzemeyi listeden seçip gram olarak girersin. Toplam ve porsiyon "
+            "başı malzeme maliyeti, porsiyon kalorisi, protein, yağ, karbonhidrat, glisemik indeks ve "
+            "vitamin/mineral değerleri anında görünür.\n"
+            "3. **Üretim aşamalarını ekle:** Her aşama için ad, sıra ve toplam süre girersin. Aşamanın büyük "
+            "kısmı pasifse (fırın, haşlama, bekletme) personelin gerçekten meşgul olduğu süreyi ayrıca "
+            "yazarsın; işçilik bu süreyle hesaplanır. Isıl işlem varsa enerji kaynağını (elektrik ya da "
+            "doğalgaz), başlangıç ve hedef sıcaklığı ve verimlilik oranını girersin. O aşamada işlenen "
+            "malzemeleri ve hangi aşama bitmeden başlayamayacağını seçersin.\n"
+            "4. **Sonucu oku:** Birbirine bağlı olmayan aşamalar aynı anda yapılabilir sayılır. Sistem "
+            "gerçek üretim süresini (kritik yol) ve aşamalar sırayla yapılsaydı geçecek süreyi yan yana "
+            "gösterir; porsiyon başı gerçek maliyeti malzeme + enerji + işçilik olarak çıkarır."
         )
         st.caption(
-            "Özel reçetelerini sadece sen görürsün, başka işletmeler "
-            "erişemez — kendi işletmene özel, tamamen ayrı bir tarif "
-            "kütüphanesi oluşturmuş olursun. Bu reçeteler, aşağıdaki "
-            f"\"Aylık Menü\" bölümündeki {_tarif_sayisi} tariflik genel "
-            "Türk mutfağı kütüphanesinden AYRIDIR — hazır olduğunda aynı "
-            "sayfanın en altındaki \"Satışa Açma\" bölümünden satışa "
-            "sunabilirsin."
+            "Elektrik, doğalgaz ve personel saat ücretini Abonelik sayfasındaki \"İşletme Maliyet "
+            "Ayarları\"ndan kendi rakamlarınla değiştirirsin. Reçetelerini sadece kendi işletmen ve "
+            f"şubelerin görür; {_tarif_sayisi} tariflik genel kütüphaneden ayrıdır. Aylık Menü'de işletme "
+            "kısaltmanla görünen düğmeyle menüye katılır. Evdekilerle Menü'de eklediğin tarifler de burada "
+            "listelenir; düzenleme ve silme buradan yapılır."
         )
     with sutun_gorsel:
         _gorsel_varsa_goster("tanitim_uretim_asamalari.png", use_container_width=True)
 
     st.divider()
 
-    # ---- 2) Menü ----
+    # ---- 3) Satışa Açma (Reçete Üretimi sayfasinin alt bolumu) ----
     sutun_gorsel, sutun_metin = st.columns([1, 1.1])
     with sutun_gorsel:
         _gorsel_varsa_goster("tanitim_menu.png", use_container_width=True)
     with sutun_metin:
         st.header("Satışa Açma")
         st.write(
-            "Reçete Üretimi sayfasında bir reçeteyi tamamlayıp (malzeme + "
-            "üretim aşamaları + maliyet) maliyetini gördükten sonra, aynı "
-            "sayfanın en altındaki \"Satışa Açma\" bölümünden doğrudan "
-            "menüye ekleyip bir satış fiyatı belirlersin — ayrı bir sayfaya "
-            "geçmene gerek yok. Sistem, o yemeğin maliyetiyle satış "
-            "fiyatını karşılaştırıp kâr marjını anlık olarak gösterir — "
-            "malzeme fiyatı değiştiğinde kâr marjı da otomatik olarak "
-            "yeniden hesaplanır, elle güncelleme gerekmez."
+            "Reçete Üretimi sayfasının en altındaki bölümdür; ayrı bir sayfaya geçmen gerekmez. Maliyetini "
+            "gördüğün reçeteyi buradan satış menüne eklersin."
         )
         st.markdown(
-            "- **Kategori bazlı organizasyon:** Çorba, Ana Yemek, Salata, "
-            "Tatlı, İçecek, Başlangıç, Pizza, Burger — menünü mutfağının "
-            "gerçek yapısına göre düzenlersin.\n"
-            "- **Anlık kâr marjı:** Her ürünün yanında maliyet, satış "
-            "fiyatı ve aradaki farkın yüzdesi tek bakışta görünür — "
-            "hangi ürünün gerçekte ne kazandırdığını tahmin etmek "
-            "yerine kesin olarak bilirsin.\n"
-            "- **Fiyatlandırma denemeleri:** Bir ürünün satış fiyatını "
-            "değiştirip kâr marjının nasıl değişeceğini, menüyü fiilen "
-            "değiştirmeden önce görebilirsin."
+            "- **Menüye ekle:** Menüde görünecek adı, satış fiyatını (€) ve isteğe bağlı bir açıklama "
+            "girersin. Aynı reçeteyi farklı ad ve fiyatla birden fazla kez ekleyebilirsin.\n"
+            "- **Kâr marjı:** Her ürünün yanında satış fiyatı, porsiyon maliyeti ve kâr marjı (€ ve %) "
+            "görünür. Bu hesapta porsiyon maliyeti malzeme maliyetidir; enerji ve işçilik dahil gerçek "
+            "maliyet sayfanın üst kısmındadır. Malzeme fiyatı değişince kâr marjı kendiliğinden yeniden "
+            "hesaplanır.\n"
+            "- **Aktif / Menüden sil:** \"Aktif\" anahtarıyla bir ürünü silmeden satıştan kaldırıp yeniden "
+            "açarsın; \"Menüden sil\" ürünü kaldırır, reçete yerinde kalır."
         )
 
     st.divider()
 
-    # ---- 4) Aylık Menü ----
-    st.header("Aylık Menü")
-    _gorsel_varsa_goster("tanitim_yillik_menu.png", use_container_width=True)
+    # ---- 4) Tarif Kütüphanesi ----
+    st.header("Tarif Kütüphanesi")
     st.write(
-        f"{_tarif_sayisi} tariflik genel bir Türk mutfağı kütüphanesinden "
-        "(7 coğrafi bölge + genel/klasik tarifler) anayasa kurallarına "
-        "uygun aylık menü üretir, sonucu her gün ayrı bir kart olarak "
-        "haftalık gruplar halinde gösterir:"
+        f"Uygulamanın {_tarif_sayisi} tariflik genel Türk mutfağı kütüphanesini incelediğin sayfadır. "
+        "Aylık Menü'deki yemekler bu kütüphaneden gelir."
     )
     st.markdown(
-        "- **Mutfak / Bölge seçimi:** İstersen tüm kütüphaneyi, istersen "
-        "sadece belirli bölge(ler)i (Ege, Akdeniz, Karadeniz vb.) "
-        "kullanabilirsin. Bir bölgeye tıklamak sadece o bölgeyi devreye "
-        "sokar; hiçbiri seçili değilken tüm kütüphane kullanılır.\n"
-        "- **Vegan / vejetaryen ve alerjen filtresi:** Beslenme tarzını "
-        "(Tümü / Vejetaryen / Vegan) seçebilir, ayrıca istediğin "
-        "alerjenleri (süt, yumurta, gluten vb.) içeren tarifleri menüden "
-        "tamamen hariç tutabilirsin.\n"
-        "- **Mevsim / Ay seçimi:** Seçtiğin ay için 4 haftalık bir menü "
-        "üretilir, mevsime uygun tarifler önceliklendirilir.\n"
-        "- **Anayasa kuralları:** Her öğün üç gruptan (ana yemek, "
-        "yardımcı yemek, tamamlayıcı) birer tarif içerir; aynı hafta "
-        "içinde bir tarif mümkün olduğunca tekrar etmez; birbiriyle "
-        "uyuşmayan yemek kombinasyonları (ör. zeytinyağlı + etli sebze) "
-        "hiçbir zaman bir arada çıkmaz.\n"
-        "- **Besin hedefi (opsiyonel) ve düzeltme:** Öğle ve akşam için "
-        "ayrı ayrı kalori/protein/yağ/karbonhidrat/glisemik indeks "
-        "aralığı belirleyebilirsin; algoritma bu aralığa uyan "
-        "kombinasyonları önceliklendirir, hedefin dışında kalan bir "
-        "öğünü \"Tekrar Dene\" butonuyla uygulamanın önereceği yeni bir "
-        "öğünle değiştirebilirsin.\n"
-        "- **Her kartta tam bilgi:** Her günün kartında o öğünün "
-        "kalori/protein/yağ/karbonhidrat/glisemik indeks/alerjen "
-        "değerleri ve porsiyon maliyeti birlikte görünür; bir yemeğin "
-        "ismine tıklarsan Tarif Kütüphanesi'ndeki ilgili tarife "
-        "doğrudan gidersin.\n"
-        "- **Aylık malzeme listesi:** Üretilen ayın tüm malzeme "
-        "ihtiyacını \"Aylık Malzeme Listesi\" ile tek bir listede "
-        "toplayıp satın alma için kullanabilirsin."
+        "- **Bul:** Bölgeye (Klasik ya da 7 bölgeden biri) ve gruba (Ana Yemek, Yardımcı Yemek, "
+        "Tamamlayıcı) göre süzüp tarifi seçersin. Aylık Menü'de bir yemeğin adına tıklayınca da bu sayfa "
+        "o tarifle açılır.\n"
+        "- **Porsiyon sayısı:** Girdiğin porsiyona göre bütün miktarlar yeniden hesaplanır. Firesi "
+        "bilinen malzemelerde tarifteki net miktarın yanında alınması gereken brüt miktar ve hesabı "
+        "yazar; porsiyon başına çiğ ağırlık da gösterilir.\n"
+        "- **Besin değerleri ve alerjen:** Toplam kalori, protein, yağ, karbonhidrat, glisemik indeks ve "
+        "alerjenler.\n"
+        "- **Gerçek üretim maliyeti:** Üretim aşaması verisi olan tariflerde malzeme + enerji + işçilik, "
+        "senin maliyet ayarlarına göre hesaplanır. Fiyatı eksik malzeme varsa adıyla belirtilir.\n"
+        "- **Hazırlık talimatı:** Adım adım hazırlanış. Talimatlar tariflere kademeli olarak ekleniyor; "
+        "henüz eklenmemiş tarifte bu sayfada yazar."
     )
 
     st.divider()
@@ -1004,37 +1046,80 @@ def kontrol_paneli_sayfasi():
         st.header("Evdekilerle Menü")
         st.write(
             "Evdeki (ya da mutfaktaki) malzemeleri ve miktarlarını girersin; sistem bunları önce kullanan "
-            "bir haftalık menü kurar, eksik kalanlar için kısa bir alışveriş listesi verir. Menü her durumda "
-            "tam çıkar: malzeme yetmeyen yerde alışveriş listesi uzar."
+            "1 ile 7 gün arasında bir menü kurar, eksik kalanlar için kısa bir alışveriş listesi verir. Menü "
+            "her durumda tam çıkar: malzeme yetmeyen yerde alışveriş listesi uzar."
         )
         st.markdown(
-            "- **Malzeme girişi:** Malzemeyi yazarak arayıp gram, kg, adet, ml ya da litre olarak eklersin. "
-            "Market fişinin fotoğrafını yükleyip, yapıştırıp ya da kamerayla çekip okutabilirsin; gıda dışı "
-            "satırlar atlanır, başka dildeki ürün adları Türkçeye çevrilip kataloğumuzdaki malzemeyle eşlenir. "
-            "Okunan her satırı kontrol edip onaylarsın.\n"
-            "- **Kendi tariflerin:** Tarifini elle girebilir, bir metinden ya da sosyal medyada gördüğün bir "
-            "paylaşımın ekran görüntüsünden okutabilirsin. \"3 su bardağı pirinç\", \"1 tutam maydanoz\" "
-            "gibi ölçüler grama çevrilir, hesabı yanında gösterilir. Kendi tariflerin menüde kütüphane "
-            "tarifleriyle birlikte kullanılır.\n"
-            "- **Ayarlar:** Kişi sayısı, öğün (öğle, akşam ya da ikisi), gün sayısı (1-7), öğünde 2 ya da 3 "
-            "tarif, isteğe bağlı besin değeri hedefleri ve malzemenin mevsimi (o mevsimde bulunmayan taze "
-            "ürünü isteyen tarifler önerilmez).\n"
-            "- **Önce besin hedefi, sonra evdekiler:** Kurallara ve besin hedefine uyan seçenekler arasından "
-            "evdeki malzemeyi en çok kullanan seçilir; her öğünün altında evdeki malzemeden ne kadarının "
-            "karşılandığı yazar.\n"
-            "- **Elle düzenleme:** Kurulan menüde istediğin günün tarifini değiştirirsin; alışveriş listesi "
-            "ve stok raporu yeniden hesaplanır.\n"
-            "- **Alışveriş listesi, stok raporu ve PDF:** Neyin alınacağını, evdekilerden neyin ne kadar "
-            "kullanılıp neyin arttığını görürsün; menü, liste, rapor ve tarifleri (kişi sayısına göre "
-            "malzemeleri ve hazırlanışıyla) tek PDF olarak indirirsin."
+            "1. **Evdeki malzemeler:** Malzemeyi yazarak arayıp gram, kg, adet, ml ya da litre olarak "
+            "eklersin; liste kaydedilir, bir sonraki girişinde hazır gelir. \"Market fişinden ekle\" ile "
+            "fişin fotoğrafını yükler, yapıştırır ya da kamerayla çekersin. Gıda dışı satırlar atlanır, "
+            "başka dildeki ürün adları Türkçeye çevrilip kataloğumuzdaki malzemeyle eşlenir. Okunan her "
+            "satırı tabloda kontrol edip eklersin.\n"
+            "2. **Kendi tariflerin:** \"Yeni tarif ekle\" ile tarifi elle girersin ya da bir metinden veya "
+            "sosyal medyada gördüğün bir paylaşımın ekran görüntüsünden okutursun. \"3 su bardağı pirinç\", "
+            "\"1 tutam maydanoz\" gibi ölçüler grama çevrilir, hesabı Not sütununda yazar; yanlışsa "
+            "düzeltirsin. Kaydedilen tarif Reçete Üretimi'nde de görünür.\n"
+            "3. **Menü ayarları:** Kişi sayısı, öğün (öğle, akşam ya da ikisi), gün sayısı (1–7), başlangıç "
+            "tarihi, öğünde 2 ya da 3 tarif, kendi tariflerini kullanma ve malzeme mevsimi kontrolü (o "
+            "mevsimde bulunmayan taze ürünü isteyen tarif önerilmez). \"Evde var\" saydığın temel malzemeler "
+            "(tuz, baharat, yağ gibi) alışveriş listesine girmez. İstersen öğün başına besin değeri hedefi "
+            "koyarsın.\n"
+            "4. **\"Menüyü oluştur\"** düğmesine basarsın. Kurallara ve besin hedefine uyan seçenekler "
+            "arasından evdeki malzemeyi en çok kullanan seçilir; her öğünün altında evdeki malzemeden ne "
+            "kadarının karşılandığı yazar."
+        )
+        st.markdown(
+            "- **Menüyü düzenle:** İstediğin günün tarifini listeden değiştirirsin; alışveriş listesi ve "
+            "stok raporu yeniden hesaplanır.\n"
+            "- **Alman gerekenler ve stok raporu:** Neyin alınacağını, evdekilerden neyin ne kadar "
+            "kullanılıp neyin arttığını görürsün.\n"
+            "- **PDF:** \"PDF hazırla\" ile menü, alışveriş listesi (\"Alındı\" kutucuklu), stok raporu ve "
+            "tarifler (kişi sayısına göre malzemeleri ve hazırlanışıyla) tek dosyada hazırlanır, "
+            "\"PDF'i indir\" ile alırsın."
         )
         st.caption(
             "Bu hizmet isteğe bağlıdır: aboneliğin başladığında bir kez sorulur, istediğin zaman Abonelik "
-            "sayfasından açıp kapatabilirsin."
+            "sayfasından açıp kapatabilirsin. Kapatınca sayfa menüden kalkar, girdiğin malzemeler silinmez."
         )
     with sutun_gorsel:
         # Bahri tanitimi video olarak hazirladi (15 Ekim 2026)
         _video_varsa_goster("tanitim_evdekilerle_menu.mp4")
+
+    st.divider()
+
+    # ---- 6) Abonelik ve ayarlar ----
+    st.header("Abonelik ve Ayarlar")
+    st.write(
+        "Abonelik sayfası işletmenin bütün ayarlarını toplar. Personel bu sayfada yalnızca hesap "
+        "bilgilerini, çıkışı ve yetkisi olan bölümleri görür."
+    )
+    st.markdown(
+        "- **Plan ve onay durumu:** Ödeme yapılmadıysa sadece Ana Sayfa ve Abonelik açıktır. Ödemeden "
+        "sonra admin onayına kadar sayfaları görüntüleyebilir ama değişiklik yapamazsın.\n"
+        "- **Şubeler:** Her şube ayrı bir işletmedir; kendi reçeteleri, maliyet ayarları, menüleri ve "
+        "raporları olur. Merkezin özel tarifleri bütün şubelerde ortaktır. Yeni şubeye merkezin malzeme "
+        "fiyatları, maliyet ayarları ve porsiyon profilleri kopyalanır, şube bunları sonra kendine göre "
+        "değiştirir. Birden fazla işletmen varsa hangisinde çalıştığını sayfanın üstündeki seçiciden "
+        "değiştirirsin. Açabileceğin işletme sayısı planına bağlıdır.\n"
+        "- **Personel ve yetkiler:** Personelin e-postasını ve şifresini sen belirlersin, hangi "
+        "işletmelerde çalışacağını seçersin. Hazır roller (Aşçı, Yönetici, Muhasebe) bir başlangıçtır; "
+        "\"Özel\" seçersen maliyetleri görme, satın alma listeleri, tarifler, reçete üretimi, aylık menü, "
+        "PDF raporları, fiyat güncelleme, maliyet ayarları ve porsiyon profilleri yetkilerini tek tek "
+        "verirsin. Personel sadece yetkisi olan sayfaları görür; değişiklik personelin bir sonraki sayfa "
+        "yenilemesinde geçerli olur.\n"
+        "- **İşletme bilgileri:** İşletme adı, reçete adlarına eklenen kısaltma, fatura adresi, vergi "
+        "dairesi ve vergi numarası.\n"
+        "- **Evdekilerle Menü:** Hizmeti açıp kapattığın anahtar.\n"
+        "- **İşletme maliyet ayarları:** Elektrik ve doğalgaz birim fiyatı (€/kWh) ve personel saat "
+        "ücreti (€). Başlangıçtaki değerler tahminidir; kendi rakamlarını girdiğinde bütün porsiyon "
+        "maliyetleri (kütüphane tarifleri dahil) hemen güncellenir.\n"
+        "- **Porsiyon profilleri:** Kaç kişiye yemek çıkardığını profil olarak tanımlarsın; birden fazla "
+        "müşteriye farklı sayılarda üretim yapıyorsan her biri için ayrı profil açarsın. Her profile özel "
+        "besin hedefi koyabilirsin; hazır şablonlardan (Hastane, Sporcu, Diyet / Kilo Verme, Şeker "
+        "Hastası, Çocuklar 9-13 yaş, Hamile / Emziren, Kalp-Damar / Hipertansiyon, Akdeniz) başlayıp "
+        "değerleri kendine göre değiştirebilirsin. Aylık Menü bu hedefleri otomatik uygular.\n"
+        "- **Hesap bilgileri ve çıkış:** Şifre değiştirme (işletme sahibi e-postasını da değiştirebilir; yeni adrese gelen doğrulama bağlantısına tıklayınca geçerli olur); sayfanın en altında \"Çıkış yap\"."
+    )
 
     st.divider()
     st.caption("Üst menüden istediğin bölüme geçip çalışmaya başlayabilirsin.")
