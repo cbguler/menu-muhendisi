@@ -13340,3 +13340,4 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   - Aylik Menu: "4 haftalik" yerine gercek takvim haftalari; "Aylik Malzeme Listesi" yerine gercek dugme adi "Aylik Sarf Listesi" ve icerigi; Kaydet, PDF secenekleri, porsiyon profili, Ozel Hizmet Profili, profil besin hedefleri, kendi recetelerini katma dugmesi eklendi.
   - Amac: "haftalik/aylik/mevsimlik/yillik menu uretir" -> ay ay uretilip kaydedilerek mevsimlik/yillik plan.
 - Acik soru (Bahri'ye): Satisa Acma'daki kar marji malzeme maliyetine gore; gercek maliyete (enerji+isclik dahil) gore mi hesaplansin?
+- Ana Sayfa gorselleri (15 Ekim 2026, Gemini): Tarif Kutuphanesi bolumune tanitim_tarif_kutuphanesi.mp4 (Bahri video olarak uretti; 1280x720, 10 sn, ses kanali cikarildi, 2,6 MB), Abonelik ve Ayarlar bolumune tanitim_abonelik.png (1376x768). Iki bolum de yazi + gorsel iki sutuna alindi; gorsel/metin yerleri bolumden bolume sirayla yer degistiriyor.

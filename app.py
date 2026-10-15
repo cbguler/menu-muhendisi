@@ -1018,25 +1018,30 @@ def kontrol_paneli_sayfasi():
     st.divider()
 
     # ---- 4) Tarif Kütüphanesi ----
-    st.header("Tarif Kütüphanesi")
-    st.write(
-        f"Uygulamanın {_tarif_sayisi} tariflik genel Türk mutfağı kütüphanesini incelediğin sayfadır. "
-        "Aylık Menü'deki yemekler bu kütüphaneden gelir."
-    )
-    st.markdown(
-        "- **Bul:** Bölgeye (Klasik ya da 7 bölgeden biri) ve gruba (Ana Yemek, Yardımcı Yemek, "
-        "Tamamlayıcı) göre süzüp tarifi seçersin. Aylık Menü'de bir yemeğin adına tıklayınca da bu sayfa "
-        "o tarifle açılır.\n"
-        "- **Porsiyon sayısı:** Girdiğin porsiyona göre bütün miktarlar yeniden hesaplanır. Firesi "
-        "bilinen malzemelerde tarifteki net miktarın yanında alınması gereken brüt miktar ve hesabı "
-        "yazar; porsiyon başına çiğ ağırlık da gösterilir.\n"
-        "- **Besin değerleri ve alerjen:** Toplam kalori, protein, yağ, karbonhidrat, glisemik indeks ve "
-        "alerjenler.\n"
-        "- **Gerçek üretim maliyeti:** Üretim aşaması verisi olan tariflerde malzeme + enerji + işçilik, "
-        "senin maliyet ayarlarına göre hesaplanır. Fiyatı eksik malzeme varsa adıyla belirtilir.\n"
-        "- **Hazırlık talimatı:** Adım adım hazırlanış. Talimatlar tariflere kademeli olarak ekleniyor; "
-        "henüz eklenmemiş tarifte bu sayfada yazar."
-    )
+    # 15 Ekim 2026: Bahri tanitimi video olarak hazirladi (Gemini).
+    sutun_gorsel, sutun_metin = st.columns([1, 1.1])
+    with sutun_gorsel:
+        _video_varsa_goster("tanitim_tarif_kutuphanesi.mp4")
+    with sutun_metin:
+        st.header("Tarif Kütüphanesi")
+        st.write(
+            f"Uygulamanın {_tarif_sayisi} tariflik genel Türk mutfağı kütüphanesini incelediğin sayfadır. "
+            "Aylık Menü'deki yemekler bu kütüphaneden gelir."
+        )
+        st.markdown(
+            "- **Bul:** Bölgeye (Klasik ya da 7 bölgeden biri) ve gruba (Ana Yemek, Yardımcı Yemek, "
+            "Tamamlayıcı) göre süzüp tarifi seçersin. Aylık Menü'de bir yemeğin adına tıklayınca da bu sayfa "
+            "o tarifle açılır.\n"
+            "- **Porsiyon sayısı:** Girdiğin porsiyona göre bütün miktarlar yeniden hesaplanır. Firesi "
+            "bilinen malzemelerde tarifteki net miktarın yanında alınması gereken brüt miktar ve hesabı "
+            "yazar; porsiyon başına çiğ ağırlık da gösterilir.\n"
+            "- **Besin değerleri ve alerjen:** Toplam kalori, protein, yağ, karbonhidrat, glisemik indeks ve "
+            "alerjenler.\n"
+            "- **Gerçek üretim maliyeti:** Üretim aşaması verisi olan tariflerde malzeme + enerji + işçilik, "
+            "senin maliyet ayarlarına göre hesaplanır. Fiyatı eksik malzeme varsa adıyla belirtilir.\n"
+            "- **Hazırlık talimatı:** Adım adım hazırlanış. Talimatlar tariflere kademeli olarak ekleniyor; "
+            "henüz eklenmemiş tarifte bu sayfada yazar."
+        )
 
     st.divider()
 
@@ -1088,38 +1093,42 @@ def kontrol_paneli_sayfasi():
     st.divider()
 
     # ---- 6) Abonelik ve ayarlar ----
-    st.header("Abonelik ve Ayarlar")
-    st.write(
-        "Abonelik sayfası işletmenin bütün ayarlarını toplar. Personel bu sayfada yalnızca hesap "
-        "bilgilerini, çıkışı ve yetkisi olan bölümleri görür."
-    )
-    st.markdown(
-        "- **Plan ve onay durumu:** Ödeme yapılmadıysa sadece Ana Sayfa ve Abonelik açıktır. Ödemeden "
-        "sonra admin onayına kadar sayfaları görüntüleyebilir ama değişiklik yapamazsın.\n"
-        "- **Şubeler:** Her şube ayrı bir işletmedir; kendi reçeteleri, maliyet ayarları, menüleri ve "
-        "raporları olur. Merkezin özel tarifleri bütün şubelerde ortaktır. Yeni şubeye merkezin malzeme "
-        "fiyatları, maliyet ayarları ve porsiyon profilleri kopyalanır, şube bunları sonra kendine göre "
-        "değiştirir. Birden fazla işletmen varsa hangisinde çalıştığını sayfanın üstündeki seçiciden "
-        "değiştirirsin. Açabileceğin işletme sayısı planına bağlıdır.\n"
-        "- **Personel ve yetkiler:** Personelin e-postasını ve şifresini sen belirlersin, hangi "
-        "işletmelerde çalışacağını seçersin. Hazır roller (Aşçı, Yönetici, Muhasebe) bir başlangıçtır; "
-        "\"Özel\" seçersen maliyetleri görme, satın alma listeleri, tarifler, reçete üretimi, aylık menü, "
-        "PDF raporları, fiyat güncelleme, maliyet ayarları ve porsiyon profilleri yetkilerini tek tek "
-        "verirsin. Personel sadece yetkisi olan sayfaları görür; değişiklik personelin bir sonraki sayfa "
-        "yenilemesinde geçerli olur.\n"
-        "- **İşletme bilgileri:** İşletme adı, reçete adlarına eklenen kısaltma, fatura adresi, vergi "
-        "dairesi ve vergi numarası.\n"
-        "- **Evdekilerle Menü:** Hizmeti açıp kapattığın anahtar.\n"
-        "- **İşletme maliyet ayarları:** Elektrik ve doğalgaz birim fiyatı (€/kWh) ve personel saat "
-        "ücreti (€). Başlangıçtaki değerler tahminidir; kendi rakamlarını girdiğinde bütün porsiyon "
-        "maliyetleri (kütüphane tarifleri dahil) hemen güncellenir.\n"
-        "- **Porsiyon profilleri:** Kaç kişiye yemek çıkardığını profil olarak tanımlarsın; birden fazla "
-        "müşteriye farklı sayılarda üretim yapıyorsan her biri için ayrı profil açarsın. Her profile özel "
-        "besin hedefi koyabilirsin; hazır şablonlardan (Hastane, Sporcu, Diyet / Kilo Verme, Şeker "
-        "Hastası, Çocuklar 9-13 yaş, Hamile / Emziren, Kalp-Damar / Hipertansiyon, Akdeniz) başlayıp "
-        "değerleri kendine göre değiştirebilirsin. Aylık Menü bu hedefleri otomatik uygular.\n"
-        "- **Hesap bilgileri ve çıkış:** Şifre değiştirme (işletme sahibi e-postasını da değiştirebilir; yeni adrese gelen doğrulama bağlantısına tıklayınca geçerli olur); sayfanın en altında \"Çıkış yap\"."
-    )
+    sutun_gorsel, sutun_metin = st.columns([1, 1.1])
+    with sutun_gorsel:
+        _gorsel_varsa_goster("tanitim_abonelik.png", use_container_width=True)
+    with sutun_metin:
+        st.header("Abonelik ve Ayarlar")
+        st.write(
+            "Abonelik sayfası işletmenin bütün ayarlarını toplar. Personel bu sayfada yalnızca hesap "
+            "bilgilerini, çıkışı ve yetkisi olan bölümleri görür."
+        )
+        st.markdown(
+            "- **Plan ve onay durumu:** Ödeme yapılmadıysa sadece Ana Sayfa ve Abonelik açıktır. Ödemeden "
+            "sonra admin onayına kadar sayfaları görüntüleyebilir ama değişiklik yapamazsın.\n"
+            "- **Şubeler:** Her şube ayrı bir işletmedir; kendi reçeteleri, maliyet ayarları, menüleri ve "
+            "raporları olur. Merkezin özel tarifleri bütün şubelerde ortaktır. Yeni şubeye merkezin malzeme "
+            "fiyatları, maliyet ayarları ve porsiyon profilleri kopyalanır, şube bunları sonra kendine göre "
+            "değiştirir. Birden fazla işletmen varsa hangisinde çalıştığını sayfanın üstündeki seçiciden "
+            "değiştirirsin. Açabileceğin işletme sayısı planına bağlıdır.\n"
+            "- **Personel ve yetkiler:** Personelin e-postasını ve şifresini sen belirlersin, hangi "
+            "işletmelerde çalışacağını seçersin. Hazır roller (Aşçı, Yönetici, Muhasebe) bir başlangıçtır; "
+            "\"Özel\" seçersen maliyetleri görme, satın alma listeleri, tarifler, reçete üretimi, aylık menü, "
+            "PDF raporları, fiyat güncelleme, maliyet ayarları ve porsiyon profilleri yetkilerini tek tek "
+            "verirsin. Personel sadece yetkisi olan sayfaları görür; değişiklik personelin bir sonraki sayfa "
+            "yenilemesinde geçerli olur.\n"
+            "- **İşletme bilgileri:** İşletme adı, reçete adlarına eklenen kısaltma, fatura adresi, vergi "
+            "dairesi ve vergi numarası.\n"
+            "- **Evdekilerle Menü:** Hizmeti açıp kapattığın anahtar.\n"
+            "- **İşletme maliyet ayarları:** Elektrik ve doğalgaz birim fiyatı (€/kWh) ve personel saat "
+            "ücreti (€). Başlangıçtaki değerler tahminidir; kendi rakamlarını girdiğinde bütün porsiyon "
+            "maliyetleri (kütüphane tarifleri dahil) hemen güncellenir.\n"
+            "- **Porsiyon profilleri:** Kaç kişiye yemek çıkardığını profil olarak tanımlarsın; birden fazla "
+            "müşteriye farklı sayılarda üretim yapıyorsan her biri için ayrı profil açarsın. Her profile özel "
+            "besin hedefi koyabilirsin; hazır şablonlardan (Hastane, Sporcu, Diyet / Kilo Verme, Şeker "
+            "Hastası, Çocuklar 9-13 yaş, Hamile / Emziren, Kalp-Damar / Hipertansiyon, Akdeniz) başlayıp "
+            "değerleri kendine göre değiştirebilirsin. Aylık Menü bu hedefleri otomatik uygular.\n"
+            "- **Hesap bilgileri ve çıkış:** Şifre değiştirme (işletme sahibi e-postasını da değiştirebilir; yeni adrese gelen doğrulama bağlantısına tıklayınca geçerli olur); sayfanın en altında \"Çıkış yap\"."
+        )
 
     st.divider()
     st.caption("Üst menüden istediğin bölüme geçip çalışmaya başlayabilirsin.")
