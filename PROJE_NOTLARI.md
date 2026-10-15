@@ -13316,3 +13316,7 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   16:9, diger tanitim gorselleriyle ayni duz renkli vektor uslup). Dosya yokken sayfa kirilmaz, yerine not gosterir.
   Guncelleme: Bahri tanitimi video olarak hazirladi -> assets/tanitim_evdekilerle_menu.mp4 (st.video, otomatik/sessiz/
   dongu; mevcut _video_varsa_goster). Aylik Menu tanitimindaki "Excel'e indir" maddesi Bahri'nin istegiyle kaldirildi.
+- 15 Ekim: Baslik (Bahri): video kaldirildi (baslik_video_masaustu/mobil.mp4 artik kullanilmiyor), logo solda + "Menü
+  Mühendisi" ortada eski yerlerine dondu, baslik inceltildi (logo 144 -> 84px, yazi 4rem -> 2.6rem; mobil logo
+  72 -> 52px). Yazinin solu/sagi icin istege bagli susler: assets/baslik_malzeme_sol.png ve baslik_malzeme_sag.png
+  (Gemini ile uretilecek; yoksa bos). Ust menu sol boslugu ve buton genislik hesabi logo payi 164 -> 104px.

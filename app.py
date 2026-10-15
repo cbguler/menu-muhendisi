@@ -1233,8 +1233,9 @@ st.markdown(
     # YUZ ... DUZELTME (13 Ekim 2026): Evdekilerle Menu ile admin oturumunda 7
     # sayfa oldu, Admin alt satira dustu. Genislik artik sayfa sayisina gore:
     # en fazla 190px, ama satira sigmiyorsa butun kutular AYNI olcude daralir
-    # (ekran - logo payi 164px - kenar/kaydirma payi - kutu aralari) / sayfa sayisi.
-    f"  width: min(190px, calc((100vw - 164px - 3.5rem - {len(sayfa_listesi) - 1} * 0.7rem) / {len(sayfa_listesi)})) !important;"
+    # (ekran - logo payi 104px - kenar/kaydirma payi - kutu aralari) / sayfa sayisi.
+    # 15 Ekim 2026: logo 144px -> 84px oldugu icin logo payi 164px -> 104px.
+    f"  width: min(190px, calc((100vw - 104px - 3.5rem - {len(sayfa_listesi) - 1} * 0.7rem) / {len(sayfa_listesi)})) !important;"
     "  white-space: nowrap; overflow: hidden;"
     "}"
     "[class*='st-key-nav_buton_masaustu_'] a {"
@@ -1249,7 +1250,7 @@ st.markdown(
     # davranisi iptal edildi). Satir, logonun (144px) SAG kenarindan
     # baslasin diye sol bosluk (padding) logo genisligi + aradaki
     # bosluk kadar (20px) verildi.
-    ".st-key-nav_buton_satiri { padding-left: 164px !important; }"
+    ".st-key-nav_buton_satiri { padding-left: 104px !important; }"  # 84px logo + 20px (15 Ekim 2026)
     ".st-key-nav_buton_satiri div[data-testid='stHorizontalBlock'] {"
     "  justify-content: flex-start !important; flex-wrap: wrap !important;"
     "}"
@@ -1442,21 +1443,46 @@ with open("assets/logo.png", "rb") as _f:
 # BEDEL: st.video() nativ oynatici KONTROL CUBUGU gosterebilir (eski
 # gizli/temiz video hilesinde yoktu) -- bu, mobil uyumluluk icin
 # BILINCLI kabul edilen bir taviz (bkz. _video_varsa_goster yorumu).
-_baslik_video_masaustu_yolu = "assets/baslik_video_masaustu.mp4"
-if os.path.exists(_baslik_video_masaustu_yolu):
-    with open(_baslik_video_masaustu_yolu, "rb") as _f:
-        st.video(_f.read(), format="video/mp4", autoplay=True, loop=True, muted=True)
-else:
-    st.markdown(
-        "<div style='position:relative; min-height:144px; padding:0.1rem 0;'>"
-        f"<img src='data:image/png;base64,{_logo_b64}' style='width:144px; height:auto; "
-        "position:absolute; left:0; top:50%; transform:translateY(-50%);'/>"
-        "<div style='width:100%; text-align:center;'>"
-        "<span style='font-size:4rem; font-weight:700; color:#0F6E56; "
-        "line-height:1; white-space:nowrap;'>Menü Mühendisi</span></div>"
-        "</div>",
-        unsafe_allow_html=True,
-    )
+# YUZ ... DUZELTME (15 Ekim 2026, Bahri): basliktaki video KALDIRILDI; logo solda, "Menü Mühendisi"
+# ortada eski yerlerine dondu ve baslik inceltildi (144px -> 84px, yazi 4rem -> 2.6rem). Yazinin
+# soluna ve sagina serpistirilmis malzeme susleri (Gemini ile uretilecek) icin yer acildi:
+# assets/baslik_malzeme_sol.png ve assets/baslik_malzeme_sag.png VARSA gosterilir, yoksa bos kalir
+# (sayfa kirilmaz). Eski baslik_susu_sol/sag.png bilincli olarak kullanilmiyor (eski tasarim).
+# Gorseller base64 ile gomuluyor (bu dosyada kanitlanmis yontem: st.image ozel HTML icinde
+# guvenilir degil -- bkz. yukaridaki KIRK ALTINCI DUZELTME).
+_BASLIK_YUKSEKLIK_PX = 84
+
+
+def _png_b64(yol):
+    if not os.path.exists(yol):
+        return None
+    with open(yol, "rb") as _f:
+        return base64.b64encode(_f.read()).decode("ascii")
+
+
+_sus_sol_b64 = _png_b64("assets/baslik_malzeme_sol.png")
+_sus_sag_b64 = _png_b64("assets/baslik_malzeme_sag.png")
+
+
+def _sus_img(b64):
+    if not b64:
+        return ""
+    return (f"<img src='data:image/png;base64,{b64}' style='height:{_BASLIK_YUKSEKLIK_PX}px; width:auto; "
+            "max-width:24vw; object-fit:contain;'/>")
+
+
+st.markdown(
+    f"<div style='position:relative; height:{_BASLIK_YUKSEKLIK_PX}px; margin:0; padding:0;'>"
+    f"<img src='data:image/png;base64,{_logo_b64}' style='height:{_BASLIK_YUKSEKLIK_PX}px; width:auto; "
+    "position:absolute; left:0; top:0;'/>"
+    "<div style='height:100%; display:flex; align-items:center; justify-content:center; gap:20px;'>"
+    + _sus_img(_sus_sol_b64)
+    + "<span style='font-size:2.6rem; font-weight:700; color:#0F6E56; line-height:1; "
+    "white-space:nowrap;'>Menü Mühendisi</span>"
+    + _sus_img(_sus_sag_b64)
+    + "</div></div>",
+    unsafe_allow_html=True,
+)
 
 with st.container(key="masaustu_nav"):
     # ELLI UCUNCU DUZELTME (30 Agustos 2026): kullanici -- (1) butonlar
@@ -1481,21 +1507,15 @@ with st.container(key="mobil_nav"):
     # risk yok -- logo+yazi ve popover butonu ayni satirda kalabilir.
     _logo_yazi_kolonu, _menu_kolonu = st.columns([3, 2], vertical_alignment="center")
     with _logo_yazi_kolonu:
-        # YUZ ELLI IKINCI DUZELTME (21 Eylul 2026): masaustundeki AYNI
-        # geri-alinabilir mantik -- dosya varsa video, yoksa eski
-        # logo+yazi.
-        _baslik_video_mobil_yolu = "assets/baslik_video_mobil.mp4"
-        if os.path.exists(_baslik_video_mobil_yolu):
-            with open(_baslik_video_mobil_yolu, "rb") as _f:
-                st.video(_f.read(), format="video/mp4", autoplay=True, loop=True, muted=True)
-        else:
-            st.markdown(
-                f"<div style='display:flex; align-items:center; gap:8px;'>"
-                f"<img src='data:image/png;base64,{_logo_b64}' style='width:72px; height:auto; flex-shrink:0;'/>"
-                "<span style='font-size:1.05rem; font-weight:700; color:#0F6E56; "
-                "white-space:nowrap;'>Menü Mühendisi</span></div>",
-                unsafe_allow_html=True,
-            )
+        # 15 Ekim 2026: mobilde de video yok; logo + yazi (inceltilmis: 72px -> 52px). Susler mobilde
+        # yer olmadigi icin gosterilmez.
+        st.markdown(
+            f"<div style='display:flex; align-items:center; gap:8px;'>"
+            f"<img src='data:image/png;base64,{_logo_b64}' style='width:52px; height:auto; flex-shrink:0;'/>"
+            "<span style='font-size:1.05rem; font-weight:700; color:#0F6E56; "
+            "white-space:nowrap;'>Menü Mühendisi</span></div>",
+            unsafe_allow_html=True,
+        )
     with _menu_kolonu:
         with st.popover("Menü"):
             for _sayfa in sayfa_listesi:
