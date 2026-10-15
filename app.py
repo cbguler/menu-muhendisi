@@ -1007,10 +1007,9 @@ def kontrol_paneli_sayfasi():
         st.markdown(
             "- **Menüye ekle:** Menüde görünecek adı, satış fiyatını (€) ve isteğe bağlı bir açıklama "
             "girersin. Aynı reçeteyi farklı ad ve fiyatla birden fazla kez ekleyebilirsin.\n"
-            "- **Kâr marjı:** Her ürünün yanında satış fiyatı, porsiyon maliyeti ve kâr marjı (€ ve %) "
-            "görünür. Bu hesapta porsiyon maliyeti malzeme maliyetidir; enerji ve işçilik dahil gerçek "
-            "maliyet sayfanın üst kısmındadır. Malzeme fiyatı değişince kâr marjı kendiliğinden yeniden "
-            "hesaplanır.\n"
+            "- **Kâr marjı:** Her ürünün yanında satış fiyatı, porsiyon gerçek maliyeti (malzeme + enerji + "
+            "işçilik) ve kâr marjı (€ ve %) görünür. Malzeme fiyatı ya da enerji ve personel ücreti "
+            "değişince kâr marjı kendiliğinden yeniden hesaplanır.\n"
             "- **Aktif / Menüden sil:** \"Aktif\" anahtarıyla bir ürünü silmeden satıştan kaldırıp yeniden "
             "açarsın; \"Menüden sil\" ürünü kaldırır, reçete yerinde kalır."
         )

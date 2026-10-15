@@ -562,6 +562,7 @@ uretim_maliyeti_sonuc = (
     .execute()
 )
 uretim_maliyeti = uretim_maliyeti_sonuc.data[0] if uretim_maliyeti_sonuc.data else None
+_gercek_maliyet_gg_haric = None  # asagida hesaplanir; Satisa Acma'daki kar marji bunu kullanir
 
 if uretim_maliyeti and _MALIYET_GORUNUR:
     # OTUZ YEDINCI DUZELTME (24 Agustos 2026): "Genel gider payı" diger
@@ -573,15 +574,25 @@ if uretim_maliyeti and _MALIYET_GORUNUR:
     # tarafinda genel_gider_payi_eur kadar geri cikariyoruz. View'deki
     # sutun kaldirilmadigi icin ileride gerekirse sorunsuz geri
     # eklenebilir.
+    # 15 Ekim 2026 DUZELTME: eski hesap porsiyon_gercek_maliyet_eur'dan (PORSIYON basi, genel gider
+    # DAHIL) genel_gider_payi_eur'u (RECETENIN TAMAMI icin) cikariyordu -- birimler farkli oldugu icin
+    # genel_gider_yuzdesi 0 degilse sonuc yanlis cikiyordu (varsayilan %15 ile eksiye bile dusebilir).
+    # Dogrusu: (malzeme + enerji + iscilik) toplamini porsiyon sayisina bolmek; genel gider bilerek
+    # dahil degil (12 Agustos 2026'dan beri hicbir hesapta kullanilmiyor).
     m1, m2, m3 = st.columns(3)
-    m1.metric("Malzeme", f"{uretim_maliyeti['malzeme_maliyeti_eur']:.2f} €")
-    m2.metric("Enerji (ısıl işlem)", f"{uretim_maliyeti['enerji_maliyeti_eur']:.2f} €")
-    m3.metric("İşçilik", f"{uretim_maliyeti['iscilik_maliyeti_eur']:.2f} €")
-    _gercek_maliyet_gg_haric = (
-        uretim_maliyeti["porsiyon_gercek_maliyet_eur"]
-        - (uretim_maliyeti.get("genel_gider_payi_eur") or 0)
-    )
-    st.metric("**Porsiyon başı gerçek maliyet**", f"{_gercek_maliyet_gg_haric:.2f} €")
+    _malz_toplam = uretim_maliyeti["malzeme_maliyeti_eur"]
+    m1.metric(f"Malzeme ({porsiyon_sayisi} porsiyon)", f"{_malz_toplam:.2f} €" if _malz_toplam is not None else "-")
+    m2.metric(f"Enerji ({porsiyon_sayisi} porsiyon)", f"{uretim_maliyeti['enerji_maliyeti_eur']:.2f} €")
+    m3.metric(f"İşçilik ({porsiyon_sayisi} porsiyon)", f"{uretim_maliyeti['iscilik_maliyeti_eur']:.2f} €")
+    if uretim_maliyeti["malzeme_maliyeti_eur"] is None:
+        st.caption("Bazı malzemelerin fiyatı eksik olduğu için gerçek maliyet hesaplanamadı.")
+    else:
+        _gercek_maliyet_gg_haric = (
+            uretim_maliyeti["malzeme_maliyeti_eur"]
+            + (uretim_maliyeti["enerji_maliyeti_eur"] or 0)
+            + (uretim_maliyeti["iscilik_maliyeti_eur"] or 0)
+        ) / porsiyon_sayisi
+        st.metric("**Porsiyon başı gerçek maliyet**", f"{_gercek_maliyet_gg_haric:.2f} €")
 else:
     st.caption("Maliyet hesaplanamadı.")
 
@@ -634,8 +645,21 @@ if recete_menu_ogeleri:
 
             mn1, mn2, mn3 = st.columns(3)
             mn1.metric("Satış fiyatı", f"{oge['satis_fiyati']:.2f} €")
-            if karlilik and karlilik.get("porsiyon_maliyeti_eur") is not None:
-                mn2.metric("Porsiyon maliyeti", f"{karlilik['porsiyon_maliyeti_eur']:.2f} €")
+            # 15 Ekim 2026 (Bahri): kar marji GERCEK porsiyon maliyetine (malzeme + enerji + iscilik)
+            # gore hesaplanir. menu_ogesi_karlilik gorunumu sadece malzeme maliyetini kullaniyor; o
+            # yuzden gercek maliyet varsa hesap burada yapilir. Gercek maliyet yoksa (isletmenin maliyet
+            # ayari kaydi yoksa) eski malzeme bazli hesap etiketiyle gosterilir.
+            if _gercek_maliyet_gg_haric is not None:
+                _kar = oge["satis_fiyati"] - _gercek_maliyet_gg_haric
+                _yuzde = (_kar / oge["satis_fiyati"] * 100) if oge["satis_fiyati"] else None
+                mn2.metric("Porsiyon gerçek maliyeti", f"{_gercek_maliyet_gg_haric:.2f} €")
+                mn3.metric(
+                    "Kâr marjı",
+                    f"{_kar:.2f} € ({_yuzde:.0f}%)" if _yuzde is not None else f"{_kar:.2f} €",
+                )
+            elif karlilik and karlilik.get("porsiyon_maliyeti_eur") is not None:
+                mn2.metric("Porsiyon malzeme maliyeti", f"{karlilik['porsiyon_maliyeti_eur']:.2f} €")
+                mn2.caption("Enerji ve işçilik dahil değil: işletmenin maliyet ayarı bulunamadı (Abonelik).")
                 yuzde = karlilik.get("kar_marji_yuzde")
                 mn3.metric(
                     "Kâr marjı",

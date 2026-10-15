@@ -13341,3 +13341,10 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   - Amac: "haftalik/aylik/mevsimlik/yillik menu uretir" -> ay ay uretilip kaydedilerek mevsimlik/yillik plan.
 - Acik soru (Bahri'ye): Satisa Acma'daki kar marji malzeme maliyetine gore; gercek maliyete (enerji+isclik dahil) gore mi hesaplansin?
 - Ana Sayfa gorselleri (15 Ekim 2026, Gemini): Tarif Kutuphanesi bolumune tanitim_tarif_kutuphanesi.mp4 (Bahri video olarak uretti; 1280x720, 10 sn, ses kanali cikarildi, 2,6 MB), Abonelik ve Ayarlar bolumune tanitim_abonelik.png (1376x768). Iki bolum de yazi + gorsel iki sutuna alindi; gorsel/metin yerleri bolumden bolume sirayla yer degistiriyor.
+
+### 15 Ekim 2026 — Kar marji gercek maliyete gore (Bahri karari)
+- Satisa Acma'daki kar marji artik porsiyon GERCEK maliyetine (malzeme + enerji + iscilik, genel gider haric) gore hesaplaniyor. menu_ogesi_karlilik gorunumu sadece malzeme maliyetini kullaniyor; hesap pages/1_Recete_Uretimi.py icinde Python'da yapiliyor, veritabaninda degisiklik YOK (SQL calistirmak gerekmiyor).
+- Isletmenin maliyet ayari kaydi yoksa (recete_uretim_maliyeti satir donmezse) eski malzeme bazli hesap "Porsiyon malzeme maliyeti" etiketi ve aciklamasiyla gosterilir.
+- Bulunan hata ve duzeltme: "Porsiyon basi gerçek maliyet" eskiden porsiyon_gercek_maliyet_eur (PORSIYON basi, genel gider DAHIL) eksi genel_gider_payi_eur (RECETENIN TAMAMI) olarak hesaplaniyordu; birimler farkli. genel_gider_yuzdesi 0 degilse (tablo varsayilani %15) sonuc yanlis, hatta eksi cikabiliyordu. Simdi (malzeme + enerji + iscilik) / porsiyon sayisi. Ornek test: malzeme 50, enerji 3, iscilik 7, 10 porsiyon, %15 genel gider -> eski 6,90 - 9,00 = -2,10; yeni 6,00. Satis 10 -> kar 4,00 (%40).
+- Ust uc kutu (Malzeme / Enerji / Iscilik) recetenin tamami icin oldugundan etiketlerine "(10 porsiyon)" eklendi.
+- Ana Sayfa Satisa Acma metni buna gore guncellendi.
