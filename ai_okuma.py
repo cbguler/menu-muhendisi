@@ -26,6 +26,8 @@ import base64
 import difflib
 import io
 import json
+import re
+import time
 
 VARSAYILAN_MODEL = "qwen/qwen3.8-27b"
 EN_FAZLA_GORSEL = 2          # gorsel basina 2.048 token sayiliyor; 2 gorsel + metin sinirin altinda kalir
@@ -79,15 +81,33 @@ def _cagir(api_anahtari, model, sistem, metin, gorseller=()):
     except Exception as e:
         metin_hata = str(e)
         if "rate_limit" in metin_hata or "Error code: 429" in metin_hata or "Error code: 413" in metin_hata:
-            raise SinirHatasi(
+            hata = SinirHatasi(
                 "Okuma servisinin (Groq, ücretsiz katman) dakikalık sınırı doldu. Bir dakika bekleyip tekrar dene; "
                 "sorun sürerse daha az görselle (ya da sadece metinle) dene."
             )
+            # 429 metninde "Please try again in 1m2.5s" / "in 12.34s" yazar (413'te yazmaz: istek fazla buyuk)
+            m = re.search(r"try again in (?:(\d+)m)?([\d.]+)s", metin_hata)
+            hata.bekleme = (int(m.group(1) or 0) * 60 + float(m.group(2))) if m and "413" not in metin_hata else None
+            raise hata
         raise OkumaHatasi(f"Okuma servisine ulaşılamadı: {metin_hata}")
     try:
         return json.loads(yanit.choices[0].message.content)
     except Exception:
         raise OkumaHatasi("Okuma servisi anlaşılır bir sonuç döndürmedi; daha net bir görselle tekrar dene.")
+
+
+def _cagir_bekleyerek(api_anahtari, model, sistem, metin, en_fazla_bekleme=25):
+    """Sadece METIN istekleri icin (16 Ekim 2026): fis okuma (gorsel) ayni dakikada sinirin buyuk kismini
+    harcadigi icin arkadan gelen kucuk ceviri/esleme istegi 429 alabilir. Groq hata metninde "try again in
+    12.3s" gibi bekleme suresi yazar; en_fazla_bekleme saniyeyi gecmiyorsa o kadar bekleyip bir kez daha dener."""
+    try:
+        return _cagir(api_anahtari, model, sistem, metin)
+    except SinirHatasi as e:
+        bekleme = getattr(e, "bekleme", None)
+        if bekleme is None or bekleme > en_fazla_bekleme:
+            raise
+        time.sleep(bekleme + 1)
+        return _cagir(api_anahtari, model, sistem, metin)
 
 
 # ---------------------------------------------------------------------
@@ -125,6 +145,17 @@ class KatalogEslestirici:
         if a in self.ad_kumesi:
             return a
         return self.takma.get(a)
+
+    def ortak_kelime(self, aday):
+        """Adin katalogdaki herhangi bir adla en fazla kac kelimesi ortak (0 = katalogla hic baglanti yok;
+        cogunlukla yabanci dilde kalmis bir ad)."""
+        k = _sade(aday or "")
+        en = 0
+        for kel in self._kelimeler.values():
+            ortak = sum(1 for w in k if any(
+                w == c or (len(w) >= 3 and len(c) >= 3 and (c.startswith(w) or w.startswith(c))) for c in kel))
+            en = max(en, ortak)
+        return en
 
     def adaylar(self, aday, n=ADAY_SAYISI):
         """Kelime ortakligi + benzerlik puanina gore en olasi katalog adlari."""
@@ -175,7 +206,45 @@ _ESLEME_SISTEM = (
 )
 
 
-def eslestir(api_anahtari, model, adlar, katalog, esanlam=None):
+# Turkce alfabede olmayan harfler (Latin disi yazilar dahil): bunlardan biri varsa ad yabanci dildedir.
+_TURKCE_HARFLER = set("abcçdefgğhıijklmnoöprsştuüvyzâîû")
+
+
+def yabanci_mi(ad):
+    """'HÄHNCHENBRUST', 'МОЛОКО', 'lait demi-écrémé', 'pollo' gibi: Turkce alfabe disi harf varsa True.
+    Sadece Turkce harfli yabanci kelimeler (ör. 'pollo') bu testi gecemez; onlari katalogla kelime ortakligi
+    olmamasi yakalar (eslestir icinde)."""
+    for c in str(ad or ""):
+        if c.isalpha() and c.lower() not in _TURKCE_HARFLER and c not in "İI":
+            return True
+    return False
+
+
+_CEVIRI_SISTEM = (
+    "Market fişinden ya da tariften gelen gıda ürünü adlarını sade TÜRKÇE genel ada çeviriyorsun (her dilden: "
+    "Almanca, İngilizce, Fransızca, Hollandaca, İtalyanca, İspanyolca, Rusça, Arapça vb.). Marka, yüzde, ambalaj, "
+    "fiyat ve kısaltma bilgisini at; fiş kısaltmalarını aç (ör. 'HAEHNCH.BRUSTF.' -> 'tavuk göğsü', "
+    "'ZWIEBELN ROT' -> 'kırmızı soğan', 'LAIT DEMI-ECR.' -> 'yarım yağlı süt', 'МОЛОКО 3,2%' -> 'süt', "
+    "'POMODORI PELATI' -> 'konserve domates', 'RUNDERGEHAKT' -> 'dana kıyma'). Ad zaten Türkçeyse aynen "
+    "bırak. Sadece JSON: {\"ceviriler\":[{\"no\":1,\"turkce\":\"...\"}]}"
+)
+
+
+def turkceye_cevir(api_anahtari, model, adlar):
+    """adlar listesini Turkce genel adlara cevirir (ayni uzunlukta liste). Istek yapilamazsa ozgun adlar doner."""
+    if not adlar:
+        return []
+    metin = "\n".join(f"{no}. {a}" for no, a in enumerate(adlar, 1))
+    try:
+        veri = _cagir_bekleyerek(api_anahtari, model, _CEVIRI_SISTEM, metin)
+    except OkumaHatasi:
+        return list(adlar)
+    ceviri = {int(e.get("no")): str(e.get("turkce") or "").strip() for e in (veri.get("ceviriler") or [])
+              if isinstance(e, dict) and str(e.get("no", "")).isdigit()}
+    return [ceviri.get(no) or a for no, a in enumerate(adlar, 1)]
+
+
+def eslestir(api_anahtari, model, adlar, katalog, esanlam=None, ceviri_kaydi=None):
     """adlar: ['kıyma', 'soğan', ...] -> [(katalog adi ya da None, kaynak), ...]
     kaynak: 'kesin' (tam ad / diger_adlar), 'esanlam' (sabit es anlamli), 'secim' (model adaylardan secti),
     'yakin' (model secemedi ya da istek yapilamadi: en olasi aday -- kullanici kontrol etmeli), None (aday yok).
@@ -183,14 +252,30 @@ def eslestir(api_anahtari, model, adlar, katalog, esanlam=None):
     es = KatalogEslestirici(katalog)
     sozluk = dict(ORTAK_ESANLAM)
     sozluk.update(esanlam or {})
-    sonuc = []
-    for a in adlar:
+
+    def _yerel(a):
         k = es.kesin(a)
         if k:
-            sonuc.append((k, "kesin"))
-            continue
+            return (k, "kesin")
         e = sozluk.get(tr_buyuk(a)) if a else None
-        sonuc.append((e, "esanlam") if e and e in es.ad_kumesi else (None, None))
+        return (e, "esanlam") if e and e in es.ad_kumesi else (None, None)
+
+    adlar = list(adlar)
+    sonuc = [_yerel(a) for a in adlar]
+    # YABANCI DIL GUVENLIK AGI (16 Ekim 2026, Bahri: yabanci dildeki fiste de ceviri devreye girsin ve
+    # malzemeler veritabaninda bulunsun). Okuma adimi adlari Turkceye cevirmekle gorevli; yine de yabanci
+    # kalan (Turkce disi harf iceren ya da katalogla hic ortak kelimesi olmayan) adlar once Turkceye cevrilir,
+    # sonra cevrilmis adla yeniden eslenir. Boylece aday listesi yabanci kelimeye gore degil Turkce ada gore kurulur.
+    cevrilecek = [i for i, a in enumerate(adlar)
+                  if a and sonuc[i][0] is None and (yabanci_mi(a) or es.ortak_kelime(a) == 0)]
+    if cevrilecek:
+        yeni = turkceye_cevir(api_anahtari, model, [adlar[i] for i in cevrilecek])
+        for i, t in zip(cevrilecek, yeni):
+            if t and tr_buyuk(t) != tr_buyuk(adlar[i]):
+                if ceviri_kaydi is not None:
+                    ceviri_kaydi[i] = t
+                adlar[i] = t
+                sonuc[i] = _yerel(t)
     bekleyen = [(i, a, es.adaylar(a)) for i, a in enumerate(adlar) if sonuc[i][0] is None and a]
     bekleyen = [(i, a, ad) for i, a, ad in bekleyen if ad]
     if not bekleyen:
@@ -199,7 +284,7 @@ def eslestir(api_anahtari, model, adlar, katalog, esanlam=None):
         f"{no}. {a} -> ADAYLAR: {' | '.join(ad)}" for no, (_i, a, ad) in enumerate(bekleyen, 1)
     )
     try:
-        veri = _cagir(api_anahtari, model, _ESLEME_SISTEM, metin)
+        veri = _cagir_bekleyerek(api_anahtari, model, _ESLEME_SISTEM, metin)
         secimler = {int(e.get("no")): e.get("katalog_adi") for e in (veri.get("eslesmeler") or [])
                     if isinstance(e, dict) and str(e.get("no", "")).isdigit()}
     except OkumaHatasi:
@@ -214,12 +299,18 @@ def eslestir(api_anahtari, model, adlar, katalog, esanlam=None):
 # 1. adim: okuma (katalogsuz)
 # ---------------------------------------------------------------------
 _FIS_SISTEM = (
-    "Bir market fişini okuyorsun. Sadece GIDA ürünlerini çıkar; poşet, deterjan, temizlik, kozmetik, indirim, "
-    "KDV, toplam ve ödeme satırlarını atla. Ürün adını sade Türkçe genel adıyla yaz (marka yazma; başka dildeyse "
-    "çevir; ör. 'ONIONS' -> 'kuru soğan', 'DANA KIYMA %20' -> 'dana kıyma'). Miktarı gram olarak ver: tartılı "
-    "ürünlerde fişteki kg (1,250 KG -> 1250); paketli ürünlerde paket boyutu x adet (SÜT 1 LT x 2 -> 2060; "
-    "1 litre ~1000-1030 g). Boyut yazmıyorsa yaygın paket boyutunu tahmin et ve tahmin=true yaz. Sadece JSON: "
-    '{"urunler":[{"fis_satiri":"...","urun":"...","gram":sayı,"tahmin":true/false}]}'
+    "Bir market fişini okuyorsun; fiş herhangi bir dilde olabilir (Türkçe, Almanca, İngilizce, Fransızca, "
+    "Hollandaca, İtalyanca, İspanyolca, Rusça, Arapça vb.). Önce fişin dilini belirle. Sadece GIDA ürünlerini "
+    "çıkar; poşet, depozito (Pfand, statiegeld, consigne), deterjan, temizlik, kozmetik, indirim, KDV/MwSt/TVA/VAT, "
+    "ara toplam, toplam ve ödeme satırlarını atla. Her ürün için fis_satiri alanına fişte yazanı AYNEN, urun "
+    "alanına sade TÜRKÇE genel adını yaz: urun HER ZAMAN Türkçe olmalı, yabancı kelime bırakma; marka yazma; fiş "
+    "kısaltmalarını aç (ör. 'ONIONS' -> 'kuru soğan', 'HAEHNCH.BRUSTF.' -> 'tavuk göğsü', 'VOLLMILCH 3,5%' -> "
+    "'tam yağlı süt', 'LAIT DEMI-ECR.' -> 'yarım yağlı süt', 'МОЛОКО' -> 'süt', 'DANA KIYMA %20' -> 'dana kıyma'). "
+    "Miktarı gram olarak ver; ondalık ayırıcı virgül ya da nokta olabilir: tartılı ürünlerde fişteki ağırlık "
+    "(1,250 KG -> 1250; '0.456 kg x 9.99/kg' -> 456; 'lb' ise 1 lb = 454 g); paketli ürünlerde paket boyutu x adet "
+    "(SÜT 1 LT x 2 -> 2060; '2 x 500G' -> 1000; 'STK', 'ST', 'PCS', 'PZ', 'шт' adet demektir; 1 litre ~1000-1030 g). "
+    "Fiyatı gram sanma. Boyut yazmıyorsa yaygın paket boyutunu tahmin et ve tahmin=true yaz. Sadece JSON: "
+    '{"dil":"fişin dili (Türkçe adıyla)","urunler":[{"fis_satiri":"...","urun":"...","gram":sayı,"tahmin":true/false}]}'
 )
 
 BIRIMLER = ["g", "kg", "ml", "l", "adet", "su bardağı", "çay bardağı", "yemek kaşığı",
@@ -259,15 +350,20 @@ def fis_oku(api_anahtari, gorsel_urlleri, katalog, model=VARSAYILAN_MODEL):
         raise OkumaHatasi("Fiş fotoğrafı yok.")
     veri = _cagir(api_anahtari, model, _FIS_SISTEM, "Fişi oku.", gorsel_urlleri)
     urunler = [u for u in (veri.get("urunler") or []) if isinstance(u, dict)]
-    eslesme = eslestir(api_anahtari, model, [str(u.get("urun") or "") for u in urunler], katalog)
+    dil = str(veri.get("dil") or "").strip()[:30]
+    ceviri_kaydi = {}
+    eslesme = eslestir(api_anahtari, model, [str(u.get("urun") or "") for u in urunler], katalog,
+                       ceviri_kaydi=ceviri_kaydi)
     return [{
         "fis_satiri": str(u.get("fis_satiri") or "")[:120],
-        "urun": str(u.get("urun") or "")[:80],
+        "urun": str(ceviri_kaydi.get(i) or u.get("urun") or "")[:80],
+        "cevrildi": i in ceviri_kaydi,
+        "dil": dil,
         "katalog_adi": k,
         "eslesme": kaynak,
         "gram": _sayi(u.get("gram")),
         "tahmin": bool(u.get("tahmin")),
-    } for u, (k, kaynak) in zip(urunler, eslesme)]
+    } for i, (u, (k, kaynak)) in enumerate(zip(urunler, eslesme))]
 
 
 def tarif_oku(api_anahtari, metin, gorsel_urlleri, katalog, model=VARSAYILAN_MODEL):

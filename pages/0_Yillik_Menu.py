@@ -707,7 +707,7 @@ for kolon, bolge in zip(kolonlar[:-1], bolgeler_mevcut):
     secili = bolge in st.session_state.secili_bolgeler_set
     etiket = KISA_BOLGE_ADI.get(bolge, bolge)
     if kolon.button(
-        etiket, key=f"bolge_buton_{bolge}", use_container_width=True,
+        etiket, key=f"bolge_buton_{bolge}", width="stretch",
         type="primary" if secili else "secondary",
     ):
         if secili:
@@ -718,7 +718,7 @@ for kolon, bolge in zip(kolonlar[:-1], bolgeler_mevcut):
 
 with kolonlar[-1]:
     if st.button(
-        isletme_adi, key="kendi_menu_buton", use_container_width=True,
+        isletme_adi, key="kendi_menu_buton", width="stretch",
         type="primary" if st.session_state.kendi_menu_dahil else "secondary",
     ):
         st.session_state.kendi_menu_dahil = not st.session_state.kendi_menu_dahil
@@ -1054,7 +1054,7 @@ with sag2:
             )
         with _col_duzelt:
             st.markdown("<div style='height: 28px'></div>", unsafe_allow_html=True)
-            if st.button("Düzelt", key="hizmet_kisi_sayisi_degistir_buton", use_container_width=True, type="primary"):
+            if st.button("Düzelt", key="hizmet_kisi_sayisi_degistir_buton", width="stretch", type="primary"):
                 st.session_state["hizmet_kisi_sayisi_onaylandi"] = False
                 st.rerun()
     else:
@@ -1911,11 +1911,11 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                 for ad in tarif_adlari:
                     st.page_link(
                         "pages/5_Tarif_Kutuphanesi.py", label=ad,
-                        query_params={"tarif": ad, "porsiyon": str(st.session_state.get("secili_porsiyon_sayisi", ""))}, use_container_width=True,
+                        query_params={"tarif": ad, "porsiyon": str(st.session_state.get("secili_porsiyon_sayisi", ""))}, width="stretch",
                     )
             st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
             with st.container(key=f"cevir_{card_id}"):
-                if st.button("◤ Besin değerleri ve maliyet", key=f"btn_cevir_{card_id}", use_container_width=True):
+                if st.button("◤ Besin değerleri ve maliyet", key=f"btn_cevir_{card_id}", width="stretch"):
                     st.session_state[yuz_key] = "arka"
                     st.rerun(scope="fragment")
         else:
@@ -2133,7 +2133,7 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                 # ayni sure butcesiyle daha fazla deneme sigar).
                 _tekrar_dene_col, _devam_et_col = st.columns(2)
                 with _tekrar_dene_col:
-                    if st.button("🔄 Tekrar Dene", key=f"btn_tekrar_dene_{card_id}", use_container_width=True):
+                    if st.button("🔄 Tekrar Dene", key=f"btn_tekrar_dene_{card_id}", width="stretch"):
                         _yeniden_uretilecek_ogunler = []
                         for _ogun_adi_kontrol, _tarif_adlari_kontrol in (gun.get("ogunler") or {}).items():
                             _t_ham_kontrol = _ogun_toplami(_tarif_adlari_kontrol, detay)
@@ -2227,7 +2227,7 @@ def _gun_popup_govdesini_ciz(gun, detay, hedefler, fiyat_verisi_var, card_id, ba
                             # (ve o script'teki bayrak kontrolunu) ETKILEMEZ.
                             st.rerun(scope="fragment")
                 with _devam_et_col:
-                    if st.button("✓ Kaydet", key=f"btn_cevir2_{card_id}", use_container_width=True):
+                    if st.button("✓ Kaydet", key=f"btn_cevir2_{card_id}", width="stretch"):
                         st.session_state[yuz_key] = "on"
                         # YUZ YIRMI UCUNCU DUZELTME (5 Eylul 2026): Bahri
                         # bildirdi -- "Tekrar Dene" ile duzelttigi (artik
@@ -2342,7 +2342,7 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
             with kolon:
                 with st.container(key=_kutu_key(i, "baslik")):
                     st.markdown(f"<div class='omgo-tablo-tarih-hucre'>{gun_bilgileri[i]['tarih_metni']}</div>", unsafe_allow_html=True)
-                    if st.button(gun_bilgileri[i]["gun_adi"], key=f"btn_gun_{card_idler[i]}", use_container_width=True):
+                    if st.button(gun_bilgileri[i]["gun_adi"], key=f"btn_gun_{card_idler[i]}", width="stretch"):
                         st.session_state["yillik_menu_popup_gun_id"] = card_idler[i]
                         st.session_state["yillik_menu_popup_yuz"] = "arka"
                         st.rerun()
@@ -2382,7 +2382,7 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
                         if j < len(liste):
                             st.page_link(
                                 "pages/5_Tarif_Kutuphanesi.py", label=liste[j],
-                                query_params={"tarif": liste[j], "porsiyon": str(st.session_state.get("secili_porsiyon_sayisi", ""))}, use_container_width=True,
+                                query_params={"tarif": liste[j], "porsiyon": str(st.session_state.get("secili_porsiyon_sayisi", ""))}, width="stretch",
                             )
                         else:
                             st.markdown("<div class='omgo-tablo-bos-hucre'>&nbsp;</div>", unsafe_allow_html=True)
@@ -2407,7 +2407,7 @@ def _hafta_kartlarini_goster(hafta, detay, fiyat_verisi_var, hedefler, ay_adi, h
                         if j < len(liste):
                             st.page_link(
                                 "pages/5_Tarif_Kutuphanesi.py", label=liste[j],
-                                query_params={"tarif": liste[j], "porsiyon": str(st.session_state.get("secili_porsiyon_sayisi", ""))}, use_container_width=True,
+                                query_params={"tarif": liste[j], "porsiyon": str(st.session_state.get("secili_porsiyon_sayisi", ""))}, width="stretch",
                             )
                         else:
                             st.markdown("<div class='omgo-tablo-bos-hucre'>&nbsp;</div>", unsafe_allow_html=True)
@@ -2485,7 +2485,7 @@ def _hafta_kartlarini_goster_mobil(hafta, detay, fiyat_verisi_var, hedefler, ay_
                     f"<div class='omgo-mobil-baslik{hs_sinifi}'>{tarih_metni} — {gun_adi}</div>",
                     unsafe_allow_html=True,
                 )
-                if st.button(f"Ayrıntılar / Maliyet", key=f"btn_gun_mobil_{card_idler[i]}", use_container_width=True):
+                if st.button(f"Ayrıntılar / Maliyet", key=f"btn_gun_mobil_{card_idler[i]}", width="stretch"):
                     st.session_state["yillik_menu_popup_gun_id"] = card_idler[i]
                     st.session_state["yillik_menu_popup_yuz"] = "arka"
                     st.rerun()
@@ -2503,7 +2503,7 @@ def _hafta_kartlarini_goster_mobil(hafta, detay, fiyat_verisi_var, hedefler, ay_
                         for j, tarif_adi in enumerate(liste):
                             st.page_link(
                                 "pages/5_Tarif_Kutuphanesi.py", label=tarif_adi,
-                                query_params={"tarif": tarif_adi, "porsiyon": str(st.session_state.get("secili_porsiyon_sayisi", ""))}, use_container_width=True,
+                                query_params={"tarif": tarif_adi, "porsiyon": str(st.session_state.get("secili_porsiyon_sayisi", ""))}, width="stretch",
                             )
                     else:
                         st.markdown("<div class='omgo-tablo-bos-hucre'>&nbsp;</div>", unsafe_allow_html=True)
@@ -3090,7 +3090,7 @@ def _aylik_sarf_listesi_dialog(aylik, porsiyon_sayisi, isletme_id, isletme_tam_a
         data=_aylik_sarf_pdf_olustur(aylik, _veri, isletme_tam_adi),
         file_name=f"aylik_sarf_listesi_{aylik['ay']}_{aylik['yil']}.pdf",
         mime="application/pdf",
-        use_container_width=True,
+        width="stretch",
         type="primary",
     )
 
@@ -3613,7 +3613,7 @@ def _aylik_menu_pdf_dialog(aylik, detay, isletme_tam_adi):
         file_name=f"aylik_menu_{_icerik_etiketi}_{aylik['ay']}_{aylik['yil']}_{st.session_state['pdf_sayfa_boyutu_secimi']}{'_yatay' if _yatay else ''}.pdf",
         mime="application/pdf",
         type="primary",
-        use_container_width=True,
+        width="stretch",
     )
 
 
@@ -3695,12 +3695,12 @@ if aylik:
     _col_kaydet, _col_pdf, _col_malzeme, _ = st.columns([2, 2, 2, 5])
     with _col_kaydet:
         if _kaydet_durumu == "hedef_disi":
-            st.button("Aylık Menüyü Kaydet", disabled=True, key="btn_aylik_kaydet_disabled", use_container_width=True)
+            st.button("Aylık Menüyü Kaydet", disabled=True, key="btn_aylik_kaydet_disabled", width="stretch")
         elif _kaydet_durumu == "profil_yok":
             st.button("Aylık Menüyü Kaydet", disabled=True, key="btn_aylik_kaydet_disabled",
-                       help="Önce yukarıdan bir porsiyon profili seç.", use_container_width=True)
+                       help="Önce yukarıdan bir porsiyon profili seç.", width="stretch")
         else:
-            if st.button("Aylık Menüyü Kaydet", key="btn_aylik_kaydet", type="primary", use_container_width=True):
+            if st.button("Aylık Menüyü Kaydet", key="btn_aylik_kaydet", type="primary", width="stretch"):
                 _profil_sorgusu = (
                     supabase.table("kayitli_aylik_menuler")
                     .select("id")
@@ -3745,7 +3745,7 @@ if aylik:
         # acilip icerik turu (Sade/Detayli) + sayfa boyutu (A4/B3)
         # seciliyor, sonra PDF uretiliyor.
         if st.button(
-            "Aylık Menüyü PDF'e indir", key="btn_aylik_pdf", type="primary", use_container_width=True,
+            "Aylık Menüyü PDF'e indir", key="btn_aylik_pdf", type="primary", width="stretch",
             # YUZ ... DUZELTME (28 Eylul 2026): PDF raporu yetkisi (pdf_raporlar)
             disabled=st.session_state.get("salt_okunur", False) or yetki("pdf_raporlar") < 1,
             help=None if yetki("pdf_raporlar") >= 1 else "PDF raporu alma yetkin yok.",
@@ -3755,7 +3755,7 @@ if aylik:
     with _col_malzeme:
         # YUZ ... DUZELTME (28 Eylul 2026): satin alma listesi yetkisi (satin_alma)
         if st.button(
-            "Aylık Sarf Listesi", key="btn_aylik_sarf_listesi", use_container_width=True, type="primary",
+            "Aylık Sarf Listesi", key="btn_aylik_sarf_listesi", width="stretch", type="primary",
             disabled=yetki("satin_alma") < 1,
             help=None if yetki("satin_alma") >= 1 else "Satın alma listesi yetkin yok.",
         ):

@@ -279,7 +279,7 @@ for abonelik in gosterilecek:
                     "E-posta": (p or {}).get("email") or ("(işletme sahibi)" if k.get("rol") == "sahip" else "-"),
                     "Durum": "-" if p is None else ("Aktif" if p.get("aktif") else "Durduruldu"),
                 })
-            st.dataframe(satirlar, hide_index=True, use_container_width=True)
+            st.dataframe(satirlar, hide_index=True, width="stretch")
         bekleyen_personel = [p for p in isletme_personeli if not p.get("kullanici_id")]
         if bekleyen_personel:
             st.caption(
@@ -458,7 +458,7 @@ else:
             "Toplam süre": _sure_yaz(_gs["sure_sn"].sum()),
             "En çok kullandığı sayfa": _en_cok.index[0] if len(_en_cok) else "-",
         })
-    st.dataframe(pd.DataFrame(_kullanici_ozet), hide_index=True, use_container_width=True)
+    st.dataframe(pd.DataFrame(_kullanici_ozet), hide_index=True, width="stretch")
 
     st.markdown("**Sayfa bazında**")
     _sayfa_ozet = (
@@ -474,7 +474,7 @@ else:
             "Kullanıcı": _sayfa_ozet["kullanici"],
             "Toplam süre": _sayfa_ozet["sure"].map(_sure_yaz),
         }),
-        hide_index=True, use_container_width=True,
+        hide_index=True, width="stretch",
     )
 
     st.markdown("**Günlük aktif kullanıcı**")
@@ -494,7 +494,7 @@ else:
                 "İşlem": _son["olay"].map(_olay_etiket),
                 "Sayfa / ayrıntı": _son["sayfa"].fillna(_son["detay"].map(_detay_etiket)).fillna(""),
             }),
-            hide_index=True, use_container_width=True,
+            hide_index=True, width="stretch",
         )
 
 # -----------------------------------------------------------------------

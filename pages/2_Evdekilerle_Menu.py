@@ -251,7 +251,7 @@ with st.form("stok_ekle", clear_on_submit=True):
     birim = c3.selectbox("Birim", ["g", "kg", "adet", "ml", "l"])
     c4.write("")
     c4.write("")
-    ekle = c4.form_submit_button("Ekle", disabled=_SALT_OKUNUR, use_container_width=True)
+    ekle = c4.form_submit_button("Ekle", disabled=_SALT_OKUNUR, width="stretch")
     st.caption(
         "Adet karşılıkları (TAHMİN, ortalama): "
         + ", ".join(f"{a.lower()} {g:.0f} g" for a, g in E.ADET_GRAM.items())
@@ -283,7 +283,7 @@ if stok:
         key=lambda r: E.tr_sirala_anahtari(r["Malzeme"]),
     )
     duzenlenen = st.data_editor(
-        pd.DataFrame(satirlar), hide_index=True, use_container_width=True, disabled=["Malzeme"] if not _SALT_OKUNUR else True,
+        pd.DataFrame(satirlar), hide_index=True, width="stretch", disabled=["Malzeme"] if not _SALT_OKUNUR else True,
         column_order=["Malzeme", "Miktar (g)", "Sil"], key="stok_tablosu",
         column_config={"Miktar (g)": st.column_config.NumberColumn(min_value=0.0, step=10.0, format="%.0f")},
     )
@@ -348,6 +348,12 @@ with st.expander("Market fişinden ekle", expanded=False):
 
     _fis = st.session_state.get("fis_satirlari")
     if _fis:
+        # 16 Ekim 2026: yabanci dildeki fis. Okuma adimi urun adlarini Turkceye cevirir; yabanci kalan adlar
+        # ayrica cevrilip katalogla yeniden eslenir (ai_okuma.eslestir). "Fişte yazan" ozgun metni gosterir.
+        _fis_dili = (_fis[0].get("dil") or "").strip()
+        if _fis_dili and A.tr_buyuk(_fis_dili) not in ("TÜRKÇE", "TURKCE", "TURKISH"):
+            st.caption(f"Fiş dili: {_fis_dili}. Ürün adları Türkçeye çevrilip kataloğumuzla eşlendi; "
+                       "\"Fişte yazan\" sütununda özgün metin duruyor.")
         _fis_df = pd.DataFrame([{
             "Ekle": bool(r["katalog_adi"] and r["gram"]),
             "Fişte yazan": r["fis_satiri"],
@@ -355,13 +361,14 @@ with st.expander("Market fişinden ekle", expanded=False):
             "Malzeme": r["katalog_adi"],
             "Gram": r["gram"],
             "Not": "; ".join(x for x in (
+                "Türkçeye çevrildi" if r.get("cevrildi") else "",
                 "paket boyutu fişte yazmıyor, tahmin edildi" if r["tahmin"] else "",
                 "kesin karşılık yok, en yakın seçildi: kontrol et" if r.get("eslesme") == "yakin" else "",
                 "katalogda karşılığı yok, Malzeme sütunundan seç" if not r["katalog_adi"] else "",
             ) if x),
         } for r in _fis])
         _fis_duzen = st.data_editor(
-            _fis_df, hide_index=True, use_container_width=True, key="fis_tablosu",
+            _fis_df, hide_index=True, width="stretch", key="fis_tablosu",
             disabled=["Fişte yazan", "Ürün", "Not"],
             column_config={
                 "Malzeme": st.column_config.SelectboxColumn(options=katalog_adlari, help="Katalogdaki karşılığı"),
@@ -518,7 +525,7 @@ with st.expander("Yeni tarif ekle", expanded=bool(st.session_state.get("ev_tarif
             or [{"Tarifte yazan": "", "Malzeme": None, "Miktar": None, "Birim": "g", "Not": ""}]
         )
         _malz_duzen = st.data_editor(
-            _malz_df, hide_index=True, use_container_width=True, num_rows="dynamic", key=f"tt_malz_{_ts}",
+            _malz_df, hide_index=True, width="stretch", num_rows="dynamic", key=f"tt_malz_{_ts}",
             column_config={
                 "Malzeme": st.column_config.SelectboxColumn(options=katalog_adlari, help="Katalogdaki karşılığı (yazarak ara)"),
                 "Miktar": st.column_config.NumberColumn(min_value=0.0, step=5.0, format="%g",
@@ -696,7 +703,7 @@ with st.container(border=True):
             )
             p2.write("")
             p2.write("")
-            if p2.button("Yükle", use_container_width=True):
+            if p2.button("Yükle", width="stretch"):
                 _hedefleri_yukle(next(p["hedefler"] for p in profiller if p["id"] == _yuklenecek))
                 st.rerun()
         st.caption(
@@ -857,7 +864,7 @@ if kayit:
               "Önerilen alım": E.gram_yazisi(E.pratik_miktar(g))} for mid, g in sonuc["eksik"].items()),
             key=lambda r: E.tr_sirala_anahtari(r["Malzeme"]),
         )
-        st.dataframe(liste, hide_index=True, use_container_width=True)
+        st.dataframe(liste, hide_index=True, width="stretch")
         st.caption(
             "Temel malzemeler (yukarıda seçtiklerin) listeye girmez. Miktarlar tarif gramlarıdır; "
             "soyma/ayıklama firesi henüz eklenmedi, kabuklu ya da kemikli ürünlerde biraz fazla almak gerekebilir."
@@ -875,7 +882,7 @@ if kayit:
               "Kalan": E.gram_yazisi(sonuc["kalan"].get(mid, 0.0))} for mid, g in bas.items()),
             key=lambda r: E.tr_sirala_anahtari(r["Malzeme"]),
         )
-        st.dataframe(rapor, hide_index=True, use_container_width=True)
+        st.dataframe(rapor, hide_index=True, width="stretch")
         kullanilmayan = sorted(
             ((malzeme_by_id.get(mid) or {}).get("ad", "?") for mid in bas if sonuc["kullanilan"].get(mid, 0.0) <= 0),
             key=E.tr_sirala_anahtari,

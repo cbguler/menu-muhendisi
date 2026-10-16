@@ -112,7 +112,7 @@ if _patron and _org:
     )
     st.dataframe(
         [{"İşletme": i["ad"], "Tür": "Merkez" if not i.get("ust_isletme_id") else "Şube"} for i in _org],
-        hide_index=True, use_container_width=True,
+        hide_index=True, width="stretch",
     )
     with st.form("yeni_sube_formu", clear_on_submit=True):
         _sc1, _sc2 = st.columns(2)
@@ -551,7 +551,7 @@ if yetki("porsiyon_profilleri") >= 2:
         num_rows="dynamic",
         hide_index=True,
         key="porsiyon_profil_editor",
-        use_container_width=True,
+        width="stretch",
     )
 
     if st.button("Porsiyon profillerini kaydet"):

@@ -13348,3 +13348,23 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
 - Bulunan hata ve duzeltme: "Porsiyon basi gerçek maliyet" eskiden porsiyon_gercek_maliyet_eur (PORSIYON basi, genel gider DAHIL) eksi genel_gider_payi_eur (RECETENIN TAMAMI) olarak hesaplaniyordu; birimler farkli. genel_gider_yuzdesi 0 degilse (tablo varsayilani %15) sonuc yanlis, hatta eksi cikabiliyordu. Simdi (malzeme + enerji + iscilik) / porsiyon sayisi. Ornek test: malzeme 50, enerji 3, iscilik 7, 10 porsiyon, %15 genel gider -> eski 6,90 - 9,00 = -2,10; yeni 6,00. Satis 10 -> kar 4,00 (%40).
 - Ust uc kutu (Malzeme / Enerji / Iscilik) recetenin tamami icin oldugundan etiketlerine "(10 porsiyon)" eklendi.
 - Ana Sayfa Satisa Acma metni buna gore guncellendi.
+
+### 16 Ekim 2026 — use_container_width kaldirildi; yabanci dildeki fis
+- Streamlit use_container_width parametresini kaldiracagini duyurdu (calisirken uyari veriyordu) ve requirements.txt'te
+  surum sabit degil (streamlit>=1.65). 38 kullanim width="stretch" ile degistirildi (app.py 6, 0_Yillik_Menu 19,
+  2_Evdekilerle_Menu 7, 6_Abonelik 2, 7_Admin 4). Fonksiyonlar (button, download_button, page_link, form_submit_button,
+  data_editor, dataframe, image) Streamlit 1.65'te width parametresini kabul ediyor (imza kontrol edildi).
+- Yabanci dildeki market fisi (Bahri: ceviri devreye girsin, malzemeler veritabaninda bulunsun):
+  - _FIS_SISTEM: fis herhangi bir dilde olabilir; once dil belirlenir ("dil" alani), urun adi HER ZAMAN Turkce genel
+    ad; fis kisaltmalari acilir (Almanca/Fransizca/Rusca ornekler); depozito (Pfand) ve vergi (MwSt/TVA/VAT) satirlari
+    atlanir; ondalik virgul/nokta, "kg x fiyat/kg", "2 x 500G", STK/PCS/шт, lb -> gram kurallari.
+  - Guvenlik agi (ai_okuma.eslestir): okuma adimindan sonra hala yabanci kalan adlar (Turkce alfabe disi harf iceren
+    ya da katalogla hic ortak kelimesi olmayan) kucuk bir metin istegiyle Turkceye cevrilir, sonra cevrilmis adla
+    yeniden eslenir (tam ad / diger_adlar / sabit es anlamli / aday secimi). Ayni ag tarif okumada da calisir.
+  - Ceviri ve esleme istekleri dakikalik sinira (429) takilirsa Groq'un yazdigi bekleme suresi 25 sn'yi gecmiyorsa
+    bekleyip bir kez daha denenir (_cagir_bekleyerek).
+  - Tabloda: "Fişte yazan" ozgun metin; cevrilen satirlarda Not'a "Türkçeye çevrildi"; fis dili Turkce degilse
+    tablonun ustunde "Fiş dili: ..." notu.
+  - Test (sahte Groq): Almanca fiste modelin cevirmedigi "Zwiebeln", "Vollmilch", Kiril "МОЛОКО" ve Turkce harfli
+    "pomodori" cevrilip KURU SOĞAN, SÜT (TAM YAĞ), SÜT (TAM YAĞ), DOMATES ile eslendi; stoga ekleme calisti. Gercek
+    Groq ile test Bahri'de: test_fisi_almanca.png (uydurma test fisi, gercek magaza degil).

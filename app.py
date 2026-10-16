@@ -909,7 +909,7 @@ def kontrol_paneli_sayfasi():
 
     # ---- 1) Aylık Menü ----
     st.header("Aylık Menü")
-    _gorsel_varsa_goster("tanitim_yillik_menu.png", use_container_width=True)
+    _gorsel_varsa_goster("tanitim_yillik_menu.png", width="stretch")
     st.write(
         f"{_tarif_sayisi} tariflik genel Türk mutfağı kütüphanesinden (Klasik tarifler + 7 coğrafi bölge) "
         "seçtiğin ay için gün gün menü üretir. Menü ayın gerçek takvim haftalarına (Pazartesi–Pazar) göre "
@@ -990,14 +990,14 @@ def kontrol_paneli_sayfasi():
             "listelenir; düzenleme ve silme buradan yapılır."
         )
     with sutun_gorsel:
-        _gorsel_varsa_goster("tanitim_uretim_asamalari.png", use_container_width=True)
+        _gorsel_varsa_goster("tanitim_uretim_asamalari.png", width="stretch")
 
     st.divider()
 
     # ---- 3) Satışa Açma (Reçete Üretimi sayfasinin alt bolumu) ----
     sutun_gorsel, sutun_metin = st.columns([1, 1.1])
     with sutun_gorsel:
-        _gorsel_varsa_goster("tanitim_menu.png", use_container_width=True)
+        _gorsel_varsa_goster("tanitim_menu.png", width="stretch")
     with sutun_metin:
         st.header("Satışa Açma")
         st.write(
@@ -1094,7 +1094,7 @@ def kontrol_paneli_sayfasi():
     # ---- 6) Abonelik ve ayarlar ----
     sutun_gorsel, sutun_metin = st.columns([1, 1.1])
     with sutun_gorsel:
-        _gorsel_varsa_goster("tanitim_abonelik.png", use_container_width=True)
+        _gorsel_varsa_goster("tanitim_abonelik.png", width="stretch")
     with sutun_metin:
         st.header("Abonelik ve Ayarlar")
         st.write(
@@ -1597,7 +1597,7 @@ with st.container(key="masaustu_nav"):
         for _i, (_kolon, _sayfa) in enumerate(zip(_buton_kolonlari, sayfa_listesi)):
             with _kolon:
                 with st.container(key=f"nav_buton_masaustu_{_i}"):
-                    st.page_link(_sayfa, use_container_width=True)
+                    st.page_link(_sayfa, width="stretch")
 
 with st.container(key="mobil_nav"):
     # Mobilde tek buton (popover) oldugu icin "Admin tasar" turu bir
@@ -1616,7 +1616,7 @@ with st.container(key="mobil_nav"):
     with _menu_kolonu:
         with st.popover("Menü"):
             for _sayfa in sayfa_listesi:
-                st.page_link(_sayfa, use_container_width=True)
+                st.page_link(_sayfa, width="stretch")
 
 # Menu satiri artik `position: fixed` oldugu icin normal akistan cikti --
 # altindaki sayfa icerigi menu tarafindan ortulmesin diye bosluk birakiyoruz.
