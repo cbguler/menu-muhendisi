@@ -50,6 +50,12 @@ YETKI_KATALOGU = [
     ("porsiyon_profilleri", "Porsiyon profilleri",
      "Porsiyon profili ve besin hedefi düzenleme",
      [("yok", "Yok"), ("duzenle", "Düzenler")]),
+    # 16 Ekim 2026 (acik is #12): Evdekilerle Menu personel erisimi. Gorur: menu kurar, listeyi/PDF'i alir,
+    # stoga dokunmaz. Duzenler: evdeki malzemeleri ekler/siler, menuyu onaylayip stoktan duser.
+    # Hizmet acik degilse sayfa kimseye gorunmez. Veritabaninda sql/196 ile zorlanir.
+    ("ev_menu", "Evdekilerle Menü",
+     "Evdeki malzemeler, menü kurma, alışveriş listesi",
+     [("yok", "Yok"), ("gor", "Görür"), ("duzenle", "Düzenler")]),
 ]
 
 YETKI_ANAHTARLARI = [k[0] for k in YETKI_KATALOGU]
@@ -61,19 +67,19 @@ HAZIR_ROLLER = {
         "maliyetler": "yok", "satin_alma": "gor", "uygulama_tarifleri": "gor",
         "ozel_tarifler": "gor", "recete_uretimi": "gor", "aylik_menu": "gor",
         "pdf_raporlar": "indir", "fiyat_guncelleme": "yok", "maliyet_ayarlari": "yok",
-        "porsiyon_profilleri": "yok",
+        "porsiyon_profilleri": "yok", "ev_menu": "yok",
     }),
     "yonetici": ("Yönetici", {
         "maliyetler": "gor", "satin_alma": "gor", "uygulama_tarifleri": "gor",
         "ozel_tarifler": "duzenle", "recete_uretimi": "duzenle", "aylik_menu": "duzenle",
         "pdf_raporlar": "indir", "fiyat_guncelleme": "duzenle", "maliyet_ayarlari": "duzenle",
-        "porsiyon_profilleri": "duzenle",
+        "porsiyon_profilleri": "duzenle", "ev_menu": "yok",
     }),
     "muhasebe": ("Muhasebe", {
         "maliyetler": "gor", "satin_alma": "gor", "uygulama_tarifleri": "gor",
         "ozel_tarifler": "yok", "recete_uretimi": "yok", "aylik_menu": "gor",
         "pdf_raporlar": "indir", "fiyat_guncelleme": "duzenle", "maliyet_ayarlari": "gor",
-        "porsiyon_profilleri": "yok",
+        "porsiyon_profilleri": "yok", "ev_menu": "yok",
     }),
 }
 OZEL_ROL = ("ozel", "Özel (aşağıdaki ayarlar)")

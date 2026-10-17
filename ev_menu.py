@@ -222,14 +222,49 @@ def tarif_ihtiyaci(tarif_malzemeleri, porsiyon, temel_idler):
     return ihtiyac
 
 
-def tarif_cezasi(ihtiyac, stok):
+def tarif_cezasi(ihtiyac, stok, agirlik=None):
+    """eksik_g - karsilanan_g. agirlik verilirse ({malzeme_id: katsayi}) evden karsilanan gram o katsayiyla
+    sayilir: cabuk bozulan malzemeyi kullanan tarif daha cazip olur (16 Ekim 2026, bkz. bozulma_agirliklari)."""
     eksik = 0.0
     karsilanan = 0.0
     for mid, g in ihtiyac.items():
         var = stok.get(mid, 0.0)
-        karsilanan += min(g, var)
+        karsilanan += min(g, var) * (agirlik.get(mid, 1.0) if agirlik else 1.0)
         eksik += max(0.0, g - var)
     return eksik - karsilanan
+
+
+# ---------------------------------------------------------------------
+# Cabuk bozulanlari once kullan (16 Ekim 2026, acik is #12)
+# ---------------------------------------------------------------------
+BOZULMA_EK_AGIRLIK = 2.0   # raf omru 0 gune yaklasan malzemede evden karsilanan gram en fazla 3 kat sayilir
+
+
+def bozulma_haritasi(katalog):
+    """{malzeme_id: raf omru (gun)}; sadece taze urunler (TAZE_URUN_BOZULMA_GUN ve alti)."""
+    sonuc = {}
+    for m in katalog:
+        try:
+            b = float(m.get("bozulma_suresi"))
+        except (TypeError, ValueError):
+            continue
+        if 0 < b <= TAZE_URUN_BOZULMA_GUN:
+            sonuc[m["id"]] = b
+    return sonuc
+
+
+def bozulma_agirliklari(bozulma, gun_indeksi, stok):
+    """O gun icin {malzeme_id: katsayi}. Raf omru ne kadar kisaysa katsayi o kadar buyuk:
+    1 + BOZULMA_EK_AGIRLIK * (1 - omur / 30). Ornek: 2 gunluk balik ~2,9; 7 gunluk ~2,5; 30 gunluk 1.
+    Malzemenin omru gecmisse (gun_indeksi >= omur) ek oncelik verilmez (artik bozulmus sayilabilir; stoga
+    giris tarihi bilinmedigi icin silinmez, sadece one cekilmez)."""
+    if not bozulma:
+        return None
+    return {
+        mid: 1.0 + BOZULMA_EK_AGIRLIK * (1.0 - b / TAZE_URUN_BOZULMA_GUN)
+        for mid, b in bozulma.items()
+        if stok.get(mid, 0.0) > 0 and gun_indeksi < b
+    }
 
 
 def stoktan_dus(ihtiyac, stok):
@@ -287,7 +322,7 @@ def menuyu_yeniden_hesapla(gun_tarifleri, tarif_malzemeleri, stok, porsiyon, tem
 
 def menu_olustur(tarifler, tarif_malzemeleri, stok, porsiyon, ogunler, gun_mevsimleri,
                  iki_tarif, hedefler, rastgele, temel_idler, ilerleme=None, malzeme_mevsim=None,
-                 gun_aylari=None, tarif_aylari=None):
+                 gun_aylari=None, tarif_aylari=None, bozulma=None):
     """tarifler: motorun bekledigi liste ({"ad","grup","mevsim_etiketi","etiketler", besin...}).
     tarif_malzemeleri: {tarif_adi: [(malzeme_id, porsiyon_basi_gram), ...]}
     stok: {malzeme_id: gram} (DEGISTIRILMEZ; kopyasi uzerinde calisilir)
@@ -301,6 +336,8 @@ def menu_olustur(tarifler, tarif_malzemeleri, stok, porsiyon, ogunler, gun_mevsi
     gun_aylari / tarif_aylari: her gunun ay adi ("Ocak"...) ve {tarif_adi: ay adlari kumesi}.
       Kullanicinin kendi tariflerinde "sunulabilir aylar" (receteler.uygun_aylar) secildiyse
       tarif sadece o aylarda onerilir; bos kume = kisitlama yok.
+    bozulma: {malzeme_id: raf omru gun} (bozulma_haritasi) -- verilirse evdeki cabuk bozulan malzemeler
+      haftanin basina cekilir (stok cezasinda daha agir sayilir). None = eski davranis.
 
     Donus sozlugu:
       gunler: [{"gun": 1, "ogunler": {"Öğle": {"tarifler": [...], "stoktan_yuzde": x}}}, ...]
@@ -336,7 +373,8 @@ def menu_olustur(tarifler, tarif_malzemeleri, stok, porsiyon, ogunler, gun_mevsi
         grup3 = [BOS_TARIF] if iki_tarif else (
             [t for t in gun_tarifleri if t["grup"] == 3] or [t for t in tarifler if t["grup"] == 3])
         for ogun_adi in ogunler:
-            ceza = {ad: tarif_cezasi(ih, kalan) for ad, ih in ihtiyaclar.items()}
+            agirlik = bozulma_agirliklari(bozulma, gun_no - 1, kalan)
+            ceza = {ad: tarif_cezasi(ih, kalan, agirlik) for ad, ih in ihtiyaclar.items()}
             secilen = ogun_olustur(
                 grup1, grup2, grup3, mevsim, kullanilan_hafta, rastgele,
                 (hedefler or {}).get(ogun_adi), kullanilan_gun_taban, ceza=ceza,

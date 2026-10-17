@@ -24,6 +24,7 @@ import streamlit as st
 from besin_sabitleri import TUM_BESIN_ALANLARI, BESIN_ETIKET, BESIN_ARALIK, kanonik_sirala
 from db import get_supabase, oturumu_uygula
 import ai_okuma as A
+import eposta
 import ev_menu as E
 import ev_menu_pdf
 
@@ -32,8 +33,9 @@ st.set_page_config(page_title="Evdekilerle Menü", page_icon="assets/favicon.png
 supabase = get_supabase()
 oturumu_uygula(supabase)
 
-if not st.session_state.get("patron_mu"):
-    st.error("Bu sayfa sadece işletme sahibine açık.")
+from yetkiler import yetki
+if not (st.session_state.get("patron_mu") or (st.session_state.get("personel_mi") and yetki("ev_menu") >= 1)):
+    st.error("Bu sayfaya erişim yetkin yok.")
     st.stop()
 if not st.session_state.get("ev_menu_hizmeti"):
     st.info("Evdekilerle Menü hizmeti kapalı. Abonelik sayfasından açabilirsin.")
@@ -42,6 +44,9 @@ if not st.session_state.get("ev_menu_hizmeti"):
 _IMZA = st.session_state.get("onbellek_imzasi", "")
 _ISLETME_ID = st.session_state.isletme_id
 _SALT_OKUNUR = st.session_state.get("salt_okunur", False)
+# 16 Ekim 2026: "ev_menu" yetkisi Gorur olan personel menu kurabilir, liste/PDF/e-posta alabilir ama stoga ve
+# tariflere dokunamaz (_SALT_OKUNUR). Odeme onayi bekleyen hesapta ise hicbir islem yapilmaz.
+_ODEME_KILITLI = st.session_state.get("odeme_onay_bekleniyor", False)
 _GENISLETILMIS = [a for a, *_ in TUM_BESIN_ALANLARI if a not in ("kalori", "protein", "yag", "karbonhidrat", "gi")]
 
 
@@ -225,8 +230,11 @@ st.caption(
     "Evdeki malzemeleri ve miktarlarını gir; sistem bunları önce kullanan bir menü kursun. "
     "Stok yetmeyen yerler için sonunda kısa bir alışveriş listesi çıkar."
 )
-if _SALT_OKUNUR:
+if _ODEME_KILITLI:
     st.info("Hesabın admin onayı bekliyor; onaylanana kadar bu sayfada değişiklik yapamazsın.")
+elif _SALT_OKUNUR:
+    st.info("Bu sayfada görüntüleme yetkin var: menü kurabilir, listeyi ve PDF'i alabilirsin; evdeki malzemeleri "
+            "ve tarifleri değiştiremezsin.")
 
 # ---------------------------------------------------------------------
 # 1) Stok
@@ -646,6 +654,14 @@ with t2:
         "tahıl, baharat, kuruyemiş gibi yıl boyu bulunan ürünler kısıtlanmaz. Evdeki malzemeler, temel "
         "malzemeler ve katalogda mevsimi girilmemiş malzemeler de muaftır.",
     )
+    # 16 Ekim 2026 (acik is #12): evdeki cabuk bozulan malzemeler (raf omru 30 gun ve alti) menunun ilk
+    # gunlerine cekilir (ev_menu.bozulma_agirliklari). Besin hedefi ve kurallar yine once gelir.
+    bozulan_once = st.checkbox(
+        "Çabuk bozulanları önce kullan", value=bool(ayar.get("bozulan_once", True)),
+        help="Evdeki taze ürünler (et, balık, süt ürünleri, sebze, meyve gibi raf ömrü kısa olanlar) menünün ilk "
+        "günlerinde kullanılmaya çalışılır; raf ömrü ne kadar kısaysa öncelik o kadar yüksek. Raf ömrü kataloğa "
+        "göredir; malzemeyi ne zaman aldığın bilinmediği için kalan ömür hesaplanmaz.",
+    )
 
 temel_adlar_katalog = [a for a in E.TEMEL_MALZEMELER if a in id_by_ad]
 haric = set(ayar.get("temel_haric") or [])
@@ -741,7 +757,7 @@ with st.container(border=True):
 # ---------------------------------------------------------------------
 # 3) Menu kur
 # ---------------------------------------------------------------------
-if st.button("Menüyü oluştur", type="primary", disabled=_SALT_OKUNUR):
+if st.button("Menüyü oluştur", type="primary", disabled=_ODEME_KILITLI):
     yeni_ayar = {
         "porsiyon": int(porsiyon), "ogun": ogun_kodu, "gun": int(gun_sayisi), "iki_tarif": bool(iki_tarif),
         "mevsim_kontrolu": bool(mevsim_kontrolu), "kendi_tarifler": bool(kendi_kullan),
@@ -749,6 +765,7 @@ if st.button("Menüyü oluştur", type="primary", disabled=_SALT_OKUNUR):
         "hedefler": {o: {a: [float(v[0]), float(v[1])] for a, v in h.items()} for o, h in (hedefler or {}).items()}
         or ayar.get("hedefler"),
         "temel_haric": [a for a in temel_adlar_katalog if a not in temel_secili],
+        "bozulan_once": bool(bozulan_once),
     }
     try:
         supabase.table("isletmeler").update({"ev_menu_ayarlari": yeni_ayar}).eq("id", _ISLETME_ID).execute()
@@ -772,6 +789,7 @@ if st.button("Menüyü oluştur", type="primary", disabled=_SALT_OKUNUR):
         [E.tarih_mevsimi(t) for t in tarihler], bool(iki_tarif), hedefler,
         random.Random(), temel_idler, ilerleme=_ilerle, malzeme_mevsim=malzeme_mevsim,
         gun_aylari=[E.AYLAR[t.month - 1] for t in tarihler], tarif_aylari=tarif_aylari,
+        bozulma=E.bozulma_haritasi(katalog) if bozulan_once else None,
     )
     cubuk.empty()
     st.session_state["ev_menu_sonuc"] = {
@@ -845,7 +863,7 @@ if kayit:
                         key=f"duz_{_surum}_{_gun_idx}_{_ogun_adi}_{_j}",
                     ))
                 _yeni_gun[_ogun_adi] = _secimler
-        if st.button("Değişikliği uygula", disabled=_SALT_OKUNUR):
+        if st.button("Değişikliği uygula", disabled=_ODEME_KILITLI):
             _gt = [{o: v["tarifler"] for o, v in g["ogunler"].items()} for g in sonuc["gunler"]]
             _gt[_gun_idx] = _yeni_gun
             _r = E.menuyu_yeniden_hesapla(
@@ -889,9 +907,42 @@ if kayit:
         )
         if kullanilmayan:
             st.caption("Bu menüde değerlendirilemeyenler: " + ", ".join(kullanilmayan))
-        st.caption("Stok kaydın değişmedi; bu rapor sadece bu menüye göre bir hesaptır.")
     else:
         st.caption("Stok boş olduğu için rapor yok.")
+
+    # -----------------------------------------------------------------
+    # Menuyu onayla -> stoktan dus (16 Ekim 2026, acik is #12). Kayitli stok, menunun kullandigi miktar kadar
+    # azaltilir. Menu kurulduktan sonra stok elle degistirildiyse o degisiklik korunur: kayitli stoktan sadece
+    # KULLANILAN miktar dusulur (eski stok uzerine yazilmaz). Ayni menu iki kez dusulmez.
+    # -----------------------------------------------------------------
+    if sonuc["kullanilan"]:
+        if kayit.get("stoktan_dusuldu"):
+            st.success("Bu menüde kullanılan malzemeler stoktan düşüldü.")
+        else:
+            st.caption(
+                "Stok kaydın henüz değişmedi. Menüyü uygulayacaksan onayla: kullanılan miktarlar evdeki "
+                "malzemeler listesinden düşülür (biten malzeme listeden çıkar)."
+            )
+            if st.button("Menüyü onayla, kullanılanları stoktan düş", disabled=_SALT_OKUNUR):
+                try:
+                    _guncel = _stok_getir()
+                    _simdi = datetime.datetime.now(datetime.timezone.utc).isoformat()
+                    for _mid, _g in sonuc["kullanilan"].items():
+                        if _mid not in _guncel:
+                            continue  # menu kurulduktan sonra elle silinmis
+                        _yeni = _guncel[_mid] - _g
+                        if _yeni < 1.0:
+                            supabase.table("ev_stogu").delete().eq("isletme_id", _ISLETME_ID).eq("malzeme_id", _mid).execute()
+                        else:
+                            supabase.table("ev_stogu").update(
+                                {"miktar_gram": round(_yeni, 1), "updated_at": _simdi}
+                            ).eq("isletme_id", _ISLETME_ID).eq("malzeme_id", _mid).execute()
+                    kayit["stoktan_dusuldu"] = True
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Stok güncellenemedi: {e}")
+    else:
+        st.caption("Bu menü evdeki malzemelerden hiçbirini kullanmıyor; stok değişmez.")
 
     # -----------------------------------------------------------------
     # PDF (15 Ekim 2026): menu + alisveris listesi + stok raporu + tarifler
@@ -936,3 +987,42 @@ if kayit:
             "PDF'i indir", data=_pdf[1], type="primary",
             file_name=f"evdekilerle_menu_{kayit['tarihler'][0].isoformat()}.pdf", mime="application/pdf",
         )
+
+    # -----------------------------------------------------------------
+    # E-posta (16 Ekim 2026, acik is #8): menu + alinmasi gerekenler, SADECE giris yapilan hesabin adresine.
+    # Gonderen hesap Secrets'ta (eposta.py). Ayni oturumda 60 sn'de bir gonderim.
+    # -----------------------------------------------------------------
+    st.subheader("E-posta")
+    _alici = (st.session_state.get("_kullanici_eposta") or "").strip()
+    if not eposta.hazir_mi():
+        st.caption("E-posta gönderimi henüz kurulmadı (yönetici ayarı bekleniyor).")
+    elif not _alici:
+        st.caption("Hesabının e-posta adresi okunamadı; e-posta gönderilemiyor.")
+    else:
+        st.caption(f"Menü ve alınması gerekenler listesi hesabının adresine ({_alici}) gönderilir.")
+        if st.button("E-postama gönder", disabled=_ODEME_KILITLI):
+            import time as _time
+            _son = st.session_state.get("_ev_eposta_son", 0)
+            if _time.time() - _son < 60:
+                st.warning(f"Az önce gönderildi. Tekrar göndermek için {int(60 - (_time.time() - _son))} sn bekle.")
+            else:
+                _alinacaklar = sorted(
+                    (((malzeme_by_id.get(mid) or {}).get("ad", "?"), E.gram_yazisi(g), E.gram_yazisi(E.pratik_miktar(g)))
+                     for mid, g in sonuc["eksik"].items()),
+                    key=lambda r: E.tr_sirala_anahtari(r[0]),
+                )
+                try:
+                    _isl_ad = ((supabase.table("isletmeler").select("ad").eq("id", _ISLETME_ID).single()
+                                .execute().data or {}).get("ad") or "")
+                except Exception:
+                    _isl_ad = ""
+                _konu, _html, _duz = eposta.ev_menu_epostasi(
+                    _isl_ad, kayit["tarihler"], sonuc["gunler"], kayit["porsiyon"], _alinacaklar,
+                )
+                try:
+                    with st.spinner("E-posta gönderiliyor..."):
+                        eposta.gonder(_alici, _konu, _html, _duz)
+                    st.session_state["_ev_eposta_son"] = _time.time()
+                    st.success(f"Gönderildi: {_alici}. Birkaç dakika içinde gelmezse gereksiz/spam klasörüne de bak.")
+                except eposta.EpostaHatasi as e:
+                    st.error(str(e))

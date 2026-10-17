@@ -13368,3 +13368,47 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
   - Test (sahte Groq): Almanca fiste modelin cevirmedigi "Zwiebeln", "Vollmilch", Kiril "МОЛОКО" ve Turkce harfli
     "pomodori" cevrilip KURU SOĞAN, SÜT (TAM YAĞ), SÜT (TAM YAĞ), DOMATES ile eslendi; stoga ekleme calisti. Gercek
     Groq ile test Bahri'de: test_fisi_almanca.png (uydurma test fisi, gercek magaza degil).
+
+### 17 Ekim 2026 — Acik isler 10, 12, 8 (+ 3 inceleme, 14 kapandi)
+- Bahri: "3 gozden gecir, 8 e-postada menu ve alinmasi gereken eksik malzeme listesini gondermeyi hedefleyelim,
+  simdilik benim emailimden gonderilsin, daha sonra baska email alirim. 10 ve 12 yapilsin. 14 denendi, tamamdir."
+- 14 KAPANDI: "Beni hatirla" (12 Ekim duzeltmesi) Bahri tarafindan gercek kullanimda denendi, calisiyor.
+- 10 (app.py): kayit hatalari kod/metne gore anlasilir mesaj (saatlik e-posta siniri, zaman asimi -- hesap yine de
+  olusmus olabilir --, ayni e-posta zaten kayitli, zayif sifre, gecersiz e-posta, kayit kapali, veritabani hatasi);
+  ham hata "Teknik detay" icinde. Kayit oncesi e-posta bicimi ve 8 karakter kontrolu. Supabase'in dogrulanmis bir
+  e-postayla tekrar kayitta hata vermeyip bos identities dondurmesi yakalanir ("zaten bir hesap var").
+- 12 (Evdekilerle Menu ikinci asama):
+  - "Cabuk bozulanlari once kullan" (varsayilan acik, ayarlara kaydedilir): ev_menu.bozulma_agirliklari -- raf
+    omru 30 gun ve alti malzemede evden karsilanan gram 1 + 2 x (1 - omur/30) katsayisiyla sayilir (2 gunluk ~2,9;
+    30 gunluk 1). Omru dolmus sayilan (gun >= omur) malzemeye ek oncelik verilmez. Besin hedefi ve kurallar once.
+  - "Menuyu onayla, kullanilanlari stoktan dus": kayitli stoktan SADECE kullanilan miktar dusulur (menu kurulduktan
+    sonra elle yapilan stok degisiklikleri korunur), 1 g altina inen satir silinir, ayni menu iki kez dusulmez.
+  - Personel erisimi: yetkiler.py'ye "ev_menu" (Yok / Gorur / Duzenler; hazir rollerde Yok). Gorur: menu kurar,
+    liste/PDF/e-posta alir; Duzenler: stok ekler/siler, menuyu onaylar. Tarif kaydi icin ayrica recete yetkisi gerekir.
+    app.py: gezinmede hizmet acik + (patron ya da ev_menu >= 1 personel); salt_okunur eslemesine "Evdekilerle Menü".
+  - sql/196_evdekilerle_menu_personel_erisimi.sql: ev_stogu politikasi auth_yetki_seviye('ev_menu') ile (okuma >= 1,
+    yazma >= 2; sahip icin sonuc ayni); ev_menu_hizmeti_acik() (personel ana isletme satirini okuyamayabilir).
+    Yerel Postgres taklidiyle test: patron kendi stogunu gorur/degistirir; Gorur personel subenin stogunu gorur,
+    degistiremez (update 0 satir, insert RLS hatasi); Duzenler personel degistirir/siler; yetkisiz personel 0 satir;
+    anon fonksiyonu calistiramaz.
+- 8 (e-posta): eposta.py (SMTP, Gmail varsayilan smtp.gmail.com:465). Ayarlar SADECE Streamlit Cloud Secrets'ta:
+  SMTP_KULLANICI, SMTP_SIFRE (Gmail uygulama sifresi), istege bagli SMTP_GONDEREN_AD / SMTP_SUNUCU / SMTP_PORT.
+  Baska adrese gecince sadece Secrets degisir. Evdekilerle Menu'de "E-postama gonder": menu (gun/ogun/tarifler) +
+  alinmasi gerekenler (gereken / onerilen alim), HTML + duz metin; alici SADECE giris yapan hesabin adresi
+  (sayfa alici sormaz); oturumda 60 sn'de bir. Secrets yoksa "henuz kurulmadi" yazar, sayfa bozulmaz.
+  Test (sahte gonderici): konu "Evdekilerle Menü: 17.10.2026 - 23.10.2026 (3 kişilik)", 60 sn kilidi calisti.
+- Ana Sayfa Evdekilerle Menu ve Abonelik metinleri yeni ozelliklere gore guncellendi.
+- 3 (Hastane sablonu) INCELEME, kod degismedi -- Bahri'nin karari bekleniyor:
+  - Kaynak: NHS Scotland "Food in Hospitals" (Mart 2016) Tablo 2/3: enerji 1800-2400 kcal/gun; protein 56 g/gun,
+    ana ogunde en az 18 g; ana ogun en az 300 kcal (enerji yogun 500); karbonhidrat >%50 enerji (HAFTALIK ortalama);
+    yag <%35, doymus yag <%11 (haftalik); lif 30 g/gun; sodyum <2400 mg/gun; D vitamini 10 mcg/gun, dipnot: "yemekle
+    >10 mcg/gun saglamak zordur", bireysel takviye gerekebilir; vitamin/mineraller RNI'ya gore HAFTALIK degerlendirilir.
+  - Sablonun sorunlari: D vitamini ogun basina 7-15 mcg (gunluk 20 mcg'den; standart 10 mcg/gun ve yemekle zor diyor);
+    karbonhidrat 92-119 g dar bant (standart sadece oran, haftalik); lif ust siniri 11 g (lifin ust siniri yok).
+  - 186b verisiyle (1000 tarif, rastgele 1 milyon uclu, anayasa kurallari UYGULANMADAN, gosterge): kis havuzu mevcut
+    sablon ~95 uclu (%0,0013); V1 (D cikar, lif 7-30, karb >= 69 g) ~11.600; V2 (V1 + kalori 550-850, protein 18-40,
+    yag 0-33, doymus 0-10,4, sodyum 0-840) ~22.700. Yaz: ~100 / ~4.400 / ~9.800. En zor kalanlar: sodyum, C vitamini.
+  - Turetilmis sayilar HESAPTIR (standarttan): kalori 550-850 = (1800-400 kahvalti-300 ara ogun)/2 ile
+    (2400-400-300)/2; karb 69 g = 550 kcal x %50 / 4; yag 33 g = 850 x %35 / 9; doymus 10,4 = 850 x %11 / 9; sodyum
+    840 = 2400 x %35. Not: kutuphane uclulerinde ekmek yok; hastane ogununde ekmek kalori/karbonhidratin bir kismini
+    karsilar -- Emre/Gizem'e sorulmali.

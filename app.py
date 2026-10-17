@@ -161,6 +161,38 @@ def hesap_olustur(email: str, sifre: str, isletme_adi: str):
     )
 
 
+def kayit_hatasi_mesaji(e):
+    """16 Ekim 2026 (acik is #10): eskiden her hata "Kayıt başarısız: <ham hata>" olarak gosteriliyordu.
+    Bu yaniltici olabiliyordu: ornegin zaman asiminda hesap sunucuda OLUSMUS olabilir (28 Eylul, Emre'nin
+    hesabi), ya da Supabase'in kendi e-posta siniri dolmustur. Hata kodu (supabase_auth ErrorCode) ve metnine
+    gore kullaniciya ne olduğunu ve ne yapmasi gerektigini soyleyen mesaj doner. Ham hata ayrica
+    "Teknik detay" icinde gosterilir."""
+    kod = getattr(e, "code", None) or ""
+    metin = str(e).lower()
+    if kod in ("over_email_send_rate_limit", "over_request_rate_limit") or "rate limit" in metin:
+        return ("Şu anda çok fazla kayıt ya da doğrulama e-postası isteği var ve sistemin saatlik sınırı doldu. "
+                "Hesabın oluşmamış olabilir. Lütfen bir saat sonra tekrar dene.")
+    if kod in ("request_timeout", "hook_timeout", "hook_timeout_after_retry") or "timed out" in metin or "timeout" in metin:
+        return ("Sunucu zamanında yanıt vermedi, ama hesabın yine de oluşmuş olabilir. E-postanı (gereksiz/spam "
+                "klasörü dahil) kontrol et: doğrulama bağlantısı geldiyse ona tıklayıp giriş yap. Birkaç dakika "
+                "içinde gelmezse aynı bilgilerle tekrar kayıt olmayı dene.")
+    if kod in ("user_already_exists", "email_exists") or "already registered" in metin or "already exists" in metin:
+        return ("Bu e-posta adresiyle zaten bir hesap var. \"Giriş yap\" sekmesinden giriş yapabilir, şifreni "
+                "hatırlamıyorsan \"Şifremi unuttum\" ile yenileyebilirsin.")
+    if kod == "weak_password" or "password" in metin and ("weak" in metin or "at least" in metin or "characters" in metin):
+        return "Şifre yeterince güçlü değil. En az 8 karakter olsun; harf ve rakamı birlikte kullan."
+    if kod in ("email_address_invalid", "validation_failed") or "invalid" in metin and "email" in metin:
+        return "E-posta adresi geçersiz görünüyor. Yazımını kontrol edip tekrar dene."
+    if kod == "email_address_not_authorized":
+        return "Bu e-posta adresine şu anda doğrulama e-postası gönderilemiyor. Başka bir adresle dene ya da yöneticiye bildir."
+    if kod == "signup_disabled" or "signups not allowed" in metin:
+        return "Yeni kayıtlar şu anda kapalı. Yöneticiye bildir."
+    if "database error" in metin:
+        return ("Hesap kaydedilirken veritabanında bir hata oluştu; bu senin hatan değil. Hesabın oluşmadı. "
+                "Lütfen yöneticiye bildir (aşağıdaki teknik detayla birlikte).")
+    return "Kayıt tamamlanamadı. Lütfen tekrar dene; sorun sürerse aşağıdaki teknik detayla yöneticiye bildir."
+
+
 # ---------------------------------------------------------------------
 # 1) Oturum yoksa: giris / kayit ekrani goster, geri kalanini render etme
 # ---------------------------------------------------------------------
@@ -377,16 +409,34 @@ if st.session_state.oturum is None:
             )
             isletme_adi = st.text_input("İşletme adı", key="kayit_isletme")
             if st.button("Hesap oluştur", type="primary"):
-                if not (yeni_email and yeni_sifre and isletme_adi):
+                yeni_email = (yeni_email or "").strip()
+                if not (yeni_email and yeni_sifre and isletme_adi.strip()):
                     st.warning("Lütfen tüm alanları doldur.")
+                elif "@" not in yeni_email or "." not in yeni_email.split("@")[-1]:
+                    st.warning("E-posta adresi geçersiz görünüyor. Yazımını kontrol et.")
+                elif len(yeni_sifre) < 8:
+                    st.warning("Şifre en az 8 karakter olmalı.")
                 else:
                     try:
-                        hesap_olustur(yeni_email, yeni_sifre, isletme_adi)
-                        st.success(
-                            "Hesabın oluşturuldu. E-postana gelen bağlantıyla doğrulayıp giriş yap."
-                        )
+                        _kayit = hesap_olustur(yeni_email, yeni_sifre, isletme_adi.strip())
+                        _kayit_kullanici = getattr(_kayit, "user", None)
+                        # Supabase, e-postasi zaten DOGRULANMIS bir hesapla tekrar kayit olunursa hata vermez;
+                        # sahte bir kullanici doner ve kimlik (identities) listesi bos olur. Bu durumda
+                        # "hesabin olusturuldu" demek yaniltici olurdu.
+                        if _kayit_kullanici is not None and getattr(_kayit_kullanici, "identities", None) == []:
+                            st.warning(
+                                "Bu e-posta adresiyle zaten bir hesap var. \"Giriş yap\" sekmesinden giriş "
+                                "yapabilir, şifreni hatırlamıyorsan \"Şifremi unuttum\" ile yenileyebilirsin."
+                            )
+                        else:
+                            st.success(
+                                "Hesabın oluşturuldu. E-postana gelen doğrulama bağlantısına tıklayıp giriş yap. "
+                                "E-posta birkaç dakika içinde gelmezse gereksiz/spam klasörüne de bak."
+                            )
                     except Exception as e:
-                        st.error(f"Kayıt başarısız: {e}")
+                        st.error(kayit_hatasi_mesaji(e))
+                        with st.expander("Teknik detay (destek için)"):
+                            st.code(f"{type(e).__name__}: {getattr(e, 'code', '') or ''} {e}")
 
         # ON YEDINCI DUZELTME (13 Agustos 2026, Oturum 11 -- Bahri'nin
         # kendi hesabinda yasadigi kilitlenme sonrasi acilen eklendi):
@@ -673,9 +723,13 @@ st.session_state.sube_limiti = abonelik_verisi["sube_limiti"]
 # karari sahip verir. NULL = henuz sorulmadi (Ana Sayfa'da bir kez sorulur).
 # 194 calistirilmadiysa ya da okunamazsa hizmet kapali sayilir.
 try:
-    st.session_state.ev_menu_hizmeti = (
-        supabase.table("isletmeler").select("ev_menu_hizmeti").eq("id", ana_isletme_id).single().execute()
-    ).data.get("ev_menu_hizmeti")
+    if personel_mi:
+        # Personel ana isletmenin satirini okuyamayabilir (sadece calistigi subeleri gorur): sql/196 fonksiyonu.
+        st.session_state.ev_menu_hizmeti = bool(supabase.rpc("ev_menu_hizmeti_acik").execute().data)
+    else:
+        st.session_state.ev_menu_hizmeti = (
+            supabase.table("isletmeler").select("ev_menu_hizmeti").eq("id", ana_isletme_id).single().execute()
+        ).data.get("ev_menu_hizmeti")
 except Exception:
     st.session_state.ev_menu_hizmeti = False
 
@@ -1066,8 +1120,9 @@ def kontrol_paneli_sayfasi():
             "3. **Menü ayarları:** Kişi sayısı, öğün (öğle, akşam ya da ikisi), gün sayısı (1–7), başlangıç "
             "tarihi, öğünde 2 ya da 3 tarif, kendi tariflerini kullanma ve malzeme mevsimi kontrolü (o "
             "mevsimde bulunmayan taze ürünü isteyen tarif önerilmez). \"Evde var\" saydığın temel malzemeler "
-            "(tuz, baharat, yağ gibi) alışveriş listesine girmez. İstersen öğün başına besin değeri hedefi "
-            "koyarsın.\n"
+            "(tuz, baharat, yağ gibi) alışveriş listesine girmez. \"Çabuk bozulanları önce kullan\" açıksa "
+            "evdeki et, balık, süt ürünü ve sebze gibi raf ömrü kısa malzemeler ilk günlere alınır. İstersen öğün "
+            "başına besin değeri hedefi koyarsın.\n"
             "4. **\"Menüyü oluştur\"** düğmesine basarsın. Kurallara ve besin hedefine uyan seçenekler "
             "arasından evdeki malzemeyi en çok kullanan seçilir; her öğünün altında evdeki malzemeden ne "
             "kadarının karşılandığı yazar."
@@ -1077,9 +1132,13 @@ def kontrol_paneli_sayfasi():
             "stok raporu yeniden hesaplanır.\n"
             "- **Alman gerekenler ve stok raporu:** Neyin alınacağını, evdekilerden neyin ne kadar "
             "kullanılıp neyin arttığını görürsün.\n"
+            "- **Menüyü onayla:** Menüyü uygulayacaksan onaylarsın; kullanılan miktarlar evdeki malzemeler "
+            "listesinden düşülür, biten malzeme listeden çıkar.\n"
             "- **PDF:** \"PDF hazırla\" ile menü, alışveriş listesi (\"Alındı\" kutucuklu), stok raporu ve "
             "tarifler (kişi sayısına göre malzemeleri ve hazırlanışıyla) tek dosyada hazırlanır, "
-            "\"PDF'i indir\" ile alırsın."
+            "\"PDF'i indir\" ile alırsın.\n"
+            "- **E-posta:** \"E-postama gönder\" ile menü ve alınması gerekenler listesi hesabının e-posta "
+            "adresine gelir."
         )
         st.caption(
             "Bu hizmet isteğe bağlıdır: aboneliğin başladığında bir kez sorulur, istediğin zaman Abonelik "
@@ -1112,7 +1171,7 @@ def kontrol_paneli_sayfasi():
             "- **Personel ve yetkiler:** Personelin e-postasını ve şifresini sen belirlersin, hangi "
             "işletmelerde çalışacağını seçersin. Hazır roller (Aşçı, Yönetici, Muhasebe) bir başlangıçtır; "
             "\"Özel\" seçersen maliyetleri görme, satın alma listeleri, tarifler, reçete üretimi, aylık menü, "
-            "PDF raporları, fiyat güncelleme, maliyet ayarları ve porsiyon profilleri yetkilerini tek tek "
+            "PDF raporları, fiyat güncelleme, maliyet ayarları, porsiyon profilleri ve Evdekilerle Menü yetkilerini tek tek "
             "verirsin. Personel sadece yetkisi olan sayfaları görür; değişiklik personelin bir sonraki sayfa "
             "yenilemesinde geçerli olur.\n"
             "- **İşletme bilgileri:** İşletme adı, reçete adlarına eklenen kısaltma, fatura adresi, vergi "
@@ -1173,8 +1232,10 @@ if not st.session_state.odeme_bekleniyor:
         sayfa_listesi.append(recete_uretimi_sayfasi)
     if yetki("uygulama_tarifleri") >= 1:
         sayfa_listesi.append(tarif_kutuphanesi_sayfasi)
-    # Evdekilerle Menu: ilk surumde sadece sahip, hizmet aciksa (tasarim v3).
-    if st.session_state.patron_mu and st.session_state.get("ev_menu_hizmeti"):
+    # Evdekilerle Menu: hizmet aciksa sahip; 16 Ekim 2026'dan beri "ev_menu" yetkisi olan personel de.
+    if st.session_state.get("ev_menu_hizmeti") and (
+        st.session_state.patron_mu or (st.session_state.personel_mi and yetki("ev_menu") >= 1)
+    ):
         sayfa_listesi.append(evdekilerle_menu_sayfasi)
 # Abonelik sayfasi herkese acik (personel orada sadece Hesap Bilgileri, cikis ve
 # yetkisi olan bolumleri gorur).
@@ -1656,6 +1717,7 @@ _sayfa_yetki_anahtari = {
     "Aylık Menü": "aylik_menu",
     "Reçete Üretimi": "recete_uretimi",
     "Tarif Kütüphanesi": "uygulama_tarifleri",
+    "Evdekilerle Menü": "ev_menu",
 }.get(pg.title)
 st.session_state.salt_okunur = st.session_state.get("odeme_onay_bekleniyor", False) or (
     _sayfa_yetki_anahtari is not None
