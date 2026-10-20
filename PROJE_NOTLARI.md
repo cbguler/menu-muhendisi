@@ -13412,3 +13412,18 @@ simdi ayni kapsamli duzeltmeyle cozuldu.
     (2400-400-300)/2; karb 69 g = 550 kcal x %50 / 4; yag 33 g = 850 x %35 / 9; doymus 10,4 = 850 x %11 / 9; sodyum
     840 = 2400 x %35. Not: kutuphane uclulerinde ekmek yok; hastane ogununde ekmek kalori/karbonhidratin bir kismini
     karsilar -- Emre/Gizem'e sorulmali.
+
+### 20 Ekim 2026 — Supabase duyurusu: 30 Ekim'den itibaren yeni tablolara otomatik Data API izni yok
+- E-posta (Supabase, 20 Ekim): 30 Ekim 2026'dan itibaren mevcut projelerde "public" semasinda YENI olusturulan
+  tablolara anon/authenticated/service_role icin otomatik GRANT verilmeyecek; izin verilmeyen tabloya supabase-js /
+  PostgREST "permission denied" doner. MEVCUT tablolar etkilenmez, izinleri aynen kalir.
+- Bizdeki durum: canli uygulama etkilenmiyor (butun tablolar 30 Ekim'den once olusturuldu). Uygulamada service role
+  anahtari sadece auth yonetimi icin (personel hesabi acma/sifre), tabloya erismiyor. Elle calistirilan yukleme
+  betikleri (yukle_yeni_tarifler_toplu.py, talimat_yukle.py, besin_kalibrasyon.py) service role ile MEVCUT tablolara yaziyor.
+- KALICI KURAL (bundan sonraki her migration): yeni tablo olusturan her SQL dosyasi, ayni dosyada izinleri acikca verir:
+    revoke all on public.<tablo> from anon;                       -- bizde anon erisimi yok (194/183 kalibi)
+    grant select, insert, update, delete on public.<tablo> to authenticated;   -- RLS ayrica zorunlu
+    grant select, insert, update, delete on public.<tablo> to service_role;    -- yukleme betikleri icin
+  Dogrulama satirina has_table_privilege('authenticated', ...) = true kontrolu eklenir. Var olan bir tabloyu
+  silip yeniden olusturan (drop + create) migration da yeni tablo sayilir, ayni kural gecerli. Yeni gorunum (view)
+  icin de ayni grant'ler yazilir (181'deki security_invoker kurali da gecerli).
